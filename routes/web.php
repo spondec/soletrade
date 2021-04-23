@@ -386,6 +386,7 @@ class DecisionMaker
     }
 }
 
+
 Route::get('/',
     function () {
         ini_set('memory_limit', -1);
@@ -394,7 +395,7 @@ Route::get('/',
         echo '<script src="trading-view.js"></script>';
 
         $btcCandle = new \App\Console\Commands\CandleBtcUsd(false);
-        $btcCandle->timeFrame = '1m';
+        $btcCandle->timeFrame = '5m';
         $data = (array)$btcCandle->getCache(1);
 //        $data = array_slice($data, -2880 / 4, 2880 / 4);
 
@@ -481,7 +482,7 @@ Route::get('/',
                 $macdVal = ceil($macd[0][$key]);
                 $signalVal = ceil($macd[1][$key]);
 
-                if (abs($macdVal - $signalVal) <= 0.99)
+                if (abs($macdVal - $signalVal) <= 1)
                 {
                     if (!$maker->inCash() && $macdVal > 0)
                     {
