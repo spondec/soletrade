@@ -147,11 +147,13 @@ class DecisionMaker
 
     //various prices
     protected float $cost;
+    protected float $commissionRate = 0.075 / 100;
 
     protected float $netProfit;
 
     protected float $profit = 0;
     protected float $loss = 0;
+    protected float $paidCommission = 0;
 
     //chart data
     protected array $chart = [];
@@ -189,6 +191,8 @@ class DecisionMaker
         }
 
         $this->assertItem();
+
+        $this->item = $this->cutCommission($this->item, $this->price);
         $this->cash = $this->item * $this->price;
         $this->cost = 0;
         $this->item = 0;
@@ -205,9 +209,19 @@ class DecisionMaker
         return ['time' => $time, 'value' => $value];
     }
 
+    protected function cutCommission(float $item, float $price = null)
+    {
+        $commission = $item * $this->commissionRate;
+        $this->paidCommission += $price ? $commission * $price : $commission;
+
+        return $item - $commission;
+    }
+
     public function buy(int $time, $amount = null): void
     {
         $this->assertCash();
+
+        $this->cash = $this->cutCommission($this->cash);
 
         $this->item = $this->cash / $this->price;
         $this->cash = 0;
@@ -244,10 +258,11 @@ class DecisionMaker
         return $this->price <= $this->cost;
     }
 
-    public function isProfiting(): bool
+    public function isProfiting(?float $ratio = null): bool
     {
         $this->assertItem();
-        return $this->price >= $this->cost;
+
+        return $this->price > $this->cost && (!$ratio || $this->price > $this->cost * $ratio / 100 + $this->cost);
     }
 
     protected function calculateLoss(): float
@@ -273,6 +288,11 @@ class DecisionMaker
     protected function getSellingPrice(): float
     {
         return $this->cost + $this->cost * $this->sell / 100;
+    }
+
+    public function getCommissionRate(): float
+    {
+        return $this->commissionRate;
     }
 
     protected function getStopPrice(): float
@@ -328,10 +348,10 @@ class DecisionMaker
     {
         $template = [
             'position' => 'belowBar',
-            'color' => 'red',
-            'shape' => 'arrowUp',
-            'text' => ucfirst($action),
-            'size' => 2,
+            'color'    => 'red',
+            'shape'    => 'arrowUp',
+            'text'     => ucfirst($action),
+            'size'     => 2,
         ];
 
         switch ($action)
@@ -389,24 +409,26 @@ class DecisionMaker
 
 Route::get('/',
     function () {
+
         ini_set('memory_limit', -1);
         ini_set('trader.real_precision', 2);
 
         echo '<script src="trading-view.js"></script>';
 
         $btcCandle = new \App\Console\Commands\CandleBtcUsd(false);
-        $btcCandle->timeFrame = '5m';
+        $btcCandle->timeFrame = '15m';
         $data = (array)$btcCandle->getCache(1);
-//        $data = array_slice($data, -2880 / 4, 2880 / 4);
+//        dump($data);
+        $data = array_slice($data, -90*24,90*24);
 
         foreach ($data as $ochl)
         {
             $chart['candles'][] = [
-                'time' => $ochl[0] / 1000,
-                'open' => $ochl[1],
+                'time'  => $ochl[0] / 1000,
+                'open'  => $ochl[1],
                 'close' => $ochl[2],
-                'high' => $ochl[3],
-                'low' => $ochl[4]
+                'high'  => $ochl[3],
+                'low'   => $ochl[4]
             ];
 
             $closes[$ochl[0] / 1000] = $ochl[2];
@@ -497,17 +519,6 @@ Route::get('/',
                 }
             }
 
-//            if ($maker->inCash() && $maker->shouldBuy())
-//            {
-//                $maker->buy($time);
-//            }
-//            else
-//            {
-//                if (!$maker->inCash() && ($maker->shouldSell() || $maker->shouldStop()))
-//                {
-//                    $maker->sell($time);
-//                }
-//            }
             $prev = $ochl;
         }
 

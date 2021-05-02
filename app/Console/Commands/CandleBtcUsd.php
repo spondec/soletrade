@@ -25,7 +25,7 @@ class CandleBtcUsd extends Command
     protected string $url = 'https://api-pub.bitfinex.com/v2/';
 
     protected string $symbol = 'tBTCUSD';
-    public string $timeFrame = '1m';
+    public string $timeFrame = '1h';
     protected string $section = 'hist';
 
     /**
@@ -47,7 +47,7 @@ class CandleBtcUsd extends Command
     protected int $limit = 10000;
     protected int $sort = 1;
 
-    protected float $year = 1/365;
+    protected float $year = 90 / 365;
 
     protected \DateTime $dateTime;
     protected Client $httpClient;
@@ -107,12 +107,12 @@ class CandleBtcUsd extends Command
             if ($data) $startDate = end($data)[0];
 
             $result = $this->httpClient->request('get', $this->url . $pathParams, [
-                    'query' => [
-                        'start' => $startDate,
-                        'limit' => $this->limit,
-                        'sort' => $this->sort
-                    ]
-                ]
+                                                          'query' => [
+                                                              'start' => $startDate,
+                                                              'limit' => $this->limit,
+                                                              'sort'  => $this->sort
+                                                          ]
+                                                      ]
             );
 
             if ($result->getStatusCode() == 200)

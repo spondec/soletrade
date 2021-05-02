@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class Trade extends Controller
+class Index extends Controller
 {
     public function index()
     {
