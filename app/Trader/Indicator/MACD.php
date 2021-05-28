@@ -4,7 +4,7 @@
 namespace App\Trader\Indicator;
 
 
-class Macd
+class MACD
 {
 
 }
