@@ -1,42 +1,74 @@
 window.addEventListener('load', function ()
 {
-    var chart = LightweightCharts.createChart(document.body, {
-        width: 2560,
-        height: 1000,
-        rightPriceScale: {
-            visible: true,
-            borderColor: 'rgba(197, 203, 206, 1)',
-        },
-        leftPriceScale: {
-            visible: true,
-            borderColor: 'rgba(197, 203, 206, 1)',
-        },
-        layout: {
-            backgroundColor: 'rgb(0,0,0)',
-            textColor: 'white',
-        },
-        grid: {
-            horzLines: {
-                color: 'rgb(59,59,59)',
+    document.body.style.backgroundColor = "black";
+
+    var charts = [];
+    var series = [];
+
+    function newChart(name, width, height)
+    {
+        charts[name] = LightweightCharts.createChart(document.body, {
+            width: width,
+            height: height,
+            rightPriceScale: {
+                visible: true,
+                borderColor: 'rgba(197, 203, 206, 1)',
             },
-            vertLines: {
-                color: 'rgb(59,59,59)',
+            leftPriceScale: {
+                visible: true,
+                borderColor: 'rgba(197, 203, 206, 1)',
             },
-        },
-        crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal,
-        },
-        timeScale: {
-            borderColor: 'rgba(197, 203, 206, 1)',
-        },
-        handleScroll: {
-            vertTouchDrag: false,
-        },
-    });
+            layout: {
+                backgroundColor: 'rgb(0,0,0)',
+                textColor: 'white',
+            },
+            grid: {
+                horzLines: {
+                    color: 'rgb(59,59,59)',
+                },
+                vertLines: {
+                    color: 'rgb(59,59,59)',
+                },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            timeScale: {
+                borderColor: 'rgba(197, 203, 206, 1)',
+            },
+            handleScroll: {
+                vertTouchDrag: false,
+            },
+        });
+
+        charts[name].subscribeCrosshairMove(function (param)
+        {
+            var position = charts[name].timeScale().scrollPosition();
+            var visibleRange = charts[name].timeScale().getVisibleRange();
+            var visibleLocalRange = charts[name].timeScale().getVisibleLogicalRange();
+
+
+            for (var key in charts)
+            {
+                timeScale = charts[key].timeScale();
+                console.log(charts[name].options())
+
+                if (key !== name && timeScale.position !== position)
+                {
+                    // timeScale.scrollToPosition(position, false);
+                    // timeScale.setVisibleRange(visibleRange);
+                    console.log(visibleLocalRange)
+                    timeScale.setVisibleLogicalRange(visibleLocalRange);
+                }
+            }
+        });
+
+        return charts[name];
+    }
 
     if (chartData.rsi)
     {
-        const rsi = chart.addLineSeries({
+        series['rsi'] = newChart('rsi', 1280, 200).addLineSeries({
             color: 'purple',
             lineWidth: 2,
             title: 'rsi',
@@ -44,77 +76,73 @@ window.addEventListener('load', function ()
             priceScaleId: 'left'
         });
 
-        rsi.setData(chartData.rsi);
+        series['rsi'].setData(chartData.rsi);
     }
 
     if (chartData.macd)
     {
-        const macd = chart.addLineSeries({
-            color: '#0094ff',
-            lineWidth: 2,
-            title: 'macd',
-            crosshairMarkerVisible: true,
-            priceScaleId: 'left'
-        });
-
-        macd.setData(chartData.macd[0]);
-
-        const signal = chart.addLineSeries({
-            color: '#ff6a00',
-            lineWidth: 2,
-            title: 'signal',
-            crosshairMarkerVisible: true,
-            priceScaleId: 'left'
-        });
-
-        signal.setData(chartData.macd[1]);
+        series['macd'] = newChart('macd', 1280, 200);
 
         let len = chartData.macd[2].length;
         var prevHist = 0;
 
-        for (var i = 0; i < len; i++)
+        for (i = 0; i < len; i++)
         {
             var point = chartData.macd[2][i];
             var hist = chartData.macd[0][i].value - chartData.macd[1][i].value;
 
             if (point.value > 0)
             {
-                if (prevHist > hist)
-                {
-                    point.color = '#B2DFDB';
-
-                } else
-                {
-                    point.color = '#26a69a';
-                }
+                if (prevHist > hist) point.color = '#B2DFDB'; else point.color = '#26a69a';
             } else
             {
-                if (prevHist < hist)
-                {
-                    point.color = '#FFCDD2';
-
-                } else
-                {
-                    point.color = '#EF5350';
-                }
+                if (prevHist < hist) point.color = '#FFCDD2'; else point.color = '#EF5350';
             }
 
             prevHist = hist;
         }
 
-        const divergence = chart.addHistogramSeries({
+        series['macd'].addLineSeries({
+            color: '#0094ff',
             lineWidth: 2,
-            title: 'signal',
+            // title: 'macd',
             crosshairMarkerVisible: true,
-            priceScaleId: 'left'
-        });
+        }).setData(chartData.macd[0]);
 
-        divergence.setData(chartData.macd[2]);
+        series['macd'].addLineSeries({
+            color: '#ff6a00',
+            lineWidth: 2,
+            // title: 'signal',
+            crosshairMarkerVisible: true,
+        }).setData(chartData.macd[1]);
+
+        series['macd'].addHistogramSeries({
+            lineWidth: 2,
+            // title: 'divergence',
+            crosshairMarkerVisible: true,
+        }).setData(chartData.macd[2]);
     }
 
-    const candlestickSeries = chart.addCandlestickSeries({priceScaleId: 'right'});
-    candlestickSeries.setData(chartData.candles);
-    candlestickSeries.setMarkers(chartData.markers);
+    series['candles'] = newChart('candles', 1280, 720).addCandlestickSeries({priceScaleId: 'right'});
+    series['candles'].setData(chartData.candles);
+    series['candles'].setMarkers(chartData.markers);
 
-    console.log(chartData);
+    series['rsi'].createPriceLine({
+        price: 70.0,
+        color: '#1477a5',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true,
+    });
+
+    series['rsi'].createPriceLine({
+        price: 30.0,
+        color: '#1477a5',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true,
+    });
+
+    window.series = series;
+    window.charts = charts;
 });
