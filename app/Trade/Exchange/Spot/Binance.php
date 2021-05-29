@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Trader\Exchange\Futures;
+namespace App\Trade\Exchange\Spot;
 
 use App\Models\Order;
-use App\Models\Position;
-use App\Trader\Exchange\AccountBalance;
-use App\Trader\Exchange\OrderBook;
+use App\Trade\Exchange\AccountBalance;
+use App\Trade\Exchange\OrderBook;
 
 class Binance implements IExchange
 {
@@ -22,16 +21,6 @@ class Binance implements IExchange
     public function stopLimit(bool $side, string $symbol, float $stopPrice, float $price, float $size): Order|false
     {
         // TODO: Implement stopLimit() method.
-    }
-
-    public function getOpenPositions(): array
-    {
-        // TODO: Implement getOpenPositions() method.
-    }
-
-    public function getMarkPrice(string $symbol): float
-    {
-        // TODO: Implement getMarkPrice() method.
     }
 
     public function getOpenOrders(): array

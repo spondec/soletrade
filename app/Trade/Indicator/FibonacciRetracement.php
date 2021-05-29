@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trader\Indicator;
+namespace App\Trade\Indicator;
 
 class FibonacciRetracement
 {

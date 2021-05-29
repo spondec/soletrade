@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Trader\Exchange;
+namespace App\Trade\Exchange;
 
-use App\Trader\Asset;
+use App\Trade\Asset;
 
 class AccountBalance
 {

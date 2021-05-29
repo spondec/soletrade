@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trader\Exchange;
+namespace App\Trade\Exchange;
 
 class OrderBook
 {

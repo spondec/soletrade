@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Trader\Exchange\Futures;
+namespace App\Trade\Exchange\Spot;
 
 use App\Models\Order;
-use App\Models\Position;
-use App\Trader\Exchange\AccountBalance;
-use App\Trader\Exchange\OrderBook;
+use App\Trade\Exchange\AccountBalance;
+use App\Trade\Exchange\OrderBook;
 
 interface IExchange
 {
@@ -21,14 +20,6 @@ interface IExchange
                               float $stopPrice,
                               float $price,
                               float $size): Order|false;
-
-    /**
-     * @return Position[]
-     *
-     */
-    public function getOpenPositions(): array;
-
-    public function getMarkPrice(string $symbol): float;
 
     /**
      * @return Order[]

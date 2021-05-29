@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trader;
+namespace App\Trade;
 
 class Trader
 {

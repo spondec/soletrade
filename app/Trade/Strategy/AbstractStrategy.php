@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trader\Strategy;
+namespace App\Trade\Strategy;
 
 //TODO:: düşüşlerden destek bulma, hangi indikatörlerin desteği başarılı vs.
 //TODO:: kısa vadede en güzel destek nedir?
@@ -12,7 +12,7 @@ namespace App\Trader\Strategy;
 //TODO:: dirençten short stratejisi: eğer güçlü bir direnç ise shortta kal, değilse scalp ile yetin
 //TODO:: fundamental haber geldiğinde paritedeki artış son 10 mumun artış ortalamasından yüksekse işleme gir
 
-use App\Trader\Indicator\AbstractIndicator;
+use App\Trade\Indicator\AbstractIndicator;
 
 class AbstractStrategy
 {
