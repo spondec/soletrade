@@ -19,7 +19,11 @@ class Binance implements IExchange
         // TODO: Implement limit() method.
     }
 
-    public function stopLimit(bool $side, string $symbol, float $stopPrice, float $price, float $size): Order|false
+    public function stopLimit(bool $side,
+                              string $symbol,
+                              float $stopPrice,
+                              float $price,
+                              float $size): Order|false
     {
         // TODO: Implement stopLimit() method.
     }

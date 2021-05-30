@@ -2,8 +2,6 @@
 
 namespace App\Trade\Exchange;
 
-use App\Trade\Asset;
-
 class AccountBalance
 {
     /** @var Asset[] */

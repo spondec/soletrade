@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Trade;
+namespace App\Trade\Exchange\Spot;
 
 class Trader
 {
     protected string $symbol;
 
-    /** @var AbstractPosition[] */
     protected array $positions;
 
     const MAX_LEVERAGE = 20;
@@ -14,26 +13,7 @@ class Trader
     protected float $cash;
     protected float $item;
 
-    protected int $leverage;
-
-    public function limit(float $size, float $price, ?float $takeProfit = null, ?float $stopLoss = null): self
-    {
-        return $this;
-    }
-
-    public function long()
-    {
-
-    }
-
-    public function short()
-    {
-
-    }
-
-    //various prices
-    protected float $cost;
-    protected float $commissionRate = 0.075 / 100;
+    protected float $commissionRate = 0.00075;
 
     protected float $netProfit;
 
@@ -52,12 +32,14 @@ class Trader
     protected float $sell;
     protected float $stop;
 
+    protected IExchange $exchange;
+
     protected function getOpenPositions()
     {
 
     }
 
-    public function __construct(float $cash, float $sellRatio, float $stopRatio)
+    public function __construct(IExchange $exchange)
     {
         $this->cash = $cash;
         $this->sell = $sellRatio;

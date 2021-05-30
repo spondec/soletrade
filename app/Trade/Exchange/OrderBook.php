@@ -13,4 +13,24 @@ class OrderBook
         $this->bid = $bid;
         $this->ask = $ask;
     }
+
+    public function getLastBid(): float
+    {
+
+    }
+
+    public function getLastAsk(): float
+    {
+
+    }
+
+    public function getFirstBid(): float
+    {
+
+    }
+
+    public function getFirstAsk(): float
+    {
+
+    }
 }

@@ -4,12 +4,10 @@ namespace App\Trade\Exchange;
 
 class Asset
 {
-    protected string $symbol;
-    protected float $amount;
-
-    public function __construct(string $symbol, float $amount)
+    public function __construct(protected string $symbol,
+                                protected float $amount,
+                                protected float $available)
     {
-        $this->symbol = $symbol;
-        $this->amount = $amount;
+
     }
 }

@@ -57,29 +57,29 @@ plotshape(plotF1618 and F1618 ? F1618 : na, style=shape.labeldown, location=loca
 plotshape(Flow, style=shape.labelup, location=location.absolute, size=size.large, color=color.yellow, textcolor=color.black, show_last=1, text="Low", offset=FL, transp=0)
 plotshape(Fhigh, style=shape.labeldown, location=location.absolute, size=size.large, color=color.yellow, textcolor=color.black, show_last=1, text="High", offset=FH, transp=0)
 
-alertcondition(FH > FL and crossover(close, F236), title="Upward Buy F236 Signal", message="Upward Buy F236")
-alertcondition(FH > FL and crossover(close, F382), title="Upward Buy F382 Signal", message="Upward Buy F382")
-alertcondition(FH > FL and crossover(close, F500), title="Upward Buy F500 Signal", message="Upward Buy F500")
-alertcondition(FH > FL and crossover(close, F618), title="Upward Buy F618 Signal", message="Upward Buy F618")
-alertcondition(FH > FL and crossover(close, F786), title="Upward Buy F786 Signal", message="Upward Buy F786")
-
-alertcondition(FH > FL and crossunder(close, F236), title="Upward Sell F236 Signal", message="Upward Sell F236")
-alertcondition(FH > FL and crossunder(close, F382), title="Upward Sell F382 Signal", message="Upward Sell F382")
-alertcondition(FH > FL and crossunder(close, F500), title="Upward Sell F500 Signal", message="Upward Sell F500")
-alertcondition(FH > FL and crossunder(close, F618), title="Upward Sell F618 Signal", message="Upward Sell F618")
-alertcondition(FH > FL and crossunder(close, F786), title="Upward Sell F786 Signal", message="Upward Sell F786")
-
-alertcondition(FH < FL and crossover(close, F236), title="Downward Buy F236 Signal", message="Downward Buy F236")
-alertcondition(FH < FL and crossover(close, F382), title="Downward Buy F382 Signal", message="Downward Buy F382")
-alertcondition(FH < FL and crossover(close, F500), title="Downward Buy F500 Signal", message="Downward Buy F500")
-alertcondition(FH < FL and crossover(close, F618), title="Downward Buy F618 Signal", message="Downward Buy F618")
-alertcondition(FH < FL and crossover(close, F786), title="Downward Buy F786 Signal", message="Downward Buy F786")
-
-alertcondition(FH < FL and crossunder(close, F236), title="Downward Sell F236 Signal", message="Downward Sell F236")
-alertcondition(FH < FL and crossunder(close, F382), title="Downward Sell F382 Signal", message="Downward Sell F382")
-alertcondition(FH < FL and crossunder(close, F500), title="Downward Sell F500 Signal", message="Downward Sell F500")
-alertcondition(FH < FL and crossunder(close, F618), title="Downward Sell F618 Signal", message="Downward Sell F618")
-alertcondition(FH < FL and crossunder(close, F786), title="Downward Sell F786 Signal", message="Downward Sell F786")
+//alertcondition(FH > FL and crossover(close, F236), title="Upward Buy F236 Signal", message="Upward Buy F236")
+//alertcondition(FH > FL and crossover(close, F382), title="Upward Buy F382 Signal", message="Upward Buy F382")
+//alertcondition(FH > FL and crossover(close, F500), title="Upward Buy F500 Signal", message="Upward Buy F500")
+//alertcondition(FH > FL and crossover(close, F618), title="Upward Buy F618 Signal", message="Upward Buy F618")
+//alertcondition(FH > FL and crossover(close, F786), title="Upward Buy F786 Signal", message="Upward Buy F786")
+//
+//alertcondition(FH > FL and crossunder(close, F236), title="Upward Sell F236 Signal", message="Upward Sell F236")
+//alertcondition(FH > FL and crossunder(close, F382), title="Upward Sell F382 Signal", message="Upward Sell F382")
+//alertcondition(FH > FL and crossunder(close, F500), title="Upward Sell F500 Signal", message="Upward Sell F500")
+//alertcondition(FH > FL and crossunder(close, F618), title="Upward Sell F618 Signal", message="Upward Sell F618")
+//alertcondition(FH > FL and crossunder(close, F786), title="Upward Sell F786 Signal", message="Upward Sell F786")
+//
+//alertcondition(FH < FL and crossover(close, F236), title="Downward Buy F236 Signal", message="Downward Buy F236")
+//alertcondition(FH < FL and crossover(close, F382), title="Downward Buy F382 Signal", message="Downward Buy F382")
+//alertcondition(FH < FL and crossover(close, F500), title="Downward Buy F500 Signal", message="Downward Buy F500")
+//alertcondition(FH < FL and crossover(close, F618), title="Downward Buy F618 Signal", message="Downward Buy F618")
+//alertcondition(FH < FL and crossover(close, F786), title="Downward Buy F786 Signal", message="Downward Buy F786")
+//
+//alertcondition(FH < FL and crossunder(close, F236), title="Downward Sell F236 Signal", message="Downward Sell F236")
+//alertcondition(FH < FL and crossunder(close, F382), title="Downward Sell F382 Signal", message="Downward Sell F382")
+//alertcondition(FH < FL and crossunder(close, F500), title="Downward Sell F500 Signal", message="Downward Sell F500")
+//alertcondition(FH < FL and crossunder(close, F618), title="Downward Sell F618 Signal", message="Downward Sell F618")
+//alertcondition(FH < FL and crossunder(close, F786), title="Downward Sell F786 Signal", message="Downward Sell F786")
 
 
 
