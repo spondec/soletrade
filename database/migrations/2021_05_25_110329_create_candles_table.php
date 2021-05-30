@@ -17,12 +17,16 @@ class CreateCandlesTable extends Migration
             $table->string('symbol', 50);
             $table->string('interval');
             $table->enum('exchange', ['BINANCE', 'FTX']);
+            $table->integer('start_date', false, true);
+            $table->integer('end_date', false, true);
             $table->binary('data');
             $table->binary('map');
-            $table->primary(['symbol', 'interval']);
+            $table->primary(['exchange', 'symbol', 'interval', 'start_date']);
             $table->timestamps();
 
             $table->index('interval');
+            $table->index('start_date');
+            $table->index('end_date');
         });
 
         \Illuminate\Support\Facades\DB::statement('ALTER TABLE `candles` MODIFY COLUMN `data` LONGBLOB');

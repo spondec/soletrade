@@ -18,5 +18,19 @@ class Candles extends Model
 {
     use HasFactory;
 
+    const MAX_CANDLES_PER_MODEL = 1000;
+
     protected $table = 'candles';
+
+    public function __get($key)
+    {
+        $column = $this->map[$key] ?? null;
+
+        if($column !== null)
+        {
+            return array_column($this->data, $column);
+        }
+
+        return parent::__get($key);
+    }
 }
