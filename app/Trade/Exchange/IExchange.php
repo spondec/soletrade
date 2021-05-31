@@ -9,7 +9,7 @@ interface IExchange
     public const BUY_LONG = true;
     public const SELL_SHORT = false;
 
-    public function getExchangeName(): string;
+    public function exchangeName(): string;
 
     public function market(bool $side, string $symbol, float $size): Order|false;
 
@@ -24,20 +24,20 @@ interface IExchange
     /**
      * @return Order[]
      */
-    public function getOpenOrders(): array;
+    public function openOrders(): array;
 
-    public function getAccountBalance(): AccountBalance;
+    public function accountBalance(): AccountBalance;
 
-    public function getLastPrice(string $symbol): float;
+    public function price(string $symbol): float;
 
-    public function getOrderBook(string $symbol): OrderBook;
+    public function orderBook(string $symbol): OrderBook;
 
     /**
      * @return string[]
      */
-    public function getSymbolList(): array;
+    public function symbolList(): array;
 
-    public function getCandleMap(): array;
+    public function candleMap(): array;
 
-    public function getCandlesForSymbol(string $symbol, string $interval, float $start, float $end): array;
+    public function candles(string $symbol, string $interval, float $start, float $end): array;
 }

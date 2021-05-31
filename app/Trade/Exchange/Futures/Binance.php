@@ -38,23 +38,43 @@ class Binance implements IExchange
         // TODO: Implement getMarkPrice() method.
     }
 
-    public function getOpenOrders(): array
+    public function openOrders(): array
     {
         // TODO: Implement getOpenOrders() method.
     }
 
-    public function getAccountBalance(): AccountBalance
+    public function accountBalance(): AccountBalance
     {
         // TODO: Implement getAccountBalance() method.
     }
 
-    public function getLastPrice(string $symbol): float
+    public function price(string $symbol): float
     {
         // TODO: Implement getLastPrice() method.
     }
 
-    public function getOrderBook(string $symbol): OrderBook
+    public function orderBook(string $symbol): OrderBook
     {
         // TODO: Implement getOrderBook() method.
+    }
+
+    public function exchangeName(): string
+    {
+        // TODO: Implement getExchangeName() method.
+    }
+
+    public function symbolList(): array
+    {
+        // TODO: Implement getSymbolList() method.
+    }
+
+    public function candleMap(): array
+    {
+        // TODO: Implement getCandleMap() method.
+    }
+
+    public function candles(string $symbol, string $interval, float $start, float $end): array
+    {
+        // TODO: Implement getCandlesForSymbol() method.
     }
 }
