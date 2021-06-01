@@ -18,7 +18,7 @@ class Candles extends Model
 {
     use HasFactory;
 
-    const MAX_CANDLES_PER_MODEL = 1000;
+    const MAX_DATA_LENGTH = 1000;
 
     protected $table = 'candles';
 

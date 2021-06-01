@@ -17,8 +17,8 @@ class Scanner
     {
         $symbolList = $this->exchange->symbolList();
         $map = $this->exchange->candleMap();
-        $exchange = mb_strtoupper($this->exchange->exchangeName());
-        $collection = [];
+        $exchange = mb_strtoupper($this->exchange->name());
+        $latestCandles = [];
 
         foreach (
             Candles::query()
@@ -29,16 +29,15 @@ class Scanner
                 ->limit(1)
                 ->get(['symbol', 'start_date', 'end_date']) as $item)
         {
-            $collection[$item->symbol][] = $item;
+            $latestCandles[$item->symbol] = $item;
         }
 
         foreach ($symbolList as $symbol)
         {
-            $candles = $collection[$symbol] ?? null;
-            $start = $candles ? end($candles)['end_date'] : 0;
-            $newCandles = $this->exchange->candles($symbol, $interval, $start, time());
+            $newCandles = $this->exchange->candles($symbol, $interval,
+                $latestCandles[$symbol]['end_date'] ?? 0, time());
 
-            foreach (array_chunk($newCandles, Candles::MAX_CANDLES_PER_MODEL) as $data)
+            foreach (array_chunk($newCandles, Candles::MAX_DATA_LENGTH) as $data)
             {
                 $new = new Candles(
                     [
@@ -53,7 +52,7 @@ class Scanner
 
                 if ($new->save())
                 {
-                    $collection[$symbol][] = $new;
+                    $latestCandles[$symbol][] = $new;
                 }
             }
         }

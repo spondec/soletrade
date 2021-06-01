@@ -58,7 +58,7 @@ class Binance implements IExchange
         // TODO: Implement getOrderBook() method.
     }
 
-    public function exchangeName(): string
+    public function name(): string
     {
         // TODO: Implement getExchangeName() method.
     }

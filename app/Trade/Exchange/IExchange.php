@@ -9,7 +9,7 @@ interface IExchange
     public const BUY_LONG = true;
     public const SELL_SHORT = false;
 
-    public function exchangeName(): string;
+    public function name(): string;
 
     public function market(bool $side, string $symbol, float $size): Order|false;
 
