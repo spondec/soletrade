@@ -22,3 +22,4 @@ hashes.json
 .phpstorm.meta.php
 _metadata.json
 .php_cs.cache
+*.cache
