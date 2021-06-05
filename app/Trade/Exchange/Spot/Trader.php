@@ -32,14 +32,14 @@ class Trader
     protected float $sell;
     protected float $stop;
 
-    protected IExchange $exchange;
+    protected AbstractExchange $exchange;
 
     protected function getOpenPositions()
     {
 
     }
 
-    public function __construct(IExchange $exchange)
+    public function __construct(AbstractExchange $exchange)
     {
         $this->cash = $cash;
         $this->sell = $sellRatio;

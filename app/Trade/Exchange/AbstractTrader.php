@@ -6,10 +6,10 @@ use App\Trade\Strategy\AbstractStrategy;
 
 abstract class AbstractTrader
 {
-    protected IExchange $exchange;
+    protected AbstractExchange $exchange;
     protected AbstractStrategy $strategy;
 
-    public function __construct(IExchange $exchange, AbstractStrategy $strategy)
+    public function __construct(AbstractExchange $exchange, AbstractStrategy $strategy)
     {
         $this->exchange = $exchange;
         $this->strategy = $strategy;

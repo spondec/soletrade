@@ -3,7 +3,7 @@
 namespace App\Trade;
 
 use App\Models\Candles;
-use App\Trade\Exchange\IExchange;
+use App\Trade\Exchange\AbstractExchange;
 use App\Trade\Strategy\AbstractStrategy;
 
 class Scanner
@@ -13,59 +13,14 @@ class Scanner
 
     protected int $lastRunDate;
 
-    public function scan(string $interval)
-    {
-        $symbolList = $this->exchange->symbolList();
-        $map = $this->exchange->candleMap();
-        $exchange = mb_strtoupper($this->exchange->name());
-        $latestCandles = [];
-
-        foreach (
-            Candles::query()
-                ->where('exchange', $exchange)
-                ->where('symbol', $symbolList)
-                ->where('interval', $interval)
-                ->orderBy('start_date')
-                ->limit(1)
-                ->get(['symbol', 'start_date', 'end_date']) as $item)
-        {
-            $latestCandles[$item->symbol] = $item;
-        }
-
-        foreach ($symbolList as $symbol)
-        {
-            $newCandles = $this->exchange->candles($symbol, $interval,
-                $latestCandles[$symbol]['end_date'] ?? 0, time());
-
-            foreach (array_chunk($newCandles, Candles::MAX_DATA_LENGTH) as $data)
-            {
-                $new = new Candles(
-                    [
-                        'exchange' => $exchange,
-                        'symbol' => $symbol,
-                        'interval' => $interval,
-                        'data' => $data,
-                        'map' => $map,
-                        'start_date' => reset($data)[$map['time']],
-                        'end_date' => end($data)[$map['time']],
-                    ]);
-
-                if ($new->save())
-                {
-                    $latestCandles[$symbol][] = $new;
-                }
-            }
-        }
-    }
-
     /**
      * Scanner constructor.
      *
-     * @param IExchange          $exchange
+     * @param AbstractExchange   $exchange
      * @param AbstractStrategy[] $strategies
      */
-    public function __construct(protected IExchange $exchange,
-                                protected array $strategies)
+    public function __construct(protected AbstractExchange $exchange,
+                                protected array            $strategies)
     {
         foreach ($this->strategies as $strategy)
         {
@@ -77,9 +32,60 @@ class Scanner
         }
     }
 
-    public function updateCandles()
+    /** Returns the latest 1000 candles for a given interval. */
+    public function scan(string $interval): array
     {
+        $symbolList = $this->exchange->symbolList();
+        $map = $this->exchange->candleMap();
+        $exchange = mb_strtoupper($this->exchange->name());
 
+        /** @var Candles[] $candles */
+        $candles = Candles::query()
+            ->where('exchange', $exchange)
+            ->where('symbol', $symbolList)
+            ->where('interval', $interval)
+            ->orderBy('start_date')
+            ->limit(1)
+            ->get(
+//                ['symbol', 'start_date', 'end_date']
+            )
+            ->keyBy('symbol');
+
+        foreach ($symbolList as $symbol)
+        {
+            $current = $candles[$symbol] ?? null;
+            $latest = $this->exchange->candles(
+                $symbol,
+                $interval,
+                $current->last()[$current->map['open']] ?? 0,
+                time());
+
+            $data = $current->data;
+            array_pop($data);
+
+            if (($gap = Candles::MAX_CANDLES - $current->length) > 0)
+            {
+                $current->data = array_merge($data, array_slice($latest, 0, $gap));
+                $latest = array_slice($latest, $gap);
+            }
+
+            foreach (array_chunk($latest, Candles::MAX_CANDLES) as $data)
+            {
+                $new = new Candles([
+                    'exchange' => $exchange,
+                    'symbol' => $symbol,
+                    'interval' => $interval,
+                    'data' => $data,
+                    'map' => $map
+                ]);
+
+                if ($new->save())
+                {
+                    $candles[$symbol] = $new;
+                }
+            }
+        }
+
+        return $candles;
     }
-
 }
