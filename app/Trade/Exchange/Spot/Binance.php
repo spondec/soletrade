@@ -6,8 +6,10 @@ use App\Models\Order;
 use App\Trade\Exchange\AccountBalance;
 use App\Trade\Exchange\OrderBook;
 
-class Binance implements IExchange
+class Binance extends AbstractExchange
 {
+    protected string $exchangeName = 'BINANCE';
+
     public function market(bool $side, string $symbol, float $size): Order|false
     {
         // TODO: Implement market() method.
@@ -18,11 +20,11 @@ class Binance implements IExchange
         // TODO: Implement limit() method.
     }
 
-    public function stopLimit(bool $side,
+    public function stopLimit(bool   $side,
                               string $symbol,
-                              float $stopPrice,
-                              float $price,
-                              float $size): Order|false
+                              float  $stopPrice,
+                              float  $price,
+                              float  $size): Order|false
     {
         // TODO: Implement stopLimit() method.
     }
