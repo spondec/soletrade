@@ -21,6 +21,7 @@ class CreateCandlesTable extends Migration
             $table->integer('end_date', false, true);
             $table->binary('data');
             $table->binary('map');
+            $table->integer('length');
             $table->primary(['exchange', 'symbol', 'interval', 'start_date']);
             $table->timestamps();
 
