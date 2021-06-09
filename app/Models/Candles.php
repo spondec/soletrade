@@ -26,6 +26,7 @@ class Candles extends Model
     protected $indicators = [];
 
     const MAX_CANDLE_LENGTH = 1000;
+    const INDICATOR_ROOT = "\App\Trade\Indicator";
 
     protected $casts = [
         'data' => 'array',
@@ -35,7 +36,7 @@ class Candles extends Model
     protected $firstKey;
     protected $lastKey;
 
-    public function addIndicator(AbstractIndicator $indicator)
+    public function addIndicator(AbstractIndicator $indicator): void
     {
         if ($indicator->getCandles() !== $this)
         {
@@ -45,9 +46,13 @@ class Candles extends Model
         $this->indicators[$indicator->name()] = $indicator;
     }
 
-    public function indicator(string $name)
+    public function indicator(string $name): AbstractIndicator
     {
-        return $this->indicators[$name] ?? throw new \LogicException("{$name} hasn't been set for this instance.");
+        return $this->indicators[$name] ??
+            throw new \LogicException(
+                class_exists(self::INDICATOR_ROOT . "\\" . $name) ?
+                    "{$name} hasn't been set for this instance." :
+                    "{$name} doesn't exist as indicator.");
     }
 
     protected static function booted()
@@ -68,7 +73,7 @@ class Candles extends Model
         return $this->length();
     }
 
-    public function setDataAttribute(array $value)
+    public function setDataAttribute(array $value): void
     {
         $this->attributes['data'] = $value;
         $this->updateKeys();
@@ -89,12 +94,12 @@ class Candles extends Model
         return count($this->attributes['data']);
     }
 
-    public function map($key)
+    public function map($key): mixed
     {
         return $this->attributes['map'][$key];
     }
 
-    protected function updateKeys()
+    protected function updateKeys(): void
     {
         $this->firstKey = array_key_first($this->attributes['data']);
         $this->lastKey = array_key_last($this->attributes['data']);
