@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Trade\Indicator\AbstractIndicator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +23,7 @@ class Candles extends Model
     use HasFactory;
 
     protected $table = 'candles';
+    protected $indicators = [];
 
     const MAX_CANDLE_LENGTH = 1000;
 
@@ -32,6 +34,21 @@ class Candles extends Model
 
     protected $firstKey;
     protected $lastKey;
+
+    public function addIndicator(AbstractIndicator $indicator)
+    {
+        if ($indicator->getCandles() !== $this)
+        {
+            throw new \InvalidArgumentException("{$indicator->name()} doesn't belong to this instance.");
+        }
+
+        $this->indicators[$indicator->name()] = $indicator;
+    }
+
+    public function indicator(string $name)
+    {
+        return $this->indicators[$name] ?? throw new \LogicException("{$name} hasn't been set for this instance.");
+    }
 
     protected static function booted()
     {
