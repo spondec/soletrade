@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CreateTradeSetupsTable extends Migration
@@ -17,6 +18,7 @@ class CreateTradeSetupsTable extends Migration
             $table->id();
             $table->string('name', 50);
             $table->string('desc', 255);
+            $table->json('config');
             $table->timestamps();
         });
     }
