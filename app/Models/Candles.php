@@ -23,18 +23,17 @@ class Candles extends Model
     use HasFactory;
 
     protected $table = 'candles';
-    protected $indicators = [];
-
-    const MAX_CANDLE_LENGTH = 1000;
-    const INDICATOR_ROOT = "\App\Trade\Indicator";
-
     protected $casts = [
         'data' => 'array',
         'map' => 'array'
     ];
 
-    protected $firstKey;
+    const MAX_CANDLE_LENGTH = 1000;
+    const INDICATOR_ROOT = "\App\Trade\Indicator";
+
     protected $lastKey;
+    protected $firstKey;
+    protected $indicators = [];
 
     public function addIndicator(AbstractIndicator $indicator): void
     {
