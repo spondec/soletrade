@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTradeSetupSuccessRatesTable extends Migration
+class CreateSuccessRatesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,12 @@ class CreateTradeSetupSuccessRatesTable extends Migration
      */
     public function up()
     {
-        Schema::create('trade_setup_success_rates', function (Blueprint $table) {
+        Schema::create('success_rates', function (Blueprint $table) {
             $table->integer('trade_setup_id');
             $table->string('symbol', 50);
-            $table->float('success_rate');
-            $table->primary(['trade_setup_id', 'symbol']);
+            $table->string('interval', 3);
+            $table->integer('success_rate');
+            $table->primary(['trade_setup_id', 'symbol', 'interval']);
             $table->timestamps();
         });
     }
@@ -29,6 +30,6 @@ class CreateTradeSetupSuccessRatesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('trade_setup_success_rates');
+        Schema::dropIfExists('success_rates');
     }
 }
