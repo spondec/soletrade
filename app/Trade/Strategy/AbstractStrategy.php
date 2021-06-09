@@ -7,23 +7,42 @@ namespace App\Trade\Strategy;
 //TODO:: Fib çizgisinin hemen üstünde ya da altında destek/direnç var mı?
 
 //TODO:: saatlik/4 saatlik destekten al, kırarsa sat? supertrend
-//TODO::
 
 //TODO:: dirençten short stratejisi: eğer güçlü bir direnç ise shortta kal, değilse scalp ile yetin
 //TODO:: fundamental haber geldiğinde paritedeki artış son 10 mumun artış ortalamasından yüksekse işleme gir
 
-use App\Trade\Indicator\AbstractIndicator;
+use App\Models\Candles;
+use App\Models\TradeSetup;
+use App\Trade\Indicator\FibonacciRetracement;
+use App\Trade\Indicator\MACD;
+use App\Trade\Indicator\RSI;
 
-class AbstractStrategy
+abstract class AbstractStrategy
 {
-    public function __construct(protected array $indicators)
+    const ALLOWED_INTERVALS = [];
+
+    /** @var int - seconds */
+    const SCAN_INTERVAL = 300;
+
+    const INDICATORS = [
+        MACD::class => [],
+        RSI::class => [],
+        FibonacciRetracement::class => []
+    ];
+
+    protected function initIndicators(Candles $candles): void
     {
-        foreach ($this->indicators as $indicator)
+        foreach (self::INDICATORS as $class => $config)
         {
-            if (!$indicator instanceof AbstractIndicator)
-            {
-                throw new \InvalidArgumentException('Indicator type is invalid.');
-            }
+            /** @noinspection PhpVoidFunctionResultUsedInspection */
+            $candles->addIndicator(new $class($candles, $config));
         }
+    }
+
+    public function check(Candles $candles): ?TradeSetup
+    {
+        $this->initIndicators($candles);
+
+
     }
 }

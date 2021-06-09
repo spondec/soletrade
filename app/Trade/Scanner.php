@@ -8,34 +8,25 @@ use App\Trade\Strategy\AbstractStrategy;
 
 class Scanner
 {
-    /** @var int - seconds */
-    const SCAN_INTERVAL = 300;
-
-    protected int $lastRunDate;
-
-    /**
-     * Scanner constructor.
-     *
-     * @param AbstractExchange   $exchange
-     * @param AbstractStrategy[] $strategies
-     */
-    public function __construct(protected AbstractExchange $exchange,
-                                protected array            $strategies)
+    public function __construct(protected AbstractExchange $exchange)
     {
-        foreach ($this->strategies as $strategy)
-        {
-            if (!$strategy instanceof AbstractStrategy)
-            {
-                throw new \InvalidArgumentException(
-                    'Strategy must be an instance of AbstractStrategy.');
-            }
-        }
+
+    }
+
+    /** @return string[] */
+    protected function filterSymbols(array $symbols): array
+    {
+        return $symbols;
     }
 
     /** Returns the latest 1000 candles for a given interval. */
-    public function scan(string $interval): array
+    public function scan(AbstractStrategy $strategy, string $interval): array
     {
-        $symbolList = $this->exchange->symbolList();
+        if (!$symbolList = $this->filterSymbols($this->exchange->symbolList()))
+        {
+            throw new \LogicException('No symbol was given.');
+        }
+
         $map = $this->exchange->candleMap();
         $exchange = mb_strtoupper($this->exchange->name());
 
@@ -57,19 +48,19 @@ class Scanner
             $latest = $this->exchange->candles(
                 $symbol,
                 $interval,
-                $current->last()[$current->map['open']] ?? 0,
+                $current->last()[$current->map('open')] ?? 0,
                 time());
 
             $data = $current->data;
             array_pop($data);
 
-            if (($gap = Candles::MAX_CANDLES - $current->length) > 0)
+            if (($gap = Candles::MAX_CANDLE_LENGTH - $current->length) > 0)
             {
                 $current->data = array_merge($data, array_slice($latest, 0, $gap));
                 $latest = array_slice($latest, $gap);
             }
 
-            foreach (array_chunk($latest, Candles::MAX_CANDLES) as $data)
+            foreach (array_chunk($latest, Candles::MAX_CANDLE_LENGTH) as $data)
             {
                 $new = new Candles([
                     'exchange' => $exchange,
@@ -84,6 +75,8 @@ class Scanner
                     $candles[$symbol] = $new;
                 }
             }
+
+            $strategy->check($candles[$symbol]);
         }
 
         return $candles;
