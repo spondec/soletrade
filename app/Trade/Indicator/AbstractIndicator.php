@@ -4,8 +4,9 @@ namespace App\Trade\Indicator;
 
 use App\Models\Candles;
 use App\Models\Signal;
+use App\Trade\VersionableInterface;
 
-abstract class AbstractIndicator
+abstract class AbstractIndicator implements VersionableInterface
 {
     protected array $config = [];
     protected array $data;
@@ -15,10 +16,6 @@ abstract class AbstractIndicator
         $this->config = array_merge($this->config, $config);
         $this->data = $this->calculate();
     }
-
-    abstract public function name(): string;
-
-    abstract public function version(): int;
 
     abstract protected function calculate(): array;
 

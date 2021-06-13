@@ -16,8 +16,9 @@ use App\Models\TradeSetup;
 use App\Trade\Indicator\FibonacciRetracement;
 use App\Trade\Indicator\MACD;
 use App\Trade\Indicator\RSI;
+use App\Trade\VersionableInterface;
 
-abstract class AbstractStrategy
+abstract class AbstractStrategy implements VersionableInterface
 {
     const ALLOWED_INTERVALS = [];
 
