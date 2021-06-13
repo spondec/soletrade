@@ -54,13 +54,13 @@ class Scanner
             $data = $current->data;
             array_pop($data);
 
-            if (($gap = Candles::MAX_CANDLE_LENGTH - $current->length) > 0)
+            if (($gap = Candles::MAX_LENGTH - $current->length) > 0)
             {
                 $current->data = array_merge($data, array_slice($latest, 0, $gap));
                 $latest = array_slice($latest, $gap);
             }
 
-            foreach (array_chunk($latest, Candles::MAX_CANDLE_LENGTH) as $data)
+            foreach (array_chunk($latest, Candles::MAX_LENGTH) as $data)
             {
                 $new = new Candles([
                     'exchange' => $exchange,
