@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property int    id
+ * @property bool   is_open
  * @property string exchange
  * @property string account
  * @property string symbol
