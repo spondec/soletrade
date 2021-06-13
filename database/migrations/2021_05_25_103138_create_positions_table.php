@@ -15,7 +15,7 @@ class CreatePositionsTable extends Migration
     {
         Schema::create('positions', function (Blueprint $table) {
             $table->id();
-            $table->boolean('closed')->default(0);
+            $table->boolean('is_open')->default(true);
             $table->enum('exchange', ['BINANCE', 'FTX']);
             $table->enum('account', ['SPOT', 'FUTURES']);
             $table->string('symbol', 50);
