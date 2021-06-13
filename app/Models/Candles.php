@@ -28,12 +28,26 @@ class Candles extends Model
         'map' => 'array'
     ];
 
-    const MAX_CANDLE_LENGTH = 1000;
+    const MAX_LENGTH = 1000;
     const INDICATOR_ROOT = "\App\Trade\Indicator";
 
     protected $lastKey;
     protected $firstKey;
+
+    /** @var AbstractIndicator[] */
     protected $indicators = [];
+
+    public function getSignals()
+    {
+        $signals = [];
+
+        foreach ($this->indicators as $indicator)
+        {
+            $signals[$indicator->name()] = $indicator->signal();
+        }
+
+        return $signals;
+    }
 
     public function addIndicator(AbstractIndicator $indicator): void
     {
@@ -51,7 +65,7 @@ class Candles extends Model
             throw new \LogicException(
                 class_exists(self::INDICATOR_ROOT . "\\" . $name) ?
                     "{$name} hasn't been set for this instance." :
-                    "{$name} doesn't exist as indicator.");
+                    "{$name} doesn't exist as an indicator.");
     }
 
     protected static function booted()
