@@ -3,8 +3,9 @@
 namespace App\Trade\Exchange\Futures;
 
 use App\Models\Position;
+use App\Trade\Exchange\AbstractExchange;
 
-abstract class AbstractExchange extends \App\Trade\Exchange\AbstractExchange
+abstract class AbstractFuturesExchange extends AbstractExchange
 {
     /**
      * @return Position[]

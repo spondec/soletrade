@@ -14,9 +14,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property mixed  created_at
  * @property mixed  updated_at
  */
-class TradeSetup extends Model
+class Signal extends Model
 {
     use HasFactory;
 
-    protected $table = 'trade_setups';
+    protected $table = 'signals';
 }
