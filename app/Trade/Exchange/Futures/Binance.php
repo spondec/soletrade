@@ -7,7 +7,7 @@ use App\Models\Position;
 use App\Trade\Exchange\AccountBalance;
 use App\Trade\Exchange\OrderBook;
 
-class Binance extends AbstractExchange
+class Binance extends AbstractFuturesExchange
 {
     const EXCHANGE_NAME = 'BINANCE';
 

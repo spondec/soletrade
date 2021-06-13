@@ -6,7 +6,7 @@ use App\Models\Order;
 use App\Trade\Exchange\AccountBalance;
 use App\Trade\Exchange\OrderBook;
 
-class Binance extends AbstractExchange
+class Binance extends AbstractSpotExchange
 {
     protected string $exchangeName = 'BINANCE';
 
