@@ -15,25 +15,27 @@ class CreateOrdersTable extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('trade_setup_id');
             $table->boolean('is_open')->default(true);
-            $table->enum('exchange',  ['BINANCE', 'FTX']);
+            $table->enum('exchange', ['BINANCE', 'FTX']);
             $table->enum('account', ['SPOT', 'FUTURES']);
             $table->string('symbol', 50);
-            $table->enum('side', ['BUY', 'SELL']);
-            $table->enum('type',
-                [
-                    'LIMIT',
-                    'MARKET',
-                    'STOP_LOSS',
-                    'STOP_LOSS_LIMIT',
-                    'TAKE_PROFIT',
-                    'TAKE_PROFIT_LIMIT',
-                    'LIMIT_MAKER'
-                ]);
+            $table->enum('side', ['BUY', 'SELL', 'LONG', 'SHORT']);
+            $table->enum('type', [
+                'LIMIT',
+                'MARKET',
+                'STOP_LOSS',
+                'STOP_LOSS_LIMIT',
+                'TAKE_PROFIT',
+                'TAKE_PROFIT_LIMIT',
+                'LIMIT_MAKER'
+            ]);
             $table->decimal('quantity');
             $table->decimal('filled');
             $table->decimal('price');
             $table->decimal('stop_price')->nullable();
+            $table->json('request')->nullable();
+            $table->json('response')->nullable();
             $table->timestamps();
         });
     }

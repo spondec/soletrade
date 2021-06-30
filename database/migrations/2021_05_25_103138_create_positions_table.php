@@ -18,13 +18,14 @@ class CreatePositionsTable extends Migration
             $table->boolean('is_open')->default(true);
             $table->enum('exchange', ['BINANCE', 'FTX']);
             $table->enum('account', ['SPOT', 'FUTURES']);
-            $table->string('symbol', 50);
+            $table->string('symbol', 20);
             $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('quantity');
+            $table->string('quantity_type', 10);
             $table->decimal('entry_price');
             $table->decimal('avg_price');
             $table->decimal('liq_price');
-            $table->decimal('margin');
+            $table->decimal('margin')->nullable();
             $table->decimal('pnl')->nullable();
             $table->decimal('stop_price')->nullable();
             $table->decimal('take_profit_price')->nullable();
