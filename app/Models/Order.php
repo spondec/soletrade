@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property int    id
+ * @property int    trade_setup_id
  * @property bool   is_open
  * @property string exchange
  * @property string account
@@ -17,6 +18,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property float  filled
  * @property float  price
  * @property float  stop_price
+ * @property array  request
+ * @property array  response
  * @property mixed  created_at
  * @property mixed  updated_at
  */
