@@ -11,7 +11,19 @@ abstract class AbstractFuturesExchange extends AbstractExchange
      * @return Position[]
      *
      */
-    abstract public function getOpenPositions(): array;
+    abstract public function openPositions(): array;
 
-    abstract public function getMarkPrice(string $symbol): float;
+    abstract public function markPrice(string $symbol): float;
+
+    public function short()
+    {
+        $this->order->side = 'SHORT';
+        return $this;
+    }
+
+    public function long()
+    {
+        $this->order->side = 'LONG';
+        return $this;
+    }
 }
