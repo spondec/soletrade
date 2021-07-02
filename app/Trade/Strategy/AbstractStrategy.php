@@ -2,15 +2,6 @@
 
 namespace App\Trade\Strategy;
 
-//TODO:: düşüşlerden destek bulma, hangi indikatörlerin desteği başarılı vs.
-//TODO:: kısa vadede en güzel destek nedir?
-//TODO:: Fib çizgisinin hemen üstünde ya da altında destek/direnç var mı?
-
-//TODO:: saatlik/4 saatlik destekten al, kırarsa sat? supertrend
-
-//TODO:: dirençten short stratejisi: eğer güçlü bir direnç ise shortta kal, değilse scalp ile yetin
-//TODO:: fundamental haber geldiğinde paritedeki artış son 10 mumun artış ortalamasından yüksekse işleme gir
-
 use App\Models\Candles;
 use App\Models\TradeSetup;
 use App\Trade\Indicator\FibonacciRetracement;
@@ -30,6 +21,8 @@ abstract class AbstractStrategy implements VersionableInterface
         RSI::class => [],
         FibonacciRetracement::class => []
     ];
+
+
 
     protected function initIndicators(Candles $candles): void
     {
