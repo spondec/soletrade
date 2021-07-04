@@ -70,6 +70,8 @@ class Candles extends Model
 
     protected static function booted()
     {
+        parent::booted();
+
         static::saving(function (self $candles) {
             if ($candles->data)
             {
