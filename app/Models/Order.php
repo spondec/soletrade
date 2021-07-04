@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int    id
@@ -20,12 +20,48 @@ use Illuminate\Database\Eloquent\Model;
  * @property float  stop_price
  * @property array  request
  * @property array  response
- * @property mixed  created_at
- * @property mixed  updated_at
+ * @property float  commission
+ * @property string commission_asset
+ * @property string exchange_order_id
+ * @property Carbon created_at
+ * @property Carbon updated_at
  */
 class Order extends Model
 {
+    use HasFactory;
+
     protected $table = 'orders';
 
-    use HasFactory;
+    protected $attributes = [
+        'request' => [],
+        'response' => []
+    ];
+
+    protected $casts = [
+        'request' => 'array',
+        'response' => 'array'
+    ];
+
+    const VALIDATION_RULES = [
+        'exchange' => 'required|in:BINANCE,FTX',
+        'account' => 'required|in:SPOT,FUTURES',
+        'symbol' => 'required|string|max:50',
+        'is_open' => 'boolean',
+        'quantity' => 'required|numeric',
+        'filled' => 'numeric',
+        'price' => 'numeric',
+        'stop_price' => 'required|numeric',
+        'type' => 'required|in:LIMIT,MARKET,STOP_LOSS,STOP_LOSS_LIMIT,TAKE_PROFIT,TAKE_PROFIT_LIMIT,LIMIT_MAKER',
+        'side' => 'required|in:BUY,SELL,LONG,SHORT'
+    ];
+
+    public function logRequest(string $key, array $data)
+    {
+        $this->request[$key][] = $data;
+    }
+
+    public function logResponse(string $key, array $data)
+    {
+        $this->response[$key][] = $data;
+    }
 }
