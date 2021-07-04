@@ -15,7 +15,7 @@ class CreateOrdersTable extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('trade_setup_id');
+            $table->foreignId('trade_setup_id')->nullable();
             $table->boolean('is_open')->default(true);
             $table->enum('exchange', ['BINANCE', 'FTX']);
             $table->enum('account', ['SPOT', 'FUTURES']);
@@ -31,9 +31,12 @@ class CreateOrdersTable extends Migration
                 'LIMIT_MAKER'
             ]);
             $table->decimal('quantity');
-            $table->decimal('filled');
-            $table->decimal('price');
+            $table->decimal('filled')->default(0);
+            $table->decimal('price')->nullable();
             $table->decimal('stop_price')->nullable();
+            $table->decimal('commission')->nullable();
+            $table->decimal('commission_asset')->nullable();
+            $table->string('exchange_order_id', 255)->nullable();
             $table->json('request')->nullable();
             $table->json('response')->nullable();
             $table->timestamps();
