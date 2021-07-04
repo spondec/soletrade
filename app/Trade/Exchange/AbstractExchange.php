@@ -3,49 +3,57 @@
 namespace App\Trade\Exchange;
 
 use App\Models\Order;
-use App\Trade\Exchange\Request\NewOrderRequest;
-use App\Trade\Exchange\Request\OrderUpdateRequest;
-use App\Trade\Exchange\Response\NewOrderResponse;
-use App\Trade\Exchange\Response\OrderUpdateResponse;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 
 abstract class AbstractExchange
 {
-    const NAME = null;
-
     const ROOT_URI = null;
     const NEW_ORDER_URL = null;
     const ORDER_UPDATE_URL = null;
-
-    /**
-     * Current order.
-     */
-    protected ?Order $order = null;
 
     protected string $apiKey;
     protected string $secretKey;
 
     protected static ?AbstractExchange $instance = null;
-    protected string $action;
+
+    protected string $name;
+
+    protected array $actions;
+    protected string $account;
+
+    /**
+     * @return string[]
+     */
+    abstract protected function availableOrderActions(): array;
 
     private function __construct()
     {
-        if (empty(static::NAME) || empty(static::ROOT_URI) || empty(static::NEW_ORDER_URL))
-        {
-            throw new \InvalidArgumentException('Exchange constants are not properly defined.');
-        }
+//        if (empty(static::ROOT_URI) || empty(static::NEW_ORDER_URL))
+//        {
+//            throw new \InvalidArgumentException('Exchange constants are not properly defined.');
+//        }
 
-        $config = Config::get('exchange.' . mb_strtoupper(static::NAME));
+        $this->name = class_basename(static::class);
+
+        $config = Config::get('exchange.' . mb_strtoupper($this->name));
 
         if (empty($config['apiKey']) || empty($config['secretKey']))
         {
-            throw new \LogicException('API/Secret key for exchange ' . static::NAME . ' could not found.');
+            throw new \LogicException('API/Secret key for exchange ' . $this->name . ' could not found.');
         }
 
         $this->apiKey = $config['apiKey'];
         $this->secretKey = $config['secretKey'];
+
+        $this->actions = $this->availableOrderActions();
+        $this->account = $this->accountType();
+    }
+
+    public function price(string $symbol): float
+    {
+
     }
 
     abstract protected function bestSellPrice(): float;
@@ -54,63 +62,70 @@ abstract class AbstractExchange
 
     abstract public function convert(string $from, string $to, float $quantity): float;
 
-    public final function updateOrder(Order $order): void
+    public final function syncOrder(Order $order): void
     {
         $request = $this->prepareOrderUpdateRequest($order);
         $response = $this->httpRequest('post', static::ORDER_UPDATE_URL, $request->data());
 
-        $this->prepareOrderUpdateResponse($response)->updateOrderState($order);
+        $this->handleOrderUpdateResponse($order, $response);
     }
 
-    public final function sendOrder(): Order
+    public final function cancelOrder(Order $order): bool
     {
-        $request = $this->prepareNewOrderRequest();
-        $data = $request->data();
 
-        $response = $this->httpRequest('post', static::NEW_ORDER_URL, $data);
+    }
 
-        if ($this->order && empty($this->order->request))
+    protected function setupOrder(string $side, string $symbol): Order
+    {
+        $order = new Order();
+
+        $order->side = $side;
+        $order->symbol = $symbol;
+
+        $order->exchange = $this->name;
+        $order->account = $this->account;
+
+        if (!in_array($order->side, $this->actions))
         {
-            $this->order->request = $data;
+            throw new \UnexpectedValueException("$this->name exchange doesn't allow to $order->side.\n
+            Available actions: " . implode(', ', $this->actions));
         }
 
-        $newOrderResponse = $this->prepareNewOrderResponse($response);
-        $newOrderResponse->updateOrderState($this->order);
-
-        return $this->detachOrder();
+        return $order;
     }
 
-    public function market(string $symbol, float $size): static
+    public function market(string $side, string $symbol, float $quantity): Order
     {
-        $this->order->symbol = $symbol;
-        $this->order->quantity = $size;
-        $this->order->type = 'MARKET';
+        $order = $this->setupOrder($side, $symbol);
 
-        return $this;
+        $order->account =
+        $order->quantity = $quantity;
+        $order->type = 'MARKET';
+
+        return $this->newOrder($order);
     }
 
-    public function limit(string $symbol, float $price, float $size): static
+    public function limit(string $side, string $symbol, float $price, float $quantity): Order
     {
-        $this->order->symbol = $symbol;
-        $this->order->price = $price;
-        $this->order->quantity = $size;
-        $this->order->type = 'LIMIT';
+        $order = $this->setupOrder($side, $symbol);
 
-        return $this;
+        $order->price = $price;
+        $order->quantity = $quantity;
+        $order->type = 'LIMIT';
+
+        return $this->newOrder($order);
     }
 
-    public function stopLimit(string $symbol,
-                              float  $stopPrice,
-                              float  $price,
-                              float  $size): static
+    public function stopLimit(string $side, string $symbol, float $stopPrice, float $price, float $quantity): Order
     {
-        $this->order->symbol = $symbol;
-        $this->order->price = $price;
-        $this->order->quantity = $size;
-        $this->order->stop_price = $stopPrice;
-        $this->order->type = 'STOP_LIMIT';
+        $order = $this->setupOrder($side, $symbol);
 
-        return $this;
+        $order->price = $price;
+        $order->quantity = $quantity;
+        $order->stop_price = $stopPrice;
+        $order->type = 'STOP_LIMIT';
+
+        return $this->newOrder($order);
     }
 
     /**
@@ -131,40 +146,49 @@ abstract class AbstractExchange
 
     abstract public function candles(string $symbol, string $interval, float $start, float $end): array;
 
-    abstract protected function prepareNewOrderRequest(): NewOrderRequest;
-
-    abstract protected function prepareOrderUpdateRequest(Order $order): OrderUpdateRequest;
-
-    abstract protected function prepareNewOrderResponse(array $rawResponse): NewOrderResponse;
-
-    abstract protected function prepareOrderUpdateResponse(array $rawResponse): OrderUpdateResponse;
-
-    protected function getDefaultRequestData(): array
-    {
-        return [
-            'apiKey' => $this->apiKey,
-            'secretKey' => $this->secretKey,
-        ];
-    }
-
-    protected final function httpRequest(string $method, string $url, array $data): ?array
+    protected function httpRequest(string $method, string $url, array $data): array
     {
         /** @var Response $response */
-        $response = call_user_func([Http::class, $method],
-            $url, array_merge($data, $this->getDefaultRequestData()));
+        $response = call_user_func([Http::class, $method], $url,
+            array_merge($data, $this->getDefaultRequestData()));
 
         return $response->json() ?? throw new \HttpResponseException(
                 "Empty result received from request $method:$url.");
     }
 
-    protected final function detachOrder(): Order
+    protected function hmacSha256(string $key, array $data): string
     {
-        $order = $this->order;
-        $this->order = null;
-        $order->save();
+        return hash_hmac('sha256', http_build_query($data), $key);
+    }
+
+    protected function newOrder(Order $order): Order
+    {
+        $request = $this->prepareNewOrderRequest($order);
+        $order->logRequest('newOrder', $request);
+
+        $response = $this->httpRequest('post', self::NEW_ORDER_URL, $request);
+        $order->logResponse('newOrder', $response);
+
+        $this->handleNewOrderResponse($order, $response);
 
         return $order;
     }
+
+    abstract protected function prepareCancelOrderRequest(Order $order): array;
+
+    abstract protected function handleCancelOrderResponse(Order $order, array $response): void;
+
+    abstract protected function prepareNewOrderRequest(Order $order): array;
+
+    abstract protected function handleNewOrderResponse(Order $order, array $response): void;
+
+    abstract protected function prepareOrderUpdateRequest(Order $order): array;
+
+    abstract protected function handleOrderUpdateResponse(Order $order, array $response): void;
+
+    abstract protected function getDefaultRequestData(): array;
+
+    abstract protected function accountType(): string;
 
     public static function instance(): static
     {
@@ -174,17 +198,5 @@ abstract class AbstractExchange
         }
 
         return static::$instance;
-    }
-
-    public function sell(): static
-    {
-        $this->order->side = 'SELL';
-        return $this;
-    }
-
-    public function buy(): static
-    {
-        $this->order->side = 'BUY';
-        return $this;
     }
 }
