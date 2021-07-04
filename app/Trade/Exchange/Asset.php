@@ -26,7 +26,7 @@ class Asset
         return $this->available;
     }
 
-    public function valueAsCurrency(string $currency): float
+    public function currencyValue(string $currency): float
     {
 
     }
