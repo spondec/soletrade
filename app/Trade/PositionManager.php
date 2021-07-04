@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Collection;
 
 class PositionManager
 {
+    protected static array $exchanges;
+
     /** @var Position[] */
     protected Collection $positions;
 
@@ -96,7 +98,7 @@ class PositionManager
     {
         $closePrice = $price ?? $position->exchange()->price($symbol = $position->symbol);
 
-        if(!$closePrice)
+        if (!$closePrice)
         {
             throw new \UnexpectedValueException("Price for $symbol couldn't be fetched from the exchange.");
         }
@@ -137,5 +139,25 @@ class PositionManager
     public function stopLoss(Position $position, float $price): bool
     {
 
+    }
+
+    public function exchange(Order|Position $model): AbstractExchange
+    {
+        $account = ucfirst(mb_strtolower($model->account));
+        $exchange = ucfirst(mb_strtolower($model->exchange));
+
+        $class = '\App\Trade\Exchange\\' . "$account\\$exchange";
+
+        if ($instance = static::$exchanges[$class] ?? null)
+        {
+            return $instance;
+        }
+
+        if (!class_exists($class))
+        {
+            throw new \LogicException("Exchange class couldn't be found: $class");
+        }
+
+        return static::$exchanges[$class] = $class::instance();
     }
 }
