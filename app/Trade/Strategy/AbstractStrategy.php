@@ -22,13 +22,10 @@ abstract class AbstractStrategy implements VersionableInterface
         FibonacciRetracement::class => []
     ];
 
-
-
     protected function initIndicators(Candles $candles): void
     {
         foreach (self::INDICATORS as $class => $config)
         {
-            /** @noinspection PhpVoidFunctionResultUsedInspection */
             $candles->addIndicator(new $class($candles, $config));
         }
     }
@@ -36,7 +33,6 @@ abstract class AbstractStrategy implements VersionableInterface
     public function check(Candles $candles): ?TradeSetup
     {
         $this->initIndicators($candles);
-
 
     }
 }
