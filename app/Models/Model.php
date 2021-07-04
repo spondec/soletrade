@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Facades\Validator;
+
 abstract class Model extends \Illuminate\Database\Eloquent\Model
 {
     const VALIDATION_RULES = [];
 
     public function validate(?array &$errors = null)
     {
-        $errors = validator($this->toArray(), static::VALIDATION_RULES)
+        $errors = Validator::make($this->toArray(), static::VALIDATION_RULES)
             ->errors()
             ->messages();
 
@@ -16,7 +18,7 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
         {
             foreach ($errors as $key => $error)
             {
-                $errors[$key] = implode(' , ', $error);
+                $errors[$key] = implode(' ,', $error);
             }
 
             throw new \UnexpectedValueException("Validation errors:\n" .
@@ -35,11 +37,12 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
     {
         if ($rules = static::VALIDATION_RULES[$key] ?? null)
         {
-            $result = validator([$key => $value], [$key => $rules]);
+            $result = Validator::make([$key => $value], [$key => $rules]);
 
-            if ($errors = $result->errors())
+            if ($errors = $result->errors()->messages())
             {
-                throw new \UnexpectedValueException('Validation error: ' . implode(' ,', $errors->get($key)));
+                throw new \UnexpectedValueException(
+                    'Validation error: ' . implode("\n", $errors[$key]));
             }
         }
 
