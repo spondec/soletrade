@@ -13,7 +13,7 @@ class AccountBalance
         {
             if(!$asset instanceof Asset)
             {
-                throw new \TypeError('The argument must be a instance of Asset class.');
+                throw new \InvalidArgumentException('The argument must be a instance of Asset class.');
             }
         }
 
