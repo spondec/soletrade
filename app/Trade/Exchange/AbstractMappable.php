@@ -2,7 +2,7 @@
 
 namespace App\Trade\Exchange;
 
-trait MappableTrait
+abstract class AbstractMappable
 {
     /**
      * @var string[]
@@ -19,7 +19,7 @@ trait MappableTrait
     {
         $missingKeys = [];
 
-        foreach ($this->map as $key => $value)
+        foreach ($this->map + $this->data as $key => $value)
         {
             if (!in_array($key, $this->expectedKeys))
             {
@@ -29,8 +29,8 @@ trait MappableTrait
 
         if (!empty($missingKeys))
         {
-            throw new \UnexpectedValueException('Expected keys are missing from the map: '
-                . implode(' , ', $missingKeys));
+            throw new \UnexpectedValueException('Expected keys are missing from the data: '
+                . implode(' ,', $missingKeys));
         }
     }
 
@@ -41,6 +41,11 @@ trait MappableTrait
 
     public function __get(string $name): mixed
     {
-        return $this->data[$this->map[$name]];
+        if (isset($this->map[$name]))
+        {
+            return $this->data[$this->map[$name]];
+        }
+
+        return $this->data[$name];
     }
 }
