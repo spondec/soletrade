@@ -29,7 +29,7 @@ class Candles extends Model
     ];
 
     const MAX_LENGTH = 1000;
-    const INDICATOR_ROOT = "\App\Trade\Indicator";
+    const INDICATOR_DIR = "\App\Trade\Indicator";
 
     protected $lastKey;
     protected $firstKey;
@@ -63,7 +63,7 @@ class Candles extends Model
     {
         return $this->indicators[$name] ??
             throw new \LogicException(
-                class_exists(self::INDICATOR_ROOT . "\\" . $name) ?
+                class_exists(self::INDICATOR_DIR . "\\" . $name) ?
                     "{$name} hasn't been set for this instance." :
                     "{$name} doesn't exist as an indicator.");
     }
