@@ -8,7 +8,7 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
 {
     const VALIDATION_RULES = [];
 
-    public function validate(?array &$errors = null)
+    public final function validate(?array &$errors = null)
     {
         $errors = Validator::make($this->toArray(), static::VALIDATION_RULES)
             ->errors()

@@ -55,12 +55,12 @@ class Order extends Model
         'side' => 'required|in:BUY,SELL,LONG,SHORT'
     ];
 
-    public function logRequest(string $key, array $data)
+    public function logRequest(string $key, array $data): void
     {
         $this->request[$key][] = $data;
     }
 
-    public function logResponse(string $key, array $data)
+    public function logResponse(string $key, array $data): void
     {
         $this->response[$key][] = $data;
     }
