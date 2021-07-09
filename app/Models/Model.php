@@ -46,6 +46,6 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
             }
         }
 
-        $this->attributes[$key] = $value;
+        parent::setAttribute($key, $value);
     }
 }
