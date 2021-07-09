@@ -18,8 +18,7 @@ use Illuminate\Support\Carbon;
  * @property float  filled
  * @property float  price
  * @property float  stop_price
- * @property array  request
- * @property array  response
+ * @property array  responses
  * @property float  commission
  * @property string commission_asset
  * @property string exchange_order_id
@@ -32,14 +31,8 @@ class Order extends Model
 
     protected $table = 'orders';
 
-    protected $attributes = [
-        'request' => [],
-        'response' => []
-    ];
-
     protected $casts = [
-        'request' => 'array',
-        'response' => 'array'
+        'responses' => 'array'
     ];
 
     const VALIDATION_RULES = [
@@ -50,18 +43,16 @@ class Order extends Model
         'quantity' => 'required|numeric',
         'filled' => 'numeric',
         'price' => 'numeric',
-        'stop_price' => 'required|numeric',
+        'stop_price' => 'nullable|numeric',
         'type' => 'required|in:LIMIT,MARKET,STOP_LOSS,STOP_LOSS_LIMIT,TAKE_PROFIT,TAKE_PROFIT_LIMIT,LIMIT_MAKER',
         'side' => 'required|in:BUY,SELL,LONG,SHORT'
     ];
 
-    public function logRequest(string $key, array $data): void
-    {
-        $this->request[$key][] = $data;
-    }
-
     public function logResponse(string $key, array $data): void
     {
-        $this->response[$key][] = $data;
+        $responses = $this->responses ?? [];
+        $responses[$key][] = $data;
+
+        $this->responses = $responses;
     }
 }
