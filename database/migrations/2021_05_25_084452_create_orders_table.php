@@ -36,9 +36,8 @@ class CreateOrdersTable extends Migration
             $table->decimal('stop_price')->nullable();
             $table->decimal('commission')->nullable();
             $table->decimal('commission_asset')->nullable();
-            $table->string('exchange_order_id', 255)->nullable();
-            $table->json('request')->nullable();
-            $table->json('response')->nullable();
+            $table->string('exchange_order_id', 255)->nullable()->index();
+            $table->json('responses')->nullable();
             $table->timestamps();
         });
     }
