@@ -4,37 +4,60 @@ namespace App\Trade\Exchange;
 
 class OrderBook
 {
-    protected array $bid;
-    protected array $ask;
+    protected float $initTime;
+
+    const TIMEOUT = 0.1;
 
     /**
-     * @param float[] $bid
-     * @param float[] $ask
+     * @param float[] $bids
+     * @param float[] $asks
      */
-    public function __construct(array $bid, array $ask)
+    public function __construct(protected array $bids, protected array $asks)
     {
-        //TODO:: sort first
-        $this->bid = $bid;
-        $this->ask = $ask;
+        $this->initTime = microtime(true);
+        $this->assertSpreadPositive();
+    }
+
+    protected function assertSpreadPositive(): void
+    {
+        if ($this->spread() < 0)
+        {
+            throw new \LogicException("Spread can't be negative.");
+        }
+    }
+
+    public function isExpired()
+    {
+        return microtime(true) - $this->initTime >= self::TIMEOUT;
     }
 
     public function bestBid(): float
     {
+        return max($this->bids);
+    }
 
+    public function spread(): float
+    {
+        return $this->bestAsk() - $this->bestBid();
     }
 
     public function bestAsk(): float
     {
-
+        return min($this->asks);
     }
 
-    public function averageBid()
+    protected final function avg(array $values): float
     {
-
+        return array_sum($values) / count($values);
     }
 
-    public function averageAsk()
+    public function averageBid(): float
     {
+        return $this->avg($this->bids);
+    }
 
+    public function averageAsk(): float
+    {
+        return $this->avg($this->asks);
     }
 }
