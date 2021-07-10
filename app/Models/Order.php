@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property string symbol
  * @property string side
  * @property string type
+ * @property string status
  * @property float  quantity
  * @property float  filled
  * @property float  price
@@ -45,14 +46,28 @@ class Order extends Model
         'price' => 'numeric',
         'stop_price' => 'nullable|numeric',
         'type' => 'required|in:LIMIT,MARKET,STOP_LOSS,STOP_LOSS_LIMIT,TAKE_PROFIT,TAKE_PROFIT_LIMIT,LIMIT_MAKER',
-        'side' => 'required|in:BUY,SELL,LONG,SHORT'
+        'side' => 'required|in:BUY,SELL,LONG,SHORT',
+        'status' => 'required|in:CLOSED,OPEN,EXPIRED,NEW,PENDING_CANCEL,REJECTED,CANCELLED,PARTIALLY_FILLED'
     ];
+
+    public function setAttribute($key, $value)
+    {
+        if (in_array($key, ['side', 'type', 'exchange', 'account']))
+        {
+            $value = mb_strtoupper($value);
+        }
+
+        parent::setAttribute($key, $value);
+    }
 
     public function logResponse(string $key, array $data): void
     {
         $responses = $this->responses ?? [];
-        $responses[$key][] = $data;
 
-        $this->responses = $responses;
+        if ($key !== ($last = array_key_last($responses)) && $data !== $responses[$last])
+        {
+            $responses[$key][] = $data;
+            $this->responses = $responses;
+        }
     }
 }

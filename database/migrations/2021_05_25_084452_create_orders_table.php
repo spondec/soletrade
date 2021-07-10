@@ -17,6 +17,15 @@ class CreateOrdersTable extends Migration
             $table->id();
             $table->foreignId('trade_setup_id')->nullable();
             $table->boolean('is_open')->default(true);
+            $table->enum('status', [
+                'CLOSED',
+                'OPEN',
+                'EXPIRED',
+                'NEW',
+                'PENDING_CANCEL',
+                'REJECTED',
+                'CANCELLED',
+                'PARTIALLY_FILLED']);
             $table->enum('exchange', ['BINANCE', 'FTX']);
             $table->enum('account', ['SPOT', 'FUTURES']);
             $table->string('symbol', 50);
@@ -28,8 +37,7 @@ class CreateOrdersTable extends Migration
                 'STOP_LOSS_LIMIT',
                 'TAKE_PROFIT',
                 'TAKE_PROFIT_LIMIT',
-                'LIMIT_MAKER'
-            ]);
+                'LIMIT_MAKER']);
             $table->decimal('quantity');
             $table->decimal('filled')->default(0);
             $table->decimal('price')->nullable();
