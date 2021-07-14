@@ -3,14 +3,15 @@
 namespace App\Trade\Exchange;
 
 use App\Models\Order;
-use Illuminate\Http\Client\Response;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Http;
 
 abstract class AbstractExchange
 {
     protected string $apiKey;
     protected string $secretKey;
+
+    protected $api;
 
     protected static ?AbstractExchange $instance = null;
 
@@ -49,41 +50,52 @@ abstract class AbstractExchange
 
     }
 
-    public function price(string $symbol): float
+    public function getApi(): mixed
     {
-
+        return $this->api;
     }
 
-    abstract protected function bestSellPrice(): float;
+    /**
+     * @param Order[] $responses
+     */
+    abstract protected function processOrderResponses(array $responses): Collection;
 
-    abstract protected function bestBuyPrice(): float;
-
-    abstract public function convert(string $from, string $to, float $quantity): float;
-
-    public final function syncOrder(Order $order): void
+    public final function syncOrder(Order $order): Order
     {
-        $request = $this->prepareOrderUpdateRequest($order);
-        $response = $this->httpRequest('post', static::ORDER_UPDATE_URL, $request->data());
-
+        $response = $this->executeOrderUpdate($order);
         $this->handleOrderUpdateResponse($order, $response);
+
+        $order->logResponse('update', $response);
+        $order->save();
+
+        return $order;
     }
 
-    public final function cancelOrder(Order $order): bool
+    public final function cancelOrder(Order $order): Order
     {
+        $response = $this->executeOrderCancel($order);
+        $this->handleOrderCancelResponse($order, $response);
 
+        $order->logResponse('cancel', $response);
+        $order->save();
+
+        return $order;
     }
 
-    protected function setupOrder(string $side, string $symbol): Order
+    protected function setupOrder(string $side = null, string $symbol = null): Order
     {
         $order = new Order();
 
-        $order->side = $side;
-        $order->symbol = $symbol;
+        if ($side)
+        {
+            $order->side = $side;
+            $this->assertAction($order); //TODO:: overriding validation when no side has been set
+        }
+
+        if ($symbol) $order->symbol = $symbol;
 
         $order->exchange = $this->name;
         $order->account = $this->account;
-
-        $this->assertAction($order);
 
         return $order;
     }
@@ -132,6 +144,19 @@ abstract class AbstractExchange
     }
 
     /**
+     * @param array $exchangeOrderIds
+     *
+     * @return Collection|Order[]
+     */
+    protected function fetchOrdersWithExchangeIds(array $exchangeOrderIds): Collection
+    {
+        return Order::query()
+            ->whereIn('exchange_order_id', $exchangeOrderIds)
+            ->get()
+            ->keyBy('exchange_order_id');
+    }
+
+    /**
      * @return Order[]
      */
     abstract public function openOrders(string $symbol): \Illuminate\Database\Eloquent\Collection;
@@ -143,19 +168,22 @@ abstract class AbstractExchange
     /**
      * @return string[]
      */
-    abstract public function symbolList(): array;
+    abstract public function symbolList(string $quoteAsset = null): array;
+
+    abstract public function buildSymbol(string $baseAsset, string $quoteAsset): ?string;
+
+    abstract public function minTradeQuantity(string $symbol): float;
 
     abstract public function candleMap(): array;
 
-    abstract public function candles(string $symbol, string $interval, float $start, float $end): array;
+    abstract public function candles(string $symbol, string $interval, float $start = null, float $limit = null): array;
 
     protected function newOrder(Order $order): Order
     {
         $response = $this->executeNewOrder($order);
-        $order->logResponse('newOrder', $response);
-
         $this->handleNewOrderResponse($order, $response);
 
+        $order->logResponse('new', $response);
         $order->save();
 
         return $order;
@@ -163,18 +191,18 @@ abstract class AbstractExchange
 
     abstract protected function updateOrderDetails(Order $order, array $response): void;
 
-    abstract protected function prepareCancelOrderRequest(Order $order): array;
+    abstract protected function executeOrderCancel(Order $order): array;
 
-    abstract protected function handleCancelOrderResponse(Order $order, array $response): void;
+    abstract protected function handleOrderCancelResponse(Order $order, array $response): void;
 
     abstract protected function executeNewOrder(Order $order): array;
 
     abstract protected function handleNewOrderResponse(Order $order, array $response): void;
 
-    abstract protected function prepareOrderUpdateRequest(Order $order): array;
+    abstract protected function executeOrderUpdate(Order $order): array;
 
     abstract protected function handleOrderUpdateResponse(Order $order, array $response): void;
-    
+
     abstract protected function accountType(): string;
 
     public static function instance(): static
