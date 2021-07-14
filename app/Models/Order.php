@@ -47,12 +47,12 @@ class Order extends Model
         'stop_price' => 'nullable|numeric',
         'type' => 'required|in:LIMIT,MARKET,STOP_LOSS,STOP_LOSS_LIMIT,TAKE_PROFIT,TAKE_PROFIT_LIMIT,LIMIT_MAKER',
         'side' => 'required|in:BUY,SELL,LONG,SHORT',
-        'status' => 'required|in:CLOSED,OPEN,EXPIRED,NEW,PENDING_CANCEL,REJECTED,CANCELLED,PARTIALLY_FILLED'
+        'status' => 'required|in:CLOSED,OPEN,EXPIRED,NEW,PENDING_CANCEL,REJECTED,CANCELED,PARTIALLY_FILLED'
     ];
 
     public function setAttribute($key, $value)
     {
-        if (in_array($key, ['side', 'type', 'exchange', 'account']))
+        if (in_array($key, ['side', 'type', 'status', 'exchange', 'account']))
         {
             $value = mb_strtoupper($value);
         }
@@ -64,7 +64,9 @@ class Order extends Model
     {
         $responses = $this->responses ?? [];
 
-        if ($key !== ($last = array_key_last($responses)) && $data !== $responses[$last])
+        $lastKey = array_key_last($responses);
+
+        if ($lastKey === null || $key !== $lastKey && $data !== $responses[$lastKey])
         {
             $responses[$key][] = $data;
             $this->responses = $responses;

@@ -24,7 +24,7 @@ class CreateOrdersTable extends Migration
                 'NEW',
                 'PENDING_CANCEL',
                 'REJECTED',
-                'CANCELLED',
+                'CANCELED',
                 'PARTIALLY_FILLED']);
             $table->enum('exchange', ['BINANCE', 'FTX']);
             $table->enum('account', ['SPOT', 'FUTURES']);
