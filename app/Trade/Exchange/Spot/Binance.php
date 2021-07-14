@@ -4,68 +4,211 @@ namespace App\Trade\Exchange\Spot;
 
 use App\Models\Order;
 use App\Trade\Exchange\AccountBalance;
+use App\Trade\Exchange\Asset;
 use App\Trade\Exchange\OrderBook;
+use Illuminate\Database\Eloquent\Collection;
 
 class Binance extends AbstractSpotExchange
 {
-    protected string $exchangeName = 'BINANCE';
+    /**
+     * @var \ccxt\binance
+     */
+    protected $api;
+    protected static array $limits = [];
 
-    public function market(bool $side, string $symbol, float $size): Order|false
+    /**
+     * @return array
+     */
+    public static function getLimits(): array
     {
-        // TODO: Implement market() method.
+        return self::$limits;
     }
 
-    public function limit(bool $side, string $symbol, float $price, float $size): Order|false
+    protected function setup(): void
     {
-        // TODO: Implement limit() method.
+        $this->api = new \ccxt\binance([
+            'apiKey' => $this->apiKey,
+            'secret' => $this->secretKey,
+            'options' => [
+                'recvWindow' => 5000
+            ]
+        ]);
     }
 
-    public function stopLimit(bool   $side,
-                              string $symbol,
-                              float  $stopPrice,
-                              float  $price,
-                              float  $size): Order|false
+    protected function processOrderResponses(array $responses): Collection
     {
-        // TODO: Implement stopLimit() method.
+        $orders = $this->fetchOrdersWithExchangeIds(
+            array_column($responses, 'id'));
+
+        foreach ($responses as $response)
+        {
+            $order = $orders[$response['id']] ?? $this->setupOrder();
+
+            $this->updateOrderDetails($order, $response);
+            $order->save();
+        }
+
+        return $orders;
     }
 
-    public function openOrders(): array
+    public function orders(string $symbol): Collection
     {
-        // TODO: Implement getOpenOrders() method.
+        return $this->processOrderResponses($this->api->fetch_orders($symbol));
+    }
+
+    public function openOrders(?string $symbol = null): Collection
+    {
+        return $this->processOrderResponses($this->api->fetch_open_orders($symbol));
     }
 
     public function accountBalance(): AccountBalance
     {
-        // TODO: Implement getAccountBalance() method.
+        $result = $this->api->fetch_balance();
+        $assets = [];
+
+        foreach ($result['total'] as $asset => $total)
+        {
+            $assets[] = new Asset($asset, $total, $result['free'][$asset]);
+        }
+
+        return new AccountBalance($this, $assets);
     }
 
-    public function price(string $symbol): float
+    public function buildSymbol(string $baseAsset, string $quoteAsset): string
     {
-        // TODO: Implement getLastPrice() method.
+        return "$baseAsset/$quoteAsset";
     }
 
     public function orderBook(string $symbol): OrderBook
     {
-        // TODO: Implement getOrderBook() method.
+        $orderBook = $this->api->fetch_order_book($symbol);
+
+        return new OrderBook($symbol,
+            array_column($orderBook['bids'], 0),
+            array_column($orderBook['asks'], 0));
     }
 
-    public function name(): string
+    public function symbolList(string $quoteAsset = null): array
     {
-        // TODO: Implement getExchangeName() method.
+        $markets = $this->api->fetch_markets();
+
+        foreach ($markets as $market)
+        {
+            static::$limits[$market['symbol']] = $market['limits'];
+        }
+
+        if ($quoteAsset)
+            $markets = array_filter($markets, fn($v) => $v['info']['quoteAsset'] === $quoteAsset);
+
+        return array_column($markets, 'symbol');
     }
 
-    public function symbolList(): array
+    public function candles(string $symbol, string $interval, float $start = null, float $limit = null): array
     {
-        // TODO: Implement getSymbolList() method.
+        return $this->api->fetch_ohlcv($symbol, $interval, $start, $limit);
+    }
+
+    protected function executeOrderCancel(Order $order): array
+    {
+        return $this->api->cancel_order($order->exchange_order_id, $order->symbol);
+    }
+
+    protected function handleOrderCancelResponse(Order $order, array $response): void
+    {
+        $this->updateOrderDetails($order, $response);
+    }
+
+    protected function executeNewOrder(Order $order): array
+    {
+        if ($order->type == 'LIMIT') $order->type = 'LIMIT_MAKER';
+        return $this->api->create_order($order->symbol,
+            $order->type,
+            $order->side,
+            $order->quantity,
+            $order->price);
+    }
+
+    protected function handleNewOrderResponse(Order $order, array $response): void
+    {
+        $this->updateOrderDetails($order, $response);
+    }
+
+    protected function executeOrderUpdate(Order $order): array
+    {
+        return $this->api->fetch_order($order->exchange_order_id, $order->symbol);
+    }
+
+    protected function handleOrderUpdateResponse(Order $order, array $response): void
+    {
+        $this->updateOrderDetails($order, $response);
+    }
+
+    protected function processOrderFills(Order $order, array $response): void
+    {
+        if (isset($response['fills']))
+        {
+            $commission = 0;
+
+            foreach ($response['fills'] as $fill)
+            {
+                $commission += $fill['commission'];
+            }
+
+            if ($commission)
+            {
+                $order->commission_asset = $fill[0]['commission_asset'];
+            }
+        }
+    }
+
+    protected function updateOrderDetails(Order $order, array $response): void
+    {
+        $order->type = $response['info']['type'];
+        $order->symbol = $response['symbol'];
+        $order->status = $response['status'];
+        $order->side = $response['side'];
+        $order->stop_price = $response['stopPrice'];
+        $order->exchange_order_id = $response['orderId'] ?? $response['id'];
+        $order->price = $response['price'];
+        $order->quantity = $response['amount'];
+        $order->filled = $response['filled'];
+
+        $this->processOrderFills($order, $response);
+    }
+
+    protected function availableOrderActions(): array
+    {
+        return ['BUY', 'SELL'];
+    }
+
+    protected function accountType(): string
+    {
+        return 'SPOT';
     }
 
     public function candleMap(): array
     {
-        // TODO: Implement getCandleMap() method.
+        return [
+            'timestamp' => 0,
+            'open' => 1,
+            'high' => 2,
+            'low' => 3,
+            'close' => 4,
+            'volume' => 5,
+        ];
     }
 
-    public function candles(string $symbol, string $interval, float $start, float $end): array
+    public function minTradeQuantity(string $symbol): float
     {
-        // TODO: Implement getCandlesForSymbol() method.
+        if (empty(static::$limits[$symbol]))
+        {
+            $this->symbolList();
+        }
+
+        $minQuantity = static::$limits[$symbol]['amount']['min'];
+        $minCost = static::$limits[$symbol]['cost']['min'];
+        $price = $this->orderBook($symbol)->bestBid();
+
+        return ($quantity = $minCost / $price) < $minQuantity ? $minQuantity : $quantity;
     }
 }
