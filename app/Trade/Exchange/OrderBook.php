@@ -12,9 +12,15 @@ class OrderBook
      * @param float[] $bids
      * @param float[] $asks
      */
-    public function __construct(protected array $bids, protected array $asks)
+    public function __construct(protected string $symbol, protected array $bids, protected array $asks)
     {
         $this->initTime = microtime(true);
+
+        if (!$this->bids || !$this->asks)
+        {
+            throw new \UnexpectedValueException("Order book data is empty for $symbol.");
+        }
+
         $this->assertSpreadPositive();
     }
 
