@@ -38,12 +38,12 @@ class CreateOrdersTable extends Migration
                 'TAKE_PROFIT',
                 'TAKE_PROFIT_LIMIT',
                 'LIMIT_MAKER']);
-            $table->decimal('quantity');
-            $table->decimal('filled')->default(0);
-            $table->decimal('price')->nullable();
-            $table->decimal('stop_price')->nullable();
-            $table->decimal('commission')->nullable();
-            $table->decimal('commission_asset')->nullable();
+            $table->decimal('quantity', 20, 10);
+            $table->decimal('filled', 20, 10)->default(0);
+            $table->decimal('price', 20, 10)->nullable();
+            $table->decimal('stop_price', 20, 10)->nullable();
+            $table->decimal('commission', 20, 10)->nullable();
+            $table->decimal('commission_asset', 20, 10)->nullable();
             $table->string('exchange_order_id', 255)->nullable()->index();
             $table->json('responses')->nullable();
             $table->timestamps();
