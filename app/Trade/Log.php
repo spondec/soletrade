@@ -2,7 +2,7 @@
 
 namespace App\Trade;
 
-final class Errors
+final class Log
 {
     protected static array $log;
 

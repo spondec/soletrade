@@ -2,7 +2,7 @@
 
 namespace App\Trade;
 
-class BackTester
+class Backtester
 {
 
 }

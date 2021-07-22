@@ -8,7 +8,7 @@ use App\Models\TradeSetup;
 use App\Trade\Exchange\AbstractExchange;
 use Illuminate\Database\Eloquent\Collection;
 
-class PositionManager
+class Manager
 {
     protected static array $exchanges;
 
