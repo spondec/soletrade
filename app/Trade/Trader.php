@@ -8,13 +8,13 @@ use App\Trade\Strategy\AbstractStrategy;
 
 class Trader
 {
-    protected PositionManager $manager;
+    protected Manager $manager;
 
     public function __construct(
         protected AbstractStrategy        $strategy,
         protected AbstractSpotExchange    $spot,
         protected AbstractFuturesExchange $futures)
     {
-        $this->manager = PositionManager::instance();
+        $this->manager = Manager::instance();
     }
 }

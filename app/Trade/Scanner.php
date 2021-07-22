@@ -22,7 +22,7 @@ class Scanner
     /** Returns the latest 1000 candles for a given interval. */
     public function scan(AbstractStrategy $strategy, string $interval): array
     {
-        if (!$symbolList = $this->filterSymbols($this->exchange->symbolList()))
+        if (!$symbolList = $this->filterSymbols($this->exchange->symbols()))
         {
             throw new \LogicException('No symbol was given.');
         }
