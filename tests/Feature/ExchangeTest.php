@@ -68,7 +68,7 @@ abstract class ExchangeTest extends TestCase
             $this->getQuantity($symbol)
         );
 
-        $this->assertOrder($order, 'BUY', 'OPEN', 'new');
+        $this->assertOrder($order, 'BUY', 'LIMIT', 'OPEN', 'new');
     }
 
     public function test_place_limit_sell_order()
@@ -79,8 +79,48 @@ abstract class ExchangeTest extends TestCase
             $this->getQuantity($symbol)
         );
 
-        $this->assertOrder($order, 'SELL', 'OPEN', 'new');
+        $this->assertOrder($order, 'SELL', 'LIMIT', 'OPEN', 'new');
     }
+
+    public function test_place_stop_limit_order()
+    {
+        $order = $this->exchange->stopLimit('SELL',
+            $symbol = $this->getSymbol(),
+            $stopPrice = $this->getLimitBuyPrice($symbol),
+            $stopPrice + $stopPrice * 0.001,
+            $this->getQuantity($symbol)
+        );
+
+        $this->assertOrder($order, 'SELL', 'STOP_LOSS_LIMIT', 'OPEN', 'new');
+    }
+
+    public function test_place_market_buy_order()
+    {
+        $order = $this->exchange->market('BUY',
+            $symbol = $this->getSymbol(),
+            $this->getQuantity($symbol));
+
+        $this->assertOrder($order, 'BUY', 'MARKET', 'CLOSED', 'new');
+    }
+
+    public function test_place_market_sell_order()
+    {
+        $order = $this->exchange->market('SELL',
+            $symbol = $this->getSymbol(),
+            $this->getQuantity($symbol));
+
+        $this->assertOrder($order, 'SELL', 'MARKET', 'CLOSED', 'new');
+    }
+
+//    public function test_place_stop_market_sell_order()
+//    {
+//        $order = $this->exchange->stopMarket('SELL',
+//            $symbol = $this->getSymbol(),
+//            $this->getQuantity($symbol),
+//            $this->getLimitBuyPrice($symbol));
+//
+//        $this->assertOrder($order, 'SELL', 'STOP_LOSS', 'OPEN', 'new');
+//    }
 
     public function test_get_open_orders()
     {
@@ -111,22 +151,33 @@ abstract class ExchangeTest extends TestCase
         }
     }
 
-    protected function assertOrder(Order $order, string $side, string $status, string $responseKey = null)
+    protected function assertOrderTypeContains(Order $order, string $expected)
+    {
+        if (!str_contains($order->type, mb_strtoupper($expected)))
+        {
+            throw new \UnexpectedValueException("Order type assertion failed. 
+                Expected: $expected \n Actual: $order->type");
+        }
+    }
+
+    protected function assertOrder(Order $order, string $side, string $type, string $status, string $responseKey)
     {
         $order->validate();
+
         $this->assertEquals($side, $order->side);
         $this->assertEquals($status, $order->status);
-        if ($responseKey) $this->assertOrderResponseExists($order, 'new');
+        $this->assertOrderTypeContains($order, $type);
+        $this->assertOrderResponseExists($order, $responseKey);
     }
 
     protected function getSymbol(): string
     {
         $primaryAsset = $this->exchange->accountBalance()->primaryAsset()->name();
 
-        return $this->exchange->symbolList($primaryAsset)[0] ?? static::$defaultSymbol;
+        return $this->exchange->symbols($primaryAsset)[0] ?? static::$defaultSymbol;
     }
 
-    protected function getQuantity(string $symbol)
+    protected function getQuantity(string $symbol): float
     {
         return $this->exchange->minTradeQuantity($symbol);
     }

@@ -25,7 +25,7 @@ class SpotBinanceTest extends ExchangeTest
         return static::$defaultSymbol;
     }
 
-    protected function getQuantity(string $symbol)
+    protected function getQuantity(string $symbol): float
     {
         return parent::getQuantity($symbol) * 3;
     }
