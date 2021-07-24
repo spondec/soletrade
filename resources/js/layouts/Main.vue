@@ -12,9 +12,6 @@
           <!-- Left Side Of Navbar -->
           <ul class="navbar-nav mr-auto">
             <li class="nav-item">
-              <v-link class="nav-link text-white" href="/about">About</v-link>
-            </li>
-            <li class="nav-item">
               <v-link class="nav-link text-white" href="/chart">Chart</v-link>
             </li>
           </ul>
