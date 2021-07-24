@@ -3,6 +3,7 @@
 namespace App\Trade\Exchange;
 
 use App\Models\Order;
+use App\Trade\Scanner;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 
@@ -20,10 +21,22 @@ abstract class AbstractExchange
     protected array $actions;
     protected string $account;
 
+    protected ?AccountBalance $prevBalance = null;
+    protected AccountBalance $currentBalance;
+
+    protected Scanner $scanner;
+
+    public function scanner(): Scanner
+    {
+        return $this->scanner;
+    }
+
     /**
      * @return string[]
      */
     abstract protected function availableOrderActions(): array;
+
+    abstract public function getMaxCandlesPerRequest(): int;
 
     private function __construct()
     {
@@ -43,6 +56,8 @@ abstract class AbstractExchange
         $this->account = $this->accountType();
 
         $this->setup();
+
+        $this->scanner = new Scanner($this);
     }
 
     protected function setup(): void
@@ -53,6 +68,20 @@ abstract class AbstractExchange
     public function getApi(): mixed
     {
         return $this->api;
+    }
+
+    public function info(): array
+    {
+        return [
+            'name'    => $this->name,
+            'account' => $this->account,
+            'actions' => implode(', ', $this->actions),
+        ];
+    }
+
+    public function name(): string
+    {
+        return $this->name;
     }
 
     /**
@@ -113,9 +142,19 @@ abstract class AbstractExchange
     {
         $order = $this->setupOrder($side, $symbol);
 
-        $order->account =
         $order->quantity = $quantity;
         $order->type = 'MARKET';
+
+        return $this->newOrder($order);
+    }
+
+    public function stopMarket(string $side, string $symbol, float $quantity, float $stopPrice): Order
+    {
+        $order = $this->setupOrder($side, $symbol);
+
+        $order->quantity = $quantity;
+        $order->stop_price = $stopPrice;
+        $order->type = 'STOP_LOSS';
 
         return $this->newOrder($order);
     }
@@ -138,7 +177,7 @@ abstract class AbstractExchange
         $order->price = $price;
         $order->quantity = $quantity;
         $order->stop_price = $stopPrice;
-        $order->type = 'STOP_LIMIT';
+        $order->type = 'STOP_LOSS_LIMIT';
 
         return $this->newOrder($order);
     }
@@ -161,14 +200,33 @@ abstract class AbstractExchange
      */
     abstract public function openOrders(string $symbol): \Illuminate\Database\Eloquent\Collection;
 
-    abstract public function accountBalance(): AccountBalance;
+    abstract public function getAccountBalance(): AccountBalance;
+
+    public function accountBalance(): AccountBalance
+    {
+        $balance = $this->getAccountBalance();
+
+        if (!$this->prevBalance)
+        {
+            $this->prevBalance = $balance;
+        }
+
+        return $this->currentBalance = $balance;
+    }
+
+    public function roe(): ?array
+    {
+        if (!$this->prevBalance) return null;
+
+        return $this->accountBalance()->calculateRoe($this->prevBalance);
+    }
 
     abstract public function orderBook(string $symbol): OrderBook;
 
     /**
      * @return string[]
      */
-    abstract public function symbolList(string $quoteAsset = null): array;
+    abstract public function symbols(string $quoteAsset = null): array;
 
     abstract public function buildSymbol(string $baseAsset, string $quoteAsset): ?string;
 
