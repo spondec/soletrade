@@ -13,10 +13,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', fn() => view('welcome'));
-Route::get('/artisan', function ()
-{
-    \Illuminate\Support\Facades\Artisan::call('trader:run');
+Route::view('/{any}', 'home')->where('any', '.*');;
 
-    return view('welcome');
-});
+//Route::get('/artisan', function ()
+//{
+//    \Illuminate\Support\Facades\Artisan::call('trader:run');
+//
+//    return view('home');
+//});
+
+Auth::routes();
