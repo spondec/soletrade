@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use App\Trade\Indicator\AbstractIndicator;
+use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
 /**
+ * @property int    id
  * @property string symbol
  * @property string interval
  * @property string exchange
@@ -22,17 +23,16 @@ class Candles extends Model
 {
     use HasFactory;
 
-    protected $table = 'candles';
-    protected $casts = [
-        'data' => 'array',
-        'map' => 'array'
-    ];
-
     const MAX_LENGTH = 1000;
     const INDICATOR_DIR = "\App\Trade\Indicator";
 
-    protected $lastKey;
-    protected $firstKey;
+    protected $table = 'candles';
+
+    protected $guarded = [];
+    protected $casts = [
+        'data' => 'array',
+        'map'  => 'array',
+    ];
 
     /** @var AbstractIndicator[] */
     protected $indicators = [];
@@ -73,10 +73,14 @@ class Candles extends Model
         parent::booted();
 
         static::saving(function (self $candles) {
-            if ($candles->data)
+            if ($data = $candles->data)
             {
-                $candles->start_date = $candles->first()[$candles->map('open')];
-                $candles->end_date = $candles->last()[$candles->map('close')];
+                $first = reset($data);
+                $last = end($data);
+                $timestamp = $candles->map('timestamp');
+
+                $candles->start_date = $first[$timestamp];
+                $candles->end_date = $last[$timestamp];
             }
 
             $candles->length = $candles->length();
@@ -90,33 +94,43 @@ class Candles extends Model
 
     public function setDataAttribute(array $value): void
     {
-        $this->attributes['data'] = $value;
-        $this->updateKeys();
+        $this->attributes['data'] = json_encode($value);
     }
 
     public function last(): array
     {
-        return $this->attributes['data'][$this->lastKey];
+        if (empty($data = $this->data))
+        {
+            return [];
+        }
+
+        return end($data);
     }
 
     public function first(): array
     {
-        return $this->attributes['data'][$this->firstKey];
+        if (empty($data = $this->data))
+        {
+            return [];
+        }
+
+        return reset($data);
     }
 
     public function length(): int
     {
-        return count($this->attributes['data']);
+        return count($this->data ?? []);
     }
 
-    public function map($key): mixed
+    public function map($key): ?string
     {
-        return $this->attributes['map'][$key];
+        return $this->map[$key] ?? null;
     }
 
-    protected function updateKeys(): void
+    public function pop()
     {
-        $this->firstKey = array_key_first($this->attributes['data']);
-        $this->lastKey = array_key_last($this->attributes['data']);
+        $data = $this->data;
+        array_pop($data);
+        $this->data = $data;
     }
 }
