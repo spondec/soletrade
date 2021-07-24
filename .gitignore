@@ -10,6 +10,8 @@ app/storage/
 # Laravel 5 & Lumen specific
 public/storage
 public/hot
+/public/css
+/public/js
 storage/*.key
 Homestead.yaml
 Homestead.json
