@@ -2,7 +2,7 @@
 
 namespace App\Trade\Exchange;
 
-use App\Trade\Errors;
+use App\Trade\Log;
 
 class AccountBalance
 {
@@ -24,18 +24,36 @@ class AccountBalance
         }
     }
 
-    protected function calculateRelativeWorth()
+    public function calculateRoe(AccountBalance $prevBalance): array
     {
-        $list = $this->exchange->symbolList($this->relativeAsset);
-        $relativeWorth = [];
+        $roe = [];
+
+        foreach ($prevBalance->getAssets() as $asset)
+        {
+            $total = $asset->total();
+            $roe[$name = $asset->name()] = $total / ($this->assets[$name]->total() - $total) * 100;
+        }
+
+        return $roe;
+    }
+
+    public function calculateRelativeWorth(string $relativeAsset = null, bool $onlyAvailable = false): array
+    {
+        $relativeAsset ??= $this->relativeAsset;
+
+        if (empty($relativeAsset))
+            throw new \UnexpectedValueException('Relative asset can not be empty.');
+
+        $symbols = $this->exchange->symbols($relativeAsset);
+        $worth = [];
 
         foreach ($this->assets as $asset)
         {
-            if (($baseAsset = $asset->name()) != $this->relativeAsset)
+            if (($baseAsset = $asset->name()) != $relativeAsset)
             {
-                $symbol = $this->exchange->buildSymbol($baseAsset, $this->relativeAsset);
+                $symbol = $this->exchange->buildSymbol($baseAsset, $relativeAsset);
 
-                if (!in_array($symbol, $list))
+                if (!in_array($symbol, $symbols))
                 {
                     continue;
                 }
@@ -46,21 +64,29 @@ class AccountBalance
 
                 } catch (\UnexpectedValueException $e)
                 {
-                    Errors::log($e);
+                    Log::log($e);
                     continue;
                 }
             }
 
-            $relativeWorth[$baseAsset] = ($price ?? 1) * $asset->available();
+            $worth[$baseAsset] = ($price ?? 1) * ($onlyAvailable ? $asset->available() : $asset->total());
         }
 
-        arsort($relativeWorth);
+        arsort($worth);
 
-        return $relativeWorth;
+        return $worth;
     }
 
     public function primaryAsset(): Asset
     {
-        return $this->assets[array_key_first($this->calculateRelativeWorth())];
+        return $this->assets[array_key_first($this->calculateRelativeWorth(onlyAvailable: true))];
+    }
+
+    /**
+     * @return Asset[]
+     */
+    public function getAssets(): array
+    {
+        return $this->assets;
     }
 }
