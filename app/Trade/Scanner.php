@@ -2,19 +2,17 @@
 
 namespace App\Trade;
 
-use App\Models\Candles;
+use App\Models\Symbol;
 use App\Trade\Exchange\AbstractExchange;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Facades\DB;
 
 class Scanner
 {
     /**
      * @return string[]
-     * @var \Closure
      */
-    protected $symbolFilterer;
+    protected ?\Closure $symbolFilterer = null;
 
     public function __construct(protected AbstractExchange $exchange)
     {
@@ -27,12 +25,21 @@ class Scanner
         $this->symbolFilterer = $filterer;
     }
 
-    /** @return Candles[] */
+    protected function filterSymbols(array &$symbols): void
+    {
+        if (($filterer = $this->symbolFilterer) instanceof \Closure)
+        {
+            $symbols = $filterer($symbols);
+        }
+    }
+
+    /** @return Symbol[] */
     public function scan(string $interval, string $quoteAsset = null): Collection
     {
-        $filterer = $this->symbolFilterer;
+        $symbolList = $this->exchange->symbols($quoteAsset);
+        $this->filterSymbols($symbolList);
 
-        if (!$symbolList = $filterer($this->exchange->symbols($quoteAsset)))
+        if (!$symbolList)
         {
             throw new \LogicException('No symbol was given.');
         }
@@ -40,85 +47,100 @@ class Scanner
         $map = $this->exchange->candleMap();
         $exchange = $this->exchange->name();
 
-        $maxDates = DB::table('candles', 'sub')
-            ->select('symbol', DB::raw('MAX(end_date) AS maxDate'))
-            ->whereIn('symbol', $symbolList)
-            ->where('exchange', $exchange)
-            ->where('interval', $interval)
-            ->groupBy('symbol');
-
-        $ids = DB::table('candles', 'main')
-            ->select(DB::raw('main.id'))
-            ->joinSub($maxDates, 'sub', function (JoinClause $join) {
-                $join->on('main.symbol', '=', 'sub.symbol');
-                $join->on('main.end_date', '=', 'sub.maxDate');
-            })
-            ->get()
-            ->pluck('id')
-            ->toArray();
-
-        /** @var Candles[] $candles */
-        $candles = Candles::query()
-            ->whereIn('id', $ids)
-            ->get()
-            ->keyBy('symbol');
-
+        $inserts = [];
         foreach ($symbolList as $symbol)
         {
+            $inserts[] = [
+                'symbol'   => $symbol,
+                'exchange' => $exchange,
+                'interval' => $interval
+            ];
+        }
+
+        DB::table('symbols')->insertOrIgnore($inserts);
+
+        /** @var Symbol[] $symbols */
+        $symbols = Symbol::query()
+            ->whereIn('symbol', $symbolList)
+            ->where('interval', $interval)
+            ->where('exchange', $exchange)
+            ->get();
+
+        $limit = $this->exchange->getMaxCandlesPerRequest();
+
+        foreach ($symbols as $symbol)
+        {
+            $id = $symbol->id;
             do
             {
-                /** @var Candles $current */
-                $current = $candles[$symbol] = $candles[$symbol] ?? $this->setupCandles($exchange,
-                        $symbol,
-                        $interval,
-                        [],
-                        $map);
+                $current = $this->fetchLastCandles($symbol, 2);
 
-                $current->pop();
+                $lastCandle = $current->first();
+                $current->shift();
 
-                $latest = $this->exchange->candles($symbol,
-                    $interval,
-                    $current->last()[$current->map('timestamp')] ?? 0,
-                    $this->exchange->getMaxCandlesPerRequest());
+                $start = $current->first()->t ?? 0;
+                $latest = $this->exchange->candles($symbol->symbol, $interval, $start, $limit);
 
                 $break = count($latest) <= 1;
-                $data = $current->data;
 
-                if (($gap = Candles::MAX_LENGTH - $current->length) > 0)
+                $inserts = [];
+                foreach ($latest as $candle)
                 {
-                    /** @noinspection SlowArrayOperationsInLoopInspection */
-                    $data = array_merge($data, array_slice($latest, 0, $gap));
-                    $latest = array_slice($latest, $gap);
+                    $inserts[] = [
+                        'symbol_id' => $id,
+                        't'         => $candle[$map->t],
+                        'o'         => $candle[$map->o],
+                        'c'         => $candle[$map->c],
+                        'h'         => $candle[$map->h],
+                        'l'         => $candle[$map->l],
+                        'v'         => $candle[$map->v],
+                    ];
                 }
 
-                $current->data = $data;
-
-                foreach (array_chunk($latest, Candles::MAX_LENGTH) as $latestData)
+                if (isset($latest[0]) && $lastCandle)
                 {
-                    $new = $this->setupCandles($exchange,
-                        $symbol,
-                        $interval,
-                        $latestData,
-                        $map);
-                    $new->save();
-                    $candles[$symbol] = $new;
+                    if ($latest[0][$map->t] != $lastCandle->t)
+                    {
+                        throw new \LogicException('Candles are corrupt!');
+                    }
+
+                    DB::table('candles')
+                        ->where('id', $lastCandle->id)
+                        ->update($inserts[0]);
+                    unset($inserts[0]);
                 }
-                $current->save();
+
+                if ($inserts)
+                    DB::table('candles')->insert($inserts);
 
             } while (!$break);
         }
 
-        return $candles;
+        return $symbols;
     }
 
-    protected function setupCandles(string $exchange, string $symbol, string $interval, mixed $data, array $map): Candles
+    protected function setupCandles(string $exchange, string $symbol, string $interval, mixed $data, array $map): Symbol
     {
-        return new Candles([
+        return new Symbol([
             'exchange' => $exchange,
             'symbol'   => $symbol,
             'interval' => $interval,
             'data'     => $data,
             'map'      => $map
         ]);
+    }
+
+    /**
+     * @param Symbol $symbol
+     *
+     * @return mixed
+     */
+    protected function fetchLastCandles(Symbol $symbol, int $limit = 10): \Illuminate\Support\Collection
+    {
+        return DB::table('candles')
+            ->where('symbol_id', $symbol->id)
+            ->orderBy('t', 'DESC')
+            ->limit($limit)
+            ->get();
     }
 }
