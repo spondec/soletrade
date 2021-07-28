@@ -4,6 +4,7 @@ namespace App\Trade;
 
 use App\Models\Order;
 use App\Models\Position;
+use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Exchange\AbstractExchange;
 use Illuminate\Database\Eloquent\Collection;
@@ -139,25 +140,5 @@ class Manager
     public function stopLoss(Position $position, float $price): bool
     {
 
-    }
-
-    public function exchange(Order|Position $model): AbstractExchange
-    {
-        $account = ucfirst(mb_strtolower($model->account));
-        $exchange = ucfirst(mb_strtolower($model->exchange));
-
-        $class = '\App\Trade\Exchange\\' . "$account\\$exchange";
-
-        if ($instance = static::$exchanges[$class] ?? null)
-        {
-            return $instance;
-        }
-
-        if (!class_exists($class))
-        {
-            throw new \LogicException("Exchange class couldn't be found: $class");
-        }
-
-        return static::$exchanges[$class] = $class::instance();
     }
 }
