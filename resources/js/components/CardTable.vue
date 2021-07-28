@@ -2,10 +2,10 @@
   <div class="card-table">
     <div class="card-table-header">{{ title }}</div>
     <div class="card-table-body">
-      <table class="table-fixed" v-if="collection.length">
+      <table class="table-fixed" v-if="Object.keys(collection).length">
         <thead class="text-dark">
         <tr>
-          <th class="w-1/4 ..." v-for="(details, key) in collection[0]">
+          <th class="w-1/4 ..." v-for="(details, key) in collection[Object.keys(collection)[0]]">
             {{ key.charAt(0).toUpperCase() + key.slice(1) }}
           </th>
         </tr>
@@ -17,11 +17,13 @@
         </tbody>
       </table>
       <p v-else>No {{ itemName }} was found.</p>
+      <slot></slot>
     </div>
   </div>
 </template>
 
 <script>
+
 export default {
   name: "CardTable",
   props: ['title', 'itemName', 'collection']
