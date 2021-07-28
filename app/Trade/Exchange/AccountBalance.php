@@ -17,7 +17,12 @@ class AccountBalance
         {
             if (!$asset instanceof Asset)
             {
-                throw new \InvalidArgumentException('The argument must be a instance of Asset class.');
+                throw new \InvalidArgumentException('Assets must be instances of Asset class.');
+            }
+
+            if ($asset->available() == 0 && $asset->total() == 0)
+            {
+                continue;
             }
 
             $this->assets[$asset->name()] = $asset;
