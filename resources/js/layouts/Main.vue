@@ -1,62 +1,63 @@
 <template>
-    <nav class="navbar navbar-expand-md navbar-dark shadow-sm">
-      <div class="container">
-        <v-link class="navbar-brand" href="/">{{ appName }}</v-link>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false"
-                aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+  <nav class="navbar navbar-expand-md navbar-dark shadow-sm">
+    <div class="container">
+      <v-link class="navbar-brand" href="/">{{ appName }}</v-link>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+              aria-controls="navbarSupportedContent" aria-expanded="false"
+              aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <!-- Left Side Of Navbar -->
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-              <v-link class="nav-link text-white" href="/chart">Chart</v-link>
-            </li>
-          </ul>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <!-- Left Side Of Navbar -->
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <v-link class="nav-link" href="/chart">Chart</v-link>
+          </li>
+        </ul>
 
-          <!-- Right Side Of Navbar -->
-          <ul class="navbar-nav ml-auto">
-            <!-- Authentication Links -->
-            <!--          @guest-->
-            <!--          @if (Route::has('login'))-->
-            <!--          <li class="nav-item">-->
-            <!--            <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>-->
-            <!--          </li>-->
-            <!--          @endif-->
+        <!-- Right Side Of Navbar -->
+        <ul class="navbar-nav ml-auto">
+          <!-- Authentication Links -->
+          <!--          @guest-->
+          <!--          @if (Route::has('login'))-->
+          <!--          <li class="nav-item">-->
+          <!--            <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>-->
+          <!--          </li>-->
+          <!--          @endif-->
 
-            <!--          @if (Route::has('register'))-->
-            <!--          <li class="nav-item">-->
-            <!--            <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>-->
-            <!--          </li>-->
-            <!--          @endif-->
-            <!--          @else-->
-            <!--          <li class="nav-item dropdown">-->
-            <!--            <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"-->
-            <!--               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>-->
-            <!--              {{ Auth::user()->name }}-->
-            <!--            </a>-->
+          <!--          @if (Route::has('register'))-->
+          <!--          <li class="nav-item">-->
+          <!--            <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>-->
+          <!--          </li>-->
+          <!--          @endif-->
+          <!--          @else-->
+          <!--          <li class="nav-item dropdown">-->
+          <!--            <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"-->
+          <!--               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>-->
+          <!--              {{ Auth::user()->name }}-->
+          <!--            </a>-->
 
-            <!--            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">-->
-            <!--              <a class="dropdown-item" href="{{ route('logout') }}"-->
-            <!--                 onclick="event.preventDefault();-->
-            <!--                                                     document.getElementById('logout-form').submit();">-->
-            <!--                {{ __('Logout') }}-->
-            <!--              </a>-->
+          <!--            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">-->
+          <!--              <a class="dropdown-item" href="{{ route('logout') }}"-->
+          <!--                 onclick="event.preventDefault();-->
+          <!--                                                     document.getElementById('logout-form').submit();">-->
+          <!--                {{ __('Logout') }}-->
+          <!--              </a>-->
 
-            <!--              <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">-->
-            <!--                @csrf-->
-            <!--              </form>-->
-            <!--            </div>-->
-            <!--          </li>-->
-            <!--          @endguest-->
-          </ul>
-        </div>
+          <!--              <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">-->
+          <!--                @csrf-->
+          <!--              </form>-->
+          <!--            </div>-->
+          <!--          </li>-->
+          <!--          @endguest-->
+        </ul>
       </div>
-    </nav>
+    </div>
+  </nav>
   <div class="container text-white">
-  <slot></slot>
+    <h1 class="card-title text-white text-4xl text-center m-2" v-if="title">{{ title }}</h1>
+    <slot></slot>
   </div>
 </template>
 
@@ -67,9 +68,13 @@ export default {
   components: {
     VLink
   },
-  mounted()
+  props: ['title'],
+  created()
   {
     this.loadVariables();
+  },
+  mounted()
+  {
   },
   methods: {
     loadVariables: function ()
@@ -85,3 +90,5 @@ export default {
   }
 }
 </script>
+
+<style src="vue-multiselect/dist/vue-multiselect.css"></style>
