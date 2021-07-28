@@ -2,10 +2,13 @@
 
 namespace App\Trade\Exchange;
 
+use App\Models\Exchange;
 use App\Models\Order;
+use App\Trade\CandleMap;
 use App\Trade\Scanner;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 abstract class AbstractExchange
 {
@@ -18,6 +21,8 @@ abstract class AbstractExchange
 
     protected string $name;
 
+    protected Exchange $model;
+
     protected array $actions;
     protected string $account;
 
@@ -26,9 +31,31 @@ abstract class AbstractExchange
 
     protected Scanner $scanner;
 
+    protected final function register(): int
+    {
+        DB::table('exchanges')->insertOrIgnore([
+            'class'   => static::class,
+            'name'    => $this->name,
+            'account' => $this->account
+        ]);
+
+        /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
+        $this->model = Exchange::query()
+            ->where('class', static::class)
+            ->limit(1)
+            ->firstOrFail();
+
+        return $this->model->id;
+    }
+
     public function scanner(): Scanner
     {
         return $this->scanner;
+    }
+
+    public function id(): int
+    {
+        return $this->model->id;
     }
 
     /**
@@ -44,18 +71,14 @@ abstract class AbstractExchange
 
         $config = Config::get('exchange.' . $this->name);
 
-        if (empty($config['apiKey']) || empty($config['secretKey']))
-        {
-            throw new \LogicException('API/Secret key for exchange ' . $this->name . ' could not found.');
-        }
-
-        $this->apiKey = $config['apiKey'];
-        $this->secretKey = $config['secretKey'];
+        $this->apiKey = $config['apiKey'] ?? null;
+        $this->secretKey = $config['secretKey'] ?? null;
 
         $this->actions = $this->availableOrderActions();
         $this->account = $this->accountType();
 
         $this->setup();
+        $this->register();
 
         $this->scanner = new Scanner($this);
     }
@@ -232,7 +255,7 @@ abstract class AbstractExchange
 
     abstract public function minTradeQuantity(string $symbol): float;
 
-    abstract public function candleMap(): array;
+    abstract public function candleMap(): CandleMap;
 
     abstract public function candles(string $symbol, string $interval, float $start = null, float $limit = null): array;
 
