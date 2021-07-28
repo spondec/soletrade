@@ -15,6 +15,10 @@ class TradeController extends Controller
      */
     public function index(): array
     {
-        return Position::all();
+        return Position::query()
+            ->orderBy('is_open', 'DESC')
+            ->limit(15)
+            ->get(['is_open', 'symbol', 'pnl'])
+            ->toArray();
     }
 }
