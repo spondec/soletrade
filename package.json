@@ -11,7 +11,7 @@
         "@vue/compiler-sfc": "^3.1.5",
         "autoprefixer": "^10.3.1",
         "axios": "^0.21",
-        "bootstrap": "^4.6.0",
+        "bootstrap": "^5.0.0-beta3",
         "jquery": "^3.6",
         "laravel-mix": "^6.0.25",
         "lodash": "^4.17.19",
@@ -25,6 +25,7 @@
         "vue-loader": "^16.3.2"
     },
     "dependencies": {
-        "lightweight-charts": "^3.3.0"
+        "lightweight-charts": "^3.3.0",
+        "vue-multiselect": "^3.0.0-alpha.2"
     }
 }
