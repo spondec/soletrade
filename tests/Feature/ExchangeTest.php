@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
+use App\Trade\CandleMap;
 use App\Trade\Exchange\AbstractExchange;
 use App\Trade\Exchange\AccountBalance;
 use Tests\TestCase;
@@ -26,15 +27,9 @@ abstract class ExchangeTest extends TestCase
         $this->exchange = $this->setupExchange();
     }
 
-    public function test_candle_map_keys()
+    public function test_candle_map()
     {
-        $map = $this->exchange->candleMap();
-        $keys = ['close', 'high', 'low', 'open', 'volume', 'timestamp'];
-
-        foreach ($keys as $key)
-        {
-            $this->assertArrayHasKey($key, $map);
-        }
+        $this->assertInstanceOf(CandleMap::class, $this->exchange->candleMap());
     }
 
     public function test_fetch_candles()
