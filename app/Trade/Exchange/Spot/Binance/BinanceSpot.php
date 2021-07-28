@@ -3,6 +3,7 @@
 namespace App\Trade\Exchange\Spot\Binance;
 
 use App\Models\Order;
+use App\Trade\CandleMap;
 use App\Trade\Exchange\AccountBalance;
 use App\Trade\Exchange\Asset;
 use App\Trade\Exchange\OrderBook;
@@ -184,16 +185,9 @@ trait BinanceSpot
         $this->processOrderFills($order, $response);
     }
 
-    public function candleMap(): array
+    public function candleMap(): CandleMap
     {
-        return [
-            'timestamp' => 0,
-            'open'      => 1,
-            'high'      => 2,
-            'low'       => 3,
-            'close'     => 4,
-            'volume'    => 5,
-        ];
+        return new CandleMap(0, 1, 4, 2, 3, 5);
     }
 
     public function minTradeQuantity(string $symbol): float
