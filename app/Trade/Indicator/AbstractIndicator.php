@@ -2,7 +2,7 @@
 
 namespace App\Trade\Indicator;
 
-use App\Models\Candles;
+use App\Models\Symbol;
 use App\Models\Signal;
 use App\Trade\VersionableInterface;
 
@@ -11,7 +11,7 @@ abstract class AbstractIndicator implements VersionableInterface
     protected array $config = [];
     protected array $data;
 
-    public function __construct(protected Candles $candles, array $config = [])
+    public function __construct(protected Symbol $symbol, array $config = [])
     {
         $this->config = array_merge($this->config, $config);
         $this->data = $this->calculate();
@@ -21,9 +21,9 @@ abstract class AbstractIndicator implements VersionableInterface
 
     abstract public function signal(): ?Signal;
 
-    public function getCandles(): Candles
+    public function getSymbol(): Symbol
     {
-        return $this->candles;
+        return $this->symbol;
     }
 
     public function data(): array
