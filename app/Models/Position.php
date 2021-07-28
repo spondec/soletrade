@@ -7,9 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property int     id
+ * @property int     exchange_id
  * @property boolean is_open
- * @property string  exchange
- * @property string  account
  * @property string  symbol
  * @property string  side
  * @property float   quantity
@@ -27,6 +26,7 @@ use Illuminate\Database\Eloquent\Model;
 class Position extends Model
 {
     use HasFactory;
+    use HasExchange;
 
     protected $table = 'positions';
 }
