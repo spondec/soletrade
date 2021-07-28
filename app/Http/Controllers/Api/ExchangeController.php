@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Trade\Config;
 use App\Trade\Exchange\AbstractExchange;
-use Illuminate\Http\Request;
 
 class ExchangeController extends Controller
 {
@@ -25,5 +24,29 @@ class ExchangeController extends Controller
         }
 
         throw new \HttpException("Exchange $exchange doesn't exist.");
+    }
+
+    public function balances(): array
+    {
+        $balances = [];
+
+        foreach (Config::exchanges() as $exchange)
+        {
+            $exchange = $exchange::instance();
+            $exchangeName = $exchange->name();
+
+            foreach ($exchange->accountBalance()->getAssets() as $assetName => $asset)
+            {
+                $balances[] = [
+                    'name'      => $assetName,
+                    'exchange'  => $exchangeName,
+                    'available' => $asset->available(),
+                    'total'     => $asset->total(),
+                ];
+            }
+        }
+        $names = array_column($balances, 'name');
+        array_multisort($names, SORT_ASC, $balances);
+        return $balances;
     }
 }
