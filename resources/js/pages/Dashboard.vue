@@ -1,13 +1,12 @@
 <template>
-  <main-layout>
-    <h1 class="card-title text-white text-4xl text-center m-2">Dashboard</h1>
-    <div class="grid 2xl:grid-cols-5 xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-4">
+  <main-layout title="Dashboard">
+    <div class="grid xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-4" v-if="!loading">
       <card-table title="Exchanges" itemName="exchange" v-bind:collection="exchanges"/>
-      <card-table title="Active Trades" itemName="active trade" v-bind:collection="trades.active"/>
-      <card-table title="Recent Trades" itemName="recent trade" v-bind:collection="trades.recent"/>
-      <card-table title="Active Strategies" itemName="strategy" v-bind:collection="strategies"/>
       <card-table title="Balances" itemName="balance" v-bind:collection="balances"/>
+      <card-table title="Trades" itemName="trade" v-bind:collection="trades"/>
+      <card-table title="Active Strategies" itemName="strategy" v-bind:collection="strategies"/>
     </div>
+    <v-spinner v-else/>
   </main-layout>
 </template>
 
@@ -16,49 +15,40 @@
 import CardTable from "../components/CardTable";
 import VLink from "../components/VLink";
 import MainLayout from "../layouts/Main";
+import ApiService from "../services/ApiService";
+import VSpinner from "../components/VSpinner";
 
 export default {
   title: 'Dashboard',
-  components: {MainLayout, VLink, CardTable},
+  components: {VSpinner, MainLayout, VLink, CardTable},
   data: function ()
   {
     return {
+      loading: true,
       exchanges: [],
       balances: [],
       strategies: [],
-      trades: {
-        recent: [],
-        active: []
-      }
+      trades: []
     }
   },
-  mounted()
+
+  created()
   {
     this.load();
   },
+  mounted()
+  {
+
+  },
   methods: {
-    load: function ()
+    load: async function ()
     {
-      this.get('api/exchanges/', data => this.exchanges = data);
-      // this.get('api/exchanges/balances', [this, 'balances']);
-      //   this.get('api/trades/active', [this, 'activeTra']);
-      //   this.get('api/trades/recent', [this, 'recentTrades']);
-      //   this.get('api/strategies/', [this, 'strategies']);
+      this.exchanges = await ApiService.exchanges();
+      this.balances = await ApiService.balances();
+      this.trades = await ApiService.trades();
+
+      this.loading = false;
     },
-    get: function (url, callback)
-    {
-      axios.get(url)
-          .then(response =>
-          {
-            console.log(response)
-            callback(response.data)
-          })
-          .catch(error =>
-          {
-            console.log(error)
-            alert('Error')
-          });
-    }
   }
 }
 </script>
