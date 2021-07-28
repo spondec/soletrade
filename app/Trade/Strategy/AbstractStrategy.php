@@ -2,7 +2,7 @@
 
 namespace App\Trade\Strategy;
 
-use App\Models\Candles;
+use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Indicator\FibonacciRetracement;
 use App\Trade\Indicator\MACD;
@@ -22,7 +22,7 @@ abstract class AbstractStrategy implements VersionableInterface
         FibonacciRetracement::class => []
     ];
 
-    protected function initIndicators(Candles $candles): void
+    protected function initIndicators(Symbol $candles): void
     {
         foreach (self::INDICATORS as $class => $config)
         {
@@ -30,7 +30,7 @@ abstract class AbstractStrategy implements VersionableInterface
         }
     }
 
-    public function check(Candles $candles): ?TradeSetup
+    public function check(Symbol $candles): ?TradeSetup
     {
         $this->initIndicators($candles);
 
