@@ -22,8 +22,6 @@ class Symbol extends Model
 
     const INDICATOR_DIR = "\App\Trade\Indicator";
 
-    protected int $limit = 0;
-
     protected $table = 'symbols';
 
     protected ?Collection $candles = null;
@@ -43,45 +41,36 @@ class Symbol extends Model
         return $signals;
     }
 
-    public function setLimit(int $limit)
-    {
-        if ($limit < $this->limit && $this->candles)
-        {
-            $this->candles = $this->candles->slice(0, $limit);
-        }
-
-        $this->limit = $limit;
-    }
-
-    public function candles(): ?Collection
+    public function candles(?int $before = null, ?int $limit = null): ?Collection
     {
         if (!$this->exists)
         {
             return null;
         }
 
-        if ($this->candles && $this->limit && count($this->candles) == $this->limit)
+        if ($this->candles)
         {
-            return $this->candles;
+            $candles = $this->candles;
+
+            if ($before)
+            {
+                $candles = $candles->filter(fn($v) => $v->t < $before);
+            }
+
+            if ($limit)
+            {
+                $candles = $candles->slice(0, $limit);
+            }
+
+            return $candles;
         }
 
-        $query = DB::table('candles')
+        $this->candles = DB::table('candles')
             ->where('symbol_id', $this->id)
-            ->orderBy('t', 'ASC');
+            ->orderBy('t', 'ASC')
+            ->get();
 
-        if ($this->limit)
-            $query->limit($this->limit);
-
-        return $this->candles = $query->get();
-    }
-
-    public function toArray()
-    {
-        $attributes = parent::toArray();
-
-        $attributes['data'] = $this->candles()?->toArray() ?? [];
-
-        return $attributes;
+        return $before || $limit ? $this->candles($before, $limit) : $this->candles;
     }
 
     public function addIndicator(AbstractIndicator $indicator): void

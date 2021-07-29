@@ -20,7 +20,11 @@ class ChartController extends Controller
 
         if ($exchange && $symbol && $interval)
         {
-            return $this->candles($exchange, $symbol, $interval);
+            return $this->candles($exchange,
+                $symbol,
+                $interval,
+                $request->get('before'),
+                $request->get('limit'));
         }
 
         return [
@@ -34,7 +38,11 @@ class ChartController extends Controller
     /**
      * @param AbstractExchange $exchange
      */
-    public function candles(string $exchange, string $symbol, string $interval, ?int $before = null): array
+    public function candles(string $exchange,
+                            string $symbol,
+                            string $interval,
+                            ?int   $before = null,
+                            ?int   $limit = null): array
     {
         /** @var Symbol $symbol */
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
@@ -44,11 +52,9 @@ class ChartController extends Controller
             ->where('interval', $interval)
             ->first();
 
-        if ($before)
-        {
-            $symbol->candles($before);
-        }
-
-        return $symbol?->toArray() ?? [];
+        return array_merge($symbol?->toArray(), [
+                'data' => $symbol->candles($before, $limit)
+                        ?->toArray() ?? []
+            ]) ?? [];
     }
 }
