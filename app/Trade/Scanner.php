@@ -9,37 +9,22 @@ use Illuminate\Support\Facades\DB;
 
 class Scanner
 {
-    /**
-     * @return string[]
-     */
-    protected ?\Closure $symbolFilterer = null;
-
     public function __construct(protected AbstractExchange $exchange)
     {
 
     }
 
-    /** @return string[] */
-    public function setFilterer(\Closure $filterer): void
-    {
-        $this->symbolFilterer = $filterer;
-    }
-
-    protected function filterSymbols(array &$symbols): void
-    {
-        if (($filterer = $this->symbolFilterer) instanceof \Closure)
-        {
-            $symbols = $filterer($symbols);
-        }
-    }
-
     /** @return Symbol[] */
-    public function scan(string $interval, string $quoteAsset = null): Collection
+    public function scan(string $interval, string $quoteAsset = null, ?\Closure $filterer = null): Collection
     {
-        $symbolList = $this->exchange->symbols($quoteAsset);
-        $this->filterSymbols($symbolList);
+        $exchangeSymbols = $this->exchange->symbols($quoteAsset);
 
-        if (!$symbolList)
+        if ($filterer instanceof \Closure)
+        {
+            $exchangeSymbols = array_filter($exchangeSymbols, $filterer);
+        }
+
+        if (!$exchangeSymbols)
         {
             throw new \LogicException('No symbol was given.');
         }
@@ -48,12 +33,12 @@ class Scanner
         $exchangeId = $this->exchange->id();
 
         $inserts = [];
-        foreach ($symbolList as $symbol)
+        foreach ($exchangeSymbols as $symbol)
         {
             $inserts[] = [
-                'symbol'   => $symbol,
+                'symbol'      => $symbol,
                 'exchange_id' => $exchangeId,
-                'interval' => $interval
+                'interval'    => $interval
             ];
         }
 
@@ -61,7 +46,7 @@ class Scanner
 
         /** @var Symbol[] $symbols */
         $symbols = Symbol::query()
-            ->whereIn('symbol', $symbolList)
+            ->whereIn('symbol', $exchangeSymbols)
             ->where('interval', $interval)
             ->where('exchange_id', $exchangeId)
             ->get();
@@ -119,21 +104,8 @@ class Scanner
         return $symbols;
     }
 
-    protected function setupCandles(string $exchange, string $symbol, string $interval, mixed $data, array $map): Symbol
-    {
-        return new Symbol([
-            'exchange' => $exchange,
-            'symbol'   => $symbol,
-            'interval' => $interval,
-            'data'     => $data,
-            'map'      => $map
-        ]);
-    }
-
     /**
      * @param Symbol $symbol
-     *
-     * @return mixed
      */
     protected function fetchLastCandles(Symbol $symbol, int $limit = 10): \Illuminate\Support\Collection
     {
