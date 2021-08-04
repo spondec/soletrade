@@ -45,14 +45,14 @@ class Scanner
         }
 
         $map = $this->exchange->candleMap();
-        $exchange = $this->exchange->name();
+        $exchangeId = $this->exchange->id();
 
         $inserts = [];
         foreach ($symbolList as $symbol)
         {
             $inserts[] = [
                 'symbol'   => $symbol,
-                'exchange' => $exchange,
+                'exchange_id' => $exchangeId,
                 'interval' => $interval
             ];
         }
@@ -63,7 +63,7 @@ class Scanner
         $symbols = Symbol::query()
             ->whereIn('symbol', $symbolList)
             ->where('interval', $interval)
-            ->where('exchange', $exchange)
+            ->where('exchange_id', $exchangeId)
             ->get();
 
         $limit = $this->exchange->getMaxCandlesPerRequest();
@@ -101,7 +101,7 @@ class Scanner
                 {
                     if ($latest[0][$map->t] != $lastCandle->t)
                     {
-                        throw new \LogicException('Candles are corrupt!');
+                        throw new \LogicException("$symbol candles are corrupt!");
                     }
 
                     DB::table('candles')
