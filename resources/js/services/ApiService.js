@@ -9,15 +9,9 @@ export default class ApiService
         axios.get(url).then(response =>
         {
             callback(response.data);
-
-            if (this.log)
-                console.log(response);
         }).catch(error =>
         {
             console.log(error);
-
-            if (this.log)
-                alert('An API error occured.');
         });
     }
 
@@ -41,13 +35,15 @@ export default class ApiService
         return (await axios.get('api/chart')).data;
     }
 
-    static async candles(exchange, symbol, interval)
+    static async candles(exchange, symbol, interval, indicators, limit)
     {
         return (await axios.get('api/chart', {
             params: {
                 symbol: symbol,
                 exchange: exchange,
-                interval: interval
+                interval: interval,
+                indicators: indicators,
+                limit: limit
             }
         })).data;
     }
