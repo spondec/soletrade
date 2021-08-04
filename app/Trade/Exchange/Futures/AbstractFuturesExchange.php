@@ -17,13 +17,11 @@ abstract class AbstractFuturesExchange extends AbstractExchange
 
     public function short()
     {
-        $this->order->side = 'SHORT';
-        return $this;
+
     }
 
     public function long()
     {
-        $this->order->side = 'LONG';
-        return $this;
+
     }
 }
