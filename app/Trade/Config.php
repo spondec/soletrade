@@ -5,6 +5,8 @@ namespace App\Trade;
 use App\Trade\Exchange\AbstractExchange;
 use App\Trade\Exchange\Spot\Binance;
 use App\Trade\Indicator\AbstractIndicator;
+use App\Trade\Indicator\MACD;
+use App\Trade\Indicator\RSI;
 use Illuminate\Support\Facades\DB;
 
 final class Config
@@ -22,7 +24,7 @@ final class Config
      */
     public static function indicators(): array
     {
-        return ['rsi', 'macd', 'fib'];
+        return [RSI::class, MACD::class];
     }
 
     /**
