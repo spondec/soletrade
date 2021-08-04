@@ -2,7 +2,7 @@
 
 namespace App\Trade;
 
-trait Name
+trait NameTrait
 {
     public static function name(): string
     {

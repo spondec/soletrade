@@ -4,12 +4,12 @@ namespace App\Trade\Indicator;
 
 use App\Models\Symbol;
 use App\Models\Signal;
-use App\Trade\Name;
+use App\Trade\NameTrait;
 use Illuminate\Support\Collection;
 
 abstract class AbstractIndicator
 {
-    use Name;
+    use NameTrait;
 
     protected array $config = [];
     protected array $data = [];

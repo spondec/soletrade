@@ -5,11 +5,11 @@ namespace App\Trade\Strategy;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Scanner;
-use App\Trade\Name;
+use App\Trade\NameTrait;
 
 abstract class AbstractStrategy
 {
-    use Name;
+    use NameTrait;
 
     /** @var int - seconds */
     const SCAN_INTERVAL = 300;
