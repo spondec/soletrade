@@ -25,7 +25,7 @@
         "vue-loader": "^16.3.2"
     },
     "dependencies": {
-        "lightweight-charts": "^3.3.0",
+        "lightweight-charts": "^3.5.0",
         "vue-multiselect": "^3.0.0-alpha.2"
     }
 }
