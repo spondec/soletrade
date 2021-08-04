@@ -27,18 +27,33 @@ class Symbol extends Model
     protected ?Collection $candles = null;
 
     /** @var AbstractIndicator[] */
-    protected $indicators = [];
+    protected array $indicators = [];
 
-    public function getSignals()
+    protected ?int $before = null;
+    protected ?int $limit = null;
+
+    public function signals()
     {
         $signals = [];
 
         foreach ($this->indicators as $indicator)
         {
-            $signals[$indicator->name()] = $indicator->signal();
+            $signals[$indicator::name()] = $indicator->signals();
         }
 
         return $signals;
+    }
+
+    public function toArray()
+    {
+        $result = parent::toArray();
+
+        $result['before'] = $this->before;
+        $result['limit'] = $this->limit;
+        $result['candles'] = $this->candles?->toArray() ?? [];
+        $result['indicators'] = array_map(fn(AbstractIndicator $i) => $i->raw(), $this->indicators) ?? [];
+
+        return $result;
     }
 
     public function candles(?int $before = null, ?int $limit = null): ?Collection
@@ -48,36 +63,39 @@ class Symbol extends Model
             return null;
         }
 
-        if ($this->candles)
+        try
         {
-            $candles = $this->candles;
-
-            if ($before)
+            if ($this->candles && ($before == $this->before || $this->limit == $limit))
             {
-                $candles = $candles->filter(fn($v) => $v->t < $before);
+                return $this->candles;
             }
-
-            if ($limit)
-            {
-                $candles = $candles->slice(0, $limit);
-            }
-
-            return $candles;
+        } finally
+        {
+            $this->before = $before;
+            $this->limit = $limit;
         }
 
-        $this->candles = DB::table('candles')
+        $query = DB::table('candles')
             ->where('symbol_id', $this->id)
-            ->orderBy('t', 'ASC')
-            ->get();
+            ->orderBy('t', 'DESC');
 
-        return $before || $limit ? $this->candles($before, $limit) : $this->candles;
+        if ($limit)
+        {
+            $query->limit($limit);
+        }
+        if ($before)
+        {
+            $query->where('t', '<', $before);
+        }
+
+        return $this->candles = $query->get()->reverse()->values();
     }
 
     public function addIndicator(AbstractIndicator $indicator): void
     {
-        if ($indicator->getSymbol() !== $this)
+        if ($indicator->symbol() !== $this)
         {
-            throw new \InvalidArgumentException("{$indicator->name()} doesn't belong to this instance.");
+            throw new \InvalidArgumentException("{$indicator::name()} doesn't belong to this instance.");
         }
 
         $this->indicators[$indicator->name()] = $indicator;
