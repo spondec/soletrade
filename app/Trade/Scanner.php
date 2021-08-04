@@ -20,7 +20,7 @@ class Scanner
     }
 
     /** @return string[] */
-    public function setSymbolFilterer(\Closure $filterer): void
+    public function setFilterer(\Closure $filterer): void
     {
         $this->symbolFilterer = $filterer;
     }
