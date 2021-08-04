@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Model;
-use App\Models\Symbol;
+use App\Repositories\SymbolRepository;
 use App\Trade\Config;
 use App\Trade\Exchange\AbstractExchange;
 use Illuminate\Http\Request;
@@ -12,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class ChartController extends Controller
 {
+    public function __construct(protected SymbolRepository $symbolRepo)
+    {
+    }
+
     public function index(Request $request): array
     {
         $symbol = $request->get('symbol');
@@ -23,6 +26,7 @@ class ChartController extends Controller
             return $this->candles($exchange,
                 $symbol,
                 $interval,
+                $request->get('indicators', []),
                 $request->get('before'),
                 $request->get('limit'));
         }
@@ -41,20 +45,15 @@ class ChartController extends Controller
     public function candles(string $exchange,
                             string $symbol,
                             string $interval,
+                            array  $indicators,
                             ?int   $before = null,
                             ?int   $limit = null): array
     {
-        /** @var Symbol $symbol */
-        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-        $symbol = Symbol::query()
-            ->where('exchange_id', $exchange::instance()->id())
-            ->where('symbol', $symbol)
-            ->where('interval', $interval)
-            ->first();
-
-        return array_merge($symbol?->toArray(), [
-                'data' => $symbol->candles($before, $limit)
-                        ?->toArray() ?? []
-            ]) ?? [];
+        return $this->symbolRepo->candles($exchange::instance(),
+                $symbol,
+                $interval,
+                $before,
+                $limit,
+                $indicators)?->toArray() ?? [];
     }
 }
