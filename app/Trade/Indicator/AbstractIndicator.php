@@ -4,24 +4,66 @@ namespace App\Trade\Indicator;
 
 use App\Models\Symbol;
 use App\Models\Signal;
-use App\Trade\VersionableInterface;
+use App\Trade\Name;
+use Illuminate\Support\Collection;
 
-abstract class AbstractIndicator implements VersionableInterface
+abstract class AbstractIndicator
 {
-    protected array $config = [];
-    protected array $data;
+    use Name;
 
-    public function __construct(protected Symbol $symbol, array $config = [])
+    protected array $config = [];
+    protected array $data = [];
+    private array $signals = [];
+
+    public function __construct(protected Symbol     $symbol,
+                                protected Collection $candles,
+                                array                $config = [])
     {
-        $this->config = array_merge($this->config, $config);
-        $this->data = $this->calculate();
+        if ($config)
+            $this->config = array_merge_recursive_distinct($this->config, $config);
+        $this->data = $this->run();
     }
 
-    abstract protected function calculate(): array;
+    abstract protected function run(): array;
 
-    abstract public function signal(): ?Signal;
+    public function raw(): array
+    {
+        return $this->data;
+    }
 
-    public function getSymbol(): Symbol
+    protected function combineTimestamps(array $data): array
+    {
+        $timestamps = array_slice($this->timestamps(), ($length = count($data)) * -1, $length);
+
+        return array_combine($timestamps, $data);
+    }
+
+    protected function closes(): array
+    {
+        return array_column($this->candles->all(), 'c');
+    }
+
+    protected function timestamps(): array
+    {
+        return array_column($this->candles->all(), 't');
+    }
+
+    protected function newSignal(Signal $signal): void
+    {
+        //TODO trigger listeners
+        $this->signals[] = $signal;
+    }
+
+    /**
+     *
+     * @return Signal[]
+     */
+    public function signals(): array
+    {
+        return $this->signals;
+    }
+
+    public function symbol(): Symbol
     {
         return $this->symbol;
     }
