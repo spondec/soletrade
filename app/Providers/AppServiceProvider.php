@@ -13,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        ini_set( 'trader.real_precision', 10);
     }
 
     /**
