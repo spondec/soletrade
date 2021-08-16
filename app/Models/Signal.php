@@ -3,25 +3,38 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
 /** COLUMNS
  *
  * @property int    id
- * @property int    trade_setup_id
- * @property string type
- * @property string indicator
- * @property int    indicator_version
+ * @property int    indicator_id
+ * @property int    symbol_id
+ * @property int    timestamp
+ * @property string name
  * @property string side
- * @property string symbol
- * @property string interval
+ * @property string $signature_id
  * @property float  price
  * @property mixed  created_at
  * @property mixed  updated_at
+ *
+ * @property Symbol symbol
  */
 class Signal extends Model
 {
     use HasFactory;
 
+    const BUY = 'BUY';
+    const SELL = 'SELL';
+
     protected $table = 'signals';
+
+    public function tradeSetup()
+    {
+        return $this->belongsToMany(TradeSetup::class);
+    }
+
+    public function symbol()
+    {
+        return $this->hasOne(Symbol::class);
+    }
 }

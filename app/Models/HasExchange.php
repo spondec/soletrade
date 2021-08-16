@@ -28,7 +28,7 @@ trait HasExchange
 
         if (!class_exists($class))
         {
-            throw new \LogicException("$name exchange instance couldn't be found at $class.");
+            throw new \LogicException("Exchange instance '$name' couldn't be found at '$class'");
         }
 
         return $instances[$id] = $class::instance();

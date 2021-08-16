@@ -2,19 +2,18 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/** COLUMNS
- *
+/**
  * @property int    id
- * @property string class
- * @property string name
- * @property string account
+ * @property string data
+ * @property string hash
+ * @property Carbon created_at
+ * @property Carbon updated_at
  */
-class Exchange extends Model
+class Signature extends Model
 {
     use HasFactory;
-
-    protected $guarded = ['id'];
 }

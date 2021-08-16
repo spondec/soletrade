@@ -37,8 +37,7 @@ class Order extends Model
     ];
 
     const VALIDATION_RULES = [
-        'exchange' => 'required|in:BINANCE,FTX',
-        'account' => 'required|in:SPOT,FUTURES',
+        'exchange_id' => 'required|integer|exists:exchanges,id',
         'symbol' => 'required|string|max:50',
         'is_open' => 'boolean',
         'quantity' => 'required|numeric|gt:0',
@@ -66,7 +65,7 @@ class Order extends Model
 
         $lastKey = array_key_last($responses);
 
-        if ($lastKey === null || $key !== $lastKey && $data !== $responses[$lastKey])
+        if ($lastKey === null || ($key !== $lastKey && $data !== $responses[$lastKey]))
         {
             $responses[$key][] = $data;
             $this->responses = $responses;

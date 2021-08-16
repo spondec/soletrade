@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
  * @property string symbol
  * @property string interval
  * @property string exchange
+ * @property int    last_update
  * @property mixed  created_at
  * @property mixed  updated_at
  */
@@ -29,8 +30,9 @@ class Symbol extends Model
     /** @var AbstractIndicator[] */
     protected array $indicators = [];
 
-    protected ?int $before = null;
     protected ?int $limit = null;
+    protected ?int $before = null;
+    protected ?int $after = null;
 
     public function signals()
     {
@@ -56,16 +58,21 @@ class Symbol extends Model
         return $result;
     }
 
-    public function candles(?int $before = null, ?int $limit = null): ?Collection
+    public function candles(?int $limit = null, ?int $before = null, ?int $after = null): ?Collection
     {
         if (!$this->exists)
         {
             return null;
         }
 
+        if ($before && $after && $limit)
+        {
+            throw new \UnexpectedValueException('Argument $limit can not be passed along with $after and $before.');
+        }
+
         try
         {
-            if ($this->candles && ($before == $this->before || $this->limit == $limit))
+            if ($this->candles && $before == $this->before && $after == $this->after && $limit == $this->limit)
             {
                 return $this->candles;
             }
@@ -77,7 +84,7 @@ class Symbol extends Model
 
         $query = DB::table('candles')
             ->where('symbol_id', $this->id)
-            ->orderBy('t', 'DESC');
+            ->orderBy('t', $order = $after ? 'ASC' : 'DESC');
 
         if ($limit)
         {
@@ -87,8 +94,12 @@ class Symbol extends Model
         {
             $query->where('t', '<', $before);
         }
+        if ($after)
+        {
+            $query->where('t', '>', $after);
+        }
 
-        return $this->candles = $query->get()->reverse()->values();
+        return $this->candles = $order === 'DESC' ? $query->get()->reverse()->values() : $query->get();
     }
 
     public function addIndicator(AbstractIndicator $indicator): void
