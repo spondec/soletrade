@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use App\Illuminate\Support\Facades\Schema;
 
 class CreateOrdersTable extends Migration
 {
@@ -16,6 +16,7 @@ class CreateOrdersTable extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('trade_setup_id')->nullable();
+            $table->foreignId('exchange_id');
             $table->boolean('is_open')->default(true);
             $table->enum('status', [
                 'CLOSED',
@@ -26,8 +27,6 @@ class CreateOrdersTable extends Migration
                 'REJECTED',
                 'CANCELED',
                 'PARTIALLY_FILLED']);
-
-            $table->foreignId('exchange_id');
             $table->string('symbol', 50);
             $table->enum('side', ['BUY', 'SELL', 'LONG', 'SHORT']);
             $table->enum('type', [
@@ -38,12 +37,12 @@ class CreateOrdersTable extends Migration
                 'TAKE_PROFIT',
                 'TAKE_PROFIT_LIMIT',
                 'LIMIT_MAKER']);
-            $table->decimal('quantity', 20, 10);
-            $table->decimal('filled', 20, 10)->default(0);
-            $table->decimal('price', 20, 10)->nullable();
-            $table->decimal('stop_price', 20, 10)->nullable();
-            $table->decimal('commission', 20, 10)->nullable();
-            $table->decimal('commission_asset', 20, 10)->nullable();
+            $table->decimal('quantity');
+            $table->decimal('filled')->default(0);
+            $table->decimal('price')->nullable();
+            $table->decimal('stop_price')->nullable();
+            $table->decimal('commission')->nullable();
+            $table->decimal('commission_asset')->nullable();
             $table->string('exchange_order_id', 255)->nullable()->index();
             $table->json('responses')->nullable();
             $table->timestamps();

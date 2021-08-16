@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use App\Illuminate\Support\Facades\Schema;
 
 class CreateSignalsTable extends Migration
 {
@@ -15,14 +15,14 @@ class CreateSignalsTable extends Migration
     {
         Schema::create('signals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('trade_setup_id')->nullable();
-            $table->string('type', 50)->index();
-            $table->string('indicator', 50);
-            $table->integer('indicator_version');
-            $table->enum('side',  ['BUY', 'SELL']);
-            $table->string('symbol', 50);
-            $table->string('interval', 3);
+            $table->foreignId('symbol_id');
+            $table->foreignId('indicator_id');
+            $table->integer('signature_id');
+            $table->string('name', 50)->index();
+            $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('price');
+            $table->bigInteger('timestamp');
+            $table->string('hash', 32)->unique();
             $table->timestamps();
         });
     }
@@ -37,3 +37,4 @@ class CreateSignalsTable extends Migration
         Schema::dropIfExists('signals');
     }
 }
+
