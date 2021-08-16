@@ -2,27 +2,36 @@
 
 namespace Tests\Feature;
 
-use App\Trade\Exchange\Spot\Binance as Original;
-use Tests\Mock\Trade\Exchange\Spot\Binance as Mock;
+use App\Trade\Exchange\Spot\Binance;
 
 class SpotBinanceTest extends ExchangeTest
 {
-    protected static string $defaultSymbol = 'BTC/USDT';
+    protected static string $testSymbol = 'BTC/USDT';
 
-    protected function setupExchange(): Original|Mock
+    protected function setupExchange(): Binance
     {
-        $binance = Mock::instance();
+        $this->exchange = Binance::instance();
+        $this->setSandboxMode(true);
 
+        return $this->exchange;
+    }
+
+    protected function setSandboxMode(bool $enabled): void
+    {
         /** @var \ccxt\binance $api */
-        $api = $binance->getApi();
-        $api->set_sandbox_mode(true);
+        $api = $this->exchange->getApi();
+        $api->set_sandbox_mode($enabled);
+    }
 
-        return $binance;
+    protected function updaterSetUp(): void
+    {
+        parent::updaterSetUp();
+        $this->setSandboxMode(false);
     }
 
     protected function getSymbol(): string
     {
-        return static::$defaultSymbol;
+        return static::$testSymbol;
     }
 
     protected function getQuantity(string $symbol): float
