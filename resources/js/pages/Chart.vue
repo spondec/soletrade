@@ -164,20 +164,20 @@ export default {
 
       for (let i in this.charts)
       {
-        this.charts[i].subscribeCrosshairMove(param =>
-        {
-          if (!param.point) return;
-          if (!param.time) return;
-          if (this.isCrossHairMoving) return;
-
-          this.isCrossHairMoving = true;
-
-          for (let j in this.charts)
-            if (j !== i)
-              this.charts[j].moveCrosshair(param.point);
-
-          this.isCrossHairMoving = false;
-        });
+        // this.charts[i].subscribeCrosshairMove(param =>
+        // {
+        //   if (!param.point) return;
+        //   if (!param.time) return;
+        //   if (this.isCrossHairMoving) return;
+        //
+        //   this.isCrossHairMoving = true;
+        //
+        //   for (let j in this.charts)
+        //     if (j !== i)
+        //       this.charts[j].moveCrosshair(param.point);
+        //
+        //   this.isCrossHairMoving = false;
+        // });
 
         this.charts[i].timeScale().subscribeVisibleLogicalRangeChange(range =>
         {
@@ -325,6 +325,11 @@ export default {
         else if (!interval)
         {
           interval = collection[i][key] - start;
+
+          if (!Number.isInteger(interval))
+          {
+            throw Error('Index interval must be a integer.');
+          }
           break;
         }
       }
@@ -431,7 +436,9 @@ export default {
         }
       }
 
+      this.loading = true;
       this.symbol = await this.prepareSymbol(await this.fetchSymbol());
+      this.loading = false;
 
       if (this.useCache)
         this.cache[key] = {symbol: this.symbol, limit: this.limit};
@@ -446,7 +453,6 @@ export default {
       const length = this.symbol.candles.length;
 
       await this.updateSymbol();
-
       await this.updateSeries();
 
       this.loading = false;
