@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'BINANCE' => [
+    'Binance' => [
         'apiKey' => env('EXCHANGE_BINANCE_API_KEY'),
         'secretKey' => env('EXCHANGE_BINANCE_SECRET_KEY')
     ],
