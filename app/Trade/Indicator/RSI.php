@@ -8,6 +8,7 @@ class RSI extends AbstractIndicator
 
     protected function run(): array
     {
-        return $this->combineTimestamps(\trader_rsi($this->closes(), $this->config['timeFrame']));
+        /** @noinspection PhpUndefinedFunctionInspection */
+        return \trader_rsi($this->closes(), $this->config['timeFrame']);
     }
 }

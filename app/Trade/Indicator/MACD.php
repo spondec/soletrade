@@ -12,15 +12,26 @@ class MACD extends AbstractIndicator
 
     protected function run(): array
     {
+        /** @noinspection PhpUndefinedFunctionInspection */
         $macd = \trader_macd($this->closes(),
             $this->config['fastPeriod'],
             $this->config['slowPeriod'],
             $this->config['signalPeriod']);
 
+        return array_map(fn($v, $k) => [
+            'm' => $v,           //macd
+            's' => $macd[1][$k], //signal
+            'd' => $macd[2][$k]  //divergence
+        ], $macd[0], array_keys($macd[0]));
+    }
+
+    public function raw(): array
+    {
+        $timestamps = array_keys($this->data);
         return [
-            'macd'       => $this->combineTimestamps($macd[0]),
-            'signal'     => $this->combineTimestamps($macd[1]),
-            'divergence' => $this->combineTimestamps($macd[2]),
+            'macd'       => array_combine($timestamps, array_column($this->data, 'm')),
+            'signal'     => array_combine($timestamps, array_column($this->data, 's')),
+            'divergence' => array_combine($timestamps, array_column($this->data, 'd'))
         ];
     }
 }
