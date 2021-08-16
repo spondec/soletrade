@@ -3,16 +3,18 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
+use App\Models\Symbol;
 use App\Trade\CandleMap;
 use App\Trade\Exchange\AbstractExchange;
 use App\Trade\Exchange\AccountBalance;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 abstract class ExchangeTest extends TestCase
 {
     protected AbstractExchange $exchange;
 
-    protected static string $defaultSymbol;
+    protected static string $testSymbol;
 
     abstract protected function setupExchange(): AbstractExchange;
 
@@ -27,7 +29,7 @@ abstract class ExchangeTest extends TestCase
         $this->exchange = $this->setupExchange();
     }
 
-    public function test_candle_map()
+    public function test_get_candle_map()
     {
         $this->assertInstanceOf(CandleMap::class, $this->exchange->candleMap());
     }
@@ -46,7 +48,7 @@ abstract class ExchangeTest extends TestCase
         }
 
         $this->assertEquals(($time - $time % $interval['seconds']) * 1000,
-            end($candles)[$map['timestamp']],
+            end($candles)[$map->t],
             "The last timestamp doesn't match with the current timestamp of the interval.");
     }
 
@@ -120,13 +122,18 @@ abstract class ExchangeTest extends TestCase
     public function test_get_open_orders()
     {
         $orders = $this->exchange->openOrders($this->getSymbol());
+        $this->assertNotEmpty($orders);
 
-        $this->assertNotEmpty($orders, 'There are no open orders.');
+        foreach ($orders as $order)
+        {
+            $this->assertInstanceOf(Order::class, $order);
+        }
     }
 
     public function test_sync_orders()
     {
         $orders = $this->exchange->openOrders($this->getSymbol());
+        $this->assertNotEmpty($orders);
 
         foreach ($orders as $order)
         {
@@ -138,12 +145,69 @@ abstract class ExchangeTest extends TestCase
     public function test_cancel_open_orders()
     {
         $orders = $this->exchange->openOrders($this->getSymbol());
+        $this->assertNotEmpty($orders);
 
         foreach ($orders as $order)
         {
             $this->exchange->cancelOrder($order);
             $this->assertEquals('CANCELED', $order->status);
         }
+    }
+
+    public function test_candle_updater()
+    {
+        $this->updaterSetUp();
+
+        $updater = $this->exchange->updater();
+        $maxRunTime = 0;
+        $interval = '5m';
+        $symbol = $this->getSymbol();
+
+        $symbols = $updater->updateByInterval(interval: $interval,
+            maxRunTime: $maxRunTime,
+            filter: fn(Symbol $s) => $s->symbol === $symbol);
+
+        /** @var Symbol $first */
+        $first = $symbols->first();
+
+        $this->assertCount(1, $symbols);
+        $this->assertEquals($first->symbol, $symbol);
+        $this->assertEquals($first->interval, $interval);
+
+        $chunkSliceLength = 5; //only test the first 5 chunks
+        $dbCandles = DB::table('candles')
+            ->where('symbol_id', $first->id)
+            ->orderBy('t', 'ASC')
+            ->get()
+            ->chunk($size = $this->exchange->getMaxCandlesPerRequest())
+            ->slice(0, $chunkSliceLength);
+
+        $map = $this->exchange->candleMap();
+        foreach ($dbCandles as $chunkKey => $dbChunk)
+        {
+            $dbChunk = $dbChunk->values(); //reset keys
+            $exchangeChunk = $this->exchange->candles($symbol, $interval, $dbChunk->first()->t - 1, $size);
+
+            if ($chunkKey + 1 == $chunkSliceLength)
+            {
+                array_pop($exchangeChunk); //ignore the last candle as it may not be closed yet
+            }
+
+            foreach ($exchangeChunk as $k => $candle)
+            {
+                $this->assertEquals($candle[$map->t], $dbChunk[$k]->t);
+                $this->assertEquals($candle[$map->c], $dbChunk[$k]->c);
+                $this->assertEquals($candle[$map->h], $dbChunk[$k]->h);
+                $this->assertEquals($candle[$map->l], $dbChunk[$k]->l);
+                $this->assertEquals($candle[$map->v], $dbChunk[$k]->v);
+                $this->assertEquals($candle[$map->o], $dbChunk[$k]->o);
+            }
+        }
+    }
+
+    protected function test_candle_updater_should_update_last_unclosed_candle()
+    {
+        //TODO
     }
 
     protected function assertOrderTypeContains(Order $order, string $expected)
@@ -169,7 +233,7 @@ abstract class ExchangeTest extends TestCase
     {
         $primaryAsset = $this->exchange->accountBalance()->primaryAsset()->name();
 
-        return $this->exchange->symbols($primaryAsset)[0] ?? static::$defaultSymbol;
+        return $this->exchange->symbols($primaryAsset)[0] ?? static::$testSymbol;
     }
 
     protected function getQuantity(string $symbol): float
@@ -180,5 +244,10 @@ abstract class ExchangeTest extends TestCase
     protected function assertOrderResponseExists(Order $order, string $responseKey): void
     {
         $this->assertTrue(array_key_exists($responseKey, $order->responses));
+    }
+
+    protected function updaterSetUp(): void
+    {
+
     }
 }
