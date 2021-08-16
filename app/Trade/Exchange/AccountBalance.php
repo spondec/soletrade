@@ -56,7 +56,7 @@ class AccountBalance
         {
             if (($baseAsset = $asset->name()) != $relativeAsset)
             {
-                $symbol = $this->exchange->buildSymbol($baseAsset, $relativeAsset);
+                $symbol = $this->exchange->symbol($baseAsset, $relativeAsset);
 
                 if (!in_array($symbol, $symbols))
                 {

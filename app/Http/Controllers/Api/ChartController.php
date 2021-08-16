@@ -7,7 +7,6 @@ use App\Repositories\SymbolRepository;
 use App\Trade\Config;
 use App\Trade\Exchange\AbstractExchange;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ChartController extends Controller
 {
@@ -35,7 +34,7 @@ class ChartController extends Controller
             'exchanges'  => Config::exchanges(),
             'symbols'    => Config::symbols(),
             'indicators' => Config::indicators(),
-            'intervals'  => DB::table('symbols')->distinct()->get('interval')->pluck('interval')
+            'intervals'  => $this->symbolRepo->intervals()
         ];
     }
 

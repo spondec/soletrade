@@ -5,23 +5,24 @@ namespace App\Trade\Exchange;
 use App\Models\Exchange;
 use App\Models\Order;
 use App\Trade\CandleMap;
-use App\Trade\Scanner;
+use App\Trade\HasName;
+use App\Trade\CandleUpdater;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 abstract class AbstractExchange
 {
+    use HasName;
+
     protected string $apiKey;
     protected string $secretKey;
 
-    protected $api;
+    protected mixed $api;
 
     protected static ?AbstractExchange $instance = null;
 
-    protected string $name;
-
-    protected Exchange $model;
+    protected Exchange $exchange;
 
     protected array $actions;
     protected string $account;
@@ -29,33 +30,31 @@ abstract class AbstractExchange
     protected ?AccountBalance $prevBalance = null;
     protected AccountBalance $currentBalance;
 
-    protected Scanner $scanner;
+    protected CandleUpdater $fetcher;
 
-    protected final function register(): int
+    protected function register(): void
     {
         DB::table('exchanges')->insertOrIgnore([
             'class'   => static::class,
-            'name'    => $this->name,
+            'name'    => static::name(),
             'account' => $this->account
         ]);
 
         /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
-        $this->model = Exchange::query()
+        $this->exchange = Exchange::query()
             ->where('class', static::class)
             ->limit(1)
             ->firstOrFail();
-
-        return $this->model->id;
-    }
-
-    public function scanner(): Scanner
-    {
-        return $this->scanner;
     }
 
     public function id(): int
     {
-        return $this->model->id;
+        return $this->exchange->id;
+    }
+
+    public function updater(): CandleUpdater
+    {
+        return $this->fetcher;
     }
 
     /**
@@ -67,9 +66,12 @@ abstract class AbstractExchange
 
     private function __construct()
     {
-        $this->name = mb_strtoupper(class_basename(static::class));
+        $config = Config::get('exchange.' . static::name());
 
-        $config = Config::get('exchange.' . $this->name);
+        if (!$config)
+        {
+            throw new \InvalidArgumentException('Invalid config for ' . static::name());
+        }
 
         $this->apiKey = $config['apiKey'] ?? null;
         $this->secretKey = $config['secretKey'] ?? null;
@@ -80,7 +82,7 @@ abstract class AbstractExchange
         $this->setup();
         $this->register();
 
-        $this->scanner = new Scanner($this);
+        $this->fetcher = new CandleUpdater($this);
     }
 
     protected function setup(): void
@@ -96,15 +98,10 @@ abstract class AbstractExchange
     public function info(): array
     {
         return [
-            'name'    => $this->name,
+            'name'    => static::name(),
             'account' => $this->account,
             'actions' => implode(', ', $this->actions),
         ];
-    }
-
-    public function name(): string
-    {
-        return $this->name;
     }
 
     /**
@@ -146,8 +143,7 @@ abstract class AbstractExchange
 
         if ($symbol) $order->symbol = $symbol;
 
-        $order->exchange = $this->name;
-        $order->account = $this->account;
+        $order->exchange_id = $this->id();
 
         return $order;
     }
@@ -156,7 +152,7 @@ abstract class AbstractExchange
     {
         if (!in_array($order->side, $this->actions))
         {
-            throw new \UnexpectedValueException("$this->name doesn't allow to $order->side.\n
+            throw new \UnexpectedValueException(static::name() . " doesn't allow to take action: $order->side.\n
             Available actions: " . implode(', ', $this->actions));
         }
     }
@@ -251,13 +247,13 @@ abstract class AbstractExchange
      */
     abstract public function symbols(string $quoteAsset = null): array;
 
-    abstract public function buildSymbol(string $baseAsset, string $quoteAsset): ?string;
+    abstract public function symbol(string $baseAsset, string $quoteAsset): ?string;
 
     abstract public function minTradeQuantity(string $symbol): float;
 
     abstract public function candleMap(): CandleMap;
 
-    abstract public function candles(string $symbol, string $interval, float $start = null, float $limit = null): array;
+    abstract public function candles(string $symbol, string $interval, int $start = null, int $limit = null): array;
 
     protected function newOrder(Order $order): Order
     {

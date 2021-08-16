@@ -16,7 +16,7 @@ trait BinanceSpot
     /**
      * @var \ccxt\binance
      */
-    protected $api;
+    protected mixed $api;
 
     protected static array $limits = [];
 
@@ -75,9 +75,9 @@ trait BinanceSpot
         return new AccountBalance($this, $assets);
     }
 
-    public function buildSymbol(string $baseAsset, string $quoteAsset): string
+    public function symbol(string $baseAsset, string $quoteAsset): string
     {
-        return "$baseAsset/$quoteAsset";
+        return mb_strtoupper("$baseAsset/$quoteAsset");
     }
 
     public function orderBook(string $symbol): OrderBook
@@ -104,7 +104,7 @@ trait BinanceSpot
         return array_column($markets, 'symbol');
     }
 
-    public function candles(string $symbol, string $interval, float $start = null, float $limit = null): array
+    public function candles(string $symbol, string $interval, int $start = null, int $limit = null): array
     {
         return $this->api->fetch_ohlcv($symbol, $interval, $start, $limit);
     }

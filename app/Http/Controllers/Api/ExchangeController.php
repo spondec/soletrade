@@ -33,7 +33,7 @@ class ExchangeController extends Controller
         foreach (Config::exchanges() as $exchange)
         {
             $exchange = $exchange::instance();
-            $exchangeName = $exchange->name();
+            $exchangeName = $exchange::name();
 
             foreach ($exchange->accountBalance()->getAssets() as $assetName => $asset)
             {
