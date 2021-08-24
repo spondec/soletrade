@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property int    timestamp
  * @property string name
  * @property string side
+ * @property bool   valid_price
  * @property string $signature_id
  * @property float  price
  * @property mixed  created_at
@@ -36,5 +37,14 @@ class Signal extends Model
     public function symbol()
     {
         return $this->hasOne(Symbol::class);
+    }
+
+    public function toArray()
+    {
+        $result = parent::toArray();
+
+        $result['price'] = round($result['price'], 2);
+
+        return $result;
     }
 }
