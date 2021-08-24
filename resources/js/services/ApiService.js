@@ -35,15 +35,17 @@ export default class ApiService
         return (await axios.get('api/chart')).data;
     }
 
-    static async candles(exchange, symbol, interval, indicators, limit)
+    static async candles(exchange, symbol, interval, indicators, limit, strategy = null, range = {})
     {
         return (await axios.get('api/chart', {
             params: {
+                strategy: strategy,
                 symbol: symbol,
                 exchange: exchange,
                 interval: interval,
                 indicators: indicators,
-                limit: limit
+                limit: limit,
+                range: range
             }
         })).data;
     }
