@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string  side
  * @property float   quantity
  * @property float   quantity_type
- * @property float   entry_price
+ * @property float   price
  * @property float   avg_price
  * @property float   liq_price
  * @property float   margin
