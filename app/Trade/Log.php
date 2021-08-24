@@ -15,9 +15,19 @@ final class Log
         }
 
         static::$log[] = [
-            'time' => microtime(true),
+            'time'      => microtime(true),
             'exception' => $exception ?? null,
-            'message' => $message ?? 'Empty message received.'
+            'message'   => $message ?? 'Empty message received.'
         ];
+    }
+
+    public static function execTime(\Closure $closure, string $taskName): void
+    {
+        $time = microtime(true);
+        $closure();
+        \Illuminate\Support\Facades\Log::info(
+            sprintf("%s lasted for %s seconds.",
+                $taskName,
+                round(microtime(true) - $time, 2)));
     }
 }
