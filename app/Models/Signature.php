@@ -16,4 +16,6 @@ use Illuminate\Database\Eloquent\Model;
 class Signature extends Model
 {
     use HasFactory;
+
+    protected $guarded = ['id'];
 }
