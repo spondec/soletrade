@@ -25,5 +25,14 @@
   @extend .card-body;
   @extend .bg-secondary;
   @extend .text-white;
-  //@extend .rounded-lg;
+}
+
+.form-select {
+  @extend .bg-dark;
+  @extend .text-white;
+}
+
+.page-link {
+  @extend .bg-dark;
+  @extend .text-white;
 }
