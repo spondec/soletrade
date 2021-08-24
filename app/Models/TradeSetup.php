@@ -10,11 +10,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property int    signature_id
  * @property int    signal_count
  * @property int    timestamp
- * @property string hash
  * @property int    symbol_id
  * @property string name
  * @property string side
- * @property float  entry_price
+ * @property bool   valid_price
+ * @property float  price
  * @property float  close_price
  * @property float  stop_price
  * @property array  take_profits
@@ -25,9 +25,13 @@ class TradeSetup extends \App\Models\Model
 {
     use HasFactory;
 
-    public array $signals;
+    public array $signals = [];
 
 //    protected $table = 'trade_setups';
+
+    protected $guarded = ['id'];
+
+    protected array $unique = ['symbol_id', 'signature_id', 'name', 'timestamp', 'side'];
 
     public function calculateRiskReward()
     {
@@ -42,5 +46,14 @@ class TradeSetup extends \App\Models\Model
     public function takeProfits()
     {
         return $this->hasMany(TakeProfit::class);
+    }
+
+    public function toArray()
+    {
+        $result = parent::toArray();
+
+        $result['price'] = round($result['price'], 2);
+
+        return $result;
     }
 }
