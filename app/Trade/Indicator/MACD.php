@@ -18,7 +18,8 @@ class MACD extends AbstractIndicator
             $this->config['slowPeriod'],
             $this->config['signalPeriod']);
 
-        return array_map(fn($v, $k) => [
+        if (!$macd) return [];
+        return array_map(static fn($v, $k) => [
             'm' => $v,           //macd
             's' => $macd[1][$k], //signal
             'd' => $macd[2][$k]  //divergence
