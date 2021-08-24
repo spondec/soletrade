@@ -6,10 +6,12 @@
       <th>Entry</th>
       <th>Exit</th>
       <th>Entry Date</th>
+      <th>Real. Entry Date</th>
       <th>Exit Date</th>
-      <th>Entry Price</th>
       <th>Valid Price</th>
+      <th>Entry Price</th>
       <th>Exit Price</th>
+      <th>Stop Price</th>
       <th>Highest Price</th>
       <th>Lowest Price</th>
       <th>ROI</th>
@@ -26,14 +28,21 @@
       <td>{{ trade.entry.name }}</td>
       <td>{{ trade.exit.name }}</td>
       <td v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
-        <a href="{{ '#' + chartId }}">{{ timestampToString(trade.entry.timestamp) }}</a>
+        <a v-bind:href="'#' + chartId">{{ timestampToString(trade.entry.timestamp) }}</a>
+      </td>
+      <td v-on:click="dateClick(trade.result.real_entry_time, trade.exit.timestamp)">
+        <a v-bind:href="'#' + chartId">{{ timestampToString(trade.result.real_entry_time) }}</a>
       </td>
       <td v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
-        <a href="{{ '#' + chartId }}">{{ timestampToString(trade.exit.timestamp) }}</a>
+        <a v-bind:href="'#' + chartId">{{ timestampToString(trade.exit.timestamp) }}</a>
       </td>
-      <td>{{ trade.entry.price }}</td>
       <td>{{ trade.entry.valid_price ? 'Yes' : 'No' }}</td>
+      <td>{{ trade.entry.price }}</td>
       <td>{{ trade.exit.price }}</td>
+      <td>
+        <p v-bind:class="{'text-danger': trade.result.stop }">
+          {{ trade.result.stop_price || 'None' }}</p>
+      </td>
       <td>{{ trade.result.highest_price }}</td>
       <td>{{ trade.result.lowest_price }}</td>
       <td>{{ trade.result.realized_roi + '%' }}</td>
@@ -42,7 +51,7 @@
     </tr>
     </tbody>
   </table>
-  <pagination v-model="page" :per-page="perPage" :records="trades.length" @paginate="paginate"/>
+  <pagination v-model=" page" :per-page="perPage" :records="trades.length" @paginate="paginate"/>
 </template>
 
 <script>
