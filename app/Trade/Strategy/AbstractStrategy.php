@@ -6,11 +6,11 @@ use App\Models\Signal;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
+use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
-use App\Trade\Helper\ClosureHash;
 use App\Trade\Indicator\AbstractIndicator;
-use Illuminate\Support\Collection;
+use App\Trade\Log;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 
@@ -18,24 +18,23 @@ abstract class AbstractStrategy
 {
     use HasName;
     use HasSignature;
+    use HasConfig;
 
-    protected array $config = ['maxCandles' => 1000];
+    protected array $config = [
+        'maxCandles' => 1000,
+        'startDate'  => null,
+        'endDate'    => null
+    ];
+
     protected array $signals = [];
     protected array $indicatorSetup;
     protected array $tradeSetup;
 
     protected SymbolRepository $symbolRepo;
 
-    abstract protected function indicatorSetup(): array;
-
-    abstract protected function tradeSetup(): array;
-
     public function __construct(array $config = [])
     {
-        if ($config)
-        {
-            $this->config = array_merge_recursive_distinct($this->config, $config);
-        }
+        $this->mergeConfig($config);
 
         $this->symbolRepo = App::make(SymbolRepository::class);
         $this->indicatorSetup = $this->indicatorSetup();
@@ -45,113 +44,92 @@ abstract class AbstractStrategy
         ]);
     }
 
-    /**
-     * @return TradeSetup[]
-     */
-    public function addSymbol(Symbol $symbol): array
+    abstract protected function indicatorSetup(): array;
+
+    abstract protected function tradeSetup(): array;
+
+    public function run(Symbol $symbol): array
     {
+        Log::execTime(function () use (&$symbol) {
+            $this->initIndicators($symbol);
+        }, 'AbstractStrategy::initIndicators()');
+
+        Log::execTime(function () use (&$trades, &$symbol) {
+            $trades = $this->findTradeSetups($symbol);
+        }, 'AbstractStrategy::findTrades()');
+
+        return $trades;
+    }
+
+    protected function initIndicators(Symbol $symbol): void
+    {
+        $candles = $symbol->candles(limit: $this->config['maxCandles'],
+            start: $this->config['startDate'],
+            end: $this->config['endDate']);
+
         foreach ($this->indicatorSetup as $class => $setup)
         {
-            $symbol->addIndicator(indicator: new $class(
-                symbol: $symbol,
-                candles: $symbol->candles(limit: $this->config['maxCandles']),
+            $indicator = new $class(symbol: $symbol,
+                candles: $candles,
                 config: is_array($setup) ? $setup['config'] ?? [] : [],
-                signalCallback: $setup instanceof \Closure ? $setup : $setup['signal'] ?? null
-            ));
+                signalCallback: $setup instanceof \Closure ? $setup : $setup['signal'] ?? null);
+
+            $symbol->addIndicator(indicator: $indicator);
         }
-
-        return $this->evaluateSignals($symbol);
-    }
-
-    /**
-     * @param Signal[] $signals
-     */
-    protected function setupTrade(array $config, array $signals): TradeSetup
-    {
-        $signature = $this->register([
-            'config'   => $this->config,
-            'signals'  => $config['signals'],
-            'callback' => isset($config['callback']) ? ClosureHash::from($config['callback']) : null
-        ]);
-
-        $tradeSetup = new TradeSetup();
-        $tradeSetup->signals = $signals;
-        $lastSignal = end($signals);
-
-        $tradeSetup->signal_count = count($signals);
-
-        $tradeSetup->name = implode('|', array_map(fn(Signal $v) => $v->name, $signals));
-        $tradeSetup->entry_price = $lastSignal->price;
-        $tradeSetup->side = $lastSignal->side;
-        $tradeSetup->timestamp = $lastSignal->timestamp;
-        $tradeSetup->signature_id = $signature->id;
-
-        return $tradeSetup;
-    }
-
-    protected function saveTrade(TradeSetup $tradeSetup)
-    {
-        $tradeSetup->hash = $this->hash(json_encode($tradeSetup->attributesToArray()));
-
-        /** @var TradeSetup $existing */
-        $existing = TradeSetup::query()->where('hash', $tradeSetup->hash)->first();
-
-        if ($existing)
-        {
-            $tradeSetup = $existing;
-        }
-        else
-        {
-            DB::transaction(function () use ($tradeSetup) {
-                $tradeSetup->save();
-                $tradeSetup->signals()->saveMany($tradeSetup->signals);
-            });
-        }
-
-        return $tradeSetup;
     }
 
     /**
      * @return TradeSetup[]
      */
-    protected function evaluateSignals(Symbol $symbol): array
+    protected function findTradeSetups(Symbol $symbol): array
     {
-        $signals = $this->getSignals($symbol);
-
-        if (!$signals)
+        if (!$signals = $this->getConfigSignals($symbol))
         {
             return [];
         }
 
-        $tradeSetups = [];
+        $setups = [];
 
         foreach ($this->tradeSetup as $key => $config)
         {
-            $indicators = $config['signals'];
-            $_signals = $signals;
+            if (!$indicators = $this->getConfigIndicators($config))
+            {
+                throw new \UnexpectedValueException('Invalid signal config for trade setup: ' . $key);
+            }
+
             $requiredTotal = count($config['signals']);
             $requiredSignals = [];
+            $firstIndicator = $indicators[0];
+            $index = 0;
 
-            while (count($_signals[$indicators[0]]))
+            while (isset($signals[$firstIndicator][$index]))
             {
-                foreach ($indicators as $indicator)
+                foreach ($indicators as $k => $indicator)
                 {
+                    $isFirst = $k === 0;
                     /* @var Signal $signal */
-                    foreach ($_signals[$indicator] as $timestamp => $signal)
+                    foreach ($signals[$indicator] as $i => $signal)
                     {
-                        unset($_signals[$indicator][$timestamp]);
+                        if ($isFirst)
+                        {
+                            if ($i < $index)
+                            {
+                                continue;
+                            }
+
+                            $index = $i + 1;
+                        }
 
                         /** @var Signal $lastSignal */
                         $lastSignal = end($requiredSignals);
 
-                        if (!$lastSignal || (
-                                $timestamp >= $lastSignal->timestamp &&
-                                $lastSignal->side == $signal->side
-                            )
-                        )
+                        if (!$lastSignal || ($signal->timestamp >= $lastSignal->timestamp && $lastSignal->side == $signal->side))
                         {
-                            $requiredSignals[] = $signal;
-                            break;
+                            if ($this->validateSignal($indicator, $config, $signal))
+                            {
+                                $requiredSignals[] = $signal;
+                                break;
+                            }
                         }
                     }
                 }
@@ -166,29 +144,99 @@ abstract class AbstractStrategy
                         $tradeSetup = $callback($tradeSetup);
                     }
 
-                    $tradeSetup->symbol_id = $symbol->id;
-                    $tradeSetups[$key] = $this->saveTrade($tradeSetup);
+                    if ($tradeSetup)
+                    {
+                        $tradeSetup->symbol_id = $symbol->id;
+                        $setups[$key][$tradeSetup->timestamp] = $this->saveTrade($tradeSetup);
+                    }
                 }
 
                 $requiredSignals = [];
             }
         }
 
-        return $tradeSetups;
+        return $setups;
     }
 
-    protected function getSignals(Symbol $symbol): array
+    protected function getConfigSignals(Symbol $symbol): array
     {
-        foreach ($this->tradeSetup as $setup)
+        $signals = [];
+        foreach ($this->tradeSetup as $config)
         {
             /* @var AbstractIndicator $indicator */
-            foreach ($setup['signals'] as $indicator)
+            foreach ($this->getConfigIndicators($config) as $indicator)
             {
                 $indicator = $symbol->indicator($indicator::name());
-                $signals[$indicator::class] = $indicator->signals()->all();
+                $signals[$indicator::class] = $indicator->signals();
             }
         }
 
         return $signals;
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function getConfigIndicators(array $config): array
+    {
+        $indicators = [];
+        foreach ($config['signals'] as $key => $indicator)
+        {
+            $indicators[] = is_array($indicator) ? $key : $indicator;
+        }
+
+        return $indicators;
+    }
+
+    protected function validateSignal(string $indicator, array $config, Signal $signal): bool
+    {
+        return !is_array($config['signals'][$indicator] ?? null) ||
+            in_array($signal->name, $config['signals'][$indicator]);
+    }
+
+    /**
+     * @param Signal[] $signals
+     */
+    protected function setupTrade(array $config, array $signals): TradeSetup
+    {
+        $signature = $this->register([
+            'strategy'        => [
+                'config' => $this->config,
+                'hash'   => $this->signature->hash
+            ],
+            'trade_setup'     => $config,
+            'indicator_setup' => array_map(
+                fn(string $class): array => $this->indicatorSetup[$class],
+                $this->getConfigIndicators($config))
+        ]);
+
+        $tradeSetup = new TradeSetup();
+        $tradeSetup->signals = $signals;
+        $lastSignal = end($signals);
+
+        $tradeSetup->signal_count = count($signals);
+        $tradeSetup->name = implode('|', array_map(
+            static fn(Signal $signal) => $signal->name, $signals));
+        $tradeSetup->price = $lastSignal->price;
+        $tradeSetup->side = $lastSignal->side;
+        $tradeSetup->timestamp = $lastSignal->timestamp;
+        $tradeSetup->signature_id = $signature->id;
+
+        return $tradeSetup;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function saveTrade(TradeSetup $tradeSetup): TradeSetup
+    {
+        DB::transaction(function () use (&$tradeSetup) {
+            $tradeSetup = TradeSetup::query()->updateOrCreate(
+                $tradeSetup->uniqueAttributesToArray(),
+                $tradeSetup->attributesToArray());
+            $tradeSetup->signals()->saveMany($tradeSetup->signals);
+        });
+
+        return $tradeSetup;
     }
 }
