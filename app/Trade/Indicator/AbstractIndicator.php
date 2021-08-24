@@ -5,6 +5,7 @@ namespace App\Trade\Indicator;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\Signal;
+use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Helper\ClosureHash;
@@ -15,6 +16,7 @@ abstract class AbstractIndicator
 {
     use HasName;
     use HasSignature;
+    use HasConfig;
 
     protected ?int $prev = null;
     protected ?int $current = null;
@@ -69,25 +71,25 @@ abstract class AbstractIndicator
                                 array                $config = [],
                                 protected ?\Closure  $signalCallback = null)
     {
-        if ($config)
-        {
-            $this->config = array_merge_recursive_distinct($this->config, $config);
-        }
+        $this->mergeConfig($config);
 
         $this->signature = $this->register([
             'contents' => $this->contents()
         ]);
 
-        $this->data = $this->combineTimestamps($this->run());
-        $this->signals = new Collection([]);
-
-        if ($signalCallback)
+        if ($candles->count())
         {
-            $this->signalSignature = $this->register([
-                'config'             => $this->config,
-                'signalCallbackHash' => ClosureHash::from($this->signalCallback)
-            ]);
-            $this->scan();
+            $this->data = $this->combineTimestamps($this->run());
+            $this->signals = new Collection([]);
+
+            if ($signalCallback)
+            {
+                $this->signalSignature = $this->register([
+                    'config'             => $this->config,
+                    'signalCallbackHash' => ClosureHash::from($this->signalCallback)
+                ]);
+                $this->scan();
+            }
         }
     }
 
@@ -109,6 +111,11 @@ abstract class AbstractIndicator
             indicator: $this,
             timestamp: $timestamp,
             value: $value);
+    }
+
+    public function prev(): mixed
+    {
+        return $this->data[$this->prev] ?? null;
     }
 
     protected function scan(): void
