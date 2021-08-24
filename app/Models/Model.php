@@ -8,6 +8,8 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
 {
     const VALIDATION_RULES = [];
 
+    protected array $unique = [];
+
     public final function validate(?array &$errors = null)
     {
         $errors = Validator::make($this->toArray(), static::VALIDATION_RULES)
@@ -47,5 +49,16 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
         }
 
         parent::setAttribute($key, $value);
+    }
+
+    public function uniqueAttributesToArray(): array
+    {
+        $attributes = [];
+        foreach ($this->unique as $column)
+        {
+            $attributes[$column] = $this->getAttribute($column);
+        }
+
+        return $attributes;
     }
 }
