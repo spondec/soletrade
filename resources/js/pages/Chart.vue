@@ -1,6 +1,10 @@
 <template>
   <main-layout v-bind:title="title">
-    <div class=" grid lg:grid-cols-4 md:grid-cols-2 sm:grid-cols-1 gap-4 form-group" v-if="sel.exchange && sel.symbol">
+    <div v-if="sel.exchange && sel.symbol" class="grid lg:grid-cols-5 md:grid-cols-2 sm:grid-cols-1 gap-4 form-group">
+      <div class="mb-3">
+        <label class="form-label">Strategy</label>
+        <vue-multiselect v-model="sel.strategy" :allow-empty="true" :options="strategies"/>
+      </div>
       <div class="mb-3">
         <label class="form-label">Exchange</label>
         <vue-multiselect v-model="sel.exchange" :options="exchanges" :allow-empty="false"/>
@@ -18,41 +22,130 @@
         <vue-multiselect v-model="sel.indicators" :options="indicators" :multiple="true"/>
       </div>
     </div>
-    <div class="chart-container" ref="chart">
-      <p class="text-lg-center" v-if="!this.charts.length">Requested chart is not available.</p>
-    </div>
 
-    <div id="macd"></div>
+    <DatePicker v-model="range" is-dark is-range>
+      <template v-slot="{ inputValue, inputEvents }">
+        <div class="flex justify-center items-center">
+          <input v-on="inputEvents.start"
+                 :value="inputValue.start"
+                 class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"/>
+          <svg class="w-4 h-4 mx-2"
+               fill="none"
+               stroke="currentColor"
+               viewBox="0 0 24 24">
+            <path d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"/>
+          </svg>
+          <input v-on="inputEvents.end"
+                 :value="inputValue.end"
+                 class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"/>
+        </div>
+      </template>
+    </DatePicker>
+
+    <div class="chart-container" ref="chart">
+      <v-spinner v-if="this.loading"/>
+      <p v-else-if="!this.symbol" class="text-lg-center">Requested chart is not available.</p>
+      <div v-if="symbol && symbol.strategy">
+        <div class="py-2">
+          <tabs nav-class="text-lg grid grid-cols-2 text-center bg-gray rounded border border-solid"
+                nav-item-active-class="bg-primary"
+                nav-item-class="py-2"
+                nav-item-disabled-class="bg-secondary"
+                @changed="toggle = !toggle">
+            <tab name="Trade Setups">
+              <div class="body divide-y my2">
+                <div v-for="(setup, id) in symbol.strategy.trade_setups" id="trade-setups" class="my-2">
+                  <div class="grid grid-cols-1 text-center">
+                    <h1 class="text-lg">{{ id }}</h1>
+                    <h1 class="text-lg" v-bind:class="{
+                        'text-danger': setup.summary.roi < 0,
+                        'text-success': setup.summary.roi > 0 }">
+                      {{ 'ROI: ' + setup.summary.roi + '%' }} </h1>
+                    <h1 class="text-lg" v-bind:class="{
+                        'text-danger': setup.summary.roi < 0,
+                        'text-success': setup.summary.roi > 0 }">
+                      {{ 'Average ROI: ' + setup.summary.avg_roi + '%' }} </h1>
+                  </div>
+                  <trade-table chart-id="chart" v-bind:trades="setup.trades" @dateClick="showRange"></trade-table>
+                </div>
+              </div>
+            </tab>
+            <tab name="Signals">
+              <div class="body divide-y">
+                <div v-for="(setup, id) in symbol.strategy.signals" id="signals" class="my-2">
+                  <div class="grid grid-cols-1 text-center">
+                    <h1 class="text-lg">{{ id }}</h1>
+                    <h1 class="text-lg" v-bind:class="{
+                        'text-danger': setup.summary.roi < 0,
+                        'text-success': setup.summary.roi > 0 }">
+                      {{ 'ROI: ' + setup.summary.roi + '%' }} </h1>
+                    <h1 class="text-lg" v-bind:class="{
+                        'text-danger': setup.summary.roi < 0,
+                        'text-success': setup.summary.roi > 0 }">
+                      {{ 'Average ROI: ' + setup.summary.avg_roi + '%' }} </h1>
+                  </div>
+                  <trade-table chart-id="chart" v-bind:trades="setup.trades" @dateClick="showRange"></trade-table>
+                </div>
+              </div>
+            </tab>
+          </tabs>
+        </div>
+      </div>
+    </div>
+    <span id="chart" class="anchor"></span>
   </main-layout>
 </template>
 
 <script>
 
 import MainLayout from '../layouts/Main';
-import {createChart, CrosshairMode} from 'lightweight-charts';
+
+import VSpinner from "../components/VSpinner";
+import TradeTable from "../components/TradeTable";
 
 import ApiService from "../services/ApiService";
-import VSpinner from "../components/VSpinner";
+
+import {createChart, CrosshairMode} from 'lightweight-charts';
+
 import VueMultiselect from 'vue-multiselect'
+
+import VueJsonPretty from 'vue-json-pretty';
+import 'vue-json-pretty/lib/styles.css';
+
+import {Tabs, Tab} from 'vue3-tabs-component';
+
+import {DatePicker} from 'v-calendar';
 
 export default {
   title: "Chart",
-  components: {VSpinner, MainLayout, VueMultiselect},
+  components: {
+    VSpinner, MainLayout, VueMultiselect, VueJsonPretty, TradeTable, Tabs, Tab, DatePicker
+  },
   watch:
       {
         sel: {
           handler: 'onSelect',
           deep: true
-        }
+        },
+        range: 'onSelect'
       },
   data: function ()
   {
     return {
+
+      range: {},
+      toggle: true,
+
       loading: false,
+      notFound: false,
 
       cache: [],
       useCache: false,
 
+      strategies: null,
       exchanges: null,
       symbols: null,
       intervals: null,
@@ -64,6 +157,7 @@ export default {
       limitReached: false,
 
       sel: {
+        strategy: null,
         exchange: null,
         symbol: null,
         interval: null,
@@ -95,12 +189,12 @@ export default {
         rightPriceScale: {
           visible: true,
           borderColor: 'rgba(197, 203, 206, 1)',
-          precision: 10,
+          // precision: 10,
           width: 60
         },
         leftPriceScale: {
-          visible: true,
-          borderColor: 'rgba(197, 203, 206, 1)',
+          // visible: true,
+          // borderColor: 'rgba(197, 203, 206, 1)',
         },
         layout: {
           backgroundColor: 'rgb(0,0,0)',
@@ -132,14 +226,18 @@ export default {
   {
     const data = await ApiService.chartData();
 
+    this.strategies = data.strategies;
     this.exchanges = data.exchanges;
     this.indicators = data.indicators;
     this.symbols = data.symbols;
     this.intervals = data.intervals;
 
+    // this.sel.strategy = "App\\Trade\\Strategy\\BasicStrategy";
     this.sel.exchange = this.exchanges[Object.keys(this.exchanges)[0]];
-    this.sel.symbol = this.symbols[this.sel.exchange][0];
-    this.sel.interval = this.intervals[0];
+    this.sel.symbol = 'BTC/USDT';
+    // this.sel.symbol = this.symbols[this.sel.exchange][0];
+    this.sel.interval = '1w';
+    // this.sel.interval = this.intervals[0];
   },
 
   mounted()
@@ -148,6 +246,18 @@ export default {
   },
 
   methods: {
+
+    showRange: function (timestampA, timestampB)
+    {
+      for (let i in this.charts)
+      {
+        this.charts[i].timeScale().setVisibleRange({
+          from: timestampA / 1000,
+          to: timestampB / 1000,
+        });
+      }
+    },
+
     registerEvents: function ()
     {
       this.charts[0].timeScale().subscribeVisibleLogicalRangeChange(newVisibleLogicalRange =>
@@ -207,6 +317,62 @@ export default {
     handlers: function ()
     {
       return {
+
+        Fib: {
+          prepare: (data, length) =>
+          {
+            for (let key in data)
+            {
+              data[key] = this.objectMap((val, k) =>
+              {
+                return {time: k / 1000, value: val};
+              }, data[key]);
+
+              this.fillFrontGaps(length, data[key]);
+            }
+            return data;
+          },
+          init: (data) =>
+          {
+            const chart = this.charts[0];
+            const colors = {
+              0: '#7c7c7c',
+              236: '#e03333',
+              382: '#e0d733',
+              500: '#148cb2',
+              618: '#36fa00',
+              702: '#dd00ff',
+              786: '#ff4500',
+              886: '#00d8ff',
+              1000: '#ffffff',
+            }
+            let series = {};
+
+            for (let i in data)
+            {
+              series[i] = chart.addLineSeries({
+                ...{
+                  color: colors[i],
+                  lastValueVisible: true,
+                  lineWidth: 1,
+                  crosshairMarkerVisible: false,
+                  priceLineVisible: false,
+                }, ...this.seriesOptions
+              });
+            }
+
+            return series;
+          },
+          update: (series, data) =>
+          {
+            for (let i in series)
+              series[i].setData(data[i]);
+          },
+          setMarkers: markers =>
+          {
+            this.series.Fib.setMarkers(markers);
+          }
+        },
         RSI: {
           prepare: (data, length) =>
           {
@@ -238,6 +404,10 @@ export default {
           update: (series, data) =>
           {
             series.setData(data);
+          },
+          setMarkers: markers =>
+          {
+            this.series.RSI.setMarkers(markers);
           }
         },
         MACD: {
@@ -309,6 +479,10 @@ export default {
           {
             for (let i in series)
               series[i].setData(data[i]);
+          },
+          setMarkers: markers =>
+          {
+            this.series.MACD.macd.setMarkers(markers);
           }
         }
       }
@@ -384,14 +558,74 @@ export default {
       }
     },
 
+    prepareSignalMarker: function (data, namePrefix)
+    {
+      return {
+        time: data.timestamp / 1000,
+        position: data.side === 'BUY' ? 'belowBar' : 'aboveBar',
+        color: data.side === 'BUY' ? '#00ff68' : '#ff0062',
+        shape: data.side === 'BUY' ? 'arrowUp' : 'arrowDown',
+        text: namePrefix ? namePrefix + ': ' + data.name : data.name
+      }
+    },
+
     initSeries: function ()
     {
       const candlestickSeries = this.charts[0].addCandlestickSeries(this.seriesOptions);
       candlestickSeries.setData(this.symbol.candles);
 
-      this.series['candlestick'] = candlestickSeries;
+      // const histogramSeries = this.charts[0].addHistogramSeries({
+      //   color: '#FFF5EE',
+      // });
+      // histogramSeries.setData(this.symbol.volumes);
 
-      this.initIndicators();
+      this.series['candlestick'] = candlestickSeries;
+    },
+
+    initMarkers: function ()
+    {
+      const strategy = this.symbol.strategy;
+
+      if (strategy)
+      {
+        if (strategy.trade_setups)
+        {
+          let markers = [];
+          for (let id in strategy.trade_setups)
+          {
+            markers = this.prepareSignalMarkers(markers, strategy.trade_setups[id].trades, true);
+          }
+          this.series['candlestick'].setMarkers(markers);
+        }
+
+        if (strategy.signals)
+        {
+          const handlers = this.handlers();
+          for (let id in strategy.signals)
+          {
+            if (handlers[id] === undefined)
+              throw  Error('No handler found for ' + id);
+
+            if (handlers[id].setMarkers === undefined)
+              throw Error(id + ' handler must contain a setMarkers() function for handling markers.');
+
+            let markers = [];
+            markers = this.prepareSignalMarkers(markers, strategy.signals[id].trades);
+            handlers[id].setMarkers(markers);
+          }
+        }
+      }
+    },
+
+    prepareSignalMarkers: function (markers, collection, prefix = false)
+    {
+      for (let id in collection)
+      {
+        markers.push(this.prepareSignalMarker(collection[id]['entry'], prefix ? prefix + ' - ' + 'Entry' : ''));
+        markers.push(this.prepareSignalMarker(collection[id]['exit'], prefix ? prefix + ' - ' + 'Exit' : ''));
+      }
+
+      return markers.sort((a, b) => (a.time - b.time));
     },
 
     replaceCandlestickChart: async function ()
@@ -411,9 +645,9 @@ export default {
 
       this.createChart();
       this.initSeries();
+      this.initIndicators();
+      this.initMarkers();
       this.registerEvents();
-
-      // series.setMarkers(chartData.markers);
     },
 
     cacheKey: function ()
@@ -500,7 +734,7 @@ export default {
         this.charts[i].resize(container.offsetWidth, container.offsetHeight, false);
     },
 
-    onSelect: function (e)
+    onSelect: function ()
     {
       this.replaceCandlestickChart();
     },
@@ -523,15 +757,23 @@ export default {
           this.sel.symbol,
           this.sel.interval,
           this.sel.indicators,
-          this.limit);
+          this.limit,
+          this.sel.strategy,
+          this.range);
     },
 
     prepareSymbol: function (symbol)
     {
       if (!Object.keys(symbol).length) return;
+
+      symbol.volumes = symbol.candles.map(x =>
+      {
+        return {time: x.t / 100, value: x.v}
+      });
+
       symbol.candles = symbol.candles.map(x =>
       {
-        return {time: x.t / 1000, open: x.o, close: x.c, high: x.h, low: x.l,}
+        return {time: x.t / 1000, open: x.o, close: x.c, high: x.h, low: x.l}
       });
 
       symbol.indicators = this.prepareIndicators(symbol.indicators, symbol.candles.length)
@@ -561,10 +803,15 @@ html, body, #app, .container {
 
 .chart-container {
   height: 25%;
+  margin-top: 10px;
 }
 
 .multiselect__single {
   overflow: hidden !important;
 }
 
+.anchor {
+  position: absolute;
+  bottom: 0;
+}
 </style>
