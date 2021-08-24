@@ -26,6 +26,10 @@
     },
     "dependencies": {
         "lightweight-charts": "^3.5.0",
-        "vue-multiselect": "^3.0.0-alpha.2"
+        "v-calendar": "^3.0.0-alpha.5",
+        "v-pagination-3": "^0.1.6",
+        "vue-json-pretty": "^2.0.4",
+        "vue-multiselect": "^3.0.0-alpha.2",
+        "vue3-tabs-component": "^1.0.3"
     }
 }
