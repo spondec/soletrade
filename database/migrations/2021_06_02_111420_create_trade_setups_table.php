@@ -20,12 +20,14 @@ class CreateTradeSetupsTable extends Migration
             $table->foreignId('position_id')->nullable();
             $table->string('name');
             $table->enum('side', ['BUY', 'SELL']);
-            $table->decimal('entry_price');
+            $table->decimal('price');
             $table->decimal('close_price')->nullable();
             $table->decimal('stop_price')->nullable();
+            $table->boolean('valid_price')->default(0);
             $table->integer('signal_count');
             $table->bigInteger('timestamp');
-            $table->string('hash', 32)->unique();
+
+            $table->unique(['symbol_id', 'signature_id', 'name', 'side', 'timestamp']);
             $table->timestamps();
         });
     }

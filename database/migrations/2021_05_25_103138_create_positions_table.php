@@ -21,7 +21,7 @@ class CreatePositionsTable extends Migration
             $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('quantity');
             $table->string('quantity_type', 10);
-            $table->decimal('entry_price');
+            $table->decimal('price');
             $table->decimal('avg_price');
             $table->decimal('liq_price');
             $table->decimal('margin')->nullable();

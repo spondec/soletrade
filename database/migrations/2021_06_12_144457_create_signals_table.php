@@ -21,6 +21,7 @@ class CreateSignalsTable extends Migration
             $table->string('name', 50)->index();
             $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('price');
+            $table->boolean('valid_price')->default(0);
             $table->bigInteger('timestamp');
             $table->string('hash', 32)->unique();
             $table->timestamps();
