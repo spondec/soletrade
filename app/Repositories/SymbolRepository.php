@@ -15,9 +15,10 @@ class SymbolRepository
     public function candles(AbstractExchange $exchange,
                             string           $symbol,
                             string           $interval,
-                            int              $before = null,
                             int              $limit = null,
-                            array            $indicators = []): ?Symbol
+                            array            $indicators = [],
+                            int              $end = null,
+                            int              $start = null): ?Symbol
     {
         /** @var Symbol $symbol */
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
@@ -30,7 +31,7 @@ class SymbolRepository
         if ($symbol)
         {
             $this->initIndicators($symbol,
-                $symbol->candles(before: $before, limit: $limit),
+                $symbol->candles(limit: $limit, start: $start, end: $end),
                 $indicators);
         }
 

@@ -31,72 +31,85 @@ class Symbol extends Model
     protected array $indicators = [];
 
     protected ?int $limit = null;
-    protected ?int $before = null;
-    protected ?int $after = null;
+    protected ?int $end = null;
+    protected ?int $start = null;
 
-    public function signals()
+    public function cachedSignals(): array
     {
         $signals = [];
-
         foreach ($this->indicators as $indicator)
         {
             $signals[$indicator::name()] = $indicator->signals();
         }
-
+//        usort($signals, fn(Signal $a, Signal $b) => $a->timestamp <=> $b->timestamp);
         return $signals;
+    }
+
+    public function signals()
+    {
+        return $this->hasMany(Signal::class);
+    }
+
+    public function trades()
+    {
+        return $this->hasMany(TradeSetup::class);
     }
 
     public function toArray()
     {
         $result = parent::toArray();
 
-        $result['before'] = $this->before;
+//        $result['signals'] = $this->signals->toArray();
+//        $result['trades'] = $this->trades->toArray();
+        $result['before'] = $this->end;
         $result['limit'] = $this->limit;
         $result['candles'] = $this->candles?->toArray() ?? [];
-        $result['indicators'] = array_map(fn(AbstractIndicator $i) => $i->raw(), $this->indicators) ?? [];
+        $result['indicators'] = array_map(
+                fn(AbstractIndicator $i): array => $i->raw(),
+                $this->indicators) ?? [];
 
         return $result;
     }
 
-    public function candles(?int $limit = null, ?int $before = null, ?int $after = null): ?Collection
+    public function candles(?int $limit = null, ?int $start = null, ?int $end = null): ?Collection
     {
         if (!$this->exists)
         {
             return null;
         }
 
-        if ($before && $after && $limit)
+        if ($end && $start && $limit)
         {
             throw new \UnexpectedValueException('Argument $limit can not be passed along with $after and $before.');
         }
 
         try
         {
-            if ($this->candles && $before == $this->before && $after == $this->after && $limit == $this->limit)
+            if ($this->candles && $end == $this->end && $start == $this->start && $limit == $this->limit)
             {
                 return $this->candles;
             }
         } finally
         {
-            $this->before = $before;
+            $this->end = $end;
             $this->limit = $limit;
         }
 
         $query = DB::table('candles')
             ->where('symbol_id', $this->id)
-            ->orderBy('t', $order = $after ? 'ASC' : 'DESC');
+            ->orderBy('t', $order = $start ? 'ASC' : 'DESC');
 
         if ($limit)
         {
             $query->limit($limit);
         }
-        if ($before)
+        if ($end)
         {
-            $query->where('t', '<', $before);
+            $query->where('t', '<', $end);
         }
-        if ($after)
+        if ($start)
         {
-            $query->where('t', '>', $after);
+            $query->where('t', '>', $start);
         }
 
         return $this->candles = $order === 'DESC' ? $query->get()->reverse()->values() : $query->get();
