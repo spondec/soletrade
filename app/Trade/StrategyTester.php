@@ -27,22 +27,14 @@ class StrategyTester
         $this->mergeConfig($config);
     }
 
-    protected function setupStrategy(string $class, array $config): AbstractStrategy
-    {
-        if (!is_subclass_of($class, AbstractStrategy::class))
-        {
-            throw new \InvalidArgumentException('Invalid strategy class provided.');
-        }
-
-        return new $class(config: $config);
-    }
-
     public function run(string $strategyClass, Symbol $symbol): array
     {
         $strategy = $this->setupStrategy($strategyClass, $this->config);
 
         Log::execTime(static function () use (&$symbol) {
-            $symbol->exchange()->updater()->update($symbol);
+
+            if ($symbol->last_update < time() - 3600)
+                $symbol->exchange()->updater()->update($symbol);
         }, 'CandleUpdater::update()');
 
         Log::execTime(static function () use (&$symbol, &$strategy, &$result) {
@@ -56,30 +48,30 @@ class StrategyTester
         return $this->result;
     }
 
-    protected function calculatePnl(float $balance, float $roi): float|int
+    protected function setupStrategy(string $class, array $config): AbstractStrategy
     {
-        return $balance * $roi / 100;
+        if (!is_subclass_of($class, AbstractStrategy::class))
+        {
+            throw new \InvalidArgumentException('Invalid strategy class: ' . $class);
+        }
+
+        return new $class(config: $config);
     }
 
-    protected function summarize(array $paired): array
+    protected function prepareResult(array $result, Symbol $symbol): void
     {
-        if (!$paired)
+        /**
+         * @var TradeSetup[] $trades
+         */
+        foreach ($result as $id => $trades)
         {
-            return [];
+            $this->result['trade_setups'][$id] = $this->pairEvaluateSummarize($trades);
         }
 
-        $balance = 100;
-
-        foreach ($paired as $pair)
+        foreach ($symbol->cachedSignals() as $indicator => $signals)
         {
-            $pnl = $this->calculatePnl($balance, $roi[] = (float)$pair['result']['realized_roi']);
-            $balance += $pnl;
+            $this->result['signals'][$indicator] = $this->pairEvaluateSummarize($signals);
         }
-
-        return [
-            'roi'     => $roi = round($balance - 100, 2),
-            'avg_roi' => round($roi / count($paired), 2)
-        ];
     }
 
     /**
@@ -113,48 +105,116 @@ class StrategyTester
 
     protected function evaluateTrade(TradeSetup|Signal $entry, TradeSetup|Signal $exit): array
     {
-        if (($exitTime = $exit->timestamp) <= ($entryTime = $entry->timestamp))
-        {
-            throw new \LogicException('Exit trade must be older than entry trade.');
-        }
+        $this->assertEntryExitTime($entry, $exit);
 
         $side = $entry->side;
         $entryPrice = $entry->price;
-
         $buy = $side === Signal::BUY;
 
-        $candle = DB::table('candles')
-            ->select(DB::raw('max(h) as h, min(l) as l'))
-            ->where('symbol_id', $entry->symbol_id)
-            ->where('t', '>=', $entryTime)
-            ->where('t', '<=', $exitTime)
-            ->first();
+        $candle = $this->getLowestHighestPriceBetween($entry, $exit);
 
-        if (!$candle)
-        {
-            throw new \UnexpectedValueException('Highest/lowest price between two trades was not found.');
-        }
+        $result['highest_price'] = $highest = (float)$candle->h;
+        $result['lowest_price'] = $lowest = (float)$candle->l;
 
-        $highest = (float)$candle->h;
-        $lowest = (float)$candle->l;
+        $stop = ($stopPrice = $entry->stop_price) && (
+                ($buy && $lowest <= $stopPrice) ||
+                (!$buy && $highest >= $stopPrice)
+            );
+        $result['stop'] = $stop;
+        $result['stop_price'] = $stopPrice;
 
         if ($validPrice = ($entryPrice >= $lowest && $entryPrice <= $highest))
         {
             $entry->valid_price = true;
             $entry->save();
+
+            $result = array_merge($result, $this->getLowestHighestUntilEntryPrice($entry, $exit));
         }
 
+        $roi = [
+            'realized_roi' => $validPrice ? $this->calcRoi($side, $entryPrice, $stop ? $stopPrice : $exit->price) : 0,
+            'highest_roi'  => $validPrice ? $this->calcRoi($side, $entryPrice, $buy ? $highest : $lowest) : 0,
+            'lowest_roi'   => $validPrice ? $this->calcRoi($side, $entryPrice, !$buy ? $highest : $lowest) : 0,
+        ];
+
         //TODO:: handle take profits
+        return array_merge($result, $roi);
+    }
+
+    protected function assertEntryExitTime(Signal|TradeSetup $entry, Signal|TradeSetup $exit): void
+    {
+        if ($exit->timestamp <= $entry->timestamp)
+        {
+            throw new \LogicException('Exit trade must be older than entry trade.');
+        }
+    }
+
+    protected function getLowestHighestPriceBetween(Signal|TradeSetup $entry, Signal|TradeSetup $exit): object
+    {
+        $candle = DB::table('candles')
+            ->select(DB::raw('max(h) as h, min(l) as l'))
+            ->where('symbol_id', $entry->symbol_id)
+            ->where('t', '>=', $entry->timestamp)
+            ->where('t', '<=', $exit->timestamp)
+            ->first();
+
+        if (!$candle)
+        {
+            throw new \UnexpectedValueException('Highest/lowest price between the two trades was not found.');
+        }
+
+        return $candle;
+    }
+
+    protected function getLowestHighestUntilEntryPrice(Signal|TradeSetup $entry, Signal|TradeSetup $exit): array
+    {
+        $candles = DB::table('candles')
+            ->where('symbol_id', $entry->symbol_id)
+            ->where('t', '>=', $entry->timestamp)
+            ->where('t', '<=', $exit->timestamp)
+            ->orderBy('t', 'ASC')
+            ->get();
+
+        if (!$candles)
+        {
+            throw new \UnexpectedValueException($entry->symbol()->first()->name . ' candles are missing!');
+        }
+
+        $lowestUntilEntry = INF;
+        $highestUntilEntry = 0;
+        $entryPrice = $entry->price;
+        $realEntryTime = null;
+
+        foreach ($candles as $candle)
+        {
+            $low = $candle->l;
+            $high = $candle->h;
+
+            if ($low < $lowestUntilEntry)
+            {
+                $lowestUntilEntry = $low;
+            }
+
+            if ($high > $highestUntilEntry)
+            {
+                $highestUntilEntry = $high;
+            }
+
+            if ($entryPrice >= $low && $entryPrice <= $high)
+            {
+                $realEntryTime = (float)$candle->t;
+                break;
+            }
+        }
+
         return [
-            'realized_roi'  => $validPrice ? $this->calculateRoi($side, $entryPrice, $exit->price) : 0,
-            'highest_roi'   => $validPrice ? $this->calculateRoi($side, $entryPrice, $buy ? $highest : $lowest) : 0,
-            'lowest_roi'    => $validPrice ? $this->calculateRoi($side, $entryPrice, !$buy ? $highest : $lowest) : 0,
-            'highest_price' => round($highest, 2),
-            'lowest_price'  => round($lowest, 2)
+            'highest_until_entry' => (float)$highestUntilEntry,
+            'lowest_until_entry'  => (float)$lowestUntilEntry,
+            'real_entry_time'     => $realEntryTime
         ];
     }
 
-    protected function calculateRoi(string $side, int|float $entryPrice, int|float $exitPrice): int|float
+    protected function calcRoi(string $side, int|float $entryPrice, int|float $exitPrice): int|float
     {
         $roi = ($exitPrice - $entryPrice) * 100 / $entryPrice;
 
@@ -163,19 +223,29 @@ class StrategyTester
         return round($roi, 2);
     }
 
-    protected function prepareResult(array $result, Symbol $symbol): void
+    protected function summarize(array $paired): array
     {
-        /**
-         * @var TradeSetup[] $trades
-         */
-        foreach ($result as $id => $trades)
+        if (!$paired)
         {
-            $this->result['trade_setups'][$id] = $this->pairEvaluateSummarize($trades);
+            return [];
         }
 
-        foreach ($symbol->cachedSignals() as $indicator => $signals)
+        $balance = 100;
+
+        foreach ($paired as $pair)
         {
-            $this->result['signals'][$indicator] = $this->pairEvaluateSummarize($signals);
+            $pnl = $this->calculatePnl($balance, $roi[] = (float)$pair['result']['realized_roi']);
+            $balance += $pnl;
         }
+
+        return [
+            'roi'     => $roi = round($balance - 100, 2),
+            'avg_roi' => round($roi / count($paired), 2)
+        ];
+    }
+
+    protected function calculatePnl(float $balance, float $roi): float|int
+    {
+        return $balance * $roi / 100;
     }
 }
