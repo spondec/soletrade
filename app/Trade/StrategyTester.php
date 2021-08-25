@@ -8,7 +8,6 @@ use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class StrategyTester
 {
@@ -91,7 +90,7 @@ class StrategyTester
             if ($entry->side !== $trade->side)
             {
                 $paired[] = [
-                    'result' => $this->evaluateTrade($entry, $trade),
+                    'result' => (new Evaluator($entry, $trade))->evaluate(),
                     'entry'  => $entry,
                     'exit'   => $trade
                 ];
@@ -101,126 +100,6 @@ class StrategyTester
         }
 
         return ['trades' => $paired, 'summary' => $this->summarize($paired)];
-    }
-
-    protected function evaluateTrade(TradeSetup|Signal $entry, TradeSetup|Signal $exit): array
-    {
-        $this->assertEntryExitTime($entry, $exit);
-
-        $side = $entry->side;
-        $entryPrice = $entry->price;
-        $buy = $side === Signal::BUY;
-
-        $candle = $this->getLowestHighestPriceBetween($entry, $exit);
-
-        $result['highest_price'] = $highest = (float)$candle->h;
-        $result['lowest_price'] = $lowest = (float)$candle->l;
-
-        $stop = ($stopPrice = $entry->stop_price) && (
-                ($buy && $lowest <= $stopPrice) ||
-                (!$buy && $highest >= $stopPrice)
-            );
-        $result['stop'] = $stop;
-        $result['stop_price'] = $stopPrice;
-
-        if ($validPrice = ($entryPrice >= $lowest && $entryPrice <= $highest))
-        {
-            $entry->valid_price = true;
-            $entry->save();
-
-            $result = array_merge($result, $this->getLowestHighestUntilEntryPrice($entry, $exit));
-        }
-
-        $roi = [
-            'realized_roi' => $validPrice ? $this->calcRoi($side, $entryPrice, $stop ? $stopPrice : $exit->price) : 0,
-            'highest_roi'  => $validPrice ? $this->calcRoi($side, $entryPrice, $buy ? $highest : $lowest) : 0,
-            'lowest_roi'   => $validPrice ? $this->calcRoi($side, $entryPrice, !$buy ? $highest : $lowest) : 0,
-        ];
-
-        //TODO:: handle take profits
-        return array_merge($result, $roi);
-    }
-
-    protected function assertEntryExitTime(Signal|TradeSetup $entry, Signal|TradeSetup $exit): void
-    {
-        if ($exit->timestamp <= $entry->timestamp)
-        {
-            throw new \LogicException('Exit trade must be older than entry trade.');
-        }
-    }
-
-    protected function getLowestHighestPriceBetween(Signal|TradeSetup $entry, Signal|TradeSetup $exit): object
-    {
-        $candle = DB::table('candles')
-            ->select(DB::raw('max(h) as h, min(l) as l'))
-            ->where('symbol_id', $entry->symbol_id)
-            ->where('t', '>=', $entry->timestamp)
-            ->where('t', '<=', $exit->timestamp)
-            ->first();
-
-        if (!$candle)
-        {
-            throw new \UnexpectedValueException('Highest/lowest price between the two trades was not found.');
-        }
-
-        return $candle;
-    }
-
-    protected function getLowestHighestUntilEntryPrice(Signal|TradeSetup $entry, Signal|TradeSetup $exit): array
-    {
-        $candles = DB::table('candles')
-            ->where('symbol_id', $entry->symbol_id)
-            ->where('t', '>=', $entry->timestamp)
-            ->where('t', '<=', $exit->timestamp)
-            ->orderBy('t', 'ASC')
-            ->get();
-
-        if (!$candles)
-        {
-            throw new \UnexpectedValueException($entry->symbol()->first()->name . ' candles are missing!');
-        }
-
-        $lowestUntilEntry = INF;
-        $highestUntilEntry = 0;
-        $entryPrice = $entry->price;
-        $realEntryTime = null;
-
-        foreach ($candles as $candle)
-        {
-            $low = $candle->l;
-            $high = $candle->h;
-
-            if ($low < $lowestUntilEntry)
-            {
-                $lowestUntilEntry = $low;
-            }
-
-            if ($high > $highestUntilEntry)
-            {
-                $highestUntilEntry = $high;
-            }
-
-            if ($entryPrice >= $low && $entryPrice <= $high)
-            {
-                $realEntryTime = (float)$candle->t;
-                break;
-            }
-        }
-
-        return [
-            'highest_until_entry' => (float)$highestUntilEntry,
-            'lowest_until_entry'  => (float)$lowestUntilEntry,
-            'real_entry_time'     => $realEntryTime
-        ];
-    }
-
-    protected function calcRoi(string $side, int|float $entryPrice, int|float $exitPrice): int|float
-    {
-        $roi = ($exitPrice - $entryPrice) * 100 / $entryPrice;
-
-        if ($side === Signal::SELL) $roi *= -1;
-
-        return round($roi, 2);
     }
 
     protected function summarize(array $paired): array
