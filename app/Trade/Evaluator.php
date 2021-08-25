@@ -80,8 +80,8 @@ class Evaluator
     {
         $candles = $this->getCandlesBetween();
 
-        $lowestUntilEntry = INF;
-        $highestUntilEntry = 0;
+        $lowestEntry = INF;
+        $highestEntry = 0;
         $entryPrice = $this->entry->price;
         $realEntryTime = null;
 
@@ -90,14 +90,14 @@ class Evaluator
             $low = $candle->l;
             $high = $candle->h;
 
-            if ($low < $lowestUntilEntry)
+            if ($low < $lowestEntry)
             {
-                $lowestUntilEntry = $low;
+                $lowestEntry = $low;
             }
 
-            if ($high > $highestUntilEntry)
+            if ($high > $highestEntry)
             {
-                $highestUntilEntry = $high;
+                $highestEntry = $high;
             }
 
             if ($entryPrice >= $low && $entryPrice <= $high)
@@ -107,9 +107,9 @@ class Evaluator
             }
         }
 
-        $this->result['highest_until_entry'] = (float)$highestUntilEntry;
-        $this->result['lowest_until_entry'] = (float)$lowestUntilEntry;
-        $this->result['real_entry_time'] = $realEntryTime;
+        $this->result['highest_entry'] = (float)$highestEntry;
+        $this->result['lowest_entry'] = (float)$lowestEntry;
+        $this->result['entry_time'] = $realEntryTime;
     }
 
     public function calcRoi(string $side, int|float $entryPrice, int|float $exitPrice): int|float

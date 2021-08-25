@@ -9,8 +9,8 @@
       <th>Entry Date</th>
       <th>Exit Date</th>
       <th>Valid Price</th>
-      <th>Highest Until Entry</th>
-      <th>Lowest Until Entry</th>
+      <th>Highest Entry</th>
+      <th>Lowest Entry</th>
       <th>Entry Price</th>
       <th>Exit Price</th>
       <th>Stop Price</th>
@@ -32,15 +32,15 @@
       <td v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
         <a v-bind:href="'#' + chartId">{{ timestampToString(trade.entry.timestamp) }}</a>
       </td>
-      <td v-on:click="dateClick(trade.result.real_entry_time, trade.exit.timestamp)">
-        <a v-bind:href="'#' + chartId">{{ timestampToString(trade.result.real_entry_time) }}</a>
+      <td v-on:click="dateClick(trade.result.entry_time, trade.exit.timestamp)">
+        <a v-bind:href="'#' + chartId">{{ timestampToString(trade.result.entry_time) }}</a>
       </td>
       <td v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
         <a v-bind:href="'#' + chartId">{{ timestampToString(trade.exit.timestamp) }}</a>
       </td>
       <td>{{ trade.entry.valid_price ? 'Yes' : 'No' }}</td>
-      <td>{{ trade.entry.highest_until_entry || 'None' }}</td>
-      <td>{{ trade.entry.lowest_until_entry || 'None' }}</td>
+      <td>{{ trade.entry.highest_entry || 'None' }}</td>
+      <td>{{ trade.entry.lowest_entry || 'None' }}</td>
       <td>{{ trade.entry.price }}</td>
       <td>{{ trade.exit.price }}</td>
       <td>
