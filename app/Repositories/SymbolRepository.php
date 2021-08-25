@@ -6,7 +6,6 @@ use App\Models\Symbol;
 use App\Trade\CandleMap;
 use App\Trade\Exchange\AbstractExchange;
 use App\Trade\Indicator\AbstractIndicator;
-use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -79,11 +78,6 @@ class SymbolRepository
         DB::table('symbols')->insertOrIgnore($inserts);
     }
 
-    public function backtest(Symbol $symbol, AbstractStrategy $strategy)
-    {
-
-    }
-
     public function updateCandle(int $id, array $values): int
     {
         return DB::table('candles')
@@ -120,14 +114,6 @@ class SymbolRepository
         return DB::table('symbols')->distinct()->get('interval')->pluck('interval');
     }
 
-//    public function updateCandle(Symbol $symbol, int $maxRunTime = 0)
-//    {
-//        $fetcher = $symbol->exchange()->fetcher();
-//
-//        return   $fetcher->fetch($interval, $maxRunTime, $quoteAsset,
-//                $symbols ? fn($v) => in_array($v, $symbols) : null);
-//    }
-
     /**
      * @param string[] $indicators
      */
@@ -153,4 +139,5 @@ class SymbolRepository
     {
         $symbol->addIndicator(new $indicator($symbol, $candles, $config, $signalCallback));
     }
+
 }
