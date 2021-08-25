@@ -34,7 +34,7 @@ class Evaluator
         $candle = $this->getLowestHighestPriceBetween();
 
         $this->result['highest_price'] = $highest = (float)$candle->h;
-        $this->resultl['lowest_price'] = $lowest = (float)$candle->l;
+        $this->result['lowest_price'] = $lowest = (float)$candle->l;
 
         $stop = ($stopPrice = $this->entry->stop_price) && (
                 ($buy && $lowest <= $stopPrice) ||
