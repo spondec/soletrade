@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class Evaluator
 {
+    protected array $result = []; //TODO Will migrate this to a model
+
     public function __construct(protected TradeSetup|Signal $entry,
                                 protected TradeSetup|Signal $exit)
     {
@@ -31,32 +33,30 @@ class Evaluator
 
         $candle = $this->getLowestHighestPriceBetween();
 
-        $result['highest_price'] = $highest = (float)$candle->h;
-        $result['lowest_price'] = $lowest = (float)$candle->l;
+        $this->result['highest_price'] = $highest = (float)$candle->h;
+        $this->resultl['lowest_price'] = $lowest = (float)$candle->l;
 
         $stop = ($stopPrice = $this->entry->stop_price) && (
                 ($buy && $lowest <= $stopPrice) ||
                 (!$buy && $highest >= $stopPrice)
             );
-        $result['stop'] = $stop;
-        $result['stop_price'] = $stopPrice;
+        $this->result['stop'] = $stop;
+        $this->result['stop_price'] = $stopPrice;
 
         if ($validPrice = ($entryPrice >= $lowest && $entryPrice <= $highest))
         {
             $this->entry->valid_price = true;
             $this->entry->save();
 
-            $result = array_merge($result, $this->getLowestHighestUntilEntryPrice());
+            $this->realizeEntry();
         }
 
-        $roi = [
-            'realized_roi' => $validPrice ? $this->calcRoi($side, $entryPrice, $stop ? $stopPrice : $this->exit->price) : 0,
-            'highest_roi'  => $validPrice ? $this->calcRoi($side, $entryPrice, $buy ? $highest : $lowest) : 0,
-            'lowest_roi'   => $validPrice ? $this->calcRoi($side, $entryPrice, !$buy ? $highest : $lowest) : 0,
-        ];
+        $this->result['realized_roi'] = $validPrice ? $this->calcRoi($side, $entryPrice, $stop ? $stopPrice : $this->exit->price) : 0;
+        $this->result['highest_roi'] = $validPrice ? $this->calcRoi($side, $entryPrice, $buy ? $highest : $lowest) : 0;
+        $this->result['lowest_roi'] = $validPrice ? $this->calcRoi($side, $entryPrice, !$buy ? $highest : $lowest) : 0;
 
         //TODO:: handle take profits
-        return array_merge($result, $roi);
+        return $this->result;
     }
 
     protected function getLowestHighestPriceBetween(): object
@@ -76,19 +76,9 @@ class Evaluator
         return $candle;
     }
 
-    protected function getLowestHighestUntilEntryPrice(): array
+    protected function realizeEntry(): void
     {
-        $candles = DB::table('candles')
-            ->where('symbol_id', $this->entry->symbol_id)
-            ->where('t', '>=', $this->entry->timestamp)
-            ->where('t', '<=', $this->exit->timestamp)
-            ->orderBy('t', 'ASC')
-            ->get();
-
-        if (!$candles)
-        {
-            throw new \UnexpectedValueException($this->entry->symbol()->first()->name . ' candles are missing!');
-        }
+        $candles = $this->getCandlesBetween();
 
         $lowestUntilEntry = INF;
         $highestUntilEntry = 0;
@@ -117,19 +107,33 @@ class Evaluator
             }
         }
 
-        return [
-            'highest_until_entry' => (float)$highestUntilEntry,
-            'lowest_until_entry'  => (float)$lowestUntilEntry,
-            'real_entry_time'     => $realEntryTime
-        ];
+        $this->result['highest_until_entry'] = (float)$highestUntilEntry;
+        $this->result['lowest_until_entry'] = (float)$lowestUntilEntry;
+        $this->result['real_entry_time'] = $realEntryTime;
     }
 
-    protected function calcRoi(string $side, int|float $entryPrice, int|float $exitPrice): int|float
+    public function calcRoi(string $side, int|float $entryPrice, int|float $exitPrice): int|float
     {
         $roi = ($exitPrice - $entryPrice) * 100 / $entryPrice;
 
         if ($side === Signal::SELL) $roi *= -1;
 
         return round($roi, 2);
+    }
+
+    protected function getCandlesBetween(): \Illuminate\Support\Collection
+    {
+        $candles = DB::table('candles')
+            ->where('symbol_id', $this->entry->symbol_id)
+            ->where('t', '>=', $this->entry->timestamp)
+            ->where('t', '<=', $this->exit->timestamp)
+            ->orderBy('t', 'ASC')
+            ->get();
+
+        if (!$candles)
+        {
+            throw new \UnexpectedValueException($this->entry->symbol()->first()->name . ' candles are missing!');
+        }
+        return $candles;
     }
 }
