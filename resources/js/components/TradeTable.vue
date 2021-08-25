@@ -5,10 +5,12 @@
       <th>Side</th>
       <th>Entry</th>
       <th>Exit</th>
+      <th>Signal Date</th>
       <th>Entry Date</th>
-      <th>Real. Entry Date</th>
       <th>Exit Date</th>
       <th>Valid Price</th>
+      <th>Highest Until Entry</th>
+      <th>Lowest Until Entry</th>
       <th>Entry Price</th>
       <th>Exit Price</th>
       <th>Stop Price</th>
@@ -37,6 +39,8 @@
         <a v-bind:href="'#' + chartId">{{ timestampToString(trade.exit.timestamp) }}</a>
       </td>
       <td>{{ trade.entry.valid_price ? 'Yes' : 'No' }}</td>
+      <td>{{ trade.entry.highest_until_entry || 'None' }}</td>
+      <td>{{ trade.entry.lowest_until_entry || 'None' }}</td>
       <td>{{ trade.entry.price }}</td>
       <td>{{ trade.exit.price }}</td>
       <td>
