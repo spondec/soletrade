@@ -4,15 +4,30 @@ namespace App\Trade;
 
 use App\Models\Signal;
 use App\Models\TradeSetup;
-use Illuminate\Support\Facades\DB;
+use App\Repositories\SymbolRepository;
+use Illuminate\Support\Facades\App;
 
 class Evaluator
 {
-    protected array $result = []; //TODO Will migrate this to a model
+    //TODO Will migrate this to a model
+    protected array $result = [
+        'realized_roi'  => 0,
+        'highest_roi'   => 0,
+        'lowest_roi'    => 0,
+        'highest_price' => 0,
+        'lowest_price'  => 0,
+        'ambiguous'     => false,
+        'stop'          => false,
+        'close'         => false,
+    ];
+
+    protected SymbolRepository $symbolRepo;
 
     public function __construct(protected TradeSetup|Signal $entry,
                                 protected TradeSetup|Signal $exit)
     {
+
+        $this->symbolRepo = App::make(SymbolRepository::class);
 
         $this->assertEntryExitTime();
     }
@@ -21,119 +36,162 @@ class Evaluator
     {
         if ($this->exit->timestamp <= $this->entry->timestamp)
         {
-            throw new \LogicException('Exit trade must be older than entry trade.');
+            throw new \LogicException('Exit trade must not be newer than entry trade.');
         }
     }
 
-    public function evaluate(): array
+    protected function validateEntryPrice(): bool
     {
-        $side = $this->entry->side;
         $entryPrice = $this->entry->price;
-        $buy = $side === Signal::BUY;
 
-        $candle = $this->getLowestHighestPriceBetween();
+        $candle = $this->symbolRepo->fetchLowestHighestPriceBetween($this->entry->symbol_id,
+            $this->entry->timestamp,
+            $this->exit->timestamp);
 
-        $this->result['highest_price'] = $highest = (float)$candle->h;
-        $this->result['lowest_price'] = $lowest = (float)$candle->l;
+        $this->result['highest_price'] = $candle->h;
+        $this->result['lowest_price'] = $candle->l;
 
-        $stop = ($stopPrice = $this->entry->stop_price) && (
-                ($buy && $lowest <= $stopPrice) ||
-                (!$buy && $highest >= $stopPrice)
-            );
-        $this->result['stop'] = $stop;
-        $this->result['stop_price'] = $stopPrice;
+        $this->entry->valid_price = $isValid = ($entryPrice >= $candle->l && $entryPrice <= $candle->h);
+        $this->entry->save();
 
-        if ($validPrice = ($entryPrice >= $lowest && $entryPrice <= $highest))
-        {
-            $this->entry->valid_price = true;
-            $this->entry->save();
-
-            $this->realizeEntry();
-        }
-
-        $this->result['realized_roi'] = $validPrice ? $this->calcRoi($side, $entryPrice, $stop ? $stopPrice : $this->exit->price) : 0;
-        $this->result['highest_roi'] = $validPrice ? $this->calcRoi($side, $entryPrice, $buy ? $highest : $lowest) : 0;
-        $this->result['lowest_roi'] = $validPrice ? $this->calcRoi($side, $entryPrice, !$buy ? $highest : $lowest) : 0;
-
-        //TODO:: handle take profits
-        return $this->result;
+        return $isValid;
     }
 
-    protected function getLowestHighestPriceBetween(): object
+    protected function realizeTrade(): void
     {
-        $candle = DB::table('candles')
-            ->select(DB::raw('max(h) as h, min(l) as l'))
-            ->where('symbol_id', $this->entry->symbol_id)
-            ->where('t', '>=', $this->entry->timestamp)
-            ->where('t', '<=', $this->exit->timestamp)
-            ->first();
-
-        if (!$candle)
-        {
-            throw new \UnexpectedValueException('Highest/lowest price between the two trades was not found.');
-        }
-
-        return $candle;
-    }
-
-    protected function realizeEntry(): void
-    {
-        $candles = $this->getCandlesBetween();
+        $candles = $this->symbolRepo->fetchCandlesBetween($this->entry->symbol_id,
+            $this->entry->timestamp,
+            $this->exit->timestamp);
 
         $lowestEntry = INF;
         $highestEntry = 0;
-        $entryPrice = $this->entry->price;
         $realEntryTime = null;
 
+        $entryPrice = $this->entry->price;
+        $stopPrice = $this->entry->stop_price;
+        $closePrice = $this->entry->close_price;
+
+        $break = false;
         foreach ($candles as $candle)
         {
             $low = $candle->l;
             $high = $candle->h;
 
-            if ($low < $lowestEntry)
+            if (!$realEntryTime)
             {
-                $lowestEntry = $low;
+                if ($low < $lowestEntry)
+                {
+                    $lowestEntry = $low;
+                }
+                if ($high > $highestEntry)
+                {
+                    $highestEntry = $high;
+                }
+                if ($entryPrice >= $low && $entryPrice <= $high)
+                {
+                    $realEntryTime = (float)$candle->t;
+                    $this->result['highest_entry'] = (float)$highestEntry;
+                    $this->result['lowest_entry'] = (float)$lowestEntry;
+                    $this->result['entry_time'] = $realEntryTime;
+                }
             }
 
-            if ($high > $highestEntry)
+            if ($stopPrice && $this->isPriceInRange($stopPrice, $high, $low))
             {
-                $highestEntry = $high;
+                $this->result['stop'] = true;
+                $break = true;
             }
 
-            if ($entryPrice >= $low && $entryPrice <= $high)
+            //TODO handle take profits
+
+            if ($closePrice && $this->isPriceInRange($closePrice, $high, $low))
             {
-                $realEntryTime = (float)$candle->t;
+                $this->result['close'] = true;
+
+                if ($break)
+                {
+                    $this->result['ambiguous'] = true;
+                }
+
+                $break = true;
+            }
+
+            if ($break ?? false)
+            {
+                $this->setCloseTime($candle->t);
                 break;
             }
         }
-
-        $this->result['highest_entry'] = (float)$highestEntry;
-        $this->result['lowest_entry'] = (float)$lowestEntry;
-        $this->result['entry_time'] = $realEntryTime;
     }
 
-    public function calcRoi(string $side, int|float $entryPrice, int|float $exitPrice): int|float
+    public function isPriceInRange(float $price, float $high, float $low): bool
+    {
+        return $price <= $high && $price >= $low;
+    }
+
+    protected function setCloseTime(int $timestamp): void
+    {
+        $this->result['close_time'] = $timestamp;
+    }
+
+    public function evaluate(): array
+    {
+        if (!$this->validateEntryPrice())
+        {
+            return $this->result;
+        }
+
+        $this->realizeTrade();
+
+        if ($this->result['ambiguous'])
+        {
+            return $this->result;
+        }
+
+        $this->calcHighLowRealRoi();
+
+        return $this->result;
+    }
+
+    protected function getExitPrice(): float
+    {
+        if ($this->result['stop'])
+        {
+            return $this->entry->stop_price;
+        }
+
+        if ($this->result['close'])
+        {
+            return $this->entry->close_price;
+        }
+
+        return $this->exit->price;
+    }
+
+    public function calcRoi(string $side, int|float $entryPrice, int|float $exitPrice): float
     {
         $roi = ($exitPrice - $entryPrice) * 100 / $entryPrice;
 
-        if ($side === Signal::SELL) $roi *= -1;
+        if ($side === Signal::SELL)
+        {
+            $roi *= -1;
+        }
 
         return round($roi, 2);
     }
 
-    protected function getCandlesBetween(): \Illuminate\Support\Collection
+    protected function calcHighLowRealRoi(): void
     {
-        $candles = DB::table('candles')
-            ->where('symbol_id', $this->entry->symbol_id)
-            ->where('t', '>=', $this->entry->timestamp)
-            ->where('t', '<=', $this->exit->timestamp)
-            ->orderBy('t', 'ASC')
-            ->get();
+        $side = $this->entry->side;
+        $entryPrice = $this->entry->price;
+        $buy = $this->entry->side === Signal::BUY;
 
-        if (!$candles)
-        {
-            throw new \UnexpectedValueException($this->entry->symbol()->first()->name . ' candles are missing!');
-        }
-        return $candles;
+        $exitPrice = $this->getExitPrice();
+
+        $this->result['realized_roi'] = $this->calcRoi($side, $entryPrice, $exitPrice);
+        $this->result['highest_roi'] = $this->calcRoi($side, $entryPrice,
+            $buy ? $this->result['highest_price'] : $this->result['lowest_price']);
+        $this->result['lowest_roi'] = $this->calcRoi($side, $entryPrice,
+            !$buy ? $this->result['highest_price'] : $this->result['lowest_price']);
     }
 }
