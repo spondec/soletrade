@@ -5,17 +5,18 @@
       <th>Side</th>
       <th>Entry</th>
       <th>Exit</th>
-      <th>Signal Date</th>
+      <th>Entry Signal</th>
       <th>Entry Date</th>
       <th>Exit Date</th>
-      <th>Valid Price</th>
+      <th>Exit Signal</th>
       <th>Highest Entry</th>
       <th>Lowest Entry</th>
       <th>Entry Price</th>
       <th>Exit Price</th>
+      <th>Close Price</th>
       <th>Stop Price</th>
-      <th>Highest Price</th>
-      <th>Lowest Price</th>
+      <!--      <th>Highest Price</th>-->
+      <!--      <th>Lowest Price</th>-->
       <th>ROI</th>
       <th>Highest ROI</th>
       <th>Lowest ROI</th>
@@ -24,31 +25,51 @@
     <tbody>
     <tr v-for="trade in paginated" class="bg-opacity-50" v-bind:class="{
         'bg-danger': trade.result.realized_roi < 0,
-        'bg-success': trade.result.realized_roi > 0
+        'bg-success': trade.result.realized_roi > 0,
+        'bg-warning' : !trade.entry.valid_price,
+        'bg-info': trade.result.ambiguous
       }">
       <td>{{ trade.entry.side }}</td>
       <td>{{ trade.entry.name }}</td>
       <td>{{ trade.exit.name }}</td>
-      <td v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
-        <a v-bind:href="'#' + chartId">{{ timestampToString(trade.entry.timestamp) }}</a>
+      <td>
+        <a v-bind:href="'#' + chartId"
+           v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
+          {{ timestampToString(trade.entry.timestamp) }}
+        </a>
       </td>
-      <td v-on:click="dateClick(trade.result.entry_time, trade.exit.timestamp)">
-        <a v-bind:href="'#' + chartId">{{ timestampToString(trade.result.entry_time) }}</a>
+      <td>
+        <a v-bind:href="'#' + chartId"
+           v-on:click="dateClick(trade.result.entry_time, trade.result.close_time)">
+          {{ timestampToString(trade.result.entry_time) }}
+        </a>
       </td>
-      <td v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
-        <a v-bind:href="'#' + chartId">{{ timestampToString(trade.exit.timestamp) }}</a>
+      <td>
+        <a v-bind:href="'#' + chartId"
+           v-on:click="dateClick(trade.result.entry_time, trade.result.close_time)">
+          {{ timestampToString(trade.result.close_time) }}
+        </a>
       </td>
-      <td>{{ trade.entry.valid_price ? 'Yes' : 'No' }}</td>
-      <td>{{ trade.entry.highest_entry || 'None' }}</td>
-      <td>{{ trade.entry.lowest_entry || 'None' }}</td>
-      <td>{{ trade.entry.price }}</td>
+      <td>
+        <a v-bind:href="'#' + chartId"
+           v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
+          {{ timestampToString(trade.exit.timestamp) }}
+        </a>
+      </td>
+      <td>{{ trade.result.highest_entry || 'None' }}</td>
+      <td>{{ trade.result.lowest_entry || 'None' }}</td>
+      <td v-bind:class="{ 'text-danger': !trade.entry.valid_price }">{{ trade.entry.price }}</td>
       <td>{{ trade.exit.price }}</td>
       <td>
-        <p v-bind:class="{'text-danger': trade.result.stop }">
-          {{ trade.result.stop_price || 'None' }}</p>
+        <p v-bind:class="{'text-warning': trade.result.close }">
+          {{ trade.entry.close_price || 'None' }}</p>
       </td>
-      <td>{{ trade.result.highest_price }}</td>
-      <td>{{ trade.result.lowest_price }}</td>
+      <td>
+        <p v-bind:class="{'text-warning': trade.result.stop }">
+          {{ trade.entry.stop_price || 'None' }}</p>
+      </td>
+      <!--      <td>{{ trade.result.highest_price }}</td>-->
+      <!--      <td>{{ trade.result.lowest_price }}</td>-->
       <td>{{ trade.result.realized_roi + '%' }}</td>
       <td>{{ trade.result.highest_roi + '%' }}</td>
       <td>{{ trade.result.lowest_roi + '%' }}</td>
@@ -86,7 +107,8 @@ export default {
 
     dateClick: function (a, b)
     {
-      this.$emit('dateClick', a, b);
+      if (a && b)
+        this.$emit('dateClick', a, b);
     },
     paginate: function (page)
     {
@@ -96,7 +118,13 @@ export default {
     },
     timestampToString: function (timestamp)
     {
-      return new Date(timestamp).toISOString().slice(0, 19).replace('T', ' ');
+      try
+      {
+        return new Date(timestamp).toISOString().slice(0, 19).replace('T', ' ');
+      } catch (e)
+      {
+        return 'None';
+      }
     }
   }
 }
