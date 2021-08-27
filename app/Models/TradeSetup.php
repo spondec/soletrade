@@ -25,18 +25,12 @@ class TradeSetup extends \App\Models\Model
 {
     use HasFactory;
 
-    public array $signals = [];
-
-//    protected $table = 'trade_setups';
-
     protected $guarded = ['id'];
+    protected $table = 'trade_setups';
 
     protected array $unique = ['symbol_id', 'signature_id', 'name', 'timestamp', 'side'];
 
-    public function calculateRiskReward()
-    {
-        //TODO
-    }
+    public array $signals = [];
 
     public function signals()
     {
@@ -48,12 +42,47 @@ class TradeSetup extends \App\Models\Model
         return $this->hasMany(TakeProfit::class);
     }
 
+    public function isBuy()
+    {
+        return $this->side === Signal::BUY;
+    }
+
     public function toArray()
     {
         $result = parent::toArray();
 
         $result['price'] = round($result['price'], 2);
+        $result['close_price'] = round($result['close_price'] ?? 0, 2);
+        $result['stop_price'] = round($result['stop_price'] ?? 0, 2);
 
         return $result;
+    }
+
+    public function setStopPrice(float $percent): void
+    {
+        $price = $this->price;
+
+        if ($this->side === Signal::BUY)
+        {
+            $this->stop_price = $price - $price * $percent / 100;
+        }
+        else
+        {
+            $this->stop_price = $price + $price * $percent / 100;
+        }
+    }
+
+    public function setClosePrice(float $percent): void
+    {
+        $price = $this->price;
+
+        if ($this->side === Signal::BUY)
+        {
+            $this->close_price = $price + $price * $percent / 100;
+        }
+        else
+        {
+            $this->close_price = $price - $price * $percent / 100;
+        }
     }
 }
