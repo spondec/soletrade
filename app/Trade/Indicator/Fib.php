@@ -6,9 +6,29 @@ class Fib extends AbstractIndicator
 {
     protected array $config = ['period' => 144];
 
-    public function nearestFib()
+    public function nearestFib(): array
     {
+        $levels = $this->data[$this->current];
+        $close = $this->closePrice();
 
+        $minDistance = null;
+        foreach ($levels as $key => $price)
+        {
+            $distance = abs($close - $price);
+            if (!$minDistance || $distance < $minDistance)
+            {
+                $minDistance = $distance;
+                $fib = $key;
+                $fibPrice = $price;
+            }
+        }
+
+        return [
+            'fib'      => $fib,
+            'price'    => $price,
+            'fibPrice' => $fibPrice,
+            'distance' => $minDistance / $price * 100
+        ];
     }
 
     public function raw(): array
