@@ -104,22 +104,46 @@ class StrategyTester
 
     protected function summarize(array $paired): array
     {
-        if (!$paired)
-        {
-            return [];
-        }
-
         $balance = 100;
+
+        $ambiguous = 0;
+        $profit = 0;
+        $loss = 0;
+        $count = 0;
 
         foreach ($paired as $pair)
         {
-            $pnl = $this->calculatePnl($balance, $roi[] = (float)$pair['result']['realized_roi']);
-            $balance += $pnl;
+            if ($pair['entry']['valid_price'] || !$pair['result']['ambiguous'])
+            {
+                $realized = $pair['result']['realized_roi'];
+                $pnl = $this->calculatePnl($balance, $roi[] = $realized);
+                $balance += $pnl;
+                $count++;
+            }
+
+            if ($pair['result']['ambiguous'])
+            {
+                $ambiguous++;
+            }
+            else
+            {
+                if ($realized < 0)
+                {
+                    $loss++;
+                }
+                else
+                {
+                    $profit++;
+                }
+            }
         }
 
         return [
-            'roi'     => $roi = round($balance - 100, 2),
-            'avg_roi' => round($roi / count($paired), 2)
+            'roi'       => $roi = round($balance - 100, 2),
+            'avg_roi'   => $count ? round($roi / $count, 2) : 0,
+            'profit'    => $profit,
+            'loss'      => $loss,
+            'ambiguous' => $ambiguous
         ];
     }
 
