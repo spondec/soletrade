@@ -55,13 +55,44 @@ class SymbolRepository
         return $mapped;
     }
 
-    /**
-     * @param array  $symbols
-     * @param int    $exchangeId
-     * @param string $interval
-     *
-     * @return array
-     */
+    public function fetchLowestHighestPriceBetween(int $symbolId, int $startDate, int $endDate): object
+    {
+        $candle = DB::table('candles')
+            ->select(DB::raw('max(h) as h, min(l) as l'))
+            ->where('symbol_id', $symbolId)
+            ->where('t', '>=', $startDate)
+            ->where('t', '<=', $endDate)
+            ->first();
+
+        if (!$candle)
+        {
+            throw new \UnexpectedValueException('Highest/lowest price between the two dates was not found.');
+        }
+
+        $candle->h = (float)$candle->h;
+        $candle->l = (float)$candle->l;
+
+        return $candle;
+    }
+
+    public function fetchCandlesBetween(int $symbolId, int $startDate, int $endDate): \Illuminate\Support\Collection
+    {
+        $candles = DB::table('candles')
+            ->where('symbol_id', $symbolId)
+            ->where('t', '>=', $startDate)
+            ->where('t', '<=', $endDate)
+            ->orderBy('t', 'ASC')
+            ->get();
+
+        if (!$candles)
+        {
+            /** @var Symbol $symbol */
+            $symbol = Symbol::query()->findOrFail($symbolId);
+            throw new \UnexpectedValueException("$symbol->symbol-$symbol->interval candles are missing.");
+        }
+        return $candles;
+    }
+
     public function insertIgnoreSymbols(array $symbols, int $exchangeId, string $interval): void
     {
         $inserts = [];
@@ -127,7 +158,6 @@ class SymbolRepository
         }
     }
 
-
     /**
      * @param AbstractIndicator $indicator
      */
@@ -139,5 +169,4 @@ class SymbolRepository
     {
         $symbol->addIndicator(new $indicator($symbol, $candles, $config, $signalCallback));
     }
-
 }
