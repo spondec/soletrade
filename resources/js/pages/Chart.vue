@@ -58,8 +58,8 @@
             <tab name="Trade Setups">
               <div class="body divide-y my2">
                 <div v-for="(setup, id) in symbol.strategy.trade_setups" id="trade-setups" class="my-2">
-                  <div class="grid grid-cols-1 text-center">
-                    <h1 class="text-lg">{{ id }}</h1>
+                  <h1 class="text-2xl text-center">{{ id }}</h1>
+                  <div class="grid grid-cols-5 text-center">
                     <h1 class="text-lg" v-bind:class="{
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
@@ -68,6 +68,9 @@
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
                       {{ 'Average ROI: ' + setup.summary.avg_roi + '%' }} </h1>
+                    <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
+                    <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
+                    <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
                   </div>
                   <trade-table chart-id="chart" v-bind:trades="setup.trades" @dateClick="showRange"></trade-table>
                 </div>
@@ -76,16 +79,19 @@
             <tab name="Signals">
               <div class="body divide-y">
                 <div v-for="(setup, id) in symbol.strategy.signals" id="signals" class="my-2">
-                  <div class="grid grid-cols-1 text-center">
-                    <h1 class="text-lg">{{ id }}</h1>
+                  <h1 class="text-2xl text-center">{{ id }}</h1>
+                  <div class="grid grid-cols-5 text-center">
                     <h1 class="text-lg" v-bind:class="{
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
                       {{ 'ROI: ' + setup.summary.roi + '%' }} </h1>
-                    <h1 class="text-lg" v-bind:class="{
+                    <h1 class="text-lg " v-bind:class="{
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
                       {{ 'Average ROI: ' + setup.summary.avg_roi + '%' }} </h1>
+                    <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
+                    <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
+                    <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
                   </div>
                   <trade-table chart-id="chart" v-bind:trades="setup.trades" @dateClick="showRange"></trade-table>
                 </div>
@@ -370,7 +376,6 @@ export default {
           },
           setMarkers: markers =>
           {
-            this.series.Fib.setMarkers(markers);
           }
         },
         RSI: {
@@ -695,6 +700,11 @@ export default {
 
     updateSeries: async function ()
     {
+      // if (!this.series['candlestick'])
+      // {
+      //   return;
+      // }
+
       this.series['candlestick'].setData(await this.symbol.candles);
 
       const handlers = this.handlers();
@@ -802,7 +812,7 @@ html, body, #app, .container {
 }
 
 .chart-container {
-  height: 25%;
+  height: 30%;
   margin-top: 10px;
 }
 
