@@ -5,28 +5,25 @@ namespace App\Trade\Indicator;
 class Fib extends AbstractIndicator
 {
     protected array $config = ['period' => 144];
+    public array $prevFib;
 
-    public function nearestFib(): array
+    public function nearestFib(array $levels, float $price): array
     {
-        $levels = $this->data[$this->current];
-        $close = $this->closePrice();
-
         $minDistance = null;
-        foreach ($levels as $key => $price)
+        foreach ($levels as $level => $levelPrice)
         {
-            $distance = abs($close - $price);
+            $distance = abs($price - $levelPrice);
             if (!$minDistance || $distance < $minDistance)
             {
                 $minDistance = $distance;
-                $fib = $key;
-                $fibPrice = $price;
+                $fibLevel = $level;
+                $fibPrice = $levelPrice;
             }
         }
 
-        return [
-            'fib'      => $fib,
-            'price'    => $price,
-            'fibPrice' => $fibPrice,
+        return $this->prevFib = [
+            'level'    => $fibLevel,
+            'price'    => $fibPrice,
             'distance' => $minDistance / $price * 100
         ];
     }
