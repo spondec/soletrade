@@ -59,7 +59,7 @@
               <div class="body divide-y my2">
                 <div v-for="(setup, id) in symbol.strategy.trade_setups" id="trade-setups" class="my-2">
                   <h1 class="text-2xl text-center">{{ id }}</h1>
-                  <div class="grid grid-cols-5 text-center">
+                  <div class="grid grid-cols-8 text-center">
                     <h1 class="text-lg" v-bind:class="{
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
@@ -68,6 +68,9 @@
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
                       {{ 'Average ROI: ' + setup.summary.avg_roi + '%' }} </h1>
+                    <h1 class="text-lg">Avg Highest ROI: {{ setup.summary.avg_highest_roi + '%' }}</h1>
+                    <h1 class="text-lg">Avg Lowest ROI: {{ setup.summary.avg_lowest_roi + '%' }}</h1>
+                    <h1 class="text-lg">Risk/Reward: {{ setup.summary.risk_reward_ratio }}</h1>
                     <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
                     <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
                     <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
@@ -80,7 +83,7 @@
               <div class="body divide-y">
                 <div v-for="(setup, id) in symbol.strategy.signals" id="signals" class="my-2">
                   <h1 class="text-2xl text-center">{{ id }}</h1>
-                  <div class="grid grid-cols-5 text-center">
+                  <div class="grid grid-cols-8 text-center">
                     <h1 class="text-lg" v-bind:class="{
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
@@ -89,6 +92,9 @@
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
                       {{ 'Average ROI: ' + setup.summary.avg_roi + '%' }} </h1>
+                    <h1 class="text-lg">Avg Highest ROI: {{ setup.summary.avg_highest_roi + '%' }}</h1>
+                    <h1 class="text-lg">Avg Lowest ROI: {{ setup.summary.avg_lowest_roi + '%' }}</h1>
+                    <h1 class="text-lg">Risk/Reward: {{ setup.summary.risk_reward_ratio }}</h1>
                     <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
                     <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
                     <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
@@ -570,7 +576,7 @@ export default {
         position: data.side === 'BUY' ? 'belowBar' : 'aboveBar',
         color: data.side === 'BUY' ? '#00ff68' : '#ff0062',
         shape: data.side === 'BUY' ? 'arrowUp' : 'arrowDown',
-        text: namePrefix ? namePrefix + ': ' + data.name : data.name
+        text: typeof namePrefix === String ? namePrefix + ': ' + data.name : data.name
       }
     },
 
@@ -677,6 +683,7 @@ export default {
 
       this.loading = true;
       this.symbol = await this.prepareSymbol(await this.fetchSymbol());
+      console.log(this.symbol)
       this.loading = false;
 
       if (this.useCache)
@@ -685,7 +692,7 @@ export default {
 
     lazyLoad: async function ()
     {
-      if (this.loading || this.limitReached) return;
+      if (this.loading || this.limitReached || !this.charts['candlestick']) return;
       this.loading = true;
       this.limit = this.symbol.candles.length + this.candlesPerRequest;
 
@@ -700,12 +707,14 @@ export default {
 
     updateSeries: async function ()
     {
-      // if (!this.series['candlestick'])
-      // {
-      //   return;
-      // }
+      try
+      {
+        this.series['candlestick'].setData(await this.symbol.candles);
 
-      this.series['candlestick'].setData(await this.symbol.candles);
+      } catch (e)
+      {
+        console.log(e)
+      }
 
       const handlers = this.handlers();
 

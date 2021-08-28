@@ -26,7 +26,7 @@
     <tr v-for="trade in paginated" class="bg-opacity-50" v-bind:class="{
         'bg-danger': trade.result.realized_roi < 0,
         'bg-success': trade.result.realized_roi > 0,
-        'bg-warning' : !trade.entry.valid_price,
+        'bg-warning' : !trade.result.valid_price,
         'bg-info': trade.result.ambiguous
       }">
       <td>{{ trade.entry.side }}</td>
@@ -58,7 +58,7 @@
       </td>
       <td>{{ trade.result.highest_entry || 'None' }}</td>
       <td>{{ trade.result.lowest_entry || 'None' }}</td>
-      <td v-bind:class="{ 'text-danger': !trade.entry.valid_price }">{{ trade.entry.price }}</td>
+      <td v-bind:class="{ 'text-danger': !trade.result.valid_price }">{{ trade.entry.price }}</td>
       <td>{{ trade.exit.price }}</td>
       <td>
         <p v-bind:class="{'text-warning': trade.result.close }">
