@@ -36,7 +36,7 @@ class Signal extends Model
 
     public function symbol()
     {
-        return $this->hasOne(Symbol::class);
+        return $this->belongsTo(Symbol::class);
     }
 
     public function toArray()
