@@ -60,7 +60,7 @@ class SymbolRepository
         $candle = DB::table('candles')
             ->select(DB::raw('max(h) as h, min(l) as l'))
             ->where('symbol_id', $symbolId)
-            ->where('t', '>=', $startDate)
+            ->where('t', '>', $startDate)
             ->where('t', '<=', $endDate)
             ->first();
 
@@ -75,21 +75,32 @@ class SymbolRepository
         return $candle;
     }
 
-    public function fetchCandlesBetween(int $symbolId, int $startDate, int $endDate): \Illuminate\Support\Collection
+    public function getSymbolId(Symbol $symbol, ?string $interval = null): ?int
     {
+        return !$interval || $symbol->interval === $interval ? $symbol->id :
+            DB::table('symbols')
+                ->where('exchange_id', $symbol->exchange_id)
+                ->where('interval', $interval ?? $symbol->interval)
+                ->where('symbol', $symbol->symbol)
+                ->get('id')?->first()->id;
+    }
+
+    public function fetchCandlesBetween(Symbol $symbol, int $startDate, int $endDate): \Illuminate\Support\Collection
+    {
+        $symbolId = $this->getSymbolId($symbol, '1m'); //fetch 1m candles to minimize the ambiguity
+
         $candles = DB::table('candles')
             ->where('symbol_id', $symbolId)
-            ->where('t', '>=', $startDate)
+            ->where('t', '>', $startDate)
             ->where('t', '<=', $endDate)
             ->orderBy('t', 'ASC')
             ->get();
 
         if (!$candles)
         {
-            /** @var Symbol $symbol */
-            $symbol = Symbol::query()->findOrFail($symbolId);
-            throw new \UnexpectedValueException("$symbol->symbol-$symbol->interval candles are missing.");
+            throw new \UnexpectedValueException("$symbol->symbol-1m candles are missing.");
         }
+
         return $candles;
     }
 
@@ -142,7 +153,9 @@ class SymbolRepository
 
     public function intervals(): Collection
     {
-        return DB::table('symbols')->distinct()->get('interval')->pluck('interval');
+        return DB::table('symbols')
+            ->selectRaw(DB::raw('DISTINCT(BINARY `interval`) as `interval`'))
+            ->get()->pluck('interval');
     }
 
     /**
@@ -165,7 +178,7 @@ class SymbolRepository
                                   Collection $candles,
                                   string     $indicator,
                                   array      $config = [],
-                                  ?\Closure  $signalCallback = null)
+                                  ?\Closure  $signalCallback = null): void
     {
         $symbol->addIndicator(new $indicator($symbol, $candles, $config, $signalCallback));
     }
