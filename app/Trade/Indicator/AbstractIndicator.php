@@ -33,6 +33,9 @@ abstract class AbstractIndicator
     private Collection $signals;
     private Signature $signalSignature;
 
+    private int $gap = 0;
+    private int $index = 0;
+
     public function __construct(protected Symbol     $symbol,
                                 protected Collection $candles,
                                 array                $config = [],
@@ -46,9 +49,18 @@ abstract class AbstractIndicator
 
         $this->signals = new Collection([]);
 
-        if ($candles->count())
+        if ($count = $candles->count())
         {
-            $this->data = $this->combineTimestamps($this->run());
+            $data = $this->run();
+
+            $this->gap = $count - count($data);
+
+            if ($this->gap < 0)
+            {
+                throw new \LogicException(static::name() . ' data count cannot exceed the candle count.');
+            }
+
+            $this->data = $this->combineTimestamps($data);
 
             if ($signalCallback)
             {
@@ -80,12 +92,22 @@ abstract class AbstractIndicator
 
     abstract protected function run(): array;
 
+    /**
+     * Use offset to access previous candles.
+     */
+    public function candle(int $offset = 0): \stdClass
+    {
+        return $this->candles[($this->index - $offset) + $this->gap];
+    }
+
     protected function scan(): void
     {
+        $this->index = -1;
         foreach ($this->data as $timestamp => $value)
         {
+            $this->index++;
             $this->current = $timestamp;
-            if ($signal = $this->checkSignal($timestamp, $value))
+            if ($signal = $this->checkSignal($value))
             {
                 $signal->timestamp = $timestamp;
                 $signal->hash = $this->hash(json_encode($signal->attributesToArray()));
@@ -107,12 +129,11 @@ abstract class AbstractIndicator
         }
     }
 
-    protected function checkSignal(int $timestamp, mixed $value): ?Signal
+    protected function checkSignal(mixed $value): ?Signal
     {
         $callback = $this->signalCallback;
         return $callback(signal: $this->setupSignal(),
             indicator: $this,
-            timestamp: $timestamp,
             value: $value);
     }
 
