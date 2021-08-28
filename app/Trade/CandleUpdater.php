@@ -28,7 +28,7 @@ class CandleUpdater
         $this->limit = $this->exchange->getMaxCandlesPerRequest();
     }
 
-    protected function registerSymbolsForInterval(string $interval)
+    protected function insertSymbols(string $interval)
     {
         $this->symbolRepo->insertIgnoreSymbols($this->symbols,
             $exchangeId = $this->exchange->id(),
@@ -43,7 +43,7 @@ class CandleUpdater
     {
         $startTime = time();
 
-        $symbols = $this->registerSymbolsForInterval($interval);
+        $symbols = $this->insertSymbols($interval);
         if ($filter) $symbols = $symbols->filter($filter)->values();
 
         if (!$symbols->count())
