@@ -37,6 +37,11 @@ class TradeSetup extends \App\Models\Model
         return $this->belongsToMany(Signal::class);
     }
 
+    public function symbol()
+    {
+        return $this->belongsTo(Symbol::class);
+    }
+
     public function takeProfits()
     {
         return $this->hasMany(TakeProfit::class);
