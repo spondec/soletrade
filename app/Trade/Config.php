@@ -5,8 +5,10 @@ namespace App\Trade;
 use App\Trade\Exchange\AbstractExchange;
 use App\Trade\Exchange\Spot\Binance;
 use App\Trade\Indicator\AbstractIndicator;
+use App\Trade\Indicator\Fib;
 use App\Trade\Indicator\MACD;
 use App\Trade\Indicator\RSI;
+use App\Trade\Strategy\BasicStrategy;
 use Illuminate\Support\Facades\DB;
 
 final class Config
@@ -24,7 +26,12 @@ final class Config
      */
     public static function indicators(): array
     {
-        return [RSI::class, MACD::class];
+        return [RSI::class, MACD::class, Fib::class];
+    }
+
+    public static function strategies(): array
+    {
+        return [BasicStrategy::class];
     }
 
     /**
@@ -37,7 +44,6 @@ final class Config
         foreach (static::exchanges() as $exchange)
         {
             $exchange = $exchange::instance();
-//            $symbols[$exchange::class] = $exchange->symbols();
             $symbols[$exchange::class] = DB::table('symbols')
                 ->distinct()
                 ->where('exchange_id', $exchange->id())
