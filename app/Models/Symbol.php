@@ -112,7 +112,8 @@ class Symbol extends Model
             $query->where('t', '>', $start);
         }
 
-        return $this->candles = $order === 'DESC' ? $query->get()->reverse()->values() : $query->get();
+        $candles = $query->get();
+        return $this->candles = ($order === 'DESC' ? $candles->reverse()->values() : $candles);
     }
 
     public function addIndicator(AbstractIndicator $indicator): void
