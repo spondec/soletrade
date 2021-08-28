@@ -3,9 +3,11 @@
 namespace App\Trade;
 
 use App\Models\Signal;
+use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 
 class Evaluator
 {
@@ -19,6 +21,7 @@ class Evaluator
         'ambiguous'     => false,
         'stop'          => false,
         'close'         => false,
+        'valid_price'   => false,
     ];
 
     protected SymbolRepository $symbolRepo;
@@ -51,15 +54,14 @@ class Evaluator
         $this->result['highest_price'] = $candle->h;
         $this->result['lowest_price'] = $candle->l;
 
-        $this->entry->valid_price = $isValid = ($entryPrice >= $candle->l && $entryPrice <= $candle->h);
-        $this->entry->save();
+        $this->result['valid_price'] = $isValid = ($entryPrice >= $candle->l && $entryPrice <= $candle->h);
 
         return $isValid;
     }
 
     protected function realizeTrade(): void
     {
-        $candles = $this->symbolRepo->fetchCandlesBetween($this->entry->symbol_id,
+        $candles = $this->symbolRepo->fetchCandlesBetween($this->entry->symbol,
             $this->entry->timestamp,
             $this->exit->timestamp);
 
