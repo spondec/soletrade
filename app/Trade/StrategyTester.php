@@ -32,8 +32,15 @@ class StrategyTester
 
         Log::execTime(static function () use (&$symbol) {
 
+            $updater = $symbol->exchange()->updater();
+
             if ($symbol->last_update < time() - 3600)
-                $symbol->exchange()->updater()->update($symbol);
+                $updater->update($symbol);
+
+            $updater->updateByInterval(interval: '1m',
+                filter: static fn(Symbol $v) => $v->symbol === $symbol->symbol &&
+                    $v->exchange_id === $symbol->exchange_id);
+
         }, 'CandleUpdater::update()');
 
         Log::execTime(static function () use (&$symbol, &$strategy, &$result) {
@@ -111,14 +118,21 @@ class StrategyTester
         $loss = 0;
         $count = 0;
 
+        $lowestRois = [];
+        $highestRois = [];
+
         foreach ($paired as $pair)
         {
             if ($pair['entry']['valid_price'] || !$pair['result']['ambiguous'])
             {
                 $realized = $pair['result']['realized_roi'];
+                $balance = $this->cutCommission($balance, 0.002);
                 $pnl = $this->calculatePnl($balance, $roi[] = $realized);
                 $balance += $pnl;
                 $count++;
+
+                $highestRois[] = (float)$pair['result']['highest_roi'];
+                $lowestRois[] = (float)$pair['result']['lowest_roi'];
             }
 
             if ($pair['result']['ambiguous'])
@@ -131,7 +145,7 @@ class StrategyTester
                 {
                     $loss++;
                 }
-                else
+                else if ($realized > 0)
                 {
                     $profit++;
                 }
@@ -139,16 +153,24 @@ class StrategyTester
         }
 
         return [
-            'roi'       => $roi = round($balance - 100, 2),
-            'avg_roi'   => $count ? round($roi / $count, 2) : 0,
-            'profit'    => $profit,
-            'loss'      => $loss,
-            'ambiguous' => $ambiguous
+            'roi'               => $roi = round($balance - 100, 2),
+            'avg_roi'           => $count ? round($roi / $count, 2) : 0,
+            'avg_highest_roi'   => $count && $highestRois ? round($avgHighestRoi = array_sum($highestRois) / count($highestRois), 2) : 0,
+            'avg_lowest_roi'    => $count && $lowestRois ? round($avgLowestRoi = array_sum($lowestRois) / count($lowestRois), 2) : 0,
+            'risk_reward_ratio' => $count && $highestRois && $lowestRois ? round(abs($avgHighestRoi / $avgLowestRoi), 2) : 0,
+            'profit'            => $profit,
+            'loss'              => $loss,
+            'ambiguous'         => $ambiguous
         ];
     }
 
     protected function calculatePnl(float $balance, float $roi): float|int
     {
         return $balance * $roi / 100;
+    }
+
+    protected function cutCommission(float|int $balance, float|int $ratio): int|float
+    {
+        return $balance - abs($balance * $ratio);
     }
 }
