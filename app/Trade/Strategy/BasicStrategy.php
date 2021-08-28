@@ -24,82 +24,101 @@ class BasicStrategy extends AbstractStrategy
         return [
             Fib::class => [
                 'config' => [],
-                'signal' => static function (Signal $signal, Fib $indicator, int $timestamp, array $value): ?Signal {
-                    $fib = $indicator->nearestFib();
-                    $distance = $fib['distance'];
+                'signal' => static function (Signal $signal, Fib $indicator, array $value): ?Signal {
+                    $fib = $indicator->nearestFib($value, $price = $indicator->closePrice());
+                    $level = $fib['level'];
 
-                    if ($distance <= 1)
+                    if ($level !== 0 && $level !== 1000)
                     {
-                        $priceBelowFib = $fib['price'] < $fib['fibPrice'];
-                        $signal->name = 'FIB-' . ($priceBelowFib ? 'BELOW' : 'ABOVE') . '_' . $fib['fib'];
-                        $signal->side = $priceBelowFib ? Signal::SELL : Signal::BUY;
-                        $signal->price = $fib['fibPrice'];
-                        return $signal;
+                        $distance = $fib['distance'];
+
+                        if ($distance <= 1)
+                        {
+                            $priceBelowFib = $price < $fib['price'];
+
+                            for ($i = 1; $i <= 3; $i++)
+                            {
+                                $prevCandle = $indicator->candle($i);
+
+                                if ($prevCandle->h < $fib['price'] !== $priceBelowFib ||
+                                    $prevCandle->l < $fib['price'] !== $priceBelowFib)
+                                {
+                                    return null;
+                                }
+                            }
+
+                            $signal->side = $side = $priceBelowFib ? Signal::SELL : Signal::BUY;
+                            $signal->name = 'FIB-' . $side . '_' . $fib['level'];
+                            $signal->price = $fib['price'];
+
+                            return $signal;
+                        }
                     }
+
                     return null;
                 }
             ],
-            //            RSI::class  => [
-            //                'config' => [],
-            //                'signal' => static function (Signal $signal, RSI $indicator, int $timestamp, int $value): ?Signal {
+            //                        RSI::class  => [
+            //                            'config' => [],
+            //                            'signal' => static function (Signal $signal, RSI $indicator, int $value): ?Signal {
             //
-            //                    $prev = $indicator->prev();
+            //                                $prev = $indicator->prev();
             //
-            //                    if ($value <= 30)
-            //                    {
-            //                        $signal->name = static::RSI_BELOW_30;
-            //                        $signal->side = Signal::BUY;
-            //                    }
-            //                    else if ($prev && $prev <= 30 && $value >= $prev)
-            //                    {
-            //                        $signal->name = static::RSI_BELOW_30_CONF;
-            //                        $signal->side = Signal::BUY;
-            //                    }
-            //                    else if ($prev && $prev >= 70 && $value <= $prev)
-            //                    {
-            //                        $signal->name = static::RSI_ABOVE_70_CONF;
-            //                        $signal->side = Signal::SELL;
-            //                    }
-            //                    else if ($value >= 70)
-            //                    {
-            //                        $signal->name = static::RSI_ABOVE_70;
-            //                        $signal->side = Signal::SELL;
-            //                    }
-            //                    else
-            //                    {
-            //                        return null;
-            //                    }
+            //                                if ($value <= 30)
+            //                                {
+            //                                    $signal->name = static::RSI_BELOW_30;
+            //                                    $signal->side = Signal::BUY;
+            //                                }
+            //                                else if ($prev && $prev <= 30 && $value >= $prev)
+            //                                {
+            //                                    $signal->name = static::RSI_BELOW_30_CONF;
+            //                                    $signal->side = Signal::BUY;
+            //                                }
+            //                                else if ($prev && $prev >= 70 && $value <= $prev)
+            //                                {
+            //                                    $signal->name = static::RSI_ABOVE_70_CONF;
+            //                                    $signal->side = Signal::SELL;
+            //                                }
+            //                                else if ($value >= 70)
+            //                                {
+            //                                    $signal->name = static::RSI_ABOVE_70;
+            //                                    $signal->side = Signal::SELL;
+            //                                }
+            //                                else
+            //                                {
+            //                                    return null;
+            //                                }
             //
-            //                    $signal->price = $indicator->closePrice();
+            //                                $signal->price = $indicator->closePrice();
             //
-            //                    return $signal;
-            //                }
-            //            ],
-            //            MACD::class => [
-            //                'config' => [],
-            //                'signal' => static function (Signal $signal, MACD $indicator, int $timestamp, array $value) {
-            //                    if ($indicator->crossOver(static fn($v): float => $v['m'],
-            //                        static fn($v): float => $v['s']))
-            //                    {
-            //                        $signal->name = static::MACD_CROSSOVER;
-            //                        $signal->side = Signal::BUY;
-            //                    }
-            //                    else if ($indicator->crossUnder(static fn($v): float => $v['m'],
-            //                        static fn($v): float => $v['s']))
-            //                    {
-            //                        $signal->name = static::MACD_CROSSUNDER;
-            //                        $signal->side = Signal::SELL;
-            //                    }
-            //                    else
-            //                    {
-            //                        return null;
-            //                    }
+            //                                return $signal;
+            //                            }
+            //                        ],
+            //                        MACD::class => [
+            //                            'config' => [],
+            //                            'signal' => static function (Signal $signal, MACD $indicator, array $value) {
+            //                                if ($indicator->crossOver(static fn($v): float => $v['m'],
+            //                                    static fn($v): float => $v['s']))
+            //                                {
+            //                                    $signal->name = static::MACD_CROSSOVER;
+            //                                    $signal->side = Signal::BUY;
+            //                                }
+            //                                else if ($indicator->crossUnder(static fn($v): float => $v['m'],
+            //                                    static fn($v): float => $v['s']))
+            //                                {
+            //                                    $signal->name = static::MACD_CROSSUNDER;
+            //                                    $signal->side = Signal::SELL;
+            //                                }
+            //                                else
+            //                                {
+            //                                    return null;
+            //                                }
             //
-            //                    $signal->price = $indicator->closePrice();
+            //                                $signal->price = $indicator->closePrice();
             //
-            //                    return $signal;
-            //                }
-            //            ]
+            //                                return $signal;
+            //                            }
+            //                        ]
         ];
     }
 
@@ -119,8 +138,8 @@ class BasicStrategy extends AbstractStrategy
                     $price = $setup->price;
                     $isBuy = $setup->isBuy();
 
-                    $percent = $price * 0.001;
-                    $setup->price = $isBuy ? $price + $percent : $price - $percent;
+//                    $percent = $price * 0.001;
+//                    $setup->price = $isBuy ? $price + $percent : $price - $percent;
 
                     if ($isBuy)
                     {
