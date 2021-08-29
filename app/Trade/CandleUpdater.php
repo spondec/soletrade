@@ -75,46 +75,52 @@ class CandleUpdater
         $startTime = time();
         $id = $symbol->id;
 
-        do
+        try
         {
-            $currentCandles = $this->symbolRepo->latestCandles($symbol, 'DESC', 2);
-            $currentLastCandle = $currentCandles->shift();
-            $start = $currentCandles->first()->t ?? 0;
-
-            $symbol->last_update = time();
-            $latestCandles = $this->exchange->candles($symbol->symbol,
-                $symbol->interval,
-                $start,
-                $this->limit);
-            $inserts = $this->symbolRepo->mapCandles($latestCandles, $id, $this->map);
-
-            $break = count($latestCandles) <= 1;
-
-            if (isset($latestCandles[0]) && $currentLastCandle)
+            do
             {
-                if ($latestCandles[0][$this->map->t] != $currentLastCandle->t)
+                DB::select(DB::raw('LOCK TABLES candles WRITE, symbols WRITE'));
+                $currentCandles = $this->symbolRepo->latestCandles($symbol, 'DESC', 2);
+                $currentLastCandle = $currentCandles->shift();
+                $start = $currentCandles->first()->t ?? 0;
+
+                $symbol->last_update = time();
+                $latestCandles = $this->exchange->candles($symbol->symbol,
+                    $symbol->interval,
+                    $start,
+                    $this->limit);
+                $inserts = $this->symbolRepo->mapCandles($latestCandles, $id, $this->map);
+
+                $break = count($latestCandles) <= 1;
+
+                if (isset($latestCandles[0]) && $currentLastCandle)
                 {
-                    throw new \LogicException("Candle corruption detected! Symbol ID: {$id}");
+                    if ($latestCandles[0][$this->map->t] != $currentLastCandle->t)
+                    {
+                        throw new \LogicException("Candle corruption detected! Symbol ID: {$id}");
+                    }
+
+                    $this->symbolRepo->updateCandle($currentLastCandle->id, $inserts[0]);
+                    unset($inserts[0]);
                 }
 
-                $this->symbolRepo->updateCandle($currentLastCandle->id, $inserts[0]);
-                unset($inserts[0]);
-            }
+                if ($inserts)
+                {   //race condition may occur
+                    DB::table('candles')->insert($inserts);
+                }
 
-            if ($inserts)
-            {
-                DB::table('candles')->insert($inserts);
-            }
+                $symbol->save();
 
-            $symbol->save();
+                if ($maxRunTime > 0 && time() - $startTime >= $maxRunTime)
+                {
+                    return false;
+                }
 
-            if ($maxRunTime > 0 && time() - $startTime >= $maxRunTime)
-            {
-                return false;
-            }
-
-        } while (!$break);
-
-        return true;
+            } while (!$break);
+            return true;
+        } finally
+        {
+            DB::select(DB::raw('UNLOCK TABLES'));
+        }
     }
 }
