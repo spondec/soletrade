@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property int    symbol_id
  * @property string name
  * @property string side
- * @property bool   valid_price
  * @property float  price
  * @property float  close_price
  * @property float  stop_price

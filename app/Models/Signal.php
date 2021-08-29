@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property int    timestamp
  * @property string name
  * @property string side
- * @property bool   valid_price
  * @property string $signature_id
  * @property float  price
  * @property mixed  created_at

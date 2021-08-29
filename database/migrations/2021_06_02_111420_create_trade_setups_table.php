@@ -23,7 +23,6 @@ class CreateTradeSetupsTable extends Migration
             $table->decimal('price');
             $table->decimal('close_price')->nullable();
             $table->decimal('stop_price')->nullable();
-            $table->boolean('valid_price')->default(0);
             $table->integer('signal_count');
             $table->bigInteger('timestamp');
 
