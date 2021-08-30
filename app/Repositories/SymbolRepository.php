@@ -96,7 +96,7 @@ class SymbolRepository
             ->orderBy('t', 'ASC')
             ->get();
 
-        if (!$candles)
+        if (!$candles->count())
         {
             throw new \UnexpectedValueException("$symbol->symbol-1m candles are missing.");
         }
