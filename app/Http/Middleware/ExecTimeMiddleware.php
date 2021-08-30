@@ -18,6 +18,7 @@ class ExecTimeMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+        Log::info('Started...');
         return $next($request);
     }
 
