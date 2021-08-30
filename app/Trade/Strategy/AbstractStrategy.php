@@ -136,15 +136,7 @@ abstract class AbstractStrategy
 
                 if ($requiredTotal == count($requiredSignals))
                 {
-                    $tradeSetup = $this->setupTrade($config, $requiredSignals);
-                    $callback = $config['callback'] ?? null;
-
-                    if ($callback instanceof \Closure)
-                    {
-                        $tradeSetup = $callback($tradeSetup);
-                    }
-
-                    if ($tradeSetup)
+                    if ($tradeSetup = $this->prepareSetup($config, $requiredSignals))
                     {
                         $tradeSetup->symbol_id = $symbol->id;
                         $setups[$key][$tradeSetup->timestamp] = $this->saveTrade($tradeSetup);
@@ -230,12 +222,26 @@ abstract class AbstractStrategy
      */
     protected function saveTrade(TradeSetup $tradeSetup): TradeSetup
     {
-        DB::transaction(function () use (&$tradeSetup) {
+        DB::transaction(static function () use (&$tradeSetup) {
             $tradeSetup = TradeSetup::query()->updateOrCreate(
                 $tradeSetup->uniqueAttributesToArray(),
                 $tradeSetup->attributesToArray());
             $tradeSetup->signals()->saveMany($tradeSetup->signals);
         });
+
+        return $tradeSetup;
+    }
+
+
+    protected function prepareSetup(mixed $config, array $requiredSignals): ?TradeSetup
+    {
+        $tradeSetup = $this->setupTrade($config, $requiredSignals);
+        $callback = $config['callback'] ?? null;
+
+        if ($callback instanceof \Closure)
+        {
+            $tradeSetup = $callback($tradeSetup);
+        }
 
         return $tradeSetup;
     }
