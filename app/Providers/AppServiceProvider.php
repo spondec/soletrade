@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Repositories\SymbolRepository;
 use App\Trade\StrategyTester;
 use App\Trade\Exchange\Spot\Binance;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;
 
@@ -36,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
             Binance::instance();
         } catch (\Exception $e)
         {
-            echo $e->getMessage();
+            \Illuminate\Support\Facades\Log::error($e->getMessage());
         }
     }
 }
