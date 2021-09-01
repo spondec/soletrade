@@ -15,13 +15,10 @@ abstract class AbstractExchange
 {
     use HasName;
 
+    protected static ?AbstractExchange $instance = null;
     protected string $apiKey;
     protected string $secretKey;
-
     protected mixed $api;
-
-    protected static ?AbstractExchange $instance = null;
-
     protected Exchange $exchange;
 
     protected array $actions;
@@ -31,38 +28,6 @@ abstract class AbstractExchange
     protected AccountBalance $currentBalance;
 
     protected CandleUpdater $fetcher;
-
-    protected function register(): void
-    {
-        DB::table('exchanges')->insertOrIgnore([
-            'class'   => static::class,
-            'name'    => static::name(),
-            'account' => $this->account
-        ]);
-
-        /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
-        $this->exchange = Exchange::query()
-            ->where('class', static::class)
-            ->limit(1)
-            ->firstOrFail();
-    }
-
-    public function id(): int
-    {
-        return $this->exchange->id;
-    }
-
-    public function updater(): CandleUpdater
-    {
-        return $this->fetcher;
-    }
-
-    /**
-     * @return string[]
-     */
-    abstract protected function availableOrderActions(): array;
-
-    abstract public function getMaxCandlesPerRequest(): int;
 
     private function __construct()
     {
@@ -85,10 +50,49 @@ abstract class AbstractExchange
         $this->fetcher = new CandleUpdater($this);
     }
 
+    /**
+     * @return string[]
+     */
+    abstract protected function availableOrderActions(): array;
+
+    abstract protected function accountType(): string;
+
     protected function setup(): void
     {
 
     }
+
+    protected function register(): void
+    {
+        DB::table('exchanges')->insertOrIgnore([
+            'class'   => static::class,
+            'name'    => static::name(),
+            'account' => $this->account
+        ]);
+
+        /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
+        $this->exchange = Exchange::query()
+            ->where('class', static::class)
+            ->limit(1)
+            ->firstOrFail();
+    }
+
+    public static function instance(): static
+    {
+        if (!static::$instance)
+        {
+            return static::$instance = new static();
+        }
+
+        return static::$instance;
+    }
+
+    public function updater(): CandleUpdater
+    {
+        return $this->fetcher;
+    }
+
+    abstract public function getMaxCandlesPerRequest(): int;
 
     public function getApi(): mixed
     {
@@ -104,11 +108,6 @@ abstract class AbstractExchange
         ];
     }
 
-    /**
-     * @param Order[] $responses
-     */
-    abstract protected function processOrderResponses(array $responses): Collection;
-
     public final function syncOrder(Order $order): Order
     {
         $response = $this->executeOrderUpdate($order);
@@ -120,6 +119,10 @@ abstract class AbstractExchange
         return $order;
     }
 
+    abstract protected function executeOrderUpdate(Order $order): array;
+
+    abstract protected function handleOrderUpdateResponse(Order $order, array $response): void;
+
     public final function cancelOrder(Order $order): Order
     {
         $response = $this->executeOrderCancel($order);
@@ -129,6 +132,20 @@ abstract class AbstractExchange
         $order->save();
 
         return $order;
+    }
+
+    abstract protected function executeOrderCancel(Order $order): array;
+
+    abstract protected function handleOrderCancelResponse(Order $order, array $response): void;
+
+    public function market(string $side, string $symbol, float $quantity): Order
+    {
+        $order = $this->setupOrder($side, $symbol);
+
+        $order->quantity = $quantity;
+        $order->type = 'MARKET';
+
+        return $this->newOrder($order);
     }
 
     protected function setupOrder(string $side = null, string $symbol = null): Order
@@ -157,15 +174,25 @@ abstract class AbstractExchange
         }
     }
 
-    public function market(string $side, string $symbol, float $quantity): Order
+    public function id(): int
     {
-        $order = $this->setupOrder($side, $symbol);
-
-        $order->quantity = $quantity;
-        $order->type = 'MARKET';
-
-        return $this->newOrder($order);
+        return $this->exchange->id;
     }
+
+    protected function newOrder(Order $order): Order
+    {
+        $response = $this->executeNewOrder($order);
+        $this->handleNewOrderResponse($order, $response);
+
+        $order->logResponse('new', $response);
+        $order->save();
+
+        return $order;
+    }
+
+    abstract protected function executeNewOrder(Order $order): array;
+
+    abstract protected function handleNewOrderResponse(Order $order, array $response): void;
 
     public function stopMarket(string $side, string $symbol, float $quantity, float $stopPrice): Order
     {
@@ -202,24 +229,16 @@ abstract class AbstractExchange
     }
 
     /**
-     * @param array $exchangeOrderIds
-     *
-     * @return Collection|Order[]
-     */
-    protected function fetchOrdersWithExchangeIds(array $exchangeOrderIds): Collection
-    {
-        return Order::query()
-            ->whereIn('exchange_order_id', $exchangeOrderIds)
-            ->get()
-            ->keyBy('exchange_order_id');
-    }
-
-    /**
      * @return Order[]
      */
     abstract public function openOrders(string $symbol): \Illuminate\Database\Eloquent\Collection;
 
-    abstract public function getAccountBalance(): AccountBalance;
+    public function roe(): ?array
+    {
+        if (!$this->prevBalance) return null;
+
+        return $this->accountBalance()->calculateRoe($this->prevBalance);
+    }
 
     public function accountBalance(): AccountBalance
     {
@@ -233,12 +252,7 @@ abstract class AbstractExchange
         return $this->currentBalance = $balance;
     }
 
-    public function roe(): ?array
-    {
-        if (!$this->prevBalance) return null;
-
-        return $this->accountBalance()->calculateRoe($this->prevBalance);
-    }
+    abstract public function getAccountBalance(): AccountBalance;
 
     abstract public function orderBook(string $symbol): OrderBook;
 
@@ -255,40 +269,23 @@ abstract class AbstractExchange
 
     abstract public function candles(string $symbol, string $interval, int $start = null, int $limit = null): array;
 
-    protected function newOrder(Order $order): Order
+    /**
+     * @param Order[] $responses
+     */
+    abstract protected function processOrderResponses(array $responses): Collection;
+
+    /**
+     * @param array $exchangeOrderIds
+     *
+     * @return Collection|Order[]
+     */
+    protected function fetchOrdersWithExchangeIds(array $exchangeOrderIds): Collection
     {
-        $response = $this->executeNewOrder($order);
-        $this->handleNewOrderResponse($order, $response);
-
-        $order->logResponse('new', $response);
-        $order->save();
-
-        return $order;
+        return Order::query()
+            ->whereIn('exchange_order_id', $exchangeOrderIds)
+            ->get()
+            ->keyBy('exchange_order_id');
     }
 
     abstract protected function updateOrderDetails(Order $order, array $response): void;
-
-    abstract protected function executeOrderCancel(Order $order): array;
-
-    abstract protected function handleOrderCancelResponse(Order $order, array $response): void;
-
-    abstract protected function executeNewOrder(Order $order): array;
-
-    abstract protected function handleNewOrderResponse(Order $order, array $response): void;
-
-    abstract protected function executeOrderUpdate(Order $order): array;
-
-    abstract protected function handleOrderUpdateResponse(Order $order, array $response): void;
-
-    abstract protected function accountType(): string;
-
-    public static function instance(): static
-    {
-        if (!static::$instance)
-        {
-            return static::$instance = new static();
-        }
-
-        return static::$instance;
-    }
 }
