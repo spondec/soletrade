@@ -25,8 +25,9 @@ class BasicStrategy extends AbstractStrategy
             Fib::class => [
                 'config' => [],
                 'signal' => static function (Signal $signal, Fib $indicator, array $value): ?Signal {
-                    $fib = $indicator->nearestFib($value, $price = $indicator->closePrice());
+                    $fib = $indicator->nearestFib($value, $closePrice = $indicator->closePrice());
                     $level = $fib['level'];
+                    $fibPrice = $fib['price'];
 
                     if ($level !== 0 && $level !== 1000)
                     {
@@ -34,14 +35,14 @@ class BasicStrategy extends AbstractStrategy
 
                         if ($distance <= 1)
                         {
-                            $priceBelowFib = $price < $fib['price'];
+                            $priceBelowFib = $closePrice < $fibPrice;
 
                             for ($i = 1; $i <= 3; $i++)
                             {
                                 $prevCandle = $indicator->candle($i);
 
-                                if ($prevCandle->h < $fib['price'] !== $priceBelowFib ||
-                                    $prevCandle->l < $fib['price'] !== $priceBelowFib)
+                                if ($prevCandle->h < $fibPrice !== $priceBelowFib ||
+                                    $prevCandle->l < $fibPrice !== $priceBelowFib)
                                 {
                                     return null;
                                 }
@@ -49,7 +50,7 @@ class BasicStrategy extends AbstractStrategy
 
                             $signal->side = $side = $priceBelowFib ? Signal::SELL : Signal::BUY;
                             $signal->name = 'FIB-' . $side . '_' . $fib['level'];
-                            $signal->price = $fib['price'];
+                            $signal->price = $fibPrice;
 
                             return $signal;
                         }
@@ -143,13 +144,13 @@ class BasicStrategy extends AbstractStrategy
 
                     if ($isBuy)
                     {
-                        $setup->close_price = $price + $price * 0.01;
-                        $setup->stop_price = $price - $price * 0.005;
+                        $setup->close_price = $price + $price * 0.0117;
+                        $setup->stop_price = $price - $price * 0.004;
                     }
                     else
                     {
-                        $setup->close_price = $price - $price * 0.01;
-                        $setup->stop_price = $price + $price * 0.005;
+                        $setup->close_price = $price - $price * 0.0117;
+                        $setup->stop_price = $price + $price * 0.004;
                     }
 
                     return $setup;
