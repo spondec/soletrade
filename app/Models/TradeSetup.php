@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property int    id
@@ -29,9 +30,7 @@ class TradeSetup extends \App\Models\Model
 
     protected array $unique = ['symbol_id', 'signature_id', 'name', 'timestamp', 'side'];
 
-    public array $signals = [];
-
-    public function signals()
+    public function signals(): BelongsToMany
     {
         return $this->belongsToMany(Signal::class);
     }

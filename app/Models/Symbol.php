@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Trade\Indicator\AbstractIndicator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -45,9 +46,9 @@ class Symbol extends Model
         return $signals;
     }
 
-    public function signals()
+    public function signals(): BelongsToMany
     {
-        return $this->hasMany(Signal::class);
+        return $this->belongsToMany(Signal::class);
     }
 
     public function trades()
