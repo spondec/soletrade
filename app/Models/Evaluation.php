@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
@@ -34,6 +33,8 @@ class Evaluation extends Model
 {
     use HasFactory;
 
+    protected array $unique = ['type', 'entry_id', 'exit_id'];
+
     public function entry(): MorphTo
     {
         return $this->morphTo('entry', 'type');
@@ -42,11 +43,6 @@ class Evaluation extends Model
     public function exit(): MorphTo
     {
         return $this->morphTo('exit', 'type');
-    }
-
-    public function setExitTime(int $timestamp): void
-    {
-        $this->exit_timestamp = $timestamp;
     }
 
     public function getExitPrice(): float
@@ -63,6 +59,4 @@ class Evaluation extends Model
 
         return $this->exit->price;
     }
-
-
 }
