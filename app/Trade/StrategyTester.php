@@ -2,11 +2,12 @@
 
 namespace App\Trade;
 
-use App\Models\Evaluation;
 use App\Models\Signal;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
+use App\Trade\Evaluation\Evaluator;
+use App\Trade\Evaluation\Summarizer;
 use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -40,7 +41,9 @@ class StrategyTester
             $updater = $symbol->exchange()->updater();
 
             if ($symbol->last_update < time() - 3600)
+            {
                 $updater->update($symbol);
+            }
 
             $updater->updateByInterval(interval: '1m',
                 filter: static fn(Symbol $v) => $v->symbol === $symbol->symbol &&
@@ -91,6 +94,7 @@ class StrategyTester
     protected function pairEvaluateSummarize(array|Collection $trades): Collection
     {
         $evaluations = new Collection();
+        $summarizer = new Summarizer();
 
         foreach ($trades as $trade)
         {
@@ -107,76 +111,6 @@ class StrategyTester
             }
         }
 
-        return new Collection(['trades' => $evaluations, 'summary' => $this->summarize($evaluations)]);
-    }
-
-    /**
-     * @param Evaluation[] $evaluations
-     *
-     * @return array
-     */
-    protected function summarize(Collection $evaluations): array
-    {
-        $balance = 100;
-
-        $ambiguous = 0;
-        $profit = 0;
-        $loss = 0;
-        $count = 0;
-
-        $lowestRois = [];
-        $highestRois = [];
-
-        foreach ($evaluations as $evaluation)
-        {
-            if ($evaluation->is_entry_price_valid && !$evaluation->is_ambiguous)
-            {
-                $realized = $realizedRois[] = $evaluation->realized_roi;
-                $balance = $this->cutCommission($balance, 0.002);
-                $pnl = $this->calculatePnl($balance, $realized);
-                $balance += $pnl;
-                $count++;
-
-                $highestRois[] = (float)$evaluation->highest_roi;
-                $lowestRois[] = (float)$evaluation->lowest_roi;
-            }
-
-            if ($evaluation->is_ambiguous)
-            {
-                $ambiguous++;
-            }
-            else
-            {
-                if ($realized < 0)
-                {
-                    $loss++;
-                }
-                else if ($realized > 0)
-                {
-                    $profit++;
-                }
-            }
-        }
-
-        return [
-            'roi'               => $roi = round($balance - 100, 2),
-            'avg_roi'           => $count ? round($roi / $count, 2) : 0,
-            'avg_highest_roi'   => $count && $highestRois ? round($avgHighestRoi = array_sum($highestRois) / count($highestRois), 2) : 0,
-            'avg_lowest_roi'    => $count && $lowestRois ? round($avgLowestRoi = array_sum($lowestRois) / count($lowestRois), 2) : 0,
-            'risk_reward_ratio' => $count && $highestRois && $lowestRois ? round(abs($avgHighestRoi / $avgLowestRoi), 2) : 0,
-            'profit'            => $profit,
-            'loss'              => $loss,
-            'ambiguous'         => $ambiguous
-        ];
-    }
-
-    protected function calculatePnl(float $balance, float $roi): float|int
-    {
-        return $balance * $roi / 100;
-    }
-
-    protected function cutCommission(float|int $balance, float|int $ratio): int|float
-    {
-        return $balance - abs($balance * $ratio);
+        return new Collection(['trades' => $evaluations, 'summary' => $summarizer->summarize($evaluations)]);
     }
 }
