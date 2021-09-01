@@ -2,12 +2,14 @@
 
 namespace App\Trade;
 
+use App\Models\Evaluation;
 use App\Models\Signal;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 
 class StrategyTester
 {
@@ -19,11 +21,14 @@ class StrategyTester
         'endDate'    => null
     ];
 
+    protected Evaluator $evaluator;
+
     protected array $result = [];
 
     public function __construct(protected SymbolRepository $symbolRepo, array $config = [])
     {
         $this->mergeConfig($config);
+        $this->evaluator = App::make(Evaluator::class);
     }
 
     public function run(string $strategyClass, Symbol $symbol): array
@@ -71,21 +76,22 @@ class StrategyTester
          */
         foreach ($result as $id => $trades)
         {
-            $this->result['trade_setups'][$id] = $this->pairEvaluateSummarize($trades);
+            $this->result['trade_setups'][$id] = $this->pairEvaluateSummarize($trades)->toArray();
         }
 
         foreach ($symbol->cachedSignals() as $indicator => $signals)
         {
-            $this->result['signals'][$indicator] = $this->pairEvaluateSummarize($signals);
+            $this->result['signals'][$indicator] = $this->pairEvaluateSummarize($signals)->toArray();
         }
     }
 
     /**
      * @param TradeSetup[]|Signal[] $trades
      */
-    protected function pairEvaluateSummarize(array|Collection $trades): array
+    protected function pairEvaluateSummarize(array|Collection $trades): Collection
     {
-        $paired = [];
+        $evaluations = new Collection();
+
         foreach ($trades as $trade)
         {
             if (!isset($entry))
@@ -96,20 +102,20 @@ class StrategyTester
 
             if ($entry->side !== $trade->side)
             {
-                $paired[] = [
-                    'result' => (new Evaluator($entry, $trade))->evaluate(),
-                    'entry'  => $entry,
-                    'exit'   => $trade
-                ];
-
+                $evaluations[] = $this->evaluator->evaluate($entry, $trade);
                 $entry = $trade;
             }
         }
 
-        return ['trades' => $paired, 'summary' => $this->summarize($paired)];
+        return new Collection(['trades' => $evaluations, 'summary' => $this->summarize($evaluations)]);
     }
 
-    protected function summarize(array $paired): array
+    /**
+     * @param Evaluation[] $evaluations
+     *
+     * @return array
+     */
+    protected function summarize(Collection $evaluations): array
     {
         $balance = 100;
 
@@ -121,21 +127,21 @@ class StrategyTester
         $lowestRois = [];
         $highestRois = [];
 
-        foreach ($paired as $pair)
+        foreach ($evaluations as $evaluation)
         {
-            if ($pair['entry']['valid_price'] || !$pair['result']['ambiguous'])
+            if ($evaluation->is_entry_price_valid && !$evaluation->is_ambiguous)
             {
-                $realized = $pair['result']['realized_roi'];
+                $realized = $realizedRois[] = $evaluation->realized_roi;
                 $balance = $this->cutCommission($balance, 0.002);
-                $pnl = $this->calculatePnl($balance, $roi[] = $realized);
+                $pnl = $this->calculatePnl($balance, $realized);
                 $balance += $pnl;
                 $count++;
 
-                $highestRois[] = (float)$pair['result']['highest_roi'];
-                $lowestRois[] = (float)$pair['result']['lowest_roi'];
+                $highestRois[] = (float)$evaluation->highest_roi;
+                $lowestRois[] = (float)$evaluation->lowest_roi;
             }
 
-            if ($pair['result']['ambiguous'])
+            if ($evaluation->is_ambiguous)
             {
                 $ambiguous++;
             }
