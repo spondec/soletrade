@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade;
+namespace App\Trade\Evaluation;
 
 use App\Models\Evaluation;
 use App\Models\Signal;
@@ -17,13 +17,12 @@ class Evaluator
         $this->symbolRepo = App::make(SymbolRepository::class);
     }
 
-    protected function setupEvaluation(TradeSetup|Signal $entry, TradeSetup|Signal $exit): Evaluation
+    protected function setup(TradeSetup|Signal $entry, TradeSetup|Signal $exit): Evaluation
     {
         $evaluation = new Evaluation();
 
         $evaluation->entry()->associate($entry);
         $evaluation->exit()->associate($exit);
-        $evaluation->side = $entry->side;
 
         $this->assertEntryExitTime($evaluation);
 
@@ -34,24 +33,8 @@ class Evaluator
     {
         if ($evaluation->exit->timestamp <= $evaluation->entry->timestamp)
         {
-            throw new \LogicException('Exit trade must not be newer than entry trade.');
+            throw new \LogicException('Exit date must not be newer than or equal to entry trade.');
         }
-    }
-
-    public function validateEntryPrice(Evaluation $evaluation): bool
-    {
-        $entryPrice = $evaluation->entry->price;
-
-        $candle = $this->symbolRepo->fetchLowestHighestPriceBetween($evaluation->entry->symbol_id,
-            $evaluation->entry->timestamp,
-            $evaluation->exit->timestamp);
-
-        $evaluation->highest_price = $candle->h;
-        $evaluation->lowest_price = $candle->l;
-
-        $evaluation->is_entry_price_valid = $isValid = ($entryPrice >= $candle->l && $entryPrice <= $candle->h);
-
-        return $isValid;
     }
 
     protected function assertExitSignal(Evaluation $evaluation)
@@ -66,9 +49,16 @@ class Evaluator
     {
         $this->assertExitSignal($evaluation);
 
-        $candles = $this->symbolRepo->fetchCandlesBetween($evaluation->entry->symbol,
+        $candle = $this->symbolRepo->fetchLowestHighestPriceBetween($evaluation->entry->symbol,
             $evaluation->entry->timestamp,
             $evaluation->exit->timestamp);
+
+        $evaluation->highest_price = $candle->h;
+        $evaluation->lowest_price = $candle->l;
+
+        $candles = $this->symbolRepo->fetchCandlesBetween($evaluation->entry->symbol,
+            $evaluation->entry->timestamp,
+            $evaluation->exit->timestamp, '1m'); //fetch 1m candles to minimize the ambiguity
 
         $lowestEntry = INF;
         $highestEntry = 0;
@@ -78,7 +68,7 @@ class Evaluator
         $stopPrice = $evaluation->entry->stop_price;
         $closePrice = $evaluation->entry->close_price;
 
-        $break = false;
+        $entered = $stopped = $ambiguous = $closed = false;
         foreach ($candles as $candle)
         {
             $low = $candle->l;
@@ -94,45 +84,43 @@ class Evaluator
                 {
                     $highestEntry = $high;
                 }
-                if ($entryPrice >= $low && $entryPrice <= $high)
+                if ($this->isPriceInRange($entryPrice, $high, $low))
                 {
-                    $realEntryTime = (float)$candle->t;
+                    $entered = true;
+                    $realEntryTime = (int)$candle->t;
                     $evaluation->highest_entry_price = (float)$highestEntry;
                     $evaluation->lowest_entry_price = (float)$lowestEntry;
                     $evaluation->entry_timestamp = $realEntryTime;
                 }
             }
 
-            if ($stopPrice && $this->isPriceInRange($stopPrice, $high, $low))
+            if ($entered)
             {
-                $isStopped = true;
-                $break = true;
-            }
-
-            //TODO handle take profits
-
-            if ($closePrice && $this->isPriceInRange($closePrice, $high, $low))
-            {
-                $isClosed = true;
-
-                if ($break)
+                if ($stopPrice && $this->isPriceInRange($stopPrice, $high, $low))
                 {
-                    $isAmbiguous = true;
+                    $stopped = true;
                 }
+                if ($closePrice && $this->isPriceInRange($closePrice, $high, $low))
+                {
+                    $closed = true;
 
-                $break = true;
-            }
-
-            if ($break ?? false)
-            {
-                $evaluation->setExitTime($candle->t);
-                break;
+                    if ($stopped)
+                    {
+                        $ambiguous = true;
+                    }
+                }
+                if ($stopped || $closed)
+                {
+                    $evaluation->exit_timestamp = $candle->t;
+                    break;
+                }
             }
         }
 
-        $evaluation->is_stopped = $isStopped ?? false;
-        $evaluation->is_closed = $isClosed ?? false;
-        $evaluation->is_ambiguous = $isAmbiguous ?? false;
+        $evaluation->is_stopped = $stopped;
+        $evaluation->is_closed = $closed;
+        $evaluation->is_ambiguous = $ambiguous;
+        $evaluation->is_entry_price_valid = $entered;
 
         $this->calcHighLowRealRoi($evaluation);
     }
@@ -144,12 +132,15 @@ class Evaluator
 
     public function evaluate(TradeSetup|Signal $entry, TradeSetup|Signal $exit): Evaluation
     {
-        $evaluation = $this->setupEvaluation($entry, $exit);
+        $evaluation = $this->setup($entry, $exit);
 
-        if ($this->validateEntryPrice($evaluation))
+        /** @var Evaluation|null $evaluation */
+        if ($exists = $evaluation->findUnique(['entry', 'exit']))
         {
-            $this->realizeTrade($evaluation);
+            return $exists;
         }
+
+        $this->realizeTrade($evaluation);
 
         $evaluation->save();
 
@@ -170,7 +161,7 @@ class Evaluator
 
     protected function calcHighLowRealRoi(Evaluation $evaluation): void
     {
-        if ($evaluation->is_ambiguous)
+        if (!$evaluation->is_entry_price_valid || $evaluation->is_ambiguous)
         {
             return;
         }
