@@ -9,6 +9,7 @@ use App\Trade\Indicator\Fib;
 use App\Trade\Indicator\MACD;
 use App\Trade\Indicator\RSI;
 use App\Trade\Strategy\BasicStrategy;
+use App\Trade\Strategy\FibScalp;
 use Illuminate\Support\Facades\DB;
 
 final class Config
@@ -31,7 +32,7 @@ final class Config
 
     public static function strategies(): array
     {
-        return [BasicStrategy::class];
+        return [FibScalp::class];
     }
 
     /**
@@ -44,7 +45,7 @@ final class Config
         foreach (static::exchanges() as $exchange)
         {
             $exchange = $exchange::instance();
-            $symbols[$exchange::class] = DB::table('symbols')
+            $symbols[$exchange::name()] = DB::table('symbols')
                 ->distinct()
                 ->where('exchange_id', $exchange->id())
                 ->get('symbol')
