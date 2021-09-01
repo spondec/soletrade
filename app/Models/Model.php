@@ -28,11 +28,24 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
         }
     }
 
+    public function findUnique(array $with = []): ?static
+    {
+        if ($this->unique)
+        {
+            /** @noinspection PhpIncompatibleReturnTypeInspection */
+            return static::query()
+                ->with($with)
+                ->where($this->uniqueAttributesToArray())
+                ->first();
+        }
+        return null;
+    }
+
     protected static function booted()
     {
         parent::booted();
 
-        static::saving(fn(self $model) => $model->validate());
+        static::saving(static fn(self $model) => $model->validate());
     }
 
     public function setAttribute($key, $value)
