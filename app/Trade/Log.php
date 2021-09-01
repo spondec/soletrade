@@ -17,7 +17,7 @@ final class Log
         static::$log[] = [
             'time'      => microtime(true),
             'exception' => $exception ?? null,
-            'message'   => $message ?? 'Empty message received.'
+            'message' => $message ?: 'Empty message received.'
         ];
     }
 
