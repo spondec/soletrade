@@ -105,7 +105,7 @@ class CandleUpdater
                 }
 
                 if ($inserts)
-                {   //race condition may occur
+                {
                     DB::table('candles')->insert($inserts);
                 }
 
