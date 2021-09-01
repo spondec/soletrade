@@ -80,6 +80,7 @@ abstract class AbstractStrategy
 
     /**
      * @return TradeSetup[]
+     * @throws \Exception
      */
     protected function findTradeSetups(Symbol $symbol): array
     {
@@ -123,7 +124,7 @@ abstract class AbstractStrategy
                         /** @var Signal $lastSignal */
                         $lastSignal = end($requiredSignals);
 
-                        if (!$lastSignal || ($signal->timestamp >= $lastSignal->timestamp && $lastSignal->side == $signal->side))
+                        if (!$lastSignal || ($signal->timestamp >= $lastSignal->timestamp && $lastSignal->side === $signal->side))
                         {
                             if ($this->validateSignal($indicator, $config, $signal))
                             {
@@ -136,10 +137,10 @@ abstract class AbstractStrategy
 
                 if ($requiredTotal == count($requiredSignals))
                 {
-                    if ($tradeSetup = $this->prepareSetup($config, $requiredSignals))
+                    if ($tradeSetup = $this->prepareTradeSetup($config, $requiredSignals))
                     {
                         $tradeSetup->symbol_id = $symbol->id;
-                        $setups[$key][$tradeSetup->timestamp] = $this->saveTrade($tradeSetup);
+                        $setups[$key][$tradeSetup->timestamp] = $this->saveTrade($tradeSetup, $requiredSignals);
                     }
                 }
 
@@ -203,7 +204,6 @@ abstract class AbstractStrategy
         ]);
 
         $tradeSetup = new TradeSetup();
-        $tradeSetup->signals = $signals;
         $lastSignal = end($signals);
 
         $tradeSetup->signal_count = count($signals);
@@ -220,22 +220,22 @@ abstract class AbstractStrategy
     /**
      * @throws \Exception
      */
-    protected function saveTrade(TradeSetup $tradeSetup): TradeSetup
+    protected function saveTrade(TradeSetup $tradeSetup, array $signals): TradeSetup
     {
-        DB::transaction(static function () use (&$tradeSetup) {
+        DB::transaction(static function () use (&$tradeSetup, &$signals) {
+            /** @var TradeSetup $tradeSetup */
             $tradeSetup = TradeSetup::query()->updateOrCreate(
                 $tradeSetup->uniqueAttributesToArray(),
                 $tradeSetup->attributesToArray());
-            $tradeSetup->signals()->saveMany($tradeSetup->signals);
+            $tradeSetup->signals()->saveMany($signals);
         });
 
         return $tradeSetup;
     }
 
-
-    protected function prepareSetup(mixed $config, array $requiredSignals): ?TradeSetup
+    protected function prepareTradeSetup(mixed $config, array $signals): ?TradeSetup
     {
-        $tradeSetup = $this->setupTrade($config, $requiredSignals);
+        $tradeSetup = $this->setupTrade($config, $signals);
         $callback = $config['callback'] ?? null;
 
         if ($callback instanceof \Closure)
