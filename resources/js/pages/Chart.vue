@@ -157,10 +157,10 @@ export default {
       cache: [],
       useCache: false,
 
-      strategies: null,
-      exchanges: null,
-      symbols: null,
-      intervals: null,
+      strategies: [],
+      exchanges: [],
+      symbols: [],
+      intervals: [],
       indicators: [],
       title: this.title,
 
@@ -244,12 +244,9 @@ export default {
     this.symbols = data.symbols;
     this.intervals = data.intervals;
 
-    // this.sel.strategy = "App\\Trade\\Strategy\\BasicStrategy";
-    this.sel.exchange = this.exchanges[Object.keys(this.exchanges)[0]];
+    this.sel.exchange = data.exchanges[0];
     this.sel.symbol = 'BTC/USDT';
-    // this.sel.symbol = this.symbols[this.sel.exchange][0];
     this.sel.interval = '1w';
-    // this.sel.interval = this.intervals[0];
   },
 
   mounted()
