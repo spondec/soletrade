@@ -55,11 +55,11 @@ class SymbolRepository
         return $mapped;
     }
 
-    public function fetchLowestHighestPriceBetween(int $symbolId, int $startDate, int $endDate): object
+    public function fetchLowestHighestPriceBetween(Symbol $symbol, int $startDate, int $endDate): object
     {
         $candle = DB::table('candles')
             ->select(DB::raw('max(h) as h, min(l) as l'))
-            ->where('symbol_id', $symbolId)
+            ->where('symbol_id', $symbol->id)
             ->where('t', '>', $startDate)
             ->where('t', '<=', $endDate)
             ->first();
@@ -75,7 +75,7 @@ class SymbolRepository
         return $candle;
     }
 
-    public function getSymbolId(Symbol $symbol, ?string $interval = null): ?int
+    public function findSymbolIdForInterval(Symbol $symbol, ?string $interval = null): ?int
     {
         return !$interval || $symbol->interval === $interval ? $symbol->id :
             DB::table('symbols')
@@ -85,9 +85,9 @@ class SymbolRepository
                 ->get('id')?->first()->id;
     }
 
-    public function fetchCandlesBetween(Symbol $symbol, int $startDate, int $endDate): \Illuminate\Support\Collection
+    public function fetchCandlesBetween(Symbol $symbol, int $startDate, int $endDate, string $interval): \Illuminate\Support\Collection
     {
-        $symbolId = $this->getSymbolId($symbol, '1m'); //fetch 1m candles to minimize the ambiguity
+        $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         $candles = DB::table('candles')
             ->where('symbol_id', $symbolId)
