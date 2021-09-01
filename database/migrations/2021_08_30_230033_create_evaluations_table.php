@@ -15,10 +15,9 @@ class CreateEvaluationsTable extends Migration
     {
         Schema::create('evaluations', function (Blueprint $table) {
             $table->id();
-            $table->enum('side', ['BUY', 'SELL']);
             $table->string('type');
-            $table->string('entry_id');
-            $table->string('exit_id')->nullable();
+            $table->foreignId('entry_id');
+            $table->foreignId('exit_id')->nullable();
             $table->float('realized_roi')->nullable();
             $table->float('highest_roi')->nullable();
             $table->float('lowest_roi')->nullable();
@@ -32,6 +31,7 @@ class CreateEvaluationsTable extends Migration
             $table->boolean('is_closed')->nullable();
             $table->bigInteger('entry_timestamp')->nullable();
             $table->bigInteger('exit_timestamp')->nullable();
+            $table->unique(['type', 'entry_id', 'exit_id']);
             $table->timestamps();
         });
     }
