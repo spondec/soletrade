@@ -59,7 +59,7 @@
               <div class="body divide-y my2">
                 <div v-for="(setup, id) in symbol.strategy.trade_setups" id="trade-setups" class="my-2">
                   <h1 class="text-2xl text-center">{{ id }}</h1>
-                  <div class="grid grid-cols-8 text-center">
+                  <div class="grid grid-cols-9 text-center">
                     <h1 class="text-lg" v-bind:class="{
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
@@ -74,6 +74,7 @@
                     <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
                     <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
                     <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
+                    <h1 class="text-lg">Failed: {{ setup.summary.failed }}</h1>
                   </div>
                   <trade-table chart-id="chart" v-bind:trades="setup.trades" @dateClick="showRange"></trade-table>
                 </div>
@@ -83,7 +84,7 @@
               <div class="body divide-y">
                 <div v-for="(setup, id) in symbol.strategy.signals" id="signals" class="my-2">
                   <h1 class="text-2xl text-center">{{ id }}</h1>
-                  <div class="grid grid-cols-8 text-center">
+                  <div class="grid grid-cols-9 text-center">
                     <h1 class="text-lg" v-bind:class="{
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
@@ -98,6 +99,7 @@
                     <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
                     <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
                     <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
+                    <h1 class="text-lg">Failed: {{ setup.summary.failed }}</h1>
                   </div>
                   <trade-table chart-id="chart" v-bind:trades="setup.trades" @dateClick="showRange"></trade-table>
                 </div>
@@ -124,9 +126,6 @@ import {createChart, CrosshairMode} from 'lightweight-charts';
 
 import VueMultiselect from 'vue-multiselect'
 
-import VueJsonPretty from 'vue-json-pretty';
-import 'vue-json-pretty/lib/styles.css';
-
 import {Tabs, Tab} from 'vue3-tabs-component';
 
 import {DatePicker} from 'v-calendar';
@@ -134,7 +133,7 @@ import {DatePicker} from 'v-calendar';
 export default {
   title: "Chart",
   components: {
-    VSpinner, MainLayout, VueMultiselect, VueJsonPretty, TradeTable, Tabs, Tab, DatePicker
+    VSpinner, MainLayout, VueMultiselect, TradeTable, Tabs, Tab, DatePicker
   },
   watch:
       {
@@ -246,7 +245,7 @@ export default {
 
     this.sel.exchange = data.exchanges[0];
     this.sel.symbol = 'BTC/USDT';
-    this.sel.interval = '1w';
+    this.sel.interval = '1h';
   },
 
   mounted()
@@ -549,11 +548,9 @@ export default {
       return indicators;
     },
 
-    initIndicators: function ()
+    initIndicators: function (container)
     {
-      const container = this.$refs.chart;
       const indicators = this.symbol.indicators;
-
       const handlers = this.handlers();
 
       for (let key in handlers)
@@ -577,17 +574,17 @@ export default {
       }
     },
 
-    initSeries: function ()
+    initCandlestickSeries: function (chart, data)
     {
-      const candlestickSeries = this.charts[0].addCandlestickSeries(this.seriesOptions);
-      candlestickSeries.setData(this.symbol.candles);
+      const candlestickSeries = chart.addCandlestickSeries(this.seriesOptions);
+      candlestickSeries.setData(data);
 
       // const histogramSeries = this.charts[0].addHistogramSeries({
       //   color: '#FFF5EE',
       // });
       // histogramSeries.setData(this.symbol.volumes);
 
-      this.series['candlestick'] = candlestickSeries;
+      return candlestickSeries;
     },
 
     initMarkers: function ()
@@ -651,9 +648,11 @@ export default {
 
       if (!this.symbol) return;
 
-      this.createChart();
-      this.initSeries();
-      this.initIndicators();
+      const container = this.$refs.chart;
+
+      const chart = this.createChart(container, this.options);
+      this.series['candlestick'] = this.initCandlestickSeries(chart, this.symbol.candles);
+      this.initIndicators(container);
       this.initMarkers();
       this.registerEvents();
     },
@@ -680,7 +679,6 @@ export default {
 
       this.loading = true;
       this.symbol = await this.prepareSymbol(await this.fetchSymbol());
-      console.log(this.symbol)
       this.loading = false;
 
       if (this.useCache)
@@ -722,16 +720,14 @@ export default {
       }
     },
 
-    createChart: function ()
+    createChart: function (container, options)
     {
-      const container = this.$refs.chart;
-
       if (!container) throw Error('Chart container was not found.');
 
-      this.options.height = container.offsetHeight;
-      this.options.width = container.offsetWidth;
+      options.height = container.offsetHeight;
+      options.width = container.offsetWidth;
 
-      const chart = createChart(container, this.options)
+      const chart = createChart(container, options);
       this.charts.push(chart);
 
       return chart;
