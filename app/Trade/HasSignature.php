@@ -4,12 +4,11 @@ namespace App\Trade;
 
 use App\Models\Signature;
 use App\Trade\Helper\ClosureHash;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 
 trait HasSignature
 {
-    protected Model $signature;
+    protected Signature $signature;
 
     public function register(array $data): Signature
     {
