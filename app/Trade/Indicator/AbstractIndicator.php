@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Trade\Indicator;
 
-use App\Models\Binding;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\Signal;
@@ -152,16 +151,6 @@ abstract class AbstractIndicator
     {
         $signal->save();
         $this->saveBindings($signal, $this->current);
-    }
-
-    public function bindPrice(Signal $signal, mixed $bind): void
-    {
-        if (!$price = $this->assertBindExists($bind))
-        {
-            throw new \UnexpectedValueException('Invalid bind price.');
-        }
-
-        $signal->price = $price;
     }
 
     /**

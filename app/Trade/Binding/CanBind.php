@@ -7,8 +7,8 @@ use App\Models\Model;
 
 trait CanBind
 {
-    protected ?\WeakMap $bindings = null;
     private ?array $bindable = null;
+    private ?\WeakMap $bindings = null;
     private ?\Closure $callback = null;
 
     /**
@@ -26,14 +26,22 @@ trait CanBind
             /** @var Binding $binding */
             foreach ($bindings as $binding)
             {
-                $binding->bindable()->associate($model);
-                $this->logChange($binding, $timestamp);
-                $binding->updateUniqueOrCreate();
+                $this->saveBinding($binding, $model, $timestamp);
             }
         }
     }
 
-    protected function logChange(Binding $binding, int $timestamp): void
+    /**
+     * @param Model $model
+     */
+    private function saveBinding(Binding $binding, Bindable $model, int $timestamp): void
+    {
+        $binding->bindable()->associate($model);
+        $this->logChange($binding, $timestamp);
+        $binding->updateUniqueOrCreate();
+    }
+
+    private function logChange(Binding $binding, int $timestamp): void
     {
         $history = $binding->history ?? [];
         $history[$timestamp] = $binding->value;
@@ -83,7 +91,7 @@ trait CanBind
         $model->setAttribute($column, $value);
     }
 
-    protected function assertBindExists(string $bind): void
+    private function assertBindExists(string $bind): void
     {
         if ($this->bindable === null)
         {
@@ -106,7 +114,7 @@ trait CanBind
     /**
      * @param Model $model
      */
-    protected function setupBinding(Bindable $model, string $column, string $bind, float $value): Binding
+    private function setupBinding(Bindable $model, string $column, string $bind, float $value): Binding
     {
         $binding = $this->bindings[$model][$column] ?? new Binding();
         $binding->column = $column;
