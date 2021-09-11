@@ -15,12 +15,12 @@ class Summarizer
     public function summarize(Collection $evaluations): array
     {
         $balance = 100;
+        $count = 0;
 
         $ambiguous = 0;
         $profit = 0;
         $loss = 0;
-        $count = 0;
-        $invalidEntry = 0;
+        $failed = 0;
 
         $lowestRois = [];
         $highestRois = [];
@@ -29,10 +29,11 @@ class Summarizer
         {
             $validEntry = $evaluation->is_entry_price_valid;
             $isAmbiguous = $evaluation->is_ambiguous;
+            $realized = $evaluation->realized_roi;
 
-            if ($validEntry && !$isAmbiguous)
+            if ($validEntry && !$isAmbiguous && $realized)
             {
-                $realized = $realizedRois[] = $evaluation->realized_roi;
+                $realizedRois[] = $realized;
                 $balance = $this->cutCommission($balance, 0.002);
                 $pnl = $this->calculatePnl($balance, $realized);
                 $balance += $pnl;
@@ -48,7 +49,7 @@ class Summarizer
             }
             else if (!$validEntry)
             {
-                $invalidEntry++;
+                $failed++;
             }
             else if ($realized < 0)
             {
@@ -61,32 +62,30 @@ class Summarizer
         }
 
         $sum = [
-            'avg_roi'             => 0,
-            'avg_highest_roi'     => 0,
-            'avg_lowest_roi'      => 0,
-            'risk_reward_ratio'   => 0,
-            'profit'              => $profit,
-            'loss'                => $loss,
-            'ambiguous'           => $ambiguous,
-            'invalid_entry_price' => $invalidEntry
+            'avg_roi'           => 0,
+            'avg_highest_roi'   => 0,
+            'avg_lowest_roi'    => 0,
+            'risk_reward_ratio' => 0,
+            'profit'            => $profit,
+            'loss'              => $loss,
+            'ambiguous'         => $ambiguous,
+            'failed'            => $failed
         ];
 
         $sum['roi'] = $roi = round($balance - 100, 2);
 
-        if ($count) //to prevent division by zero
+        if ($count > 0)//prevent division by zero
         {
             $sum['avg_roi'] = round($roi / $count, 2);
 
             if ($highestRois)
             {
-                $sum['avg_highest_roi'] = round($avgHighestRoi = array_sum($highestRois) / count($highestRois), 2);
+                $sum['avg_highest_roi'] = round($avgHighestRoi = array_sum($highestRois) / $count, 2);
             }
-
             if ($lowestRois)
             {
-                $sum['avg_lowest_roi'] = round($avgLowestRoi = array_sum($lowestRois) / count($lowestRois), 2);
+                $sum['avg_lowest_roi'] = round($avgLowestRoi = array_sum($lowestRois) / $count, 2);
             }
-
             if ($highestRois && $lowestRois)
             {
                 $sum['risk_reward_ratio'] = round(abs($avgHighestRoi / $avgLowestRoi), 2);
