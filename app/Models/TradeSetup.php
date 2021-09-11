@@ -2,28 +2,33 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Trade\Binding\Bindable;
+use App\Trade\Binding\HasBinding;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * @property int    id
- * @property int    position_id
- * @property int    signature_id
- * @property int    signal_count
- * @property int    timestamp
- * @property int    symbol_id
- * @property string name
- * @property string side
- * @property float  price
- * @property float  close_price
- * @property float  stop_price
- * @property array  take_profits
- * @property mixed  created_at
- * @property mixed  updated_at
+ * @property Signal[]  signals
+ * @property Symbol    symbol
+ * @property Signature signature
+ *
+ * @property int       id
+ * @property int       position_id
+ * @property int       signature_id
+ * @property int       signal_count
+ * @property int       timestamp
+ * @property int       symbol_id
+ * @property string    name
+ * @property string    side
+ * @property float     price
+ * @property float     close_price
+ * @property float     stop_price
+ * @property array     take_profits
+ * @property mixed     created_at
+ * @property mixed     updated_at
  */
-class TradeSetup extends \App\Models\Model
+class TradeSetup extends Model implements Bindable
 {
-    use HasFactory;
+    use HasBinding;
 
     protected $guarded = ['id'];
     protected $table = 'trade_setups';
@@ -38,6 +43,11 @@ class TradeSetup extends \App\Models\Model
     public function symbol()
     {
         return $this->belongsTo(Symbol::class);
+    }
+
+    public function signature()
+    {
+        return $this->belongsTo(Signature::class);
     }
 
     public function takeProfits()

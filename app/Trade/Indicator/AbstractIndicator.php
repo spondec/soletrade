@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade\Indicator;
 
+use App\Models\Binding;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\Signal;
+use App\Trade\Binding\CanBind;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Helper\ClosureHash;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 abstract class AbstractIndicator
@@ -17,21 +20,20 @@ abstract class AbstractIndicator
     use HasName;
     use HasSignature;
     use HasConfig;
+    use CanBind;
 
     protected ?int $prev = null;
     protected ?int $current = null;
 
     /** @var Signature */
-    protected Model $signature;
-
-    protected array $config = [];
-
+    protected Signature $signature;
+    protected array $config = ['binding' => null];
     protected array $data = [];
+    private Signature $signalSignature;
     /**
      * @var Signal[]
      */
     private Collection $signals;
-    private Signature $signalSignature;
 
     private int $gap = 0;
     private int $index = 0;
@@ -43,6 +45,7 @@ abstract class AbstractIndicator
     {
         $this->mergeConfig($config);
 
+        /** @var Signature signature */
         $this->signature = $this->register([
             'contents' => $this->contents()
         ]);
@@ -54,7 +57,6 @@ abstract class AbstractIndicator
             $data = $this->run();
 
             $this->gap = $count - count($data);
-
             if ($this->gap < 0)
             {
                 throw new \LogicException(static::name() . ' data count cannot exceed the candle count.');
@@ -73,6 +75,8 @@ abstract class AbstractIndicator
         }
     }
 
+    abstract protected function run(): array;
+
     protected function combineTimestamps(?array $data): array
     {
         if (!$data)
@@ -90,7 +94,75 @@ abstract class AbstractIndicator
         return array_column($this->candles->all(), 't');
     }
 
-    abstract protected function run(): array;
+    protected function scan(): void
+    {
+        $this->index = -1;
+        /** @var Signal $lastSignal */
+        $lastSignal = null;
+        foreach ($this->data as $timestamp => $value)
+        {
+            $this->index++;
+            $this->current = $timestamp;
+
+            if ($lastSignal) $this->syncBindings($lastSignal);
+
+            /** @var Signal $signal */
+            if ($signal = ($this->signalCallback)(signal: $this->setupSignal(), indicator: $this, value: $value))
+            {
+                if (next($this->data))
+                {
+                    $signal->timestamp = $timestamp;
+                }
+                else
+                {
+                    $signal->timestamp = time();
+                }
+
+                $old = $signal;
+                $this->replaceBindable($old, $signal = $signal->updateUniqueOrCreate());
+                $this->saveSignal($signal);
+
+                if ($lastSignal) $this->saveSignal($lastSignal);
+
+                $this->signals[] = $lastSignal = $signal;
+            }
+
+            $this->prev = $timestamp;
+        }
+
+        //Make sure to save the last signal in case of a nonexistent following signal
+        if ($lastSignal) $this->saveSignal($lastSignal);
+    }
+
+    public function setupSignal(): Signal
+    {
+        $signal = new Signal();
+
+        $signal->symbol()->associate($this->symbol);
+        $signal->indicator()->associate($this->signature);
+        $signal->signature()->associate($this->signalSignature);
+
+        return $signal;
+    }
+
+    /**
+     * @param Signal $signal
+     */
+    protected function saveSignal(Signal $signal): void
+    {
+        $signal->save();
+        $this->saveBindings($signal, $this->current);
+    }
+
+    public function bindPrice(Signal $signal, mixed $bind): void
+    {
+        if (!$price = $this->assertBindExists($bind))
+        {
+            throw new \UnexpectedValueException('Invalid bind price.');
+        }
+
+        $signal->price = $price;
+    }
 
     /**
      * Use offset to access previous candles.
@@ -98,54 +170,6 @@ abstract class AbstractIndicator
     public function candle(int $offset = 0): \stdClass
     {
         return $this->candles[($this->index - $offset) + $this->gap];
-    }
-
-    protected function scan(): void
-    {
-        $this->index = -1;
-        foreach ($this->data as $timestamp => $value)
-        {
-            $this->index++;
-            $this->current = $timestamp;
-            if ($signal = $this->checkSignal($value))
-            {
-                $signal->timestamp = $timestamp;
-                $signal->hash = $this->hash(json_encode($signal->attributesToArray()));
-                $existing = Signal::query()->where('hash', $signal->hash)->first();
-
-                if ($existing)
-                {
-                    $signal = $existing;
-                }
-                else
-                {
-                    $signal->save();
-                }
-
-                $this->signals[] = $signal;
-            }
-
-            $this->prev = $timestamp;
-        }
-    }
-
-    protected function checkSignal(mixed $value): ?Signal
-    {
-        $callback = $this->signalCallback;
-        return $callback(signal: $this->setupSignal(),
-            indicator: $this,
-            value: $value);
-    }
-
-    public function setupSignal(): Signal
-    {
-        $signal = new Signal();
-
-        $signal->symbol_id = $this->symbol->id;
-        $signal->indicator_id = $this->id();
-        $signal->signature_id = $this->signalSignature->id;
-
-        return $signal;
     }
 
     public function id(): int
@@ -194,8 +218,8 @@ abstract class AbstractIndicator
     {
         foreach ($this->candles as $candle)
         {
-            if ($candle->t == $this->current)
-                return $candle->c;
+            if ($candle->t === $this->current)
+                return (float)$candle->c;
         }
 
         throw new \LogicException('Current timestamp does not exist.');
@@ -227,6 +251,16 @@ abstract class AbstractIndicator
     public function data(): array
     {
         return $this->data;
+    }
+
+    protected function getBindable(): array
+    {
+        return [];
+    }
+
+    protected function getBindValue(int|float|string $bind): mixed
+    {
+        throw new \Exception('getBindValue() must be overridden.');
     }
 
     protected function closes(): array

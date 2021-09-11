@@ -16,11 +16,16 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property float             highest_roi
  * @property float             lowest_roi
  * @property string            side
+ * @property float             entry_price
+ * @property float             exit_price
+ * @property float             close_price //rename to cancel_price
+ * @property float             stop_price
  * @property float             highest_price
  * @property float             lowest_price
  * @property float             highest_entry_price
  * @property float             lowest_entry_price
  * @property bool              is_entry_price_valid
+ * @property bool              is_exit_price_valid
  * @property bool              is_ambiguous
  * @property bool              is_stopped
  * @property bool              is_closed
@@ -33,6 +38,9 @@ class Evaluation extends Model
 {
     use HasFactory;
 
+    protected $guarded = ['id'];
+
+    protected $with = ['entry', 'exit'];
     protected array $unique = ['type', 'entry_id', 'exit_id'];
 
     public function entry(): MorphTo
@@ -43,20 +51,5 @@ class Evaluation extends Model
     public function exit(): MorphTo
     {
         return $this->morphTo('exit', 'type');
-    }
-
-    public function getExitPrice(): float
-    {
-        if ($this->is_stopped)
-        {
-            return $this->entry->stop_price;
-        }
-
-        if ($this->is_closed)
-        {
-            return $this->entry->close_price;
-        }
-
-        return $this->exit->price;
     }
 }

@@ -41,6 +41,13 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
         return null;
     }
 
+    public function updateUniqueOrCreate(): static
+    {
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return static::query()->updateOrCreate(
+            $this->uniqueAttributesToArray(), $this->attributesToArray());
+    }
+
     protected static function booted()
     {
         parent::booted();

@@ -4,8 +4,8 @@ namespace App\Trade\Indicator;
 
 class Fib extends AbstractIndicator
 {
-    protected array $config = ['period' => 144];
     public array $prevFib;
+    protected array $config = ['period' => 144];
 
     public function nearestFib(array $levels, float $price): array
     {
@@ -41,6 +41,21 @@ class Fib extends AbstractIndicator
         }
 
         return $raw;
+    }
+
+    protected function getBindValue(int|float|string $bind): float
+    {
+        return $this->data[$this->current][$bind];
+    }
+
+    protected function getBindable(): array
+    {
+        return [0, 236, 382, 500, 618, 702, 786, 886, 1000];
+    }
+
+    protected function getBindPrice(mixed $bind): float
+    {
+        return $this->data[$this->current][$bind];
     }
 
     protected function run(): array

@@ -2,6 +2,7 @@
   <table class="table table-responsive text-white">
     <thead>
     <tr>
+      <th>Details</th>
       <th>Side</th>
       <th>Entry</th>
       <th>Exit</th>
@@ -9,10 +10,10 @@
       <th>Entry Date</th>
       <th>Exit Date</th>
       <th>Exit Signal</th>
-      <th>Lowest Price</th>
-      <th>Lowest Entry</th>
-      <th>Highest Entry</th>
-      <th>Highest Price</th>
+      <!--      <th>Lowest Price</th>-->
+      <!--      <th>Lowest Entry</th>-->
+      <!--      <th>Highest Entry</th>-->
+      <!--      <th>Highest Price</th>-->
       <th>Entry Price</th>
       <th>Exit Price</th>
       <th>Close Price</th>
@@ -31,6 +32,9 @@
         'bg-warning' : !trade.is_entry_price_valid,
         'bg-info': trade.is_ambiguous
       }">
+      <td>
+        <vue-json-pretty :path="'res'" :data="trade" :deep="0"></vue-json-pretty>
+      </td>
       <td>{{ trade.entry.side }}</td>
       <td>{{ trade.entry.name }}</td>
       <td>{{ trade.exit.name }}</td>
@@ -41,16 +45,18 @@
         </a>
       </td>
       <td>
-        <a v-bind:href="'#' + chartId"
+        <a v-if="trade.entry_timestamp" v-bind:href="'#' + chartId"
            v-on:click="dateClick(trade.entry_timestamp, trade.exit_timestamp)">
           {{ timestampToString(trade.entry_timestamp) }}
         </a>
+        <p v-else>N/A</p>
       </td>
       <td>
-        <a v-bind:href="'#' + chartId"
+        <a v-if="trade.entry_timestamp" v-bind:href="'#' + chartId"
            v-on:click="dateClick(trade.entry_timestamp, trade.exit_timestamp)">
           {{ timestampToString(trade.exit_timestamp) }}
         </a>
+        <p v-else>N/A</p>
       </td>
       <td>
         <a v-bind:href="'#' + chartId"
@@ -58,19 +64,19 @@
           {{ timestampToString(trade.exit.timestamp) }}
         </a>
       </td>
-      <td>{{ trade.lowest_price || 'N/A' }}</td>
-      <td>{{ trade.lowest_entry_price || 'N/A' }}</td>
-      <td>{{ trade.highest_entry_price || 'N/A' }}</td>
-      <td>{{ trade.highest_price || 'N/A' }}</td>
-      <td v-bind:class="{ 'text-danger': !trade.is_entry_price_valid }">{{ trade.entry.price }}</td>
-      <td>{{ trade.exit.price }}</td>
+      <!--      <td>{{ round(trade.lowest_price) || 'N/A' }}</td>-->
+      <!--      <td>{{ round(trade.lowest_entry_price) || 'N/A' }}</td>-->
+      <!--      <td>{{ round(trade.highest_entry_price) || 'N/A' }}</td>-->
+      <!--      <td>{{ round(trade.highest_price) || 'N/A' }}</td>-->
+      <td v-bind:class="{ 'text-danger': !trade.is_entry_price_valid }">{{ round(trade.entry_price) }}</td>
+      <td v-bind:class="{ 'text-danger': !trade.is_exit_price_valid }">{{ round(trade.exit_price) }}</td>
       <td>
         <p v-bind:class="{'text-warning': trade.is_closed }">
-          {{ trade.entry.close_price || 'N/A' }}</p>
+          {{ round(trade.close_price) || 'N/A' }}</p>
       </td>
       <td>
         <p v-bind:class="{'text-warning': trade.is_stopped }">
-          {{ trade.entry.stop_price || 'N/A' }}</p>
+          {{ round(trade.stop_price) || 'N/A' }}</p>
       </td>
       <!--      <td>{{ trade.highest_price }}</td>-->
       <!--      <td>{{ trade.lowest_price }}</td>-->
@@ -87,11 +93,14 @@
 
 import Pagination from 'v-pagination-3';
 
+import VueJsonPretty from 'vue-json-pretty';
+import 'vue-json-pretty/lib/styles.css';
+
 export default {
   name: "TradeTable",
   props: ['trades', 'chartId'],
   emits: ['dateClick'],
-  components: {Pagination},
+  components: {Pagination, VueJsonPretty},
 
   data: function ()
   {
@@ -123,11 +132,14 @@ export default {
 
     round: function (float)
     {
-      return float ? float.toFixed(2) : float;
+      const parsed = parseFloat(float);
+
+      return !Number.isNaN(parsed) ? parsed.toFixed(2) : float;
     },
 
     timestampToString: function (timestamp)
     {
+      if (!timestamp) return 'N/A';
       try
       {
         return new Date(timestamp).toISOString().slice(0, 19).replace('T', ' ');
