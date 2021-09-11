@@ -35,9 +35,9 @@ class Symbol extends Model
     protected ?int $end = null;
     protected ?int $start = null;
 
-    public function cachedSignals(): array
+    public function cachedSignals(): Collection
     {
-        $signals = [];
+        $signals = new Collection();
         foreach ($this->indicators as $indicator)
         {
             $signals[$indicator::name()] = $indicator->signals();

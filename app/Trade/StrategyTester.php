@@ -23,13 +23,14 @@ class StrategyTester
     ];
 
     protected Evaluator $evaluator;
-
+    protected Summarizer $summarizer;
     protected array $result = [];
 
     public function __construct(protected SymbolRepository $symbolRepo, array $config = [])
     {
         $this->mergeConfig($config);
         $this->evaluator = App::make(Evaluator::class);
+        $this->summarizer = App::make(Summarizer::class);
     }
 
     public function run(string $strategyClass, Symbol $symbol): array
@@ -72,7 +73,7 @@ class StrategyTester
         return new $class(config: $config);
     }
 
-    protected function prepareResult(array $result, Symbol $symbol): void
+    protected function prepareResult(Collection $result, Symbol $symbol): void
     {
         /**
          * @var TradeSetup[] $trades
@@ -91,10 +92,9 @@ class StrategyTester
     /**
      * @param TradeSetup[]|Signal[] $trades
      */
-    protected function pairEvaluateSummarize(array|Collection $trades): Collection
+    protected function pairEvaluateSummarize(Collection $trades): Collection
     {
         $evaluations = new Collection();
-        $summarizer = new Summarizer();
 
         foreach ($trades as $trade)
         {
@@ -111,6 +111,11 @@ class StrategyTester
             }
         }
 
-        return new Collection(['trades' => $evaluations, 'summary' => $summarizer->summarize($evaluations)]);
+        foreach ($evaluations as $key => $evaluation)
+        {
+            $evaluations[$key] = $evaluation->fresh();
+        }
+
+        return new Collection(['trades' => $evaluations, 'summary' => $this->summarizer->summarize($evaluations)]);
     }
 }

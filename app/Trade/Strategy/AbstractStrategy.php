@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade\Strategy;
 
 use App\Models\Signal;
@@ -11,6 +13,7 @@ use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Indicator\AbstractIndicator;
 use App\Trade\Log;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 
@@ -48,7 +51,7 @@ abstract class AbstractStrategy
 
     abstract protected function tradeSetup(): array;
 
-    public function run(Symbol $symbol): array
+    public function run(Symbol $symbol): Collection
     {
         Log::execTime(function () use (&$symbol) {
             $this->initIndicators($symbol);
@@ -82,7 +85,7 @@ abstract class AbstractStrategy
      * @return TradeSetup[]
      * @throws \Exception
      */
-    protected function findTradeSetups(Symbol $symbol): array
+    protected function findTradeSetups(Symbol $symbol): Collection
     {
         if (!$signals = $this->getConfigSignals($symbol))
         {
@@ -137,9 +140,11 @@ abstract class AbstractStrategy
 
                 if ($requiredTotal == count($requiredSignals))
                 {
-                    if ($tradeSetup = $this->prepareTradeSetup($config, $requiredSignals))
+                    $tradeSetup = $this->setupTrade($symbol, $config, $requiredSignals);
+
+                    if ($tradeSetup = $this->applyTradeSetupConfig($tradeSetup, $config))
                     {
-                        $tradeSetup->symbol_id = $symbol->id;
+                        $setups[$key] = $setups[$key] ?? new Collection();
                         $setups[$key][$tradeSetup->timestamp] = $this->saveTrade($tradeSetup, $requiredSignals);
                     }
                 }
@@ -148,7 +153,7 @@ abstract class AbstractStrategy
             }
         }
 
-        return $setups;
+        return new Collection($setups);
     }
 
     protected function getConfigSignals(Symbol $symbol): array
@@ -190,7 +195,41 @@ abstract class AbstractStrategy
     /**
      * @param Signal[] $signals
      */
-    protected function setupTrade(array $config, array $signals): TradeSetup
+    protected function setupTrade(Symbol $symbol, array $config, array $signals): TradeSetup
+    {
+        $signature = $this->registerSignature($config);
+        $tradeSetup = $this->createTradeSetup($symbol, $signature);
+
+        return $this->fillTradeSetup($tradeSetup, $signals);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function saveTrade(TradeSetup $tradeSetup, array $signals): TradeSetup
+    {
+        DB::transaction(static function () use (&$tradeSetup, &$signals) {
+            /** @var TradeSetup $tradeSetup */
+            $tradeSetup = $tradeSetup->updateUniqueOrCreate();
+            $tradeSetup->signals()->sync(array_map(static fn(Signal $signal) => $signal->id, $signals));
+        });
+
+        return $tradeSetup;
+    }
+
+    protected function applyTradeSetupConfig(TradeSetup $tradeSetup, mixed $config): ?TradeSetup
+    {
+        $callback = $config['callback'] ?? null;
+
+        if ($callback instanceof \Closure)
+        {
+            $tradeSetup = $callback($tradeSetup);
+        }
+
+        return $tradeSetup;
+    }
+
+    protected function registerSignature(array $config): \App\Models\Signature
     {
         $signature = $this->register([
             'strategy'        => [
@@ -202,9 +241,22 @@ abstract class AbstractStrategy
                 fn(string $class): array => $this->indicatorSetup[$class],
                 $this->getConfigIndicators($config))
         ]);
+        return $signature;
+    }
 
+    protected function createTradeSetup(Symbol $symbol, \App\Models\Signature $signature): TradeSetup
+    {
         $tradeSetup = new TradeSetup();
-        $lastSignal = end($signals);
+
+        $tradeSetup->symbol()->associate($symbol);
+        $tradeSetup->signature()->associate($signature);
+
+        return $tradeSetup;
+    }
+
+    protected function fillTradeSetup(TradeSetup $tradeSetup, array $signals): TradeSetup
+    {
+        $lastSignal = end($signals); //TODO make sure its order
 
         $tradeSetup->signal_count = count($signals);
         $tradeSetup->name = implode('|', array_map(
@@ -212,36 +264,6 @@ abstract class AbstractStrategy
         $tradeSetup->price = $lastSignal->price;
         $tradeSetup->side = $lastSignal->side;
         $tradeSetup->timestamp = $lastSignal->timestamp;
-        $tradeSetup->signature_id = $signature->id;
-
-        return $tradeSetup;
-    }
-
-    /**
-     * @throws \Exception
-     */
-    protected function saveTrade(TradeSetup $tradeSetup, array $signals): TradeSetup
-    {
-        DB::transaction(static function () use (&$tradeSetup, &$signals) {
-            /** @var TradeSetup $tradeSetup */
-            $tradeSetup = TradeSetup::query()->updateOrCreate(
-                $tradeSetup->uniqueAttributesToArray(),
-                $tradeSetup->attributesToArray());
-            $tradeSetup->signals()->saveMany($signals);
-        });
-
-        return $tradeSetup;
-    }
-
-    protected function prepareTradeSetup(mixed $config, array $signals): ?TradeSetup
-    {
-        $tradeSetup = $this->setupTrade($config, $signals);
-        $callback = $config['callback'] ?? null;
-
-        if ($callback instanceof \Closure)
-        {
-            $tradeSetup = $callback($tradeSetup);
-        }
 
         return $tradeSetup;
     }
