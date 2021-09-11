@@ -22,7 +22,7 @@ class CreateSignalsTable extends Migration
             $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('price');
             $table->bigInteger('timestamp');
-            $table->string('hash', 32)->unique();
+            $table->unique(['symbol_id', 'indicator_id', 'signature_id', 'timestamp']);
             $table->timestamps();
         });
     }
