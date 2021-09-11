@@ -1,5 +1,6 @@
 const mix = require('laravel-mix');
 const tailwindcss = require('tailwindcss')
+const webpack = require('webpack');
 
 /*
  |--------------------------------------------------------------------------
@@ -17,6 +18,14 @@ mix.js('resources/js/app.js', 'public/js')
     .sass('resources/sass/app.scss', 'public/css')
     .options({
         processCssUrls: false,
-        postCss: [ tailwindcss('tailwind.config.js') ],
+        postCss: [tailwindcss('tailwind.config.js')],
     })
-    .sourceMaps(false, 'source-map');
+    .sourceMaps(false, 'source-map')
+    .webpackConfig({
+        plugins: [
+            new webpack.DefinePlugin({
+                __VUE_OPTIONS_API__: true,
+                __VUE_PROD_DEVTOOLS__: false
+            })
+        ]
+    });
