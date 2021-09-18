@@ -30,4 +30,9 @@ class Binding extends Model
     {
         return $this->morphTo();
     }
+
+    public function setHistoryAttribute(array $history)
+    {
+        $this->attributes['history'] = json_encode(array_unique($history, SORT_NUMERIC));
+    }
 }
