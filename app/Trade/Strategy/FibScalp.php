@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade\Strategy;
 
 use App\Models\Signal;
@@ -58,22 +60,30 @@ class FibScalp extends AbstractStrategy
                 'signals'  => [
                     Fib::class
                 ],
-                'callback' => static function (TradeSetup $setup): ?TradeSetup {
-                    $price = $setup->price;
-                    $isBuy = $setup->isBuy();
+                'callback' => function (TradeSetup $setup): ?TradeSetup {
 
-//                    $percent = $price * 0.001;
-//                    $setup->price = $isBuy ? $price + $percent : $price - $percent;
 
-                    if ($isBuy)
+                    if ($setup->isBuy())
                     {
-                        $setup->close_price = $price + $price * 0.015;
-                        $setup->stop_price = $price - $price * 0.005;
+                        $this->bind($setup,
+                            'close_price',
+                            'last_signal_price',
+                            static fn(float $price): float => $price + $price * 0.017);
+                        $this->bind($setup,
+                            'stop_price',
+                            'last_signal_price',
+                            static fn(float $price): float => $price - $price * 0.005);
                     }
                     else
                     {
-                        $setup->close_price = $price - $price * 0.015;
-                        $setup->stop_price = $price + $price * 0.005;
+                        $this->bind($setup,
+                            'close_price',
+                            'last_signal_price',
+                            static fn(float $price): float => $price - $price * 0.017);
+                        $this->bind($setup,
+                            'stop_price',
+                            'last_signal_price',
+                            static fn(float $price): float => $price + $price * 0.005);
                     }
 
                     return $setup;

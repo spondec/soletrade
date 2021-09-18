@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Trade\Indicator;
 
+use App\Models\Binding;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\Signal;
+use App\Trade\Binding\Bindable;
 use App\Trade\Binding\CanBind;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
@@ -21,12 +23,12 @@ abstract class AbstractIndicator
     use HasConfig;
     use CanBind;
 
+    protected array $config = ['binding' => null];
+
     protected ?int $prev = null;
     protected ?int $current = null;
+    protected ?int $next = null;
 
-    /** @var Signature */
-    protected Signature $signature;
-    protected array $config = ['binding' => null];
     protected array $data = [];
     private Signature $signalSignature;
     /**
@@ -150,7 +152,7 @@ abstract class AbstractIndicator
     protected function saveSignal(Signal $signal): void
     {
         $signal->save();
-        $this->saveBindings($signal, $this->current);
+        $this->saveBindings($signal);
     }
 
     /**
@@ -242,12 +244,17 @@ abstract class AbstractIndicator
         return $this->data;
     }
 
+    protected function afterBinding(Binding $binding, ?\Closure $callback): void
+    {
+        $this->logChange($binding, $this->current);
+    }
+
     protected function getBindable(): array
     {
         return [];
     }
 
-    protected function getBindValue(int|float|string $bind): mixed
+    protected function getBindValue(int|string $bind): mixed
     {
         throw new \Exception('getBindValue() must be overridden.');
     }

@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Trade\Strategy;
 
+use App\Models\Binding;
 use App\Models\Signal;
+use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
+use App\Trade\Binding\Bindable;
+use App\Trade\Binding\CanBind;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
@@ -22,6 +26,7 @@ abstract class AbstractStrategy
     use HasName;
     use HasSignature;
     use HasConfig;
+    use CanBind;
 
     protected array $config = [
         'maxCandles' => 1000,
@@ -32,8 +37,9 @@ abstract class AbstractStrategy
     protected array $signals = [];
     protected array $indicatorSetup;
     protected array $tradeSetup;
-
     protected SymbolRepository $symbolRepo;
+
+    protected ?Signal $lastSignal;
 
     public function __construct(array $config = [])
     {
@@ -140,6 +146,7 @@ abstract class AbstractStrategy
 
                 if ($requiredTotal == count($requiredSignals))
                 {
+                    $this->lastSignal = $signal;
                     $tradeSetup = $this->setupTrade($symbol, $config, $requiredSignals);
 
                     if ($tradeSetup = $this->applyTradeSetupConfig($tradeSetup, $config))
@@ -147,6 +154,7 @@ abstract class AbstractStrategy
                         $setups[$key] = $setups[$key] ?? new Collection();
                         $setups[$key][$tradeSetup->timestamp] = $this->saveTrade($tradeSetup, $requiredSignals);
                     }
+                    $this->lastSignal = null;
                 }
 
                 $requiredSignals = [];
@@ -203,16 +211,42 @@ abstract class AbstractStrategy
         return $this->fillTradeSetup($tradeSetup, $signals);
     }
 
-    /**
-     * @throws \Exception
-     */
-    protected function saveTrade(TradeSetup $tradeSetup, array $signals): TradeSetup
+    protected function registerSignature(array $config): Signature
     {
-        DB::transaction(static function () use (&$tradeSetup, &$signals) {
-            /** @var TradeSetup $tradeSetup */
-            $tradeSetup = $tradeSetup->updateUniqueOrCreate();
-            $tradeSetup->signals()->sync(array_map(static fn(Signal $signal) => $signal->id, $signals));
-        });
+        $signature = $this->register([
+            'strategy'        => [
+                'config' => $this->config,
+                'hash'   => $this->signature->hash
+            ],
+            'trade_setup'     => $config,
+            'indicator_setup' => array_map(
+                fn(string $class): array => $this->indicatorSetup[$class],
+                $this->getConfigIndicators($config))
+        ]);
+        return $signature;
+    }
+
+    protected function createTradeSetup(Symbol $symbol, Signature $signature): TradeSetup
+    {
+        $tradeSetup = new TradeSetup();
+
+        $tradeSetup->symbol()->associate($symbol);
+        $tradeSetup->signature()->associate($signature);
+
+        return $tradeSetup;
+    }
+
+    protected function fillTradeSetup(TradeSetup $tradeSetup, array $signals): TradeSetup
+    {
+        $lastSignal = end($signals);
+
+        $tradeSetup->signal_count = count($signals);
+        $tradeSetup->name = implode('|', array_map(
+            static fn(Signal $signal) => $signal->name, $signals));
+        $tradeSetup->side = $lastSignal->side;
+        $tradeSetup->timestamp = $lastSignal->timestamp;
+
+        $this->bind($tradeSetup, 'price', 'last_signal_price');
 
         return $tradeSetup;
     }
@@ -229,42 +263,53 @@ abstract class AbstractStrategy
         return $tradeSetup;
     }
 
-    protected function registerSignature(array $config): \App\Models\Signature
+    /**
+     * @throws \Exception
+     */
+    protected function saveTrade(TradeSetup $tradeSetup, array $signals): TradeSetup
     {
-        $signature = $this->register([
-            'strategy'        => [
-                'config' => $this->config,
-                'hash'   => $this->signature->hash
-            ],
-            'trade_setup'     => $config,
-            'indicator_setup' => array_map(
-                fn(string $class): array => $this->indicatorSetup[$class],
-                $this->getConfigIndicators($config))
-        ]);
-        return $signature;
-    }
-
-    protected function createTradeSetup(Symbol $symbol, \App\Models\Signature $signature): TradeSetup
-    {
-        $tradeSetup = new TradeSetup();
-
-        $tradeSetup->symbol()->associate($symbol);
-        $tradeSetup->signature()->associate($signature);
+        $old = $tradeSetup;
+        DB::transaction(static function () use (&$tradeSetup, &$signals) {
+            /** @var TradeSetup $tradeSetup */
+            $tradeSetup = $tradeSetup->updateUniqueOrCreate();
+            $tradeSetup->signals()->sync(array_map(static fn(Signal $signal) => $signal->id, $signals));
+        });
+        $this->replaceBindable($old, $tradeSetup);
+        $this->saveBindings($tradeSetup);
 
         return $tradeSetup;
     }
 
-    protected function fillTradeSetup(TradeSetup $tradeSetup, array $signals): TradeSetup
+    protected function preBindingSave(Binding $binding, ?\Closure $callback): void
     {
-        $lastSignal = end($signals); //TODO make sure its order
+        $this->setHistory($binding,
+            $this->getBindHistory($binding->name),
+            $callback);
+    }
 
-        $tradeSetup->signal_count = count($signals);
-        $tradeSetup->name = implode('|', array_map(
-            static fn(Signal $signal) => $signal->name, $signals));
-        $tradeSetup->price = $lastSignal->price;
-        $tradeSetup->side = $lastSignal->side;
-        $tradeSetup->timestamp = $lastSignal->timestamp;
+    protected function getBindHistory(string $bind): ?array
+    {
+        $map = $this->getBindMap();
+        return $this->lastSignal->bindings()->where('column', $map[$bind])->first()?->history;
+    }
 
-        return $tradeSetup;
+    protected function getBindMap(): array
+    {
+        return [
+            'last_signal_price' => 'price'
+        ];
+    }
+
+    protected function getBindable(): array
+    {
+        return ['last_signal_price'];
+    }
+
+    protected function getBindValue(int|string $bind): mixed
+    {
+        $map = $this->getBindMap();
+        $column = $map[$bind] ?? $bind;
+
+        return $this->lastSignal->getAttribute($column);
     }
 }
