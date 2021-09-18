@@ -181,21 +181,21 @@ export default {
       charts: [],
       series: [],
       seriesOptions: {
-        priceFormat: {
-          type: 'price',
-          precision: 2,
-          minMove: 0.0000000001,
-        },
+        // priceFormat: {
+        //   type: 'price',
+        //   precision: 2,
+        //   minMove: 0.0000000001,
+        // },
       },
       options: {
         width: 400,
         height: 600,
 
-        priceFormat: {
-          type: 'price',
-          precision: 10,
-          minMove: 0.000000001,
-        },
+        // priceFormat: {
+        //   type: 'price',
+        //   precision: 10,
+        //   minMove: 0.000000001,
+        // },
 
         rightPriceScale: {
           visible: true,
