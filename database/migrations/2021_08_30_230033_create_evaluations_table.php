@@ -27,6 +27,8 @@ class CreateEvaluationsTable extends Migration
             $table->decimal('stop_price')->nullable();
             $table->decimal('highest_price');
             $table->decimal('lowest_price');
+            $table->decimal('highest_price_to_lowest_exit')->nullable();
+            $table->decimal('lowest_price_to_highest_exit')->nullable();
             $table->decimal('highest_entry_price')->nullable();
             $table->decimal('lowest_entry_price')->nullable();
             $table->boolean('is_entry_price_valid')->default(0);

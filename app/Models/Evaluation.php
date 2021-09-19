@@ -15,13 +15,14 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property float             realized_roi
  * @property float             highest_roi
  * @property float             lowest_roi
- * @property string            side
  * @property float             entry_price
  * @property float             exit_price
  * @property float             close_price //rename to cancel_price
  * @property float             stop_price
  * @property float             highest_price
  * @property float             lowest_price
+ * @property float             lowest_price_to_highest_exit
+ * @property float             highest_price_to_lowest_exit
  * @property float             highest_entry_price
  * @property float             lowest_entry_price
  * @property bool              is_entry_price_valid

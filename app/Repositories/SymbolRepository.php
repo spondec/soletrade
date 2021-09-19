@@ -8,6 +8,7 @@ use App\Trade\Exchange\AbstractExchange;
 use App\Trade\Indicator\AbstractIndicator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use JetBrains\PhpStorm\ArrayShape;
 
 class SymbolRepository
 {
@@ -55,24 +56,48 @@ class SymbolRepository
         return $mapped;
     }
 
-    public function fetchLowestHighestPriceBetween(Symbol $symbol, int $startDate, int $endDate): object
+    public function getNextCandleOpen(int $symbolId, int $timestamp): int
     {
-        $candle = DB::table('candles')
-            ->select(DB::raw('max(h) as h, min(l) as l'))
-            ->where('symbol_id', $symbol->id)
-            ->where('t', '>', $startDate)
-            ->where('t', '<=', $endDate)
-            ->first();
+        return DB::table('candles')
+            ->where('symbol_id', $symbolId)
+            ->where('t', '>', $timestamp)
+            ->orderBy('t', 'ASC')
+            ->first()?->t;
+    }
 
-        if (!$candle)
+    /**
+     * @param \stdClass[] $candles
+     *
+     * @return \stdClass[]
+     */
+    #[ArrayShape(['lowest' => "\stdClass", 'highest' => "\stdClass"])]
+    public function getLowestHighest(Collection $candles): array
+    {
+        $highest = 0;
+        $lowest = INF;
+        $result = [];
+
+        foreach ($candles as $candle)
         {
-            throw new \UnexpectedValueException('Highest/lowest price between the two dates was not found.');
+            if ($candle->l < $lowest)
+            {
+                $lowest = $candle->l;
+                $result['lowest'] = $candle;
+            }
+
+            if ($candle->h > $highest)
+            {
+                $highest = $candle->h;
+                $result['highest'] = $candle;
+            }
         }
 
-        $candle->h = (float)$candle->h;
-        $candle->l = (float)$candle->l;
+        if (empty($result['highest']) || empty($result['lowest']))
+        {
+            throw new \LogicException('Lowest and/or highest candles was not found.');
+        }
 
-        return $candle;
+        return $result;
     }
 
     public function findSymbolIdForInterval(Symbol $symbol, ?string $interval = null): ?int
@@ -85,20 +110,22 @@ class SymbolRepository
                 ->get('id')?->first()->id;
     }
 
-    public function fetchCandlesBetween(Symbol $symbol, int $startDate, int $endDate, string $interval): \Illuminate\Support\Collection
+    public function fetchCandlesBetween(Symbol $symbol, int $startDate, int $endDate, ?string $interval = null): Collection
     {
+        if ($startDate >= $endDate)
+        {
+            throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
+        }
+
+        $interval = $interval ?? $symbol->interval;
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
-        $candles = DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', '>', $startDate)
-            ->where('t', '<=', $endDate)
-            ->orderBy('t', 'ASC')
-            ->get();
+        $builder = $this->buildBetween($symbolId, $startDate, $endDate);
+        $candles = $builder->orderBy('t', 'ASC')->get();
 
         if (!$candles->count())
         {
-            throw new \UnexpectedValueException("$symbol->symbol-1m candles are missing.");
+            throw new \UnexpectedValueException("$symbol->symbol-$interval candles was not found.");
         }
 
         return $candles;
@@ -181,5 +208,16 @@ class SymbolRepository
                                   ?\Closure  $signalCallback = null): void
     {
         $symbol->addIndicator(new $indicator($symbol, $candles, $config, $signalCallback));
+    }
+
+    protected function buildBetween(int $symbolId, int $startDate, int $endDate): \Illuminate\Database\Query\Builder
+    {
+        $nextOpenStart = $this->getNextCandleOpen($symbolId, $startDate);
+        $nextOpenEnd = $this->getNextCandleOpen($symbolId, $endDate);
+
+        return DB::table('candles')
+            ->where('symbol_id', $symbolId)
+            ->where('t', '>', $nextOpenStart)
+            ->where('t', '<=', $nextOpenEnd);
     }
 }

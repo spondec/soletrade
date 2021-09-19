@@ -11,8 +11,9 @@ use App\Models\Evaluation;
 use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
+use App\Trade\Log;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 
 class Evaluator
 {
@@ -34,47 +35,51 @@ class Evaluator
     {
         $this->assertExitSignal($evaluation);
 
-        $entryTimestamp = $evaluation->entry->timestamp;
-        $exitTimestamp = $evaluation->exit->timestamp;
-        $symbol = $evaluation->entry->symbol;
-        $symbolId = $symbol->id;
+        $repo = $this->symbolRepo;
 
-        $startDate = $this->getNextCandleOpen($symbolId, $entryTimestamp);
-        $endDate = $this->getNextCandleOpen($symbolId, $exitTimestamp);
+        $entry = $evaluation->entry;
+        $exit = $evaluation->exit;
 
-        $candle = $this->symbolRepo->fetchLowestHighestPriceBetween($symbol, $startDate, $endDate);
-
-        $evaluation->highest_price = $candle->h;
-        $evaluation->lowest_price = $candle->l;
+        $entryTime = $entry->timestamp;
+        $exitTime = $exit->timestamp;
+        $symbol = $entry->symbol;
 
         //fetch 1m candles to minimize the ambiguity
-        $candles = $this->symbolRepo->fetchCandlesBetween($symbol, $startDate, $endDate, '1m');
+        $candles = $repo->fetchCandlesBetween($symbol, $entryTime, $exitTime, '1m');
+
+        //might need to fetch the candles of the real
+        //interval of the symbol to boost performance
+        Log::execTime(static function () use (&$repo, &$lowHigh, &$candles) {
+            $lowHigh = $repo->getLowestHighest($candles);
+        }, SymbolRepository::class . '::' . 'getLowestHighest() - 1m candles');
+
+        $evaluation->highest_price = $lowHigh['highest']->h;
+        $evaluation->lowest_price = $lowHigh['lowest']->l;
 
         $lowestEntry = INF;
         $highestEntry = 0;
-        $entryTime = null;
-
-        $bindings = $evaluation->entry->bindings()->get()->keyBy('column');
+        $realEntryTime = null;
 
         $entered = $stopped = $ambiguous = $closed = false;
+        $bindings = $entry->bindings->keyBy('column');
+
         foreach ($candles as $candle)
         {
-            $entryPrice = isset($bindings['price'])
-                ? $this->getLastValueToTimestamp($bindings['price'], $candle->t)
-                : $evaluation->entry->price;
-
-            $stopPrice = isset($bindings['stop_price'])
-                ? $this->getLastValueToTimestamp($bindings['stop_price'], $candle->t)
-                : $evaluation->entry->stop_price;
-
-            $closePrice = isset($bindings['close_price'])
-                ? $this->getLastValueToTimestamp($bindings['close_price'], $candle->t)
-                : $evaluation->entry->close_price;
-
             $low = (float)$candle->l;
             $high = (float)$candle->h;
+            $timestamp = (int)$candle->t;
 
-            if (!$entryTime)
+            $entryPrice = isset($bindings['price'])
+                ? $this->getLastValueToTimestamp($bindings['price'], $timestamp)
+                : $entry->price;
+            $stopPrice = isset($bindings['stop_price'])
+                ? $this->getLastValueToTimestamp($bindings['stop_price'], $timestamp)
+                : $entry->stop_price;
+            $closePrice = isset($bindings['close_price'])
+                ? $this->getLastValueToTimestamp($bindings['close_price'], $timestamp)
+                : $entry->close_price;
+
+            if (!$realEntryTime)
             {
                 if ($low < $lowestEntry)
                 {
@@ -84,24 +89,25 @@ class Evaluator
                 {
                     $highestEntry = $high;
                 }
-                if ($this->isPriceInRange($entryPrice, $high, $low))
+                if ($this->inRange($entryPrice, $high, $low))
                 {
                     $entered = true;
-                    $entryTime = (int)$candle->t;
+                    $realEntryTime = $timestamp;
+
                     $evaluation->entry_price = $entryPrice;
-                    $evaluation->entry_timestamp = $entryTime;
-                    $evaluation->highest_entry_price = (float)$highestEntry;
-                    $evaluation->lowest_entry_price = (float)$lowestEntry;
+                    $evaluation->entry_timestamp = $realEntryTime;
+                    $evaluation->highest_entry_price = $highestEntry;
+                    $evaluation->lowest_entry_price = $lowestEntry;
                 }
             }
 
             if ($entered)
             {
-                if ($stopPrice && $this->isPriceInRange($stopPrice, $high, $low))
+                if ($stopPrice && $this->inRange($stopPrice, $high, $low))
                 {
                     $stopped = true;
                 }
-                if ($closePrice && $this->isPriceInRange($closePrice, $high, $low))
+                if ($closePrice && $this->inRange($closePrice, $high, $low))
                 {
                     $closed = true;
 
@@ -112,7 +118,7 @@ class Evaluator
                 }
                 if ($stopped || $closed)
                 {
-                    $evaluation->exit_timestamp = $candle->t;
+                    $evaluation->exit_timestamp = $timestamp;
                     break;
                 }
             }
@@ -137,21 +143,12 @@ class Evaluator
         }
     }
 
-    protected function assertExitSignal(Evaluation $evaluation)
+    protected function assertExitSignal(Evaluation $evaluation): void
     {
         if (!$evaluation->exit)
         {
             throw new \InvalidArgumentException('Exit signal/setup does not exist.');
         }
-    }
-
-    protected function getNextCandleOpen(int $symbolId, int $timestamp): int
-    {
-        return DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', '>', $timestamp)
-            ->orderBy('t', 'ASC')
-            ->first()?->t;
     }
 
     protected function getLastValueToTimestamp(Binding $binding, int $timestamp)
@@ -172,9 +169,9 @@ class Evaluator
         return $binding->value;
     }
 
-    public function isPriceInRange(float $price, float $high, float $low): bool
+    public function inRange(float $value, float $high, float $low): bool
     {
-        return $price <= $high && $price >= $low;
+        return $value <= $high && $value >= $low;
     }
 
     protected function calcHighLowRealRoi(Evaluation $evaluation): void
@@ -188,6 +185,7 @@ class Evaluator
         $entryPrice = (float)$evaluation->entry_price;
         $buy = $evaluation->entry->side === Signal::BUY;
 
+
         $evaluation->highest_roi = $this->calcRoi($side, $entryPrice,
             (float)($buy ? $evaluation->highest_price : $evaluation->lowest_price));
         $evaluation->lowest_roi = $this->calcRoi($side, $entryPrice,
@@ -199,6 +197,8 @@ class Evaluator
             // is validated in the subsequent evaluations.
             return;
         }
+
+        $this->calcHighestLowestPricesToExit($evaluation);
 
         $evaluation->realized_roi = $this->calcRoi($side, $entryPrice, $exitPrice);
 
@@ -237,7 +237,7 @@ class Evaluator
         return null;
     }
 
-    protected function findExitEqualsEntry(Evaluation $evaluation): \Illuminate\Support\Collection
+    protected function findExitEqualsEntry(Evaluation $evaluation): Collection
     {
         return Evaluation::query()->with(['entry', 'exit'])
             ->where('type', $evaluation->type)
@@ -245,9 +245,10 @@ class Evaluator
             ->get();
     }
 
-    protected function completePrevExit(Evaluation $prev, Evaluation $current)
+    protected function completePrevExit(Evaluation $prev, Evaluation $current): void
     {
         $prev->exit_price = $current->entry_price;
+        $prev->exit_timestamp = $current->entry_timestamp;
 
         if ($prev->is_exit_price_valid = $current->is_entry_price_valid)
         {
@@ -272,6 +273,41 @@ class Evaluator
         if ($evaluation->exit->timestamp <= $evaluation->entry->timestamp)
         {
             throw new \LogicException('Exit date must not be newer than or equal to entry trade.');
+        }
+    }
+
+    /**
+     * @param Evaluation $evaluation
+     */
+    protected function calcHighestLowestPricesToExit(Evaluation $evaluation): void
+    {
+        $repo = $this->symbolRepo;
+        $symbol = $evaluation->entry->symbol;
+        $entryTime = $evaluation->entry_timestamp;
+        $exitTime = $evaluation->exit_timestamp;
+
+        if (empty($entryTime) || empty($exitTime))
+        {
+            throw new \LogicException('Evaluation entry/exit must be realized.');
+        }
+
+        $candles = $repo->fetchCandlesBetween($symbol, $entryTime, $exitTime, '1m');
+        $lowHigh = $repo->getLowestHighest($candles);
+        $lowest = $lowHigh['lowest'];
+        $highest = $lowHigh['highest'];
+
+        if ($lowest->t > $entryTime)
+        {
+            $evaluation->lowest_price_to_highest_exit =
+                $repo->getLowestHighest($repo->fetchCandlesBetween(
+                    $symbol, $entryTime, $highest->t, '1m'))['lowest']->l;
+        }
+
+        if ($highest->t > $entryTime)
+        {
+            $evaluation->highest_price_to_lowest_exit =
+                $repo->getLowestHighest($repo->fetchCandlesBetween(
+                    $symbol, $entryTime, $lowest->t, '1m'))['highest']->h;
         }
     }
 }

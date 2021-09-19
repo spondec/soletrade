@@ -2,10 +2,12 @@
 
 namespace App\Trade\Binding;
 
+use App\Models\Binding;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
- * @property Bindable binding
+ * @property Bindable  binding
+ * @property Binding[] bindings
  */
 interface Bindable
 {
