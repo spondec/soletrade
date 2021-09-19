@@ -113,9 +113,16 @@ class StrategyTester
 
         foreach ($evaluations as $key => $evaluation)
         {
-            $evaluations[$key] = $evaluation->fresh();
+            $evaluations[$key] = $evaluation->fresh(['entry', 'entry.bindings', 'exit', 'exit.bindings']);
         }
 
-        return new Collection(['trades' => $evaluations, 'summary' => $this->summarizer->summarize($evaluations)]);
+        Log::execTime(function () use (&$summary, &$evaluations) {
+            $summary = $this->summarizer->summarize($evaluations);
+        }, Summarizer::class . '::' . 'summarize()');
+
+        return new Collection([
+            'trades'  => $evaluations,
+            'summary' => $summary
+        ]);
     }
 }
