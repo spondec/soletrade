@@ -4,7 +4,6 @@ namespace App\Trade;
 
 use App\Models\Signature;
 use App\Trade\Helper\ClosureHash;
-use Illuminate\Database\QueryException;
 
 trait HasSignature
 {
@@ -12,27 +11,14 @@ trait HasSignature
 
     public function register(array $data): Signature
     {
-        try
-        {
-            $signature = new Signature([
-                'data' => $json = json_encode($this->hashCallbacksInArray($data)),
-                'hash' => $hash = $this->hash($json)
-            ]);
-
-            if ($signature->save())
-            {
-                return $signature;
-            }
-        } catch (QueryException $e)
-        {
-            if ($e->errorInfo[1] !== 1062)
-            {
-                throw $e;
-            }
-        }
+        $json = json_encode($this->hashCallbacksInArray($data));
+        $hash = $this->hash($json);
 
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return Signature::query()->where('hash', $hash)->firstOrFail();
+        return Signature::query()->firstOrCreate(['hash' => $hash], [
+            'data' => $json,
+            'hash' => $hash
+        ]);
     }
 
     public function hashCallbacksInArray(array $array): array
