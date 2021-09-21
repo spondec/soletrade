@@ -45,13 +45,8 @@ class Evaluator
         $symbol = $entry->symbol;
 
         //fetch 1m candles to minimize the ambiguity
-        $candles = $repo->fetchCandlesBetween($symbol, $entryTime, $exitTime, '1m');
-
-        //might need to fetch the candles of the real
-        //interval of the symbol to boost performance
-        Log::execTime(static function () use (&$repo, &$lowHigh, &$candles) {
-            $lowHigh = $repo->getLowestHighest($candles);
-        }, SymbolRepository::class . '::' . 'getLowestHighest() - 1m candles');
+        $candles = $repo->fetchCandles($symbol, $entryTime, $exitTime, '1m');
+        $lowHigh = $repo->getLowestHighest($candles);
 
         $evaluation->highest_price = $lowHigh['highest']->h;
         $evaluation->lowest_price = $lowHigh['lowest']->l;
@@ -248,10 +243,10 @@ class Evaluator
     protected function completePrevExit(Evaluation $prev, Evaluation $current): void
     {
         $prev->exit_price = $current->entry_price;
-        $prev->exit_timestamp = $current->entry_timestamp;
 
         if ($prev->is_exit_price_valid = $current->is_entry_price_valid)
         {
+            $prev->exit_timestamp = $current->entry_timestamp;
             $this->calcHighLowRealRoi($prev);
         }
     }
@@ -291,7 +286,12 @@ class Evaluator
             throw new \LogicException('Evaluation entry/exit must be realized.');
         }
 
-        $candles = $repo->fetchCandlesBetween($symbol, $entryTime, $exitTime, '1m');
+        if ($entryTime >= $exitTime)
+        {
+            return;
+        }
+
+        $candles = $repo->fetchCandles($symbol, $entryTime, $exitTime, '1m');
         $lowHigh = $repo->getLowestHighest($candles);
         $lowest = $lowHigh['lowest'];
         $highest = $lowHigh['highest'];
@@ -299,14 +299,14 @@ class Evaluator
         if ($lowest->t > $entryTime)
         {
             $evaluation->lowest_price_to_highest_exit =
-                $repo->getLowestHighest($repo->fetchCandlesBetween(
+                $repo->getLowestHighest($repo->fetchCandles(
                     $symbol, $entryTime, $highest->t, '1m'))['lowest']->l;
         }
 
         if ($highest->t > $entryTime)
         {
             $evaluation->highest_price_to_lowest_exit =
-                $repo->getLowestHighest($repo->fetchCandlesBetween(
+                $repo->getLowestHighest($repo->fetchCandles(
                     $symbol, $entryTime, $lowest->t, '1m'))['highest']->h;
         }
     }
