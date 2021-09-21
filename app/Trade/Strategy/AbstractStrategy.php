@@ -10,12 +10,10 @@ use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
-use App\Trade\Binding\Bindable;
 use App\Trade\Binding\CanBind;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
-use App\Trade\Indicator\AbstractIndicator;
 use App\Trade\Log;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -144,7 +142,7 @@ abstract class AbstractStrategy
                     }
                 }
 
-                if ($requiredTotal == count($requiredSignals))
+                if ($requiredTotal === count($requiredSignals))
                 {
                     $this->lastSignal = $signal;
                     $tradeSetup = $this->setupTrade($symbol, $config, $requiredSignals);
@@ -169,7 +167,7 @@ abstract class AbstractStrategy
         $signals = [];
         foreach ($this->tradeSetup as $config)
         {
-            /* @var AbstractIndicator $indicator */
+            /* @var \App\Trade\Indicator\AbstractIndicator $indicator */
             foreach ($this->getConfigIndicators($config) as $indicator)
             {
                 $indicator = $symbol->indicator($indicator::name());
@@ -205,25 +203,23 @@ abstract class AbstractStrategy
      */
     protected function setupTrade(Symbol $symbol, array $config, array $signals): TradeSetup
     {
-        $signature = $this->registerSignature($config);
+        $signature = $this->registerTradeSetupSignature($config);
         $tradeSetup = $this->createTradeSetup($symbol, $signature);
 
         return $this->fillTradeSetup($tradeSetup, $signals);
     }
 
-    protected function registerSignature(array $config): Signature
+    protected function registerTradeSetupSignature(array $config): Signature
     {
-        $signature = $this->register([
+        return $this->register([
             'strategy'        => [
-                'config' => $this->config,
-                'hash'   => $this->signature->hash
+                'signature' => $this->signature->hash
             ],
             'trade_setup'     => $config,
             'indicator_setup' => array_map(
                 fn(string $class): array => $this->indicatorSetup[$class],
                 $this->getConfigIndicators($config))
         ]);
-        return $signature;
     }
 
     protected function createTradeSetup(Symbol $symbol, Signature $signature): TradeSetup
@@ -290,9 +286,10 @@ abstract class AbstractStrategy
     protected function getBindHistory(string $bind): ?array
     {
         $map = $this->getBindMap();
-        return $this->lastSignal->bindings()->where('column', $map[$bind])->first()?->history;
+        return $this->lastSignal->bindings()->where('column', $map[$bind])->first()?->history ?? null;
     }
 
+    #[\JetBrains\PhpStorm\ArrayShape(['last_signal_price' => "string"])]
     protected function getBindMap(): array
     {
         return [
