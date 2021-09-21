@@ -110,7 +110,7 @@ class SymbolRepository
                 ->get('id')?->first()->id;
     }
 
-    public function fetchCandlesBetween(Symbol $symbol, int $startDate, int $endDate, ?string $interval = null): Collection
+    public function fetchCandles(Symbol $symbol, int $startDate, int $endDate, ?string $interval = null): Collection
     {
         if ($startDate >= $endDate)
         {
