@@ -106,15 +106,17 @@ class StrategyTester
 
             if ($entry->side !== $trade->side)
             {
-                $evaluations[] = $this->evaluator->evaluate($entry, $trade);
+                Log::execTime(function () use (&$evaluations, &$entry, &$trade) {
+                    $evaluations[] = $this->evaluator->evaluate($entry, $trade);
+                }, Evaluator::class . '::' . 'evaluate()');
+
                 $entry = $trade;
             }
         }
 
-        foreach ($evaluations as $key => $evaluation)
-        {
-            $evaluations[$key] = $evaluation->fresh(['entry', 'entry.bindings', 'exit', 'exit.bindings']);
-        }
+        Log::execTime(function () use (&$evaluations) {
+            $evaluations = $this->freshenEvaluations($evaluations, ['entry', 'entry.bindings', 'exit', 'exit.bindings']);
+        }, StrategyTester::class . '::' . 'freshenEvaluations()');
 
         Log::execTime(function () use (&$summary, &$evaluations) {
             $summary = $this->summarizer->summarize($evaluations);
@@ -124,5 +126,21 @@ class StrategyTester
             'trades'  => $evaluations,
             'summary' => $summary
         ]);
+    }
+
+
+    /**
+     * @param \App\Models\Evaluation[] $evaluations
+     *
+     * @return \App\Models\Evaluation[]
+     */
+    protected function freshenEvaluations(Collection $evaluations, array $with = []): Collection
+    {
+        foreach ($evaluations as $key => $evaluation)
+        {
+            $evaluations[$key] = $evaluation->fresh($with);
+        }
+
+        return $evaluations;
     }
 }
