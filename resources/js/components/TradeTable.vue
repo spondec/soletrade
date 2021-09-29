@@ -122,6 +122,10 @@ export default {
     {
       if (a && b)
         this.$emit('dateClick', a, b);
+      else if (a)
+        this.$emit('dateClick', a, a);
+      else if (b)
+        this.$emit('dateClick', b, b);
     },
     paginate: function (page)
     {
