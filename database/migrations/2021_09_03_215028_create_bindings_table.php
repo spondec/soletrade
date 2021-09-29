@@ -17,11 +17,10 @@ class CreateBindingsTable extends Migration
             $table->id();
             $table->string('bindable_type');
             $table->foreignId('bindable_id');
+            $table->foreignId('signature_id');
             $table->string('column');
-            $table->decimal('value');
             $table->string('class');
             $table->string('name');
-            $table->json('history')->nullable(true);
             $table->unique(['bindable_type', 'bindable_id', 'column']);
             $table->timestamps();
         });

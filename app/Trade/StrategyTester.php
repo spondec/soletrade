@@ -41,7 +41,7 @@ class StrategyTester
 
             $updater = $symbol->exchange()->updater();
 
-            if ($symbol->last_update < time() - 3600)
+            if ($symbol->last_update <= (time() - 3600) * 1000)
             {
                 $updater->update($symbol);
             }
@@ -75,26 +75,35 @@ class StrategyTester
 
     protected function prepareResult(Collection $result, Symbol $symbol): void
     {
+        $with = ['entry', 'entry.bindings', 'exit', 'exit.bindings'];
         /**
          * @var TradeSetup[] $trades
          */
         foreach ($result as $id => $trades)
         {
-            $this->result['trade_setups'][$id] = $this->pairEvaluateSummarize($trades)->toArray();
+            $this->result['trade_setups'][$id] = $this->pairEvaluateSummarize($trades,
+                array_merge($with, [
+                    'entry.signals',
+                    'entry.signals.bindings',
+                    'exit.signals',
+                    'exit.signals.bindings'
+                ]))->toArray();
         }
 
         foreach ($symbol->cachedSignals() as $indicator => $signals)
         {
-            $this->result['signals'][$indicator] = $this->pairEvaluateSummarize($signals)->toArray();
+            $this->result['signals'][$indicator] = $this->pairEvaluateSummarize($signals,
+                $with)->toArray();
         }
     }
 
     /**
      * @param TradeSetup[]|Signal[] $trades
      */
-    protected function pairEvaluateSummarize(Collection $trades): Collection
+    protected function pairEvaluateSummarize(Collection $trades, array $with = []): Collection
     {
         $evaluations = new Collection();
+        $lastCandle = $this->symbolRepo->fetchLastCandle($trades->first()->symbol);
 
         foreach ($trades as $trade)
         {
@@ -104,23 +113,18 @@ class StrategyTester
                 continue;
             }
 
-            if ($entry->side !== $trade->side)
+            if ($entry->side !== $trade->side &&
+                $entry->timestamp < $lastCandle->t &&
+                $trade->timestamp < $lastCandle->t)
             {
-                Log::execTime(function () use (&$evaluations, &$entry, &$trade) {
-                    $evaluations[] = $this->evaluator->evaluate($entry, $trade);
-                }, Evaluator::class . '::' . 'evaluate()');
+                $evaluations[] = $this->evaluator->evaluate($entry, $trade);
 
                 $entry = $trade;
             }
         }
 
-        Log::execTime(function () use (&$evaluations) {
-            $evaluations = $this->freshenEvaluations($evaluations, ['entry', 'entry.bindings', 'exit', 'exit.bindings']);
-        }, StrategyTester::class . '::' . 'freshenEvaluations()');
-
-        Log::execTime(function () use (&$summary, &$evaluations) {
-            $summary = $this->summarizer->summarize($evaluations);
-        }, Summarizer::class . '::' . 'summarize()');
+        $evaluations = $this->freshenEvaluations($evaluations, $with);
+        $summary = $this->summarizer->summarize($evaluations);
 
         return new Collection([
             'trades'  => $evaluations,

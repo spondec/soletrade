@@ -38,6 +38,19 @@ class SymbolRepository
         return $symbol;
     }
 
+    /**
+     * @param string[] $indicators
+     */
+    public function initIndicators(Symbol     $symbol,
+                                   Collection $candles,
+                                   array      $indicators): void
+    {
+        foreach ($indicators as $class)
+        {
+            $symbol->addIndicator(new $class(symbol: $symbol, candles: $candles));
+        }
+    }
+
     public function mapCandles(array $candles, int $symbolId, CandleMap $map): array
     {
         $mapped = [];
@@ -54,15 +67,6 @@ class SymbolRepository
             ];
         }
         return $mapped;
-    }
-
-    public function getNextCandleOpen(int $symbolId, int $timestamp): int
-    {
-        return DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', '>', $timestamp)
-            ->orderBy('t', 'ASC')
-            ->first()?->t;
     }
 
     /**
@@ -100,16 +104,6 @@ class SymbolRepository
         return $result;
     }
 
-    public function findSymbolIdForInterval(Symbol $symbol, ?string $interval = null): ?int
-    {
-        return !$interval || $symbol->interval === $interval ? $symbol->id :
-            DB::table('symbols')
-                ->where('exchange_id', $symbol->exchange_id)
-                ->where('interval', $interval ?? $symbol->interval)
-                ->where('symbol', $symbol->symbol)
-                ->get('id')?->first()->id;
-    }
-
     public function fetchCandles(Symbol $symbol, int $startDate, int $endDate, ?string $interval = null): Collection
     {
         if ($startDate >= $endDate)
@@ -120,15 +114,45 @@ class SymbolRepository
         $interval = $interval ?? $symbol->interval;
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
-        $builder = $this->buildBetween($symbolId, $startDate, $endDate);
-        $candles = $builder->orderBy('t', 'ASC')->get();
+        $candles = DB::table('candles')
+            ->where('symbol_id', $symbolId)
+            ->where('t', '>', $startDate)
+            ->where('t', '<=', $endDate)
+            ->orderBy('t', 'ASC')
+            ->get();
 
-        if (!$candles->count())
+        if (!$candles->first())
         {
             throw new \UnexpectedValueException("$symbol->symbol-$interval candles was not found.");
         }
 
         return $candles;
+    }
+
+    public function findSymbolIdForInterval(Symbol $symbol, ?string $interval = null): ?int
+    {
+        return !$interval || $symbol->interval === $interval ? $symbol->id :
+            DB::table('symbols')
+                ->where('exchange_id', $symbol->exchange_id)
+                ->where('interval', $interval ?? $symbol->interval)
+                ->where('symbol', $symbol->symbol)
+                ->get('id')?->first()->id;
+    }
+
+    public function fetchNextCandle(int $symbolId, int $timestamp): \stdClass
+    {
+        $candle = DB::table('candles')
+            ->where('symbol_id', $symbolId)
+            ->where('t', '>', $timestamp)
+            ->orderBy('t', 'ASC')
+            ->first();
+
+        if (!$candle)
+        {
+            throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed yet.");
+        }
+
+        return $candle;
     }
 
     public function insertIgnoreSymbols(array $symbols, int $exchangeId, string $interval): void
@@ -186,19 +210,6 @@ class SymbolRepository
     }
 
     /**
-     * @param string[] $indicators
-     */
-    public function initIndicators(Symbol     $symbol,
-                                   Collection $candles,
-                                   array      $indicators): void
-    {
-        foreach ($indicators as $class)
-        {
-            $symbol->addIndicator(new $class(symbol: $symbol, candles: $candles));
-        }
-    }
-
-    /**
      * @param AbstractIndicator $indicator
      */
     public function initIndicator(Symbol     $symbol,
@@ -210,14 +221,11 @@ class SymbolRepository
         $symbol->addIndicator(new $indicator($symbol, $candles, $config, $signalCallback));
     }
 
-    protected function buildBetween(int $symbolId, int $startDate, int $endDate): \Illuminate\Database\Query\Builder
+    public function fetchLastCandle(Symbol $symbol): \stdClass
     {
-        $nextOpenStart = $this->getNextCandleOpen($symbolId, $startDate);
-        $nextOpenEnd = $this->getNextCandleOpen($symbolId, $endDate);
-
         return DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', '>', $nextOpenStart)
-            ->where('t', '<=', $nextOpenEnd);
+            ->where('symbol_id', $symbol->id)
+            ->orderBy('t', 'DESC')
+            ->first();
     }
 }

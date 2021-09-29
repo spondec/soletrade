@@ -40,7 +40,7 @@ class FibScalp extends AbstractStrategy
                             }
 
                             $signal->side = $side = $priceBelowFib ? Signal::SELL : Signal::BUY;
-                            $signal->name = 'FIB-' . $side . '_' . $fib['level'];
+                            $signal->name = $indicator->buildSignalName(['side' => $side, 'level' => $fib['level']]);
                             $indicator->bind($signal, 'price', $fib['level']);
 
                             return $signal;
@@ -61,8 +61,6 @@ class FibScalp extends AbstractStrategy
                     Fib::class
                 ],
                 'callback' => function (TradeSetup $setup): ?TradeSetup {
-
-
                     if ($setup->isBuy())
                     {
                         $this->bind($setup,

@@ -9,19 +9,26 @@ trait HasSignature
 {
     protected Signature $signature;
 
+    /**
+     * @var Signature[]
+     */
+    private array $signatureCache = [];
+
     public function register(array $data): Signature
     {
-        $json = json_encode($this->hashCallbacksInArray($data));
+        $json = json_encode($hashed = $this->hashCallbacksInArray($data));
         $hash = $this->hash($json);
 
+        if ($signature = $this->signatureCache[$hash] ?? null)
+        {
+            return $signature;
+        }
+
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return Signature::query()->firstOrCreate(['hash' => $hash], [
-            'data' => $json,
-            'hash' => $hash
-        ]);
+        return $this->signatureCache[$hash] = Signature::query()->firstOrCreate(['hash' => $hash], ['hash' => $hash, 'data' => $hashed]);
     }
 
-    public function hashCallbacksInArray(array $array): array
+    protected function hashCallbacksInArray(array $array): array
     {
         foreach ($array as &$item)
         {
@@ -38,7 +45,7 @@ trait HasSignature
         return $array;
     }
 
-    public function hash(string $string): string
+    protected function hash(string $string): string
     {
         return md5($string);
     }

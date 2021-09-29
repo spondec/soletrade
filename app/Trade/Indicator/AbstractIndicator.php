@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Trade\Indicator;
 
-use App\Models\Binding;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\Signal;
-use App\Trade\Binding\Bindable;
+use App\Repositories\SymbolRepository;
 use App\Trade\Binding\CanBind;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Helper\ClosureHash;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 
 abstract class AbstractIndicator
 {
@@ -98,41 +99,46 @@ abstract class AbstractIndicator
     protected function scan(): void
     {
         $this->index = -1;
-        /** @var Signal $lastSignal */
-        $lastSignal = null;
-        foreach ($this->data as $timestamp => $value)
+
+        /** @var SymbolRepository $repo */
+        $repo = App::make(SymbolRepository::class);
+        $lastCandle = $repo->fetchLastCandle($this->symbol);
+
+        while ($value = current($this->data))
         {
             $this->index++;
-            $this->current = $timestamp;
-
-            if ($lastSignal) $this->syncBindings($lastSignal);
+            $this->current = $openTime = key($this->data);
+            next($this->data);
+            $nextOpenTime = key($this->data);
 
             /** @var Signal $signal */
             if ($signal = ($this->signalCallback)(signal: $this->setupSignal(), indicator: $this, value: $value))
             {
-                if (next($this->data))
-                {
-                    $signal->timestamp = $timestamp;
-                }
-                else
-                {
-                    $signal->timestamp = time();
-                }
+                $signal->timestamp = $openTime;
+                $signal->confirmed = $nextOpenTime || ($lastCandle && $lastCandle->t > $openTime);//the candle is closed
 
                 $old = $signal;
                 $this->replaceBindable($old, $signal = $signal->updateUniqueOrCreate());
                 $this->saveSignal($signal);
-
-                if ($lastSignal) $this->saveSignal($lastSignal);
-
-                $this->signals[] = $lastSignal = $signal;
+                $this->signals[] = $signal;
+            }
+            else
+            {
+                //a possible signal that is no longer valid
+                // but might exist in the database
+                //needs to be marked as unconfirmed
+                $unconfirmed[] = $openTime;
             }
 
-            $this->prev = $timestamp;
+            $this->prev = $openTime;
         }
 
-        //Make sure to save the last signal in case of a nonexistent following signal
-        if ($lastSignal) $this->saveSignal($lastSignal);
+        DB::table('signals')
+            ->where('symbol_id', $this->symbol->id)
+            ->where('indicator_id', $this->signature->id)
+            ->where('signature_id', $this->signalSignature->id)
+            ->whereIn('timestamp', $unconfirmed)
+            ->update(['confirmed' => false]);
     }
 
     public function setupSignal(): Signal
@@ -244,19 +250,29 @@ abstract class AbstractIndicator
         return $this->data;
     }
 
-    protected function afterBinding(Binding $binding, ?\Closure $callback): void
-    {
-        $this->logChange($binding, $this->current);
-    }
-
     protected function getBindable(): array
     {
         return [];
     }
 
-    protected function getBindValue(int|string $bind): mixed
+    protected function getBindingSignatureExtra(string|int $bind): array
     {
-        throw new \Exception('getBindValue() must be overridden.');
+        return [
+            'symbol_id'           => $this->symbol->id,
+            'indicator_id'        => $this->signature->id,
+            'signal_signature_id' => $this->signalSignature->id
+        ];
+    }
+
+    protected function getSavePoints(string|int $bind, Signature $signature): array
+    {
+        return [];
+    }
+
+    protected function getBindValue(int|string $bind, ?int $timestamp = null): mixed
+    {
+        throw new \Exception('Binding is disabled by default. 
+        To enable it, override getBindable(), getBindValue() and getSavePoints().');
     }
 
     protected function closes(): array

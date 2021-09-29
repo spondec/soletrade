@@ -6,7 +6,6 @@ use App\Models\Binding;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
- * @property Bindable  binding
  * @property Binding[] bindings
  */
 interface Bindable

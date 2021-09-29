@@ -2,6 +2,9 @@
 
 namespace App\Trade\Indicator;
 
+use App\Models\Signature;
+use Illuminate\Support\Collection;
+
 class Fib extends AbstractIndicator
 {
     public array $prevFib;
@@ -43,7 +46,7 @@ class Fib extends AbstractIndicator
         return $raw;
     }
 
-    protected function getBindValue(int|float|string $bind): float
+    protected function getBindValue(string|int $bind, ?int $timestamp = null): float
     {
         return $this->data[$this->current][$bind];
     }
@@ -122,5 +125,25 @@ class Fib extends AbstractIndicator
         }
 
         return $fib;
+    }
+
+    public function buildSignalName(array $params): string
+    {
+        return 'FIB-' . $params['side'] . '_' . $params['level'];
+    }
+
+    protected function getSavePoints(int|string $bind, Signature $signature): array
+    {
+        $points = [];
+
+        foreach ($this->data as $timestamp => $fib)
+        {
+            $points[] = [
+                'timestamp' => $timestamp,
+                'value'     => $fib[$bind]
+            ];
+        }
+
+        return $points;
     }
 }

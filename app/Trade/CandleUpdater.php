@@ -84,7 +84,7 @@ class CandleUpdater
                 $currentLastCandle = $currentCandles->shift();
                 $start = $currentCandles->first()->t ?? 0;
 
-                $symbol->last_update = time();
+                $symbol->last_update = time() * 1000;
                 $latestCandles = $this->exchange->candles($symbol->symbol,
                     $symbol->interval,
                     $start,

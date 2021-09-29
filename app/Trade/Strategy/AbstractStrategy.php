@@ -31,13 +31,12 @@ abstract class AbstractStrategy
         'startDate'  => null,
         'endDate'    => null
     ];
-
     protected array $signals = [];
     protected array $indicatorSetup;
     protected array $tradeSetup;
     protected SymbolRepository $symbolRepo;
-
     protected ?Signal $lastSignal;
+    protected array $bindMap;
 
     public function __construct(array $config = [])
     {
@@ -49,11 +48,18 @@ abstract class AbstractStrategy
         $this->signature = $this->register([
             'contents' => $this->contents()
         ]);
+
+        $this->bindMap = $this->getBindMap();
     }
 
     abstract protected function indicatorSetup(): array;
 
     abstract protected function tradeSetup(): array;
+
+    protected function getBindMap(): array
+    {
+        return ['last_signal_price' => 'price'];
+    }
 
     public function run(Symbol $symbol): Collection
     {
@@ -276,25 +282,20 @@ abstract class AbstractStrategy
         return $tradeSetup;
     }
 
-    protected function preBindingSave(Binding $binding, ?\Closure $callback): void
+    protected function getSavePoints(string|int $bind, Signature $signature): array
     {
-        $this->setHistory($binding,
-            $this->getBindHistory($binding->name),
-            $callback);
-    }
+        $data = $signature->data;
 
-    protected function getBindHistory(string $bind): ?array
-    {
-        $map = $this->getBindMap();
-        return $this->lastSignal->bindings()->where('column', $map[$bind])->first()?->history ?? null;
-    }
+        if ($bind === 'last_signal_price' && ($id = $data['extra']['last_signal_binding_signature_id']))
+        {
+            return DB::table('save_points')
+                ->where('binding_signature_id', $id)
+                ->get(['timestamp', 'value'])
+                ->map(fn($v) => (array)$v)
+                ->all();
+        }
 
-    #[\JetBrains\PhpStorm\ArrayShape(['last_signal_price' => "string"])]
-    protected function getBindMap(): array
-    {
-        return [
-            'last_signal_price' => 'price'
-        ];
+        throw new \InvalidArgumentException("Could not get save points for bind: {$bind}");
     }
 
     protected function getBindable(): array
@@ -302,10 +303,28 @@ abstract class AbstractStrategy
         return ['last_signal_price'];
     }
 
-    protected function getBindValue(int|string $bind): mixed
+    protected function getBindingSignatureExtra(string|int $bind): array
     {
-        $map = $this->getBindMap();
-        $column = $map[$bind] ?? $bind;
+        return [
+            'last_signal_binding_signature_id' => $this->fetchSignalBindingSignature($this->lastSignal,
+                $this->bindMap['last_signal_price'])->id
+        ];
+    }
+
+    private function fetchSignalBindingSignature(Signal $signal, string $column): Signature
+    {
+        /** @var Binding $binding */
+        $binding = $signal->bindings()
+            ->with('signature')
+            ->where('column', $column)
+            ->first();
+
+        return $binding->signature;
+    }
+
+    protected function getBindValue(int|string $bind, ?int $timestamp = null): mixed
+    {
+        $column = $this->bindMap[$bind] ?? $bind;
 
         return $this->lastSignal->getAttribute($column);
     }

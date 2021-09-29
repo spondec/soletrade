@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Trade\Binding\Bindable;
 use App\Trade\Binding\HasBinding;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /** COLUMNS
  *
@@ -15,6 +17,7 @@ use App\Trade\Binding\HasBinding;
  * @property int       indicator_id
  * @property int       symbol_id
  * @property int       timestamp
+ * @property bool      confirmed
  * @property string    name
  * @property string    side
  * @property string    signature_id
@@ -35,28 +38,28 @@ class Signal extends Model implements Bindable
     protected $guarded = ['id'];
     protected array $unique = ['symbol_id', 'indicator_id', 'signature_id', 'timestamp'];
 
-    public function tradeSetup()
+    public function tradeSetup(): BelongsToMany
     {
         return $this->belongsToMany(TradeSetup::class);
     }
 
-    public function symbol()
+    public function symbol(): BelongsTo
     {
         return $this->belongsTo(Symbol::class);
     }
 
-    public function indicator()
+    public function indicator(): BelongsTo
     {
         return $this->belongsTo(Signature::class);
 
     }
 
-    public function signature()
+    public function signature(): BelongsTo
     {
         return $this->belongsTo(Signature::class);
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         $result = parent::toArray();
 

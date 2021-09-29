@@ -18,7 +18,7 @@ class CreateSymbolsTable extends Migration
             $table->string('symbol', 20)->index();
             $table->string('interval', 3)->index();
             $table->foreignId('exchange_id');
-            $table->integer('last_update', unsigned: true)->default(0);
+            $table->bigInteger('last_update', unsigned: true)->default(0);
             $table->unique(['exchange_id', 'symbol', 'interval']);
             $table->timestamps();
         });
