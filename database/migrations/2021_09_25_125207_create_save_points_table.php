@@ -19,7 +19,6 @@ class CreateSavePointsTable extends Migration
             $table->bigInteger('timestamp');
             $table->decimal('value');
             $table->unique(['binding_signature_id', 'timestamp']);
-            $table->timestamps();
         });
     }
 
