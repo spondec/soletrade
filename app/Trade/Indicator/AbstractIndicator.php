@@ -24,7 +24,7 @@ abstract class AbstractIndicator
     use HasConfig;
     use CanBind;
 
-    protected array $config = ['binding' => null];
+    protected array $config = [];
 
     protected ?int $prev = null;
     protected ?int $current = null;
@@ -133,12 +133,13 @@ abstract class AbstractIndicator
             $this->prev = $openTime;
         }
 
-        DB::table('signals')
-            ->where('symbol_id', $this->symbol->id)
-            ->where('indicator_id', $this->signature->id)
-            ->where('signature_id', $this->signalSignature->id)
-            ->whereIn('timestamp', $unconfirmed)
-            ->update(['confirmed' => false]);
+        if (isset($unconfirmed))
+            DB::table('signals')
+                ->where('symbol_id', $this->symbol->id)
+                ->where('indicator_id', $this->signature->id)
+                ->where('signature_id', $this->signalSignature->id)
+                ->whereIn('timestamp', $unconfirmed)
+                ->update(['confirmed' => false]);
     }
 
     public function setupSignal(): Signal
