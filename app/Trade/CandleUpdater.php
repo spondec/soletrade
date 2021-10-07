@@ -46,7 +46,7 @@ class CandleUpdater
         $symbols = $this->insertSymbols($interval);
         if ($filter) $symbols = $symbols->filter($filter)->values();
 
-        if (!$symbols->count())
+        if (!$symbols->first())
         {
             throw new \LogicException('No symbol was given.');
         }
@@ -58,7 +58,7 @@ class CandleUpdater
             if (($maxRunTime > 0 && $remaining <= 0) ||
                 !$this->update($symbol, $maxRunTime > 0 ? $remaining : 0))
             {
-                if (($length = $key - 1) < 1) //nothing to return if the length is non positive
+                if (($length = $key - 1) < 1) //nothing to return if the length is non-positive
                 {
                     return null;
                 }
