@@ -31,15 +31,24 @@ abstract class AbstractStrategy
         'startDate'  => null,
         'endDate'    => null
     ];
-    protected array $signals = [];
+
     protected array $indicatorSetup;
     protected array $tradeSetup;
     protected SymbolRepository $symbolRepo;
     protected ?Signal $lastSignal;
     protected array $bindMap;
 
+    protected Collection $trades;
+    protected Collection $signals;
+
     public function __construct(array $config = [])
     {
+        $defaultConfig = $this->getDefaultConfig();
+
+        $childConfig = $this->config;
+        $this->config = $defaultConfig;
+
+        $this->mergeConfig($childConfig);
         $this->mergeConfig($config);
 
         $this->symbolRepo = App::make(SymbolRepository::class);
@@ -52,6 +61,15 @@ abstract class AbstractStrategy
         $this->bindMap = $this->getBindMap();
     }
 
+    protected function getDefaultConfig(): array
+    {
+        return [
+            'maxCandles' => 1000,
+            'startDate'  => null,
+            'endDate'    => null
+        ];
+    }
+
     abstract protected function indicatorSetup(): array;
 
     abstract protected function tradeSetup(): array;
@@ -61,17 +79,27 @@ abstract class AbstractStrategy
         return ['last_signal_price' => 'price'];
     }
 
-    public function run(Symbol $symbol): Collection
+    public function trades(): Collection
     {
-        Log::execTime(function () use (&$symbol) {
-            $this->initIndicators($symbol);
-        }, 'AbstractStrategy::initIndicators()');
+        return $this->trades;
+    }
 
-        Log::execTime(function () use (&$trades, &$symbol) {
-            $trades = $this->findTradeSetups($symbol);
-        }, 'AbstractStrategy::findTrades()');
+    public function signals(): Collection
+    {
+        return $this->signals;
+    }
 
-        return $trades;
+    public function run(Symbol $symbol): void
+    {
+        Log::execTimeStart('AbstractStrategy::initIndicators()');
+        $this->initIndicators($symbol);
+        Log::execTimeFinish('AbstractStrategy::initIndicators()');
+
+        $this->signals = $this->getConfigSignals($symbol);
+
+        Log::execTimeStart('AbstractStrategy::findTrades()');
+        $this->trades = $this->findTrades($symbol);
+        Log::execTimeFinish('AbstractStrategy::findTrades()');
     }
 
     protected function initIndicators(Symbol $symbol): void
@@ -95,13 +123,8 @@ abstract class AbstractStrategy
      * @return TradeSetup[]
      * @throws \Exception
      */
-    protected function findTradeSetups(Symbol $symbol): Collection
+    protected function findTrades(Symbol $symbol): Collection
     {
-        if (!$signals = $this->getConfigSignals($symbol))
-        {
-            return [];
-        }
-
         $setups = [];
 
         foreach ($this->tradeSetup as $key => $config)
@@ -116,13 +139,13 @@ abstract class AbstractStrategy
             $firstIndicator = $indicators[0];
             $index = 0;
 
-            while (isset($signals[$firstIndicator][$index]))
+            while (isset($this->signals[$firstIndicator][$index]))
             {
                 foreach ($indicators as $k => $indicator)
                 {
                     $isFirst = $k === 0;
                     /* @var Signal $signal */
-                    foreach ($signals[$indicator] as $i => $signal)
+                    foreach ($this->signals[$indicator] as $i => $signal)
                     {
                         if ($isFirst)
                         {
@@ -168,7 +191,7 @@ abstract class AbstractStrategy
         return new Collection($setups);
     }
 
-    protected function getConfigSignals(Symbol $symbol): array
+    protected function getConfigSignals(Symbol $symbol): Collection
     {
         $signals = [];
         foreach ($this->tradeSetup as $config)
@@ -181,7 +204,7 @@ abstract class AbstractStrategy
             }
         }
 
-        return $signals;
+        return new Collection($signals);
     }
 
     /**
@@ -290,6 +313,8 @@ abstract class AbstractStrategy
         {
             return DB::table('save_points')
                 ->where('binding_signature_id', $id)
+                ->where('timestamp', '>=', $this->config['startDate'])
+                ->where('timestamp', '<=', $this->config['endDate'])
                 ->get(['timestamp', 'value'])
                 ->map(fn($v) => (array)$v)
                 ->all();
