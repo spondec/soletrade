@@ -57,9 +57,9 @@
                 @changed="toggle = !toggle">
             <tab name="Trade Setups">
               <div class="body divide-y my2">
-                <div v-for="(setup, id) in symbol.strategy.trade_setups" id="trade-setups" class="my-2">
+                <div v-for="(setup, id) in symbol.strategy.trades" id="trade-setups" class="my-2">
                   <h1 class="text-2xl text-center">{{ id }}</h1>
-                  <div class="grid grid-cols-9 text-center">
+                  <div class="grid grid-cols-10 text-center">
                     <h1 class="text-lg" v-bind:class="{
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
@@ -71,12 +71,13 @@
                     <h1 class="text-lg">Avg Highest ROI: {{ setup.summary.avg_highest_roi + '%' }}</h1>
                     <h1 class="text-lg">Avg Lowest ROI: {{ setup.summary.avg_lowest_roi + '%' }}</h1>
                     <h1 class="text-lg">Risk/Reward: {{ setup.summary.risk_reward_ratio }}</h1>
+                    <h1 class="text-lg">Success Ratio: {{ setup.summary.success_ratio }}</h1>
                     <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
                     <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
                     <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
                     <h1 class="text-lg">Failed: {{ setup.summary.failed }}</h1>
                   </div>
-                  <trade-table chart-id="chart" v-bind:trades="setup.trades" @dateClick="showRange"></trade-table>
+                  <trade-table chart-id="chart" v-bind:trades="setup.evaluations" @dateClick="showRange"></trade-table>
                 </div>
               </div>
             </tab>
@@ -84,7 +85,7 @@
               <div class="body divide-y">
                 <div v-for="(setup, id) in symbol.strategy.signals" id="signals" class="my-2">
                   <h1 class="text-2xl text-center">{{ id }}</h1>
-                  <div class="grid grid-cols-9 text-center">
+                  <div class="grid grid-cols-10 text-center">
                     <h1 class="text-lg" v-bind:class="{
                         'text-danger': setup.summary.roi < 0,
                         'text-success': setup.summary.roi > 0 }">
@@ -96,12 +97,13 @@
                     <h1 class="text-lg">Avg Highest ROI: {{ setup.summary.avg_highest_roi + '%' }}</h1>
                     <h1 class="text-lg">Avg Lowest ROI: {{ setup.summary.avg_lowest_roi + '%' }}</h1>
                     <h1 class="text-lg">Risk/Reward: {{ setup.summary.risk_reward_ratio }}</h1>
+                    <h1 class="text-lg">Success Ratio: {{ setup.summary.success_ratio }}</h1>
                     <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
                     <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
                     <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
                     <h1 class="text-lg">Failed: {{ setup.summary.failed }}</h1>
                   </div>
-                  <trade-table chart-id="chart" v-bind:trades="setup.trades" @dateClick="showRange"></trade-table>
+                  <trade-table chart-id="chart" v-bind:trades="setup.evaluations" @dateClick="showRange"></trade-table>
                 </div>
               </div>
             </tab>
@@ -593,12 +595,12 @@ export default {
 
       if (strategy)
       {
-        if (strategy.trade_setups)
+        if (strategy.trades)
         {
           let markers = [];
-          for (let id in strategy.trade_setups)
+          for (let id in strategy.trades)
           {
-            markers = this.prepareSignalMarkers(markers, strategy.trade_setups[id].trades, true);
+            markers = this.prepareSignalMarkers(markers, strategy.trades[id].evaluations, true);
           }
           this.series['candlestick'].setMarkers(markers);
         }
@@ -615,7 +617,7 @@ export default {
               throw Error(id + ' handler must contain a setMarkers() function for handling markers.');
 
             let markers = [];
-            markers = this.prepareSignalMarkers(markers, strategy.signals[id].trades);
+            markers = this.prepareSignalMarkers(markers, strategy.signals[id].evaluations);
             handlers[id].setMarkers(markers);
           }
         }
