@@ -24,8 +24,18 @@ trait HasSignature
             return $signature;
         }
 
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->signatureCache[$hash] = Signature::query()->firstOrCreate(['hash' => $hash], ['hash' => $hash, 'data' => $hashed]);
+        /** @var Signature $signature */
+        $signature = Signature::query()->firstOrCreate(['hash' => $hash], [
+            'hash' => $hash,
+            'data' => $hashed
+        ]);
+
+        if ($signature->data !== $hashed)
+        {
+            throw new \LogicException("Hash collision detected for $signature->hash");
+        }
+
+        return $this->signatureCache[$hash] = $signature;
     }
 
     protected function hashCallbacksInArray(array $array): array
