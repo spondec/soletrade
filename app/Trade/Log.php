@@ -1,10 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade;
+
+use Illuminate\Support\Facades\Log as Logger;
 
 final class Log
 {
     protected static array $log;
+
+    /** @var string[] */
+    protected static array $tasks = [];
 
     public static function log(string|\Exception $message): void
     {
@@ -17,17 +24,34 @@ final class Log
         static::$log[] = [
             'time'      => microtime(true),
             'exception' => $exception ?? null,
-            'message' => $message ?: 'Empty message received.'
+            'message'   => $message ?: 'Empty message received.'
         ];
     }
 
-    public static function execTime(\Closure $closure, string $taskName): void
+    public static function execTimeStart(string $taskName): void
     {
-        $time = microtime(true);
-        $closure();
-        \Illuminate\Support\Facades\Log::info(
-            sprintf("%s lasted for %s seconds.",
-                $taskName,
-                round(microtime(true) - $time, 2)));
+        if (in_array($taskName, static::$tasks))
+        {
+            throw new \LogicException("Task $taskName is already started.");
+        }
+
+        static::$tasks[(string)microtime(true)] = $taskName;
+
+        Logger::info(sprintf('Started: %s', $taskName));
+    }
+
+    public static function execTimeFinish(string $taskName)
+    {
+        if (!$time = array_search($taskName, static::$tasks))
+        {
+            throw new \LogicException("$taskName is not started, therefore can not be finished.");
+        }
+
+        $execTime = microtime(true) - (float)$time;
+
+        Logger::info(sprintf('Finished in %s seconds: %s',
+            round($execTime, 2), static::$tasks[$time]));
+
+        unset(static::$tasks[$time]);
     }
 }

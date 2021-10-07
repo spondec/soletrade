@@ -5,10 +5,22 @@ declare(strict_types=1);
 namespace App\Trade\Evaluation;
 
 use App\Models\Evaluation;
+use App\Trade\HasConfig;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
 
-class Summarizer
+class Summary implements Arrayable
 {
+    use HasConfig;
+
+    protected array $config = [
+        'feeRatio'   => 0.001,
+        'riskReward' => [
+            'interval' => '1m',
+            'total'    => 3
+        ]
+    ];
+
     protected float $balance = 100;
 
     protected int $total = 0;
@@ -17,30 +29,35 @@ class Summarizer
     protected int $loss = 0;
     protected int $failed = 0;
 
-    protected array $lowestRois = [];
-    protected array $highestRois = [];
+    protected array $lowestRoi = [];
+    protected array $highestRoi = [];
 
-    protected float $feeRatio = 0.001;
+    protected array $riskReward = [];
+
+    protected array $result;
+
+    public function __construct(protected Collection $evaluations, array $config = [])
+    {
+        $this->mergeConfig($config);
+        $this->result = $this->summarize($evaluations);
+    }
 
     /**
      * @param Evaluation[] $evaluations
      *
      * @return array
      */
-    public function summarize(Collection $evaluations): array
+    protected function summarize(Collection $evaluations): array
     {
-        foreach ($evaluations as $evaluation)
-        {
-            $this->processEvaluation($evaluation);
-        }
+        $evaluations->map(fn(Evaluation $evaluation): Evaluation => $this->processEvaluation($evaluation));
 
-        $stat = $this->getStat();
+        $stats = $this->getStats();
         $averages = $this->roundArray($this->calcAverages(), 2);
 
-        return array_merge($stat, $averages);
+        return array_merge($stats, $averages);
     }
 
-    protected function processEvaluation(Evaluation $evaluation): void
+    protected function processEvaluation(Evaluation $evaluation): Evaluation
     {
         $validEntry = (bool)$evaluation->is_entry_price_valid;
         $isAmbiguous = (bool)$evaluation->is_ambiguous;
@@ -48,16 +65,18 @@ class Summarizer
 
         if ($validEntry && !$isAmbiguous && $realized)
         {
-            $this->balance = $this->cutCommission($this->balance, $this->feeRatio * 2);
-            $pnl = $this->calculatePnl($this->balance, $realized);
+            $this->balance = $this->cutCommission($this->balance, $this->config['feeRatio'] * 2);
+            $pnl = $this->calcPnl($this->balance, $realized);
             $this->balance += $pnl;
             $this->total++;
 
-            $this->highestRois[] = (float)$evaluation->highest_roi;
-            $this->lowestRois[] = (float)$evaluation->lowest_roi;
+            $this->highestRoi[] = (float)$evaluation->highest_roi;
+            $this->lowestRoi[] = (float)$evaluation->lowest_roi;
         }
 
         $this->updateCounters($isAmbiguous, $validEntry, $realized);
+
+        return $evaluation;
     }
 
     public function cutCommission(float|int $balance, float|int $ratio): int|float
@@ -65,7 +84,7 @@ class Summarizer
         return $balance - abs($balance * $ratio);
     }
 
-    public function calculatePnl(float $balance, float $roi): float|int
+    public function calcPnl(float $balance, float $roi): float|int
     {
         return $balance * $roi / 100;
     }
@@ -90,10 +109,10 @@ class Summarizer
         }
     }
 
-    private function getStat(): array
+    private function getStats(): array
     {
         return [
-            'fee_ratio' => $this->feeRatio,
+            'fee_ratio' => $this->config['feeRatio'],
             'profit'    => $this->profit,
             'loss'      => $this->loss,
             'ambiguous' => $this->ambiguous,
@@ -106,12 +125,7 @@ class Summarizer
      */
     protected function roundArray(array $items, int $precision): array
     {
-        foreach ($items as &$item)
-        {
-            $item = round($item, $precision);
-        }
-
-        return $items;
+        return array_map(fn(float $v): float => round($v, $precision), $items);
     }
 
     private function calcAverages(): array
@@ -120,7 +134,8 @@ class Summarizer
             'avg_roi'           => 0,
             'avg_highest_roi'   => 0,
             'avg_lowest_roi'    => 0,
-            'risk_reward_ratio' => 0
+            'risk_reward_ratio' => 0,
+            'success_ratio'     => 0
         ];
 
         $sum['roi'] = $roi = $this->balance - 100;
@@ -128,21 +143,40 @@ class Summarizer
         if ($this->total > 0)//prevent division by zero
         {
             $sum['avg_roi'] = $roi / $this->total;
+            $sum['success_ratio'] = $this->profit / $this->total * 100;
 
-            if ($this->highestRois)
+            if ($this->highestRoi)
             {
-                $sum['avg_highest_roi'] = $avgHighestRoi = array_sum($this->highestRois) / $this->total;
+                $sum['avg_highest_roi'] = $avgHighestRoi = array_sum($this->highestRoi) / $this->total;
             }
-            if ($this->lowestRois)
+            if ($this->lowestRoi)
             {
-                $sum['avg_lowest_roi'] = $avgLowestRoi = array_sum($this->lowestRois) / $this->total;
+                $sum['avg_lowest_roi'] = $avgLowestRoi = array_sum($this->lowestRoi) / $this->total;
             }
-            if ($this->highestRois && $this->lowestRois)
+            if ($this->highestRoi && $this->lowestRoi)
             {
                 $sum['risk_reward_ratio'] = abs($avgHighestRoi / $avgLowestRoi);
             }
         }
 
         return $sum;
+    }
+
+    public function evaluations(?\Closure $modify = null): Collection
+    {
+        if ($modify)
+        {
+            $this->evaluations = $modify($this->evaluations);
+        }
+
+        return $this->evaluations;
+    }
+
+    public function toArray()
+    {
+        return [
+            'summary'     => $this->result,
+            'evaluations' => $this->evaluations->toArray()
+        ];
     }
 }

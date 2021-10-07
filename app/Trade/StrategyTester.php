@@ -2,12 +2,14 @@
 
 namespace App\Trade;
 
+use App\Models\Evaluation;
+use App\Models\Model;
 use App\Models\Signal;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Evaluation\Evaluator;
-use App\Trade\Evaluation\Summarizer;
+use App\Trade\Evaluation\Summary;
 use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -17,50 +19,43 @@ class StrategyTester
     use HasConfig;
 
     protected array $config = [
-        'maxCandles' => null,
-        'startDate'  => null,
-        'endDate'    => null
+        'strategy' => [
+            'maxCandles' => null,
+            'startDate'  => null,
+            'endDate'    => null
+        ],
+        'summary'  => [
+
+        ]
     ];
 
     protected Evaluator $evaluator;
-    protected Summarizer $summarizer;
-    protected array $result = [];
 
     public function __construct(protected SymbolRepository $symbolRepo, array $config = [])
     {
         $this->mergeConfig($config);
         $this->evaluator = App::make(Evaluator::class);
-        $this->summarizer = App::make(Summarizer::class);
     }
 
-    public function run(string $strategyClass, Symbol $symbol): array
+    public function runStrategy(Symbol $symbol, string $strategyClass, array $config = []): AbstractStrategy
     {
-        $strategy = $this->setupStrategy($strategyClass, $this->config);
+        $strategy = $this->setupStrategy($strategyClass, $config);
 
-        Log::execTime(static function () use (&$symbol) {
+        Log::execTimeStart('CandleUpdater::update()');
+        $this->updateCandles($symbol);
+        Log::execTimeFinish('CandleUpdater::update()');
 
-            $updater = $symbol->exchange()->updater();
+        Log::execTimeStart('AbstractStrategy::run()');
+        $strategy->run($symbol);
+        Log::execTimeFinish('AbstractStrategy::run()');
 
-            if ($symbol->last_update <= (time() - 3600) * 1000)
-            {
-                $updater->update($symbol);
-            }
+        return $strategy;
+    }
 
-            $updater->updateByInterval(interval: '1m',
-                filter: static fn(Symbol $v) => $v->symbol === $symbol->symbol &&
-                    $v->exchange_id === $symbol->exchange_id);
-
-        }, 'CandleUpdater::update()');
-
-        Log::execTime(static function () use (&$symbol, &$strategy, &$result) {
-            $result = $strategy->run($symbol);
-        }, 'StrategyTester::run()');
-
-        Log::execTime(function () use (&$symbol, &$result) {
-            $this->prepareResult($result, $symbol);
-        }, 'StrategyTester::prepareResult()');
-
-        return $this->result;
+    public function summary(Collection $trades, array $config = [])
+    {
+        return $this->summarize($this->evaluate($trades),
+            array_merge_recursive_distinct($this->config['summary'], $config));
     }
 
     protected function setupStrategy(string $class, array $config): AbstractStrategy
@@ -70,37 +65,29 @@ class StrategyTester
             throw new \InvalidArgumentException('Invalid strategy class: ' . $class);
         }
 
+        $config = array_merge_recursive_distinct($this->config['strategy'], $config);
+
         return new $class(config: $config);
     }
 
-    protected function prepareResult(Collection $result, Symbol $symbol): void
+    protected function updateCandles(Symbol $symbol): void
     {
-        $with = ['entry', 'entry.bindings', 'exit', 'exit.bindings'];
-        /**
-         * @var TradeSetup[] $trades
-         */
-        foreach ($result as $id => $trades)
+        $updater = $symbol->exchange()->updater();
+
+        if ($symbol->last_update <= (time() - 3600) * 1000)
         {
-            $this->result['trade_setups'][$id] = $this->pairEvaluateSummarize($trades,
-                array_merge($with, [
-                    'entry.signals',
-                    'entry.signals.bindings',
-                    'exit.signals',
-                    'exit.signals.bindings'
-                ]))->toArray();
+            $updater->update($symbol);
         }
 
-        foreach ($symbol->cachedSignals() as $indicator => $signals)
-        {
-            $this->result['signals'][$indicator] = $this->pairEvaluateSummarize($signals,
-                $with)->toArray();
-        }
+        $updater->updateByInterval(interval: '1m',
+            filter: static fn(Symbol $v) => $v->symbol === $symbol->symbol &&
+                $v->exchange_id === $symbol->exchange_id);
     }
 
     /**
      * @param TradeSetup[]|Signal[] $trades
      */
-    protected function pairEvaluateSummarize(Collection $trades, array $with = []): Collection
+    protected function evaluate(Collection $trades): Collection
     {
         $evaluations = new Collection();
         $lastCandle = $this->symbolRepo->fetchLastCandle($trades->first()->symbol);
@@ -123,28 +110,14 @@ class StrategyTester
             }
         }
 
-        $evaluations = $this->freshenEvaluations($evaluations, $with);
-        $summary = $this->summarizer->summarize($evaluations);
-
-        return new Collection([
-            'trades'  => $evaluations,
-            'summary' => $summary
-        ]);
+        return $evaluations;
     }
 
-
     /**
-     * @param \App\Models\Evaluation[] $evaluations
-     *
-     * @return \App\Models\Evaluation[]
+     * @param Collection|TradeSetup[]|Signal[] $trades
      */
-    protected function freshenEvaluations(Collection $evaluations, array $with = []): Collection
+    protected function summarize(Collection $trades, array $config = []): Summary
     {
-        foreach ($evaluations as $key => $evaluation)
-        {
-            $evaluations[$key] = $evaluation->fresh($with);
-        }
-
-        return $evaluations;
+        return new Summary($trades, $config);
     }
 }

@@ -5,39 +5,12 @@ namespace App\Repositories;
 use App\Models\Symbol;
 use App\Trade\CandleMap;
 use App\Trade\Exchange\AbstractExchange;
-use App\Trade\Indicator\AbstractIndicator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\ArrayShape;
 
 class SymbolRepository
 {
-    public function candles(AbstractExchange $exchange,
-                            string           $symbol,
-                            string           $interval,
-                            int              $limit = null,
-                            array            $indicators = [],
-                            int              $end = null,
-                            int              $start = null): ?Symbol
-    {
-        /** @var Symbol $symbol */
-        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-        $symbol = Symbol::query()
-            ->where('exchange_id', $exchange::instance()->id())
-            ->where('symbol', $symbol)
-            ->where('interval', $interval)
-            ->first();
-
-        if ($symbol)
-        {
-            $this->initIndicators($symbol,
-                $symbol->candles(limit: $limit, start: $start, end: $end),
-                $indicators);
-        }
-
-        return $symbol;
-    }
-
     /**
      * @param string[] $indicators
      */
@@ -111,7 +84,6 @@ class SymbolRepository
             throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
         }
 
-        $interval = $interval ?? $symbol->interval;
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         $candles = DB::table('candles')
@@ -129,14 +101,14 @@ class SymbolRepository
         return $candles;
     }
 
-    public function findSymbolIdForInterval(Symbol $symbol, ?string $interval = null): ?int
+    public function findSymbolIdForInterval(Symbol $symbol, ?string $interval = null): int
     {
         return !$interval || $symbol->interval === $interval ? $symbol->id :
             DB::table('symbols')
                 ->where('exchange_id', $symbol->exchange_id)
-                ->where('interval', $interval ?? $symbol->interval)
+                ->where('interval', $interval)
                 ->where('symbol', $symbol->symbol)
-                ->get('id')?->first()->id;
+                ->get('id')->first()->id;
     }
 
     public function fetchNextCandle(int $symbolId, int $timestamp): \stdClass
@@ -149,7 +121,7 @@ class SymbolRepository
 
         if (!$candle)
         {
-            throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed yet.");
+            throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed.");
         }
 
         return $candle;
@@ -209,23 +181,22 @@ class SymbolRepository
             ->get()->pluck('interval');
     }
 
-    /**
-     * @param AbstractIndicator $indicator
-     */
-    public function initIndicator(Symbol     $symbol,
-                                  Collection $candles,
-                                  string     $indicator,
-                                  array      $config = [],
-                                  ?\Closure  $signalCallback = null): void
-    {
-        $symbol->addIndicator(new $indicator($symbol, $candles, $config, $signalCallback));
-    }
-
     public function fetchLastCandle(Symbol $symbol): \stdClass
     {
         return DB::table('candles')
             ->where('symbol_id', $symbol->id)
             ->orderBy('t', 'DESC')
             ->first();
+    }
+
+    public function fetchSymbol(AbstractExchange $exchange, string $symbolName, string $interval): ?Symbol
+    {
+        /** @var Symbol $symbol */
+        $symbol = Symbol::query()
+            ->where('exchange_id', $exchange::instance()->id())
+            ->where('symbol', $symbolName)
+            ->where('interval', $interval)
+            ->first();
+        return $symbol;
     }
 }

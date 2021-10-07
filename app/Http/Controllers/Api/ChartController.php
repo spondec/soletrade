@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Symbol;
+use App\Models\Evaluation;
 use App\Repositories\SymbolRepository;
+use App\Trade\Evaluation\Summary;
 use App\Trade\HasName;
+use App\Trade\Log;
 use App\Trade\StrategyTester;
 use App\Trade\Config;
 use App\Trade\Exchange\AbstractExchange;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 class ChartController extends Controller
@@ -47,6 +50,15 @@ class ChartController extends Controller
         ];
     }
 
+    protected function getKeyByValue(string $name, array $items): ?string
+    {
+        if ($param = $this->request->get($name))
+        {
+            return array_search($param, $items);
+        }
+        return null;
+    }
+
     /**
      * @param HasName[]|string[] $classes
      */
@@ -68,13 +80,6 @@ class ChartController extends Controller
         return $mapped;
     }
 
-    protected function getKeyByValue(string $name, array $items): ?string
-    {
-        if ($param = $this->request->get($name))
-            return array_search($param, $items);
-        return null;
-    }
-
     /**
      * @param AbstractExchange $exchange
      */
@@ -90,33 +95,78 @@ class ChartController extends Controller
         $start = $range ? Carbon::parse($range['start'])->getTimestampMs() : null;
         $end = $range ? Carbon::parse($range['end'])->getTimestampMs() : null;
 
+        $symbol = $this->symbolRepo->fetchSymbol(exchange: $exchange::instance(), symbolName: $symbolName, interval: $interval);
+        abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
+
         if ($strategy)
         {
-            /** @var Symbol $symbol */
-            $symbol = $this->symbolRepo->fetchSymbols(symbols: [$symbolName],
-                interval: $interval,
-                exchangeId: $exchange::instance()->id())
-                ->first();
-
-            abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
-
             $tester = new StrategyTester(App::make(SymbolRepository::class), [
-                'startDate' => $start,
-                'endDate'   => $end
+                'strategy' => [
+                    'startDate' => $start,
+                    'endDate'   => $end
+                ]
             ]);
-            $result = $tester->run($strategy, $symbol);
+            $result = $tester->runStrategy($symbol, $strategy);
 
+            Log::execTimeStart('Evaluating and summarizing trades');
+            /** @var Summary[]|Collection $tradeSummary */
+            $tradeSummary = $result->trades()
+                ->map(fn(Collection $trades): Summary => $tester->summary($trades));
+            Log::execTimeFinish('Evaluating and summarizing trades');
+
+//            Log::execTimeStart('Evaluating and summarizing signals');
+//            /** @var Summary[]|Collection $signalSummary */
+//            $signalSummary = $result->signals()
+//                ->map(fn(Collection $signals): Summary => $tester->summary($signals));
+//            Log::execTimeFinish('Evaluating and summarizing signals');
+
+            Log::execTimeStart('Freshening evaluations');
+            $signalWith = [
+                'entry',
+                'entry.bindings',
+                'exit',
+                'exit.bindings'
+            ];
+
+//            $this->freshenEvaluations($signalSummary, $signalWith);
+
+            $tradeWith = array_merge($signalWith, [
+                'entry.signals',
+                'entry.signals.bindings',
+                'exit.signals',
+                'exit.signals.bindings'
+            ]);
+
+            $this->freshenEvaluations($tradeSummary, $tradeWith);
+            Log::execTimeFinish('Freshening evaluations');
+
+            Log::execTimeStart('Preparing symbol');
             $symbol = $symbol->toArray();
-            $symbol['strategy'] = $result;
+            $symbol['strategy'] = [
+                'trades' => $tradeSummary->toArray(),
+                //                'signals' => $signalSummary->toArray()
+            ];
+            Log::execTimeFinish('Preparing symbol');
+
             return $symbol;
         }
 
-        return $this->symbolRepo->candles(exchange: $exchange::instance(),
-                symbol: $symbolName,
-                interval: $interval,
-                limit: $range ? null : $limit,
-                indicators: $indicators,
-                end: $end,
-                start: $start)?->toArray() ?? [];
+        $candles = $symbol->candles($range ? null : $limit, $start, $end);
+        $this->symbolRepo->initIndicators($symbol, $candles, $indicators);
+
+        return $symbol->toArray();
+    }
+
+    /**
+     * @param Summary[] $summaries
+     */
+    protected function freshenEvaluations(Collection $summaries, array $with): void
+    {
+        foreach ($summaries as $summary)
+        {
+            $summary->evaluations(static function (Collection $evaluations) use ($with): Collection {
+                return $evaluations->map(fn(Evaluation $e): Evaluation => $e->fresh($with));
+            });
+        }
     }
 }
