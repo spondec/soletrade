@@ -3,12 +3,16 @@
 namespace App\Trade\Indicator;
 
 use App\Models\Signature;
-use Illuminate\Support\Collection;
 
 class Fib extends AbstractIndicator
 {
     public array $prevFib;
-    protected array $config = ['period' => 144];
+    protected array $config = [
+        'period'              => 144,
+        'distanceToLevel'     => 1,
+        'totalBarsAfterLevel' => 3,
+        'levels'              => [236, 382, 500, 618, 786]
+    ];
 
     public function nearestFib(array $levels, float $price): array
     {
@@ -68,6 +72,8 @@ class Fib extends AbstractIndicator
         $highs = [];
         $lows = [];
         $bars = 0;
+        $levels = $this->config['levels'];
+        sort($levels);
         foreach ($this->candles as $candle)
         {
             $highs[] = (float)$candle->h;
@@ -83,37 +89,28 @@ class Fib extends AbstractIndicator
 
                 $keys = array_keys($lows, $lowest);
                 $lowestPosition = (int)end($keys);
+                $new = [];
 
                 if ($lowestPosition < $highestPosition)
                 {
-                    //upward
-                    $fib[] = [
-                        0    => $highest,
-                        236  => $highest - ($highest - $lowest) * 0.236,
-                        382  => $highest - ($highest - $lowest) * 0.382,
-                        500  => $highest - ($highest - $lowest) * 0.500,
-                        618  => $highest - ($highest - $lowest) * 0.618,
-                        702  => $highest - ($highest - $lowest) * 0.702,
-                        786  => $highest - ($highest - $lowest) * 0.786,
-                        886  => $highest - ($highest - $lowest) * 0.886,
-                        1000 => $highest - ($highest - $lowest) * 1.000
-                    ];
+                    $new[0] = $highest;
+                    foreach ($levels as $level)
+                    {
+                        $new[$level] = $highest - ($highest - $lowest) * ($level / 1000);
+                    }
+                    $new[1000] = $highest - ($highest - $lowest) * 1.000;
                 }
                 else
                 {
-                    //downward
-                    $fib[] = [
-                        0    => $lowest,
-                        236  => ($highest - $lowest) * 0.236 + $lowest,
-                        382  => ($highest - $lowest) * 0.382 + $lowest,
-                        500  => ($highest - $lowest) * 0.500 + $lowest,
-                        618  => ($highest - $lowest) * 0.618 + $lowest,
-                        702  => ($highest - $lowest) * 0.702 + $lowest,
-                        786  => ($highest - $lowest) * 0.786 + $lowest,
-                        886  => ($highest - $lowest) * 0.886 + $lowest,
-                        1000 => ($highest - $lowest) * 1.000 + $lowest
-                    ];
+                    $new[0] = $lowest;
+                    foreach ($levels as $level)
+                    {
+                        $new[$level] = ($highest - $lowest) * ($level / 1000) + $lowest;
+                    }
+                    $new[1000] = ($highest - $lowest) * 1.000 + $lowest;
                 }
+
+                $fib[] = $new;
 
                 array_shift($highs);
                 array_shift($lows);
