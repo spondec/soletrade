@@ -21,6 +21,7 @@ class CreateEvaluationsTable extends Migration
             $table->float('realized_roi')->nullable();
             $table->float('highest_roi')->nullable();
             $table->float('lowest_roi')->nullable();
+            $table->float('lowest_to_highest_roi')->nullable();
             $table->decimal('entry_price')->nullable();
             $table->decimal('exit_price')->nullable();
             $table->decimal('close_price')->nullable();
@@ -38,6 +39,7 @@ class CreateEvaluationsTable extends Migration
             $table->boolean('is_closed')->nullable();
             $table->bigInteger('entry_timestamp')->nullable();
             $table->bigInteger('exit_timestamp')->nullable();
+            $table->json('risk_reward_history')->nullable();
             $table->unique(['type', 'entry_id', 'exit_id']);
             $table->timestamps();
         });
