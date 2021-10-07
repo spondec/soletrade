@@ -31,34 +31,6 @@ class Evaluator
         return $evaluation->updateUniqueOrCreate();
     }
 
-    public function calcRiskReward(bool   $buy,
-                                   float  $entry,
-                                   float  $high,
-                                   float  $low,
-                                   ?float &$highRoi = null,
-                                   ?float &$lowRoi = null): float
-    {
-        $side = $buy ? Signal::BUY : Signal::SELL;
-
-        if ($buy)
-        {
-            $highRoi = $this->calcRoi($side, $entry, $high);
-            $lowRoi = $this->calcRoi($side, $entry, $low);
-        }
-        else
-        {
-            $highRoi = $this->calcRoi($side, $entry, $low);
-            $lowRoi = $this->calcRoi($side, $entry, $high);
-        }
-
-        if ($lowRoi == 0)
-        {
-            return 0;
-        }
-
-        return abs($highRoi / $lowRoi);
-    }
-
     protected function realizeTrade(Evaluation $evaluation): void
     {
         $this->assertExitSignal($evaluation);
@@ -87,7 +59,7 @@ class Evaluator
         $highest = 0;
         $realEntryTime = null;
 
-        $entered = $stopped = $ambiguous = $closed = false;
+        $entered = $stopped = $closed = $exited = false;
         /** @var Binding[] $bindings */
         $bindings = $entry->bindings;
         $savePoints = [];
@@ -128,11 +100,8 @@ class Evaluator
                 }
                 if ($this->inRange($entryPrice, $high, $low))
                 {
-                    $entered = true;
-                    $realEntryTime = $timestamp;
-
-                    $evaluation->entry_price = $entryPrice;
-                    $evaluation->entry_timestamp = $realEntryTime;
+                    $evaluation->is_entry_price_valid = $entered = true;
+                    $evaluation->entry_timestamp = $realEntryTime = $timestamp;
                     $evaluation->highest_entry_price = $highestEntry;
                     $evaluation->lowest_entry_price = $lowestEntry;
                 }
@@ -158,33 +127,34 @@ class Evaluator
                     ];
                 }
 
-                if ($stopPrice && $this->inRange($stopPrice, $high, $low))
+                if (!$exited)
                 {
-                    $stopped = true;
-                }
-                if ($closePrice && $this->inRange($closePrice, $high, $low))
-                {
-                    $closed = true;
-
-                    if ($stopped)
+                    if ($stopPrice && $this->inRange($stopPrice, $high, $low))
                     {
-                        $ambiguous = true;
+                        $evaluation->is_stopped = $stopped = true;
                     }
-                }
-                if ($stopped || $closed)
-                {
-                    $evaluation->exit_timestamp = $timestamp;
-                    break;
+                    if ($closePrice && $this->inRange($closePrice, $high, $low))
+                    {
+                        $evaluation->is_closed = $closed = true;
+
+                        if ($stopped)
+                        {
+                            $evaluation->is_ambiguous = true;
+                        }
+                    }
+                    if ($stopped || $closed)
+                    {
+                        $evaluation->exit_timestamp = $timestamp;
+                        $exited = true;
+                    }
                 }
             }
         }
 
+        $evaluation->entry_price = $entryPrice;
         $evaluation->stop_price = $stopPrice;
         $evaluation->close_price = $closePrice;
-        $evaluation->is_stopped = $stopped;
-        $evaluation->is_closed = $closed;
-        $evaluation->is_ambiguous = $ambiguous;
-        $evaluation->is_entry_price_valid = $entered;
+
         $evaluation->risk_reward_history = $riskRewardHistory;
 
         if ($realEntryTime)
@@ -247,32 +217,32 @@ class Evaluator
         return $value <= $high && $value >= $low;
     }
 
-    protected function calcHighLowRealRoi(Evaluation $evaluation): void
+    public function calcRiskReward(bool   $buy,
+                                   float  $entry,
+                                   float  $high,
+                                   float  $low,
+                                   ?float &$highRoi = null,
+                                   ?float &$lowRoi = null): float
     {
-        if (!$evaluation->is_entry_price_valid || $evaluation->is_ambiguous)
+        $side = $buy ? Signal::BUY : Signal::SELL;
+
+        if ($buy)
         {
-            return;
+            $highRoi = $this->calcRoi($side, $entry, $high);
+            $lowRoi = $this->calcRoi($side, $entry, $low);
+        }
+        else
+        {
+            $highRoi = $this->calcRoi($side, $entry, $low);
+            $lowRoi = $this->calcRoi($side, $entry, $high);
         }
 
-        $side = $evaluation->entry->side;
-        $entryPrice = (float)$evaluation->entry_price;
-        $buy = $evaluation->entry->side === Signal::BUY;
-
-        $evaluation->highest_roi = $this->calcRoi($side, $entryPrice,
-            (float)($buy ? $evaluation->highest_price : $evaluation->lowest_price));
-        $evaluation->lowest_roi = $this->calcRoi($side, $entryPrice,
-            (float)(!$buy ? $evaluation->highest_price : $evaluation->lowest_price));
-        $evaluation->lowest_to_highest_roi = $this->calcRoi($side, $entryPrice,
-            (float)($buy ? $evaluation->lowest_price_to_highest_exit : $evaluation->highest_price_to_lowest_exit));
-
-        if (!$exitPrice = $this->getExitPrice($evaluation))
+        if ($lowRoi == 0)
         {
-            //We'll calculate the realized ROI after the exit price
-            // is validated in the subsequent evaluations.
-            return;
+            return 0;
         }
 
-        $evaluation->realized_roi = $this->calcRoi($side, $entryPrice, $exitPrice);
+        return abs($highRoi / $lowRoi);
     }
 
     public function calcRoi(string $side, int|float $entryPrice, int|float $exitPrice): float
@@ -285,26 +255,6 @@ class Evaluator
         }
 
         return round($roi, 2);
-    }
-
-    protected function getExitPrice(Evaluation $evaluation): float|null
-    {
-        if ($evaluation->is_stopped)
-        {
-            return (float)$evaluation->stop_price;
-        }
-
-        if ($evaluation->is_closed)
-        {
-            return (float)$evaluation->close_price;
-        }
-
-        if ($evaluation->is_exit_price_valid)
-        {
-            return (float)$evaluation->exit_price;
-        }
-
-        return null;
     }
 
     /**
@@ -345,6 +295,54 @@ class Evaluator
         }
     }
 
+    protected function calcHighLowRealRoi(Evaluation $evaluation): void
+    {
+        if (!$evaluation->is_entry_price_valid || $evaluation->is_ambiguous)
+        {
+            return;
+        }
+
+        $side = $evaluation->entry->side;
+        $entryPrice = (float)$evaluation->entry_price;
+        $buy = $evaluation->entry->side === Signal::BUY;
+
+        $evaluation->highest_roi = $this->calcRoi($side, $entryPrice,
+            (float)($buy ? $evaluation->highest_price : $evaluation->lowest_price));
+        $evaluation->lowest_roi = $this->calcRoi($side, $entryPrice,
+            (float)(!$buy ? $evaluation->highest_price : $evaluation->lowest_price));
+        $evaluation->lowest_to_highest_roi = $this->calcRoi($side, $entryPrice,
+            (float)($buy ? $evaluation->lowest_price_to_highest_exit : $evaluation->highest_price_to_lowest_exit));
+
+        if (!$exitPrice = $this->getExitPrice($evaluation))
+        {
+            //We'll calculate the realized ROI after the exit price
+            // is validated in the subsequent evaluations.
+            return;
+        }
+
+        $evaluation->realized_roi = $this->calcRoi($side, $entryPrice, $exitPrice);
+    }
+
+    protected function getExitPrice(Evaluation $evaluation): float|null
+    {
+        if ($evaluation->is_stopped)
+        {
+            return (float)$evaluation->stop_price;
+        }
+
+        if ($evaluation->is_closed)
+        {
+            return (float)$evaluation->close_price;
+        }
+
+        if ($evaluation->is_exit_price_valid)
+        {
+            return (float)$evaluation->exit_price;
+        }
+
+        return null;
+    }
+
     protected function findExitEqualsEntry(Evaluation $evaluation): Collection
     {
         return Evaluation::query()->with(['entry', 'exit'])
@@ -359,7 +357,11 @@ class Evaluator
 
         if ($prev->is_exit_price_valid = $current->is_entry_price_valid)
         {
-            $prev->exit_timestamp = $current->entry_timestamp;
+            if (!$prev->exit_timestamp)
+            {
+                $prev->exit_timestamp = $current->entry_timestamp;
+            }
+
             $this->calcHighLowRealRoi($prev);
         }
     }
