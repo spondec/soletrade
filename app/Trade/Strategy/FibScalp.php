@@ -24,11 +24,13 @@ class FibScalp extends AbstractStrategy
                     {
                         $distance = $fib['distance'];
 
-                        if ($distance <= 1)
+                        if ($distance <= $indicator->config('distanceToLevel'))
                         {
                             $priceBelowFib = $closePrice < $fibPrice;
 
-                            for ($i = 1; $i <= 3; $i++)
+                            $bars = $indicator->config('totalBarsAfterLevel');
+
+                            for ($i = 1; $i <= $bars; $i++)
                             {
                                 $prevCandle = $indicator->candle($i);
 
@@ -66,7 +68,7 @@ class FibScalp extends AbstractStrategy
                         $this->bind($setup,
                             'close_price',
                             'last_signal_price',
-                            static fn(float $price): float => $price + $price * 0.017);
+                            static fn(float $price): float => $price + $price * 0.015);
                         $this->bind($setup,
                             'stop_price',
                             'last_signal_price',
@@ -77,7 +79,7 @@ class FibScalp extends AbstractStrategy
                         $this->bind($setup,
                             'close_price',
                             'last_signal_price',
-                            static fn(float $price): float => $price - $price * 0.017);
+                            static fn(float $price): float => $price - $price * 0.015);
                         $this->bind($setup,
                             'stop_price',
                             'last_signal_price',
