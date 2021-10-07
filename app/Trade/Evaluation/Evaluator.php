@@ -31,6 +31,34 @@ class Evaluator
         return $evaluation->updateUniqueOrCreate();
     }
 
+    public function calcRiskReward(bool   $buy,
+                                   float  $entry,
+                                   float  $high,
+                                   float  $low,
+                                   ?float &$highRoi = null,
+                                   ?float &$lowRoi = null): float
+    {
+        $side = $buy ? Signal::BUY : Signal::SELL;
+
+        if ($buy)
+        {
+            $highRoi = $this->calcRoi($side, $entry, $high);
+            $lowRoi = $this->calcRoi($side, $entry, $low);
+        }
+        else
+        {
+            $highRoi = $this->calcRoi($side, $entry, $low);
+            $lowRoi = $this->calcRoi($side, $entry, $high);
+        }
+
+        if ($lowRoi == 0)
+        {
+            return 0;
+        }
+
+        return abs($highRoi / $lowRoi);
+    }
+
     protected function realizeTrade(Evaluation $evaluation): void
     {
         $this->assertExitSignal($evaluation);
@@ -55,6 +83,8 @@ class Evaluator
 
         $lowestEntry = INF;
         $highestEntry = 0;
+        $lowest = INF;
+        $highest = 0;
         $realEntryTime = null;
 
         $entered = $stopped = $ambiguous = $closed = false;
@@ -66,6 +96,9 @@ class Evaluator
         {
             $savePoints[$binding->column] = $this->fetchSavePoints($binding, $firstCandle->t, $lastCandle->t);
         }
+
+        $riskRewardHistory = [];
+        $buy = $entry->side === Signal::BUY;
 
         foreach ($candles as $candle)
         {
@@ -107,6 +140,24 @@ class Evaluator
 
             if ($entered)
             {
+                $newLow = $low < $lowest;
+                $newHigh = $high > $highest;
+
+                if ($newLow || $newHigh)
+                {
+                    if ($newLow) $lowest = $low;
+                    if ($newHigh) $highest = $high;
+
+                    $riskRewardHistory[$timestamp] = [
+                        'ratio'  => round($this->calcRiskReward($buy,
+                            $entryPrice,
+                            $highest,
+                            $lowest, $highRoi, $lowRoi), 2),
+                        'reward' => $highRoi,
+                        'risk'   => $lowRoi
+                    ];
+                }
+
                 if ($stopPrice && $this->inRange($stopPrice, $high, $low))
                 {
                     $stopped = true;
@@ -134,6 +185,12 @@ class Evaluator
         $evaluation->is_closed = $closed;
         $evaluation->is_ambiguous = $ambiguous;
         $evaluation->is_entry_price_valid = $entered;
+        $evaluation->risk_reward_history = $riskRewardHistory;
+
+        if ($realEntryTime)
+        {
+            $this->calcHighestLowestPricesToExit($evaluation);
+        }
 
         $this->calcHighLowRealRoi($evaluation);
 
@@ -201,11 +258,12 @@ class Evaluator
         $entryPrice = (float)$evaluation->entry_price;
         $buy = $evaluation->entry->side === Signal::BUY;
 
-
         $evaluation->highest_roi = $this->calcRoi($side, $entryPrice,
             (float)($buy ? $evaluation->highest_price : $evaluation->lowest_price));
         $evaluation->lowest_roi = $this->calcRoi($side, $entryPrice,
             (float)(!$buy ? $evaluation->highest_price : $evaluation->lowest_price));
+        $evaluation->lowest_to_highest_roi = $this->calcRoi($side, $entryPrice,
+            (float)($buy ? $evaluation->lowest_price_to_highest_exit : $evaluation->highest_price_to_lowest_exit));
 
         if (!$exitPrice = $this->getExitPrice($evaluation))
         {
@@ -214,11 +272,7 @@ class Evaluator
             return;
         }
 
-        $this->calcHighestLowestPricesToExit($evaluation);
-
         $evaluation->realized_roi = $this->calcRoi($side, $entryPrice, $exitPrice);
-
-        //TODO ROIs of after the entry until exit
     }
 
     public function calcRoi(string $side, int|float $entryPrice, int|float $exitPrice): float
@@ -261,11 +315,11 @@ class Evaluator
         $repo = $this->symbolRepo;
         $symbol = $evaluation->entry->symbol;
         $entryTime = $evaluation->entry_timestamp;
-        $exitTime = $evaluation->exit_timestamp;
+        $exitTime = $evaluation->exit->timestamp;
 
         if (empty($entryTime) || empty($exitTime))
         {
-            throw new \LogicException('Evaluation entry/exit must be realized.');
+            throw new \LogicException('Entry and exit must be timestamped.');
         }
 
         if ($entryTime >= $exitTime)
@@ -280,16 +334,14 @@ class Evaluator
 
         if ($lowest->t > $entryTime)
         {
-            $evaluation->lowest_price_to_highest_exit =
-                $repo->getLowestHighest($repo->fetchCandles(
-                    $symbol, $entryTime, $highest->t, '1m'))['lowest']->l;
+            $evaluation->lowest_price_to_highest_exit = $repo->getLowestHighest($repo->fetchCandles(
+                $symbol, $entryTime, $highest->t, '1m'))['lowest']->l;
         }
 
         if ($highest->t > $entryTime)
         {
-            $evaluation->highest_price_to_lowest_exit =
-                $repo->getLowestHighest($repo->fetchCandles(
-                    $symbol, $entryTime, $lowest->t, '1m'))['highest']->h;
+            $evaluation->highest_price_to_lowest_exit = $repo->getLowestHighest($repo->fetchCandles(
+                $symbol, $entryTime, $lowest->t, '1m'))['highest']->h;
         }
     }
 
