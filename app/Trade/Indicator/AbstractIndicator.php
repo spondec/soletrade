@@ -49,10 +49,12 @@ abstract class AbstractIndicator
 
         /** @var Signature signature */
         $this->signature = $this->register([
-            'contents' => $this->contents()
+            'contents' => $this->contents(),
+            'config'   => $this->config
         ]);
 
         $this->signals = new Collection([]);
+        $this->setup();
 
         if ($count = $candles->count())
         {
@@ -75,6 +77,11 @@ abstract class AbstractIndicator
                 $this->scan();
             }
         }
+    }
+
+    protected function setup(): void
+    {
+
     }
 
     abstract protected function run(): array;
@@ -259,9 +266,9 @@ abstract class AbstractIndicator
     protected function getBindingSignatureExtra(string|int $bind): array
     {
         return [
-            'symbol_id'           => $this->symbol->id,
-            'indicator_id'        => $this->signature->id,
-            'signal_signature_id' => $this->signalSignature->id
+            'symbol_id'    => $this->symbol->id,
+            'indicator_id' => $this->signature->id,
+            //            'signal_signature_id' => $this->signalSignature->id
         ];
     }
 
@@ -272,7 +279,7 @@ abstract class AbstractIndicator
 
     protected function getBindValue(int|string $bind, ?int $timestamp = null): mixed
     {
-        throw new \Exception('Binding is disabled by default. 
+        throw new \LogicException('Binding is disabled by default. 
         To enable it, override getBindable(), getBindValue() and getSavePoints().');
     }
 
