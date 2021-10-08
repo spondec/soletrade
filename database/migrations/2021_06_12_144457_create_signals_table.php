@@ -23,6 +23,7 @@ class CreateSignalsTable extends Migration
             $table->decimal('price');
             $table->bigInteger('timestamp');
             $table->boolean('confirmed')->default(false);
+            $table->json('info')->nullable(true);
             $table->unique(['symbol_id', 'indicator_id', 'signature_id', 'timestamp']);
             $table->timestamps();
         });

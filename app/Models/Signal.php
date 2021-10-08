@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string    side
  * @property string    signature_id
  * @property float     price
+ * @property array     info
  * @property mixed     created_at
  * @property mixed     updated_at
  *
@@ -37,6 +38,10 @@ class Signal extends Model implements Bindable
 
     protected $guarded = ['id'];
     protected array $unique = ['symbol_id', 'indicator_id', 'signature_id', 'timestamp'];
+
+    protected $casts = [
+        'info' => 'array'
+    ];
 
     public function tradeSetup(): BelongsToMany
     {
