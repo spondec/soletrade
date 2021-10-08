@@ -79,8 +79,9 @@ trait CanBind
 
                 foreach (array_chunk($points, 1000) as $chunk)
                 {
-                    DB::table('save_points')
-                        ->upsert($chunk, ['timestamp', 'binding_signature_id'], ['value']);
+                    DB::table('save_points')->upsert($chunk,
+                        ['timestamp', 'binding_signature_id'],
+                        ['value']);
                 }
             }
 
@@ -162,7 +163,7 @@ trait CanBind
     /**
      * @param Model $model
      */
-    protected function saveBindings(Bindable $model): void
+    public function saveBindings(Bindable $model): void
     {
         if (!$model->exists)
         {
@@ -188,14 +189,14 @@ trait CanBind
      *
      * @return Binding[]
      */
-    private function getBindings(Bindable $model): array
+    private function getBindings(Bindable $model): ?array
     {
-        return $this->bindings[$model];
+        return $this->bindings[$model] ?? null;
     }
 
-    protected function replaceBindable(Bindable $current, Bindable $new): void
+    public function replaceBindable(Bindable $current, Bindable $new): void
     {
-        if ($bindings = $this->bindings[$current])
+        if ($bindings = $this->bindings[$current] ?? false)
         {
             unset($this->bindings[$current]);
             $this->bindings[$new] = $bindings;
