@@ -4,7 +4,7 @@ namespace App\Trade;
 
 trait HasConfig
 {
-    public function mergeConfig(array $config)
+    protected function mergeConfig(array $config)
     {
         if ($config)
         {
