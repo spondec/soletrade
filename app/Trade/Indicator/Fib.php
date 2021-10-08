@@ -6,7 +6,6 @@ use App\Models\Signature;
 
 class Fib extends AbstractIndicator
 {
-    public array $prevFib;
     protected array $config = [
         'period'              => 144,
         'distanceToLevel'     => 1,
@@ -14,7 +13,21 @@ class Fib extends AbstractIndicator
         'levels'              => [236, 382, 500, 618, 786]
     ];
 
-    public function nearestFib(array $levels, float $price): array
+    public static function targetLevels(array $levels, int $level, bool $isBuy): array
+    {
+        if ($isBuy)
+        {
+            $target = array_reverse(array_filter($levels, static fn(float $l) => $l < $level));
+        }
+        else
+        {
+            $target = array_filter($levels, static fn(float $l) => $l > $level);
+        }
+
+        return array_values($target);
+    }
+
+    public static function nearestLevel(array $levels, float $price): array
     {
         $minDistance = null;
         foreach ($levels as $level => $levelPrice)
@@ -28,7 +41,7 @@ class Fib extends AbstractIndicator
             }
         }
 
-        return $this->prevFib = [
+        return [
             'level'    => $fibLevel,
             'price'    => $fibPrice,
             'distance' => $minDistance / $price * 100
@@ -50,6 +63,11 @@ class Fib extends AbstractIndicator
         return $raw;
     }
 
+    public function buildSignalName(array $params): string
+    {
+        return 'FIB-' . $params['side'] . '_' . $params['level'];
+    }
+
     protected function getBindValue(string|int $bind, ?int $timestamp = null): float
     {
         return $this->data[$this->current][$bind];
@@ -65,15 +83,27 @@ class Fib extends AbstractIndicator
         return $this->data[$this->current][$bind];
     }
 
+    protected function setup(): void
+    {
+        $levels = &$this->config['levels'];
+
+        $levels[] = 0;
+        $levels[] = 1000;
+
+        $levels = array_unique($levels);
+        sort($levels);
+    }
+
     protected function run(): array
     {
-        $fib = [];
+        $levels = $this->config['levels'];
         $period = (int)$this->config['period'];
+
+        $fib = [];
         $highs = [];
         $lows = [];
         $bars = 0;
-        $levels = $this->config['levels'];
-        sort($levels);
+
         foreach ($this->candles as $candle)
         {
             $highs[] = (float)$candle->h;
@@ -122,11 +152,6 @@ class Fib extends AbstractIndicator
         }
 
         return $fib;
-    }
-
-    public function buildSignalName(array $params): string
-    {
-        return 'FIB-' . $params['side'] . '_' . $params['level'];
     }
 
     protected function getSavePoints(int|string $bind, Signature $signature): array
