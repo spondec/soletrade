@@ -75,8 +75,12 @@ abstract class AbstractIndicator
                     'signalCallbackHash' => ClosureHash::from($this->signalCallback)
                 ]);
                 $this->scan();
+
             }
         }
+
+        //this object shouldn't be in a loop anymore
+        $this->current = $this->prev = $this->next = null;
     }
 
     protected function setup(): void

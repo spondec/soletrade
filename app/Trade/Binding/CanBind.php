@@ -22,11 +22,15 @@ trait CanBind
      *
      * @throws \Exception
      */
-    final public function bind(Bindable $model, string $column, string|int $bind, ?\Closure $callback = null): Binding
+    final public function bind(Bindable   $model,
+                               string     $column,
+                               string|int $bind,
+                               ?\Closure  $callback = null,
+                               ?int       $timestamp = null): Binding
     {
         $this->assertBindExists($bind);
 
-        $value = $this->getBindValue($bind);
+        $value = $this->getBindValue($bind, $timestamp);
 
         $signature = $this->register([
             'bind'     => $bind,

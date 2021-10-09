@@ -70,6 +70,11 @@ class Fib extends AbstractIndicator
 
     protected function getBindValue(string|int $bind, ?int $timestamp = null): float
     {
+        if ($timestamp)
+        {
+            return $this->data[$timestamp][$bind];
+        }
+
         return $this->data[$this->current][$bind];
     }
 
