@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Trade\Binding\Bindable;
 use App\Trade\Binding\HasBinding;
+use App\Trade\Calc;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
@@ -64,6 +65,10 @@ class TradeSetup extends Model implements Bindable
     {
         $result = parent::toArray();
 
+        $result['risk_reward_ratio'] = round(Calc::riskReward($this->isBuy(),
+            $result['price'],
+            $result['close_price'],
+            $result['stop_price']), 2);
         $result['price'] = round($result['price'], 2);
         $result['close_price'] = round($result['close_price'] ?? 0, 2);
         $result['stop_price'] = round($result['stop_price'] ?? 0, 2);
