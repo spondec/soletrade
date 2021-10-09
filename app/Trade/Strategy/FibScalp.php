@@ -6,7 +6,9 @@ namespace App\Trade\Strategy;
 
 use App\Models\Signal;
 use App\Models\TradeSetup;
+use App\Trade\Calc;
 use App\Trade\Indicator\Fib;
+use Illuminate\Support\Collection;
 
 class FibScalp extends AbstractStrategy
 {
@@ -14,9 +16,12 @@ class FibScalp extends AbstractStrategy
     {
         return [
             Fib::class => [
-                'config' => [],
+                'config' => [
+                    'period' => 144,
+                    'levels' => [236, 382, 500, 618, 786, 702, 446, 554, 650, 886, 114, 214]
+                ],
                 'signal' => static function (Signal $signal, Fib $indicator, array $value): ?Signal {
-                    $fib = $indicator->nearestFib($value, $closePrice = $indicator->closePrice());
+                    $fib = Fib::nearestLevel($value, $closePrice = $indicator->closePrice());
                     $level = $fib['level'];
                     $fibPrice = $fib['price'];
 
@@ -42,6 +47,7 @@ class FibScalp extends AbstractStrategy
                             }
 
                             $signal->side = $side = $priceBelowFib ? Signal::SELL : Signal::BUY;
+                            $signal->info = array_merge($fib, ['levels' => $indicator->config('levels'), 'prices' => $value]);
                             $signal->name = $indicator->buildSignalName(['side' => $side, 'level' => $fib['level']]);
                             $indicator->bind($signal, 'price', $fib['level']);
 
@@ -62,28 +68,38 @@ class FibScalp extends AbstractStrategy
                 'signals'  => [
                     Fib::class
                 ],
-                'callback' => function (TradeSetup $setup): ?TradeSetup {
-                    if ($setup->isBuy())
+                'callback' => function (TradeSetup $setup, Collection $signals): ?TradeSetup {
+
+                    /** @var Signal $signal */
+                    $signal = $signals->last();
+                    $fib = $signal->info;
+
+                    $targetLevels = Fib::targetLevels($fib['levels'], $fib['level'], $buy = $setup->isBuy());
+
+                    $firstTarget = $targetLevels[0];
+                    $targetPrice = $fib['prices'][$firstTarget];
+
+                    /** @var Fib $fib */
+                    $fib = $this->indicator($signal->indicator_id);
+                    $fib->bind($setup, 'close_price', $firstTarget, timestamp: $signal->timestamp);
+                    $this->bind($setup, 'price', 'last_signal_price');
+
+                    $reward = Calc::roi($buy, $setup->price, $targetPrice) / 100;
+                    $risk = $reward / 2;
+
+                    if ($buy)
                     {
-                        $this->bind($setup,
-                            'close_price',
-                            'last_signal_price',
-                            static fn(float $price): float => $price + $price * 0.015);
                         $this->bind($setup,
                             'stop_price',
                             'last_signal_price',
-                            static fn(float $price): float => $price - $price * 0.005);
+                            static fn(float $price): float => $price - $price * $risk);
                     }
                     else
                     {
                         $this->bind($setup,
-                            'close_price',
-                            'last_signal_price',
-                            static fn(float $price): float => $price - $price * 0.015);
-                        $this->bind($setup,
                             'stop_price',
                             'last_signal_price',
-                            static fn(float $price): float => $price + $price * 0.005);
+                            static fn(float $price): float => $price + $price * $risk);
                     }
 
                     return $setup;
