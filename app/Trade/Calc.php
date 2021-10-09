@@ -2,8 +2,6 @@
 
 namespace App\Trade;
 
-use App\Models\Signal;
-
 class Calc
 {
     public static function pnl(float $balance, float $roi): float|int
@@ -16,25 +14,15 @@ class Calc
         return $value <= $high && $value >= $low;
     }
 
-    public static function riskReward(bool   $isLong,
+    public static function riskReward(bool   $isBuy,
                                       float  $entry,
-                                      float  $high,
-                                      float  $low,
+                                      float  $exit,
+                                      float  $stop,
                                       ?float &$highRoi = null,
                                       ?float &$lowRoi = null): float
     {
-        $side = $isLong ? Signal::BUY : Signal::SELL;
-
-        if ($isLong)
-        {
-            $highRoi = self::roi($side, $entry, $high);
-            $lowRoi = self::roi($side, $entry, $low);
-        }
-        else
-        {
-            $highRoi = self::roi($side, $entry, $low);
-            $lowRoi = self::roi($side, $entry, $high);
-        }
+        $highRoi = self::roi($isBuy, $entry, $exit);
+        $lowRoi = self::roi($isBuy, $entry, $stop);
 
         if ($lowRoi == 0)
         {
@@ -44,11 +32,11 @@ class Calc
         return abs($highRoi / $lowRoi);
     }
 
-    public static function roi(string $side, int|float $entryPrice, int|float $exitPrice): float
+    public static function roi(bool $isBuy, int|float $entryPrice, int|float $exitPrice): float
     {
         $roi = ($exitPrice - $entryPrice) * 100 / $entryPrice;
 
-        if ($side === Signal::SELL)
+        if (!$isBuy)
         {
             $roi *= -1;
         }

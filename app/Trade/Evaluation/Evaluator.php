@@ -100,8 +100,10 @@ class Evaluator
                     $riskRewardHistory[$timestamp] = [
                         'ratio'  => round(Calc::riskReward($buy,
                             $entryPrice,
-                            $highest,
-                            $lowest, $highRoi, $lowRoi), 2),
+                            $buy ? $highest : $lowest,
+                            $buy ? $lowest : $highest,
+                            $highRoi,
+                            $lowRoi), 2),
                         'reward' => $highRoi,
                         'risk'   => $lowRoi
                     ];
@@ -214,11 +216,11 @@ class Evaluator
         $entryPrice = (float)$evaluation->entry_price;
         $buy = $evaluation->entry->side === Signal::BUY;
 
-        $evaluation->highest_roi = Calc::roi($side, $entryPrice,
+        $evaluation->highest_roi = Calc::roi($buy, $entryPrice,
             (float)($buy ? $evaluation->highest_price : $evaluation->lowest_price));
-        $evaluation->lowest_roi = Calc::roi($side, $entryPrice,
+        $evaluation->lowest_roi = Calc::roi($buy, $entryPrice,
             (float)(!$buy ? $evaluation->highest_price : $evaluation->lowest_price));
-        $evaluation->lowest_to_highest_roi = Calc::roi($side, $entryPrice,
+        $evaluation->lowest_to_highest_roi = Calc::roi($buy, $entryPrice,
             (float)($buy ? $evaluation->lowest_price_to_highest_exit : $evaluation->highest_price_to_lowest_exit));
 
         if (!$exitPrice = $this->getExitPrice($evaluation))
@@ -228,7 +230,7 @@ class Evaluator
             return;
         }
 
-        $evaluation->realized_roi = Calc::roi($side, $entryPrice, $exitPrice);
+        $evaluation->realized_roi = Calc::roi($buy, $entryPrice, $exitPrice);
     }
 
     protected function getExitPrice(Evaluation $evaluation): float|null
