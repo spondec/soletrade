@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\App;
 
 class Evaluator
 {
+    /** @var \WeakReference[] */
+    protected static array $cache = [];
+
     protected SymbolRepository $symbolRepo;
 
     public function __construct()
@@ -26,8 +29,9 @@ class Evaluator
     public function evaluate(TradeSetup|Signal $entry, TradeSetup|Signal $exit): Evaluation
     {
         $this->realizeTrade($evaluation = $this->setup($entry, $exit));
+        $this->holdRef($evaluation = $evaluation->updateUniqueOrCreate());
 
-        return $evaluation->updateUniqueOrCreate();
+        return $evaluation;
     }
 
     protected function realizeTrade(Evaluation $evaluation): void
@@ -155,6 +159,7 @@ class Evaluator
             {
                 $this->completePrevExit($prev, $evaluation);
                 $prev->save();
+
             }
         }
     }
@@ -258,7 +263,36 @@ class Evaluator
         return Evaluation::query()->with(['entry', 'exit'])
             ->where('type', $evaluation->type)
             ->where('exit_id', $evaluation->entry_id)
-            ->get();
+            ->get()
+            ->map(fn(Evaluation $e) => $this->getCached($e));
+    }
+
+    protected function getCached(Evaluation $evaluation): Evaluation
+    {
+        if ($ref = $this->getRef($evaluation))
+        {
+            /** @var Evaluation $cached */
+            if ($cached = $ref->get())
+            {
+                $evaluation = $cached;
+            }
+            else
+            {
+                $this->holdRef($evaluation);
+            }
+        }
+
+        return $evaluation;
+    }
+
+    protected function getRef(Evaluation $evaluation): ?\WeakReference
+    {
+        return static::$cache[$evaluation->id] ?? null;
+    }
+
+    protected function holdRef(Evaluation $evaluation): void
+    {
+        static::$cache[$evaluation->id] = \WeakReference::create($evaluation);
     }
 
     protected function completePrevExit(Evaluation $prev, Evaluation $current): void
@@ -295,6 +329,4 @@ class Evaluator
             throw new \LogicException('Exit date must not be newer than or equal to entry trade.');
         }
     }
-
-
 }
