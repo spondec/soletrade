@@ -9,7 +9,6 @@ use App\Models\Signal;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
-use App\Repositories\SymbolRepository;
 use App\Trade\Binding\CanBind;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
@@ -17,7 +16,6 @@ use App\Trade\HasSignature;
 use App\Trade\Indicator\AbstractIndicator;
 use App\Trade\Log;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 
 abstract class AbstractStrategy
@@ -32,13 +30,18 @@ abstract class AbstractStrategy
         'startDate'  => null,
         'endDate'    => null
     ];
-    protected array $indicatorSetup;
-    protected array $tradeSetup;
-    protected SymbolRepository $symbolRepo;
-    protected ?Signal $lastSignal;
-    protected array $bindMap;
-    protected Collection $trades;
-    protected Collection $signals;
+    private array $indicatorSetup;
+    private array $tradeSetup;
+    private ?Signal $lastSignal;
+    private array $bindMap;
+    /**
+     * @var TradeSetup[]
+     */
+    private Collection $trades;
+    /**
+     * @var Collection[]
+     */
+    private Collection $signals;
     /**
      * @var AbstractIndicator[]
      */
@@ -54,7 +57,6 @@ abstract class AbstractStrategy
         $this->mergeConfig($childConfig);
         $this->mergeConfig($config);
 
-        $this->symbolRepo = App::make(SymbolRepository::class);
         $this->indicators = new Collection();
         $this->indicatorSetup = $this->indicatorSetup();
         $this->tradeSetup = $this->tradeSetup();
@@ -185,11 +187,7 @@ abstract class AbstractStrategy
                     {
                         if ($isFirst)
                         {
-                            if ($i < $index)
-                            {
-                                continue;
-                            }
-
+                            if ($i < $index) continue;
                             $index = $i + 1;
                         }
 
@@ -274,7 +272,7 @@ abstract class AbstractStrategy
         $lastSignal = $signals->last();
 
         $tradeSetup->signal_count = count($signals);
-        $tradeSetup->name = $signals->map(static fn(Signal $signal) => $signal->name)->implode('|');
+        $tradeSetup->name = $signals->map(static fn(Signal $signal): string => $signal->name)->implode('|');
         $tradeSetup->side = $lastSignal->side;
         $tradeSetup->timestamp = $lastSignal->timestamp;
         $tradeSetup->price = $lastSignal->price;
