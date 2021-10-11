@@ -19,24 +19,22 @@ use Illuminate\Support\Facades\DB;
 
 abstract class AbstractIndicator
 {
+    protected array $config = [];
+
     use HasName;
     use HasSignature;
     use HasConfig;
     use CanBind;
 
-    protected array $config = [];
-
-    protected ?int $prev = null;
-    protected ?int $current = null;
-    protected ?int $next = null;
-
-    protected array $data = [];
+    private ?int $prev = null;
+    private ?int $current = null;
+    private ?int $next = null;
+    private Collection $data;
     private Signature $signalSignature;
     /**
      * @var Signal[]
      */
     private Collection $signals;
-
     private int $gap = 0;
     private int $index = 0;
 
@@ -66,7 +64,7 @@ abstract class AbstractIndicator
                 throw new \LogicException(static::name() . ' data count cannot exceed the candle count.');
             }
 
-            $this->data = $this->combineTimestamps($data);
+            $this->data = new Collection($this->combineTimestamps($data));
 
             if ($signalCallback)
             {
@@ -115,15 +113,21 @@ abstract class AbstractIndicator
         $repo = App::make(SymbolRepository::class);
         $lastCandle = $repo->fetchLastCandle($this->symbol);
 
-        while ($value = current($this->data))
+        $iterator = $this->data->getIterator();
+
+        while ($iterator->valid())
         {
+            $value = $iterator->current();
             $this->index++;
-            $this->current = $openTime = key($this->data);
-            next($this->data);
-            $nextOpenTime = key($this->data);
+            $openTime = $iterator->key();
+            $this->current = $openTime;
+            $iterator->next();
+            $nextOpenTime = $iterator->key();
 
             /** @var Signal $signal */
-            if ($signal = ($this->signalCallback)(signal: $this->setupSignal(), indicator: $this, value: $value))
+            $signal = ($this->signalCallback)(signal: $this->setupSignal(), indicator: $this, value: $value);
+
+            if ($signal)
             {
                 $signal->timestamp = $openTime;
                 $signal->confirmed = $nextOpenTime || ($lastCandle && $lastCandle->t > $openTime);//the candle is closed
@@ -173,6 +177,21 @@ abstract class AbstractIndicator
         $this->saveBindings($signal);
     }
 
+    public function prev(): mixed
+    {
+        return $this->data[$this->prev];
+    }
+
+    public function current(): mixed
+    {
+        return $this->data[$this->current];
+    }
+
+    public function next(): mixed
+    {
+        return $this->data[$this->next];
+    }
+
     /**
      * Use offset to access previous candles.
      */
@@ -218,11 +237,6 @@ abstract class AbstractIndicator
         return $prevX > $prevY && $currentX < $currentY;
     }
 
-    public function prev(): mixed
-    {
-        return $this->data[$this->prev] ?? null;
-    }
-
     public function closePrice(): float
     {
         foreach ($this->candles as $candle)
@@ -236,7 +250,7 @@ abstract class AbstractIndicator
 
     public function raw(): array
     {
-        return $this->data;
+        return $this->data->all();
     }
 
     public function candles(): Collection
@@ -257,7 +271,7 @@ abstract class AbstractIndicator
         return $this->symbol;
     }
 
-    public function data(): array
+    public function data(): Collection
     {
         return $this->data;
     }
