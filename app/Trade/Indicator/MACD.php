@@ -28,11 +28,13 @@ class MACD extends AbstractIndicator
 
     public function raw(): array
     {
-        $timestamps = array_keys($this->data);
+        $timestamps = $this->data()->keys()->all();
+        $data = $this->data()->all();
+
         return [
-            'macd'       => array_combine($timestamps, array_column($this->data, 'm')),
-            'signal'     => array_combine($timestamps, array_column($this->data, 's')),
-            'divergence' => array_combine($timestamps, array_column($this->data, 'd'))
+            'macd'       => array_combine($timestamps, array_column($data, 'm')),
+            'signal'     => array_combine($timestamps, array_column($data, 's')),
+            'divergence' => array_combine($timestamps, array_column($data, 'd'))
         ];
     }
 }
