@@ -3,6 +3,7 @@
 namespace App\Trade\Indicator;
 
 use App\Models\Signature;
+use JetBrains\PhpStorm\ArrayShape;
 
 class Fib extends AbstractIndicator
 {
@@ -13,20 +14,60 @@ class Fib extends AbstractIndicator
         'levels'              => [236, 382, 500, 618, 786]
     ];
 
-    public static function targetLevels(array $levels, int $level, bool $isBuy): array
+    /**
+     * Upward means the retracement goes from low to high.
+     */
+    public static function isUpward(array $prices): bool
     {
-        if ($isBuy)
+        $firstLevel = array_key_first($prices);
+        $firstLevelPrice = $prices[$firstLevel];
+
+        foreach ($prices as $level => $price)
         {
-            $target = array_reverse(array_filter($levels, static fn(float $l) => $l < $level));
+            if ($level !== $firstLevel)
+            {
+                return $price < $firstLevelPrice;
+            }
+        }
+
+        throw new \InvalidArgumentException('Invalid price and fib levels provided as argument.');
+    }
+
+    /**
+     * @param array $prices - Keys should be the corresponding fib level of each price.
+     */
+    public static function targetLevels(array $prices, int $level, bool $isBuy): array
+    {
+        $levels = array_keys($prices);
+        $isUpward = self::isUpward($prices);
+
+        if ($isUpward)
+        {
+            if ($isBuy)
+            {
+                $target = array_reverse(array_filter($levels, static fn(float $l) => $l < $level));
+            }
+            else
+            {
+                $target = array_filter($levels, static fn(float $l) => $l > $level);
+            }
         }
         else
         {
-            $target = array_filter($levels, static fn(float $l) => $l > $level);
+            if ($isBuy)
+            {
+                $target = array_filter($levels, static fn(float $l) => $l > $level);
+            }
+            else
+            {
+                $target = array_reverse(array_filter($levels, static fn(float $l) => $l < $level));
+            }
         }
 
         return array_values($target);
     }
 
+    #[ArrayShape(['level' => "int|string", 'price' => "float", 'distance' => "float|int"])]
     public static function nearestLevel(array $levels, float $price): array
     {
         $minDistance = null;
@@ -52,7 +93,7 @@ class Fib extends AbstractIndicator
     {
         $raw = [];
 
-        foreach ($this->data as $timestamp => $fibLevels)
+        foreach ($this->data() as $timestamp => $fibLevels)
         {
             foreach ($fibLevels as $key => $val)
             {
@@ -72,10 +113,10 @@ class Fib extends AbstractIndicator
     {
         if ($timestamp)
         {
-            return $this->data[$timestamp][$bind];
+            return $this->data()[$timestamp][$bind];
         }
 
-        return $this->data[$this->current][$bind];
+        return $this->current()[$bind];
     }
 
     protected function getBindable(): array
@@ -85,7 +126,7 @@ class Fib extends AbstractIndicator
 
     protected function getBindPrice(mixed $bind): float
     {
-        return $this->data[$this->current][$bind];
+        return $this->current()[$bind];
     }
 
     protected function setup(): void
@@ -163,7 +204,7 @@ class Fib extends AbstractIndicator
     {
         $points = [];
 
-        foreach ($this->data as $timestamp => $fib)
+        foreach ($this->data() as $timestamp => $fib)
         {
             $points[] = [
                 'timestamp' => $timestamp,
