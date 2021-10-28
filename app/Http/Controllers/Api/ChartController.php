@@ -98,6 +98,9 @@ class ChartController extends Controller
         $symbol = $this->symbolRepo->fetchSymbol(exchange: $exchange::instance(), symbolName: $symbolName, interval: $interval);
         abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
 
+        $candles = $symbol->candles($range ? null : $limit, $start, $end);
+        $this->symbolRepo->initIndicators($symbol, $candles, $indicators);
+
         if ($strategy)
         {
             $tester = new StrategyTester(App::make(SymbolRepository::class), [
@@ -122,18 +125,14 @@ class ChartController extends Controller
 
             Log::execTimeStart('Freshening evaluations');
             $signalWith = [
-                'entry',
                 'entry.bindings',
-                'exit',
                 'exit.bindings'
             ];
 
 //            $this->freshenEvaluations($signalSummary, $signalWith);
 
             $tradeWith = array_merge($signalWith, [
-                'entry.signals',
                 'entry.signals.bindings',
-                'exit.signals',
                 'exit.signals.bindings'
             ]);
 
@@ -150,9 +149,6 @@ class ChartController extends Controller
 
             return $symbol;
         }
-
-        $candles = $symbol->candles($range ? null : $limit, $start, $end);
-        $this->symbolRepo->initIndicators($symbol, $candles, $indicators);
 
         return $symbol->toArray();
     }

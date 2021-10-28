@@ -15,7 +15,7 @@ class PositionTest extends TestCase
         $this->assertEquals($this->calcRelativeRoi(-10, 1), $pos->relativeRoi(0.9));
         $pos->close(time());
         $this->assertEquals(300, $pos->exitRoi());
-        $this->assertEquals($this->calcRelativeRoi(300, $size), $pos->exitRelativeRoi());
+        $this->assertEquals($this->calcRelativeRoi(300, $size), $pos->relativeExitRoi());
     }
 
     protected function getPosition(bool $isBuy, float $size, float $entry, float $exit = 0, float $stop = 0): Position
@@ -45,7 +45,7 @@ class PositionTest extends TestCase
         $this->assertEquals($this->calcRelativeRoi(-10, $size), $pos->relativeRoi(0.9));
         $pos->stop(time());
         $this->assertEquals(-50, $pos->exitRoi());
-        $this->assertEquals(-0.5, $pos->exitRelativeRoi());
+        $this->assertEquals(-0.5, $pos->relativeExitRoi());
     }
 
     public function test_partial_profit_decrease_buy_roi(): void
@@ -60,7 +60,7 @@ class PositionTest extends TestCase
 
         $pos->stop(time());
         $this->assertEquals(-50, $pos->exitRoi());
-        $this->assertEquals($this->calcRelativeRoi(-50, $size), $pos->exitRelativeRoi());
+        $this->assertEquals($this->calcRelativeRoi(-50, $size), $pos->relativeExitRoi());
 
         $pos = $this->getPosition(true, $size = 1, 1, 1.5);
         $pos->decreaseSize(0.5, 2);
@@ -69,7 +69,7 @@ class PositionTest extends TestCase
 
         $pos->close(time());
         $this->assertEquals(75, $pos->exitRoi());
-        $this->assertEquals($this->calcRelativeRoi(75, $size), $pos->exitRelativeRoi());
+        $this->assertEquals($this->calcRelativeRoi(75, $size), $pos->relativeExitRoi());
     }
 
     protected function calcRelativeRoi(float $roi, float $size): float
@@ -98,7 +98,7 @@ class PositionTest extends TestCase
 
         $pos->stop(time());
         $this->assertEquals(-50, $pos->exitRoi());
-        $this->assertEquals($this->calcRelativeRoi(-50, $size), $pos->exitRelativeRoi());
+        $this->assertEquals($this->calcRelativeRoi(-50, $size), $pos->relativeExitRoi());
 
         $pos = $this->getPosition(true, $size = 100, 1, 2);
         $pos->decreaseSize(50, 0.5);
@@ -108,7 +108,7 @@ class PositionTest extends TestCase
 
         $pos->close(time());
         $this->assertEquals(25, $pos->exitRoi());
-        $this->assertEquals($this->calcRelativeRoi(25, $size), $pos->exitRelativeRoi());
+        $this->assertEquals($this->calcRelativeRoi(25, $size), $pos->relativeExitRoi());
     }
 
     public function test_partial_profit_decrease_sell_roi(): void

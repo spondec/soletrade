@@ -16,6 +16,7 @@ use App\Trade\Helper\ClosureHash;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use JetBrains\PhpStorm\Pure;
 
 abstract class AbstractIndicator
 {
@@ -57,8 +58,8 @@ abstract class AbstractIndicator
         if ($count = $candles->count())
         {
             $data = $this->run();
-
             $this->gap = $count - count($data);
+
             if ($this->gap < 0)
             {
                 throw new \LogicException(static::name() . ' data count cannot exceed the candle count.');
@@ -73,8 +74,11 @@ abstract class AbstractIndicator
                     'signalCallbackHash' => ClosureHash::from($this->signalCallback)
                 ]);
                 $this->scan();
-
             }
+        }
+        else
+        {
+            $this->data = new Collection();
         }
 
         //this object shouldn't be in a loop anymore
@@ -88,7 +92,7 @@ abstract class AbstractIndicator
 
     abstract protected function run(): array;
 
-    protected function combineTimestamps(?array $data): array
+    #[Pure] protected function combineTimestamps(?array $data): array
     {
         if (!$data)
         {
@@ -100,7 +104,7 @@ abstract class AbstractIndicator
         return array_combine($timestamps, $data);
     }
 
-    protected function timestamps(): array
+    #[Pure] protected function timestamps(): array
     {
         return array_column($this->candles->all(), 't');
     }
@@ -149,12 +153,14 @@ abstract class AbstractIndicator
         }
 
         if (isset($unconfirmed))
+        {
             DB::table('signals')
                 ->where('symbol_id', $this->symbol->id)
                 ->where('indicator_id', $this->signature->id)
                 ->where('signature_id', $this->signalSignature->id)
                 ->whereIn('timestamp', $unconfirmed)
                 ->update(['confirmed' => false]);
+        }
     }
 
     public function setupSignal(): Signal
@@ -239,16 +245,17 @@ abstract class AbstractIndicator
 
     public function closePrice(): float
     {
-        foreach ($this->candles as $candle)
+        $candle = $this->candles[$this->index + $this->gap];
+
+        if ($candle->t !== $this->current)
         {
-            if ($candle->t === $this->current)
-                return (float)$candle->c;
+            throw new \LogicException('Timestamp mismatched.');
         }
 
-        throw new \LogicException('Current timestamp does not exist.');
+        return (float)$candle->c;
     }
 
-    public function raw(): array
+    #[Pure] public function raw(): array
     {
         return $this->data->all();
     }
@@ -285,8 +292,7 @@ abstract class AbstractIndicator
     {
         return [
             'symbol_id'    => $this->symbol->id,
-            'indicator_id' => $this->signature->id,
-            //            'signal_signature_id' => $this->signalSignature->id
+            'indicator_id' => $this->signature->id
         ];
     }
 
@@ -301,7 +307,7 @@ abstract class AbstractIndicator
         To enable it, override getBindable(), getBindValue() and getSavePoints().');
     }
 
-    protected function closes(): array
+    #[Pure] protected function closes(): array
     {
         return array_column($this->candles->all(), 'c');
     }

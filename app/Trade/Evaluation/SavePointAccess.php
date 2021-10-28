@@ -21,14 +21,12 @@ class SavePointAccess
     public function __construct(protected Bindable $model, int $startDate, int $endDate)
     {
         $this->repo = App::make(BindingRepository::class);
-        $savePoints = [];
+        $this->savePoints = new Collection();
 
         foreach ($model->bindings as $binding)
         {
-            $savePoints[$binding->column] = $this->repo->fetchSavePoints($binding, $startDate, $endDate);
+            $this->savePoints[$binding->column] = $this->repo->fetchSavePoints($binding, $startDate, $endDate);
         }
-
-        $this->savePoints = new Collection($savePoints);
     }
 
     public function lastPointOrAttribute(string $column, int $timestamp): float

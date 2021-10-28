@@ -9,8 +9,6 @@ class Fib extends AbstractIndicator
 {
     protected array $config = [
         'period'              => 144,
-        'distanceToLevel'     => 1,
-        'totalBarsAfterLevel' => 3,
         'levels'              => [236, 382, 500, 618, 786]
     ];
 

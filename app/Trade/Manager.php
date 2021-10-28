@@ -56,7 +56,7 @@ class Manager
     {
         $order = $exchange->limit($setup->side,
             $setup->symbol,
-            $setup->entry_price,
+            $setup->price,
             $size);
 
         if (!$order)
