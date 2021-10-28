@@ -48,36 +48,52 @@ class SymbolRepository
      * @return \stdClass[]
      */
     #[ArrayShape(['lowest' => "\stdClass", 'highest' => "\stdClass"])]
-    public function getLowestHighest(Collection $candles): array
+    public function fetchLowestHighestCandle(int $symbolId, int $startDate, int $endDate): array
     {
-        $highest = 0;
-        $lowest = INF;
-        $result = [];
-
-        foreach ($candles as $candle)
+        if ($startDate >= $endDate)
         {
-            if ($candle->l < $lowest)
-            {
-                $lowest = $candle->l;
-                $result['lowest'] = $candle;
-            }
-
-            if ($candle->h > $highest)
-            {
-                $highest = $candle->h;
-                $result['highest'] = $candle;
-            }
+            throw new \InvalidArgumentException('Start date can not be greater than or equal to end date.');
         }
 
-        if (empty($result['highest']) || empty($result['lowest']))
+        $query = DB::table('candles')
+            ->where('symbol_id', $symbolId)
+            ->where('t', '>=', $startDate)
+            ->where('t', '<=', $endDate);
+
+        $highest = $query->orderBy('l', 'ASC')->first();
+        $lowest = $query->reorder('h', 'DESC')->first();
+
+        if (empty($highest) || empty($lowest))
         {
             throw new \LogicException('Lowest and/or highest candles was not found.');
         }
 
-        return $result;
+        return [
+            'highest' => $highest,
+            'lowest'  => $lowest
+        ];
     }
 
-    public function fetchCandles(Symbol $symbol, int $startDate, int $endDate, ?string $interval = null): Collection
+    public function fetchCandlesLimit(Symbol $symbol, int $startDate, int $limit, ?string $interval = null): Collection
+    {
+        $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
+
+        $candles = DB::table('candles')
+            ->where('symbol_id', $symbolId)
+            ->where('t', '>', $startDate)
+            ->orderBy('t', 'ASC')
+            ->limit($limit)
+            ->get();
+
+        if (!$candles->first())
+        {
+            throw new \UnexpectedValueException("$symbol->symbol-$interval candles was not found.");
+        }
+
+        return $candles;
+    }
+
+    public function fetchCandlesBetween(Symbol $symbol, int $startDate, int $endDate, ?string $interval = null): Collection
     {
         if ($startDate >= $endDate)
         {
@@ -109,6 +125,14 @@ class SymbolRepository
                 ->where('interval', $interval)
                 ->where('symbol', $symbol->symbol)
                 ->get('id')->first()->id;
+    }
+
+    public function fetchCandle(Symbol $symbol, int $timestamp, string $interval): \stdClass
+    {
+        return DB::table('candles')
+            ->where('symbol_id', $this->findSymbolIdForInterval($symbol, $interval))
+            ->where('t', $timestamp)
+            ->first();
     }
 
     public function fetchNextCandle(int $symbolId, int $timestamp): \stdClass

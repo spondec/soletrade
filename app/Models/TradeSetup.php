@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property string    name
  * @property string    side
  * @property float     price
+ * @property float     size
  * @property float     close_price
  * @property float     stop_price
  * @property array     take_profits
@@ -33,6 +34,10 @@ class TradeSetup extends Model implements Bindable
 
     protected $guarded = ['id'];
     protected $table = 'trade_setups';
+
+    protected $attributes = [
+        'size' => 100
+    ];
 
     protected array $unique = ['symbol_id', 'signature_id', 'name', 'timestamp', 'side'];
 

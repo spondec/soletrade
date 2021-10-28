@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property TradeSetup|Signal exit
  * @property int               exit_id
  * @property float             realized_roi
+ * @property float             relative_roi
  * @property float             highest_roi
  * @property float             lowest_roi
  * @property float             lowest_to_highest_roi
@@ -27,13 +28,13 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property float             highest_entry_price
  * @property float             lowest_entry_price
  * @property bool              is_entry_price_valid
- * @property bool              is_exit_price_valid
  * @property bool              is_ambiguous
  * @property bool              is_stopped
  * @property bool              is_closed
  * @property int               entry_timestamp
  * @property int               exit_timestamp
  * @property array             risk_reward_history
+ * @property array             log
  * @property \Carbon\Carbon    created_at
  * @property \Carbon\Carbon    updated_at
  */
@@ -46,7 +47,8 @@ class Evaluation extends Model
     protected $with = ['entry', 'exit'];
     protected array $unique = ['type', 'entry_id', 'exit_id'];
     protected $casts = [
-        'risk_reward_history' => 'array'
+        'risk_reward_history' => 'array',
+        'log'                 => 'array'
     ];
 
     public function entry(): MorphTo

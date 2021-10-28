@@ -21,6 +21,7 @@ class CreateTradeSetupsTable extends Migration
             $table->string('name');
             $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('price');
+            $table->float('size');
             $table->decimal('close_price')->nullable();
             $table->decimal('stop_price')->nullable();
             $table->integer('signal_count');

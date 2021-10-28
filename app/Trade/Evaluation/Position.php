@@ -3,7 +3,6 @@
 namespace App\Trade\Evaluation;
 
 use App\Trade\Calc;
-use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 
 class Position
@@ -17,7 +16,7 @@ class Position
 
     protected ?int $exitTime = null;
 
-    protected Collection $trades;
+    protected array $trades = [];
 
     protected float $multiplier = 1;
     protected float $amount = 0;
@@ -28,6 +27,13 @@ class Position
 
     protected float $maxUsedSize = 0;
 
+    protected float $exitPrice;
+
+    public function getExitPrice(): float
+    {
+        return $this->exitPrice;
+    }
+
     public function __construct(protected bool  $isBuy,
                                 protected float $size,
                                 protected int   $entryTime,
@@ -36,7 +42,6 @@ class Position
                                 protected Price $stop)
     {
         $this->remainingSize = static::MAX_SIZE;
-        $this->trades = new Collection();
         $this->assertSize($this->size);
         $this->newTrade(true, $entry->get(), $size);
         $this->entry->lock($this);
@@ -155,12 +160,34 @@ class Position
         {
             throw new \LogicException('Attempted to close a position that is already closed.');
         }
+
         $this->exit->lock($this);
-        $exitPrice = $this->exit->get();
-        $this->saveRoi($exitPrice);
+        $this->exitPrice = $this->exit->get();
+
+        $this->saveRoi($this->exitPrice);
+
         $this->isClosed = true;
         $this->exitTime = $exitTime;
-        $this->newTrade(false, $exitPrice, $this->getUsedSize());
+
+        $this->newTrade(false, $this->exitPrice, $this->getUsedSize());
+    }
+
+    public function stop(int $exitTime): void
+    {
+        if ($this->isStopped)
+        {
+            throw new \LogicException('Attempted to stop a position that is already stopped.');
+        }
+
+        $this->stop->lock($this);
+        $this->exitPrice = $this->stop->get();
+
+        $this->saveRoi($this->exitPrice);
+
+        $this->isStopped = true;
+        $this->exitTime = $exitTime;
+
+        $this->newTrade(false, $this->exitPrice, $this->getUsedSize());
     }
 
     protected function saveRoi(float $price): void
@@ -230,7 +257,7 @@ class Position
         return $this->calcShortRoi($lastPrice, $usedSize, self::MAX_SIZE);
     }
 
-    public function exitRelativeRoi(): float
+    public function relativeExitRoi(): float
     {
         return $this->relativeRoi;
     }
@@ -243,20 +270,6 @@ class Position
     public function exitRoi(): float
     {
         return $this->roi;
-    }
-
-    public function stop(int $exitTime): void
-    {
-        if ($this->isStopped)
-        {
-            throw new \LogicException('Attempted to stop a position that is already stopped.');
-        }
-        $this->stop->lock($this);
-        $stopPrice = $this->stop->get();
-        $this->saveRoi($stopPrice);
-        $this->isStopped = true;
-        $this->exitTime = $exitTime;
-        $this->newTrade(false, $stopPrice, $this->getUsedSize());
     }
 
     public function entryTime(): int
@@ -277,5 +290,10 @@ class Position
     public function price(string $type): Price
     {
         return $this->{$type};
+    }
+
+    public function getTrades(): array
+    {
+        return $this->trades;
     }
 }

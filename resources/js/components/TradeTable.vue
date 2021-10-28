@@ -70,7 +70,7 @@
       <!--      <td>{{ round(trade.highest_entry_price) || 'N/A' }}</td>-->
       <!--      <td>{{ round(trade.highest_price) || 'N/A' }}</td>-->
       <td v-bind:class="{ 'text-danger': !trade.is_entry_price_valid }">{{ round(trade.entry_price) }}</td>
-      <td v-bind:class="{ 'text-danger': !trade.is_exit_price_valid }">{{ round(trade.exit_price) }}</td>
+      <td>{{ round(trade.exit_price) }}</td>
       <td>
         <p v-bind:class="{'text-warning': trade.is_closed }">
           {{ round(trade.close_price) || 'N/A' }}</p>
