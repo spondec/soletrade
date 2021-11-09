@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * @property int    id
+ * @property int    exchange_id
  * @property string symbol
  * @property string interval
- * @property string exchange
  * @property int    last_update
  * @property mixed  created_at
  * @property mixed  updated_at
