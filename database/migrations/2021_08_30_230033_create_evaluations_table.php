@@ -23,6 +23,7 @@ class CreateEvaluationsTable extends Migration
             $table->float('highest_roi')->nullable();
             $table->float('lowest_roi')->nullable();
             $table->float('lowest_to_highest_roi')->nullable();
+            $table->float('used_size')->default(0);
             $table->decimal('entry_price')->nullable();
             $table->decimal('avg_entry_price')->nullable();
             $table->decimal('exit_price')->nullable();

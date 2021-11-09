@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property float             highest_roi
  * @property float             lowest_roi
  * @property float             lowest_to_highest_roi
+ * @property float             used_size
  * @property float             entry_price
  * @property float             exit_price
  * @property float             close_price //rename to cancel_price
