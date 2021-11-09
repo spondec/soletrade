@@ -41,6 +41,6 @@ class Calc
             $roi *= -1;
         }
 
-        return round($roi, 2);
+        return $roi;
     }
 }
