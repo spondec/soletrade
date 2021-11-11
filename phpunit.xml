@@ -26,8 +26,8 @@
     <php>
         <server name="APP_ENV" value="testing"/>
         <server name="BCRYPT_ROUNDS" value="4"/>
-        <server name="EXCHANGE_BINANCE_API_KEY" value="UnJwGwVCsuI6a1lFxzx059gibwl1bDfw5EDuSNU2pCkjtml7skCgDKxeBx1znq95"/>
-        <server name="EXCHANGE_BINANCE_SECRET_KEY" value="IUa0Pj99LT7GbPPBzOnUYXaVbnYDRSXV0Y4vT9MPk7qE7rjlfSxfYyt47xLnvjJe"/>
+        <server name="EXCHANGE_BINANCE_API_KEY" value=""/>
+        <server name="EXCHANGE_BINANCE_SECRET_KEY" value=""/>
         <server name="CACHE_DRIVER" value="array"/>
         <!-- <server name="DB_CONNECTION" value="sqlite"/> -->
         <!-- <server name="DB_DATABASE" value=":memory:"/> -->
