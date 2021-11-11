@@ -27,7 +27,7 @@ abstract class AbstractExchange
     protected ?AccountBalance $prevBalance = null;
     protected AccountBalance $currentBalance;
 
-    protected CandleUpdater $fetcher;
+    protected CandleUpdater $updater;
 
     private function __construct()
     {
@@ -47,7 +47,7 @@ abstract class AbstractExchange
         $this->setup();
         $this->register();
 
-        $this->fetcher = new CandleUpdater($this);
+        $this->updater = new CandleUpdater($this);
     }
 
     /**
@@ -89,7 +89,7 @@ abstract class AbstractExchange
 
     public function updater(): CandleUpdater
     {
-        return $this->fetcher;
+        return $this->updater;
     }
 
     abstract public function getMaxCandlesPerRequest(): int;
