@@ -2,21 +2,20 @@
 
 namespace App\Trade\Evaluation;
 
-use App\Trade\Strategy\TradeAction\AbstractTradeAction;
+use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
 
 class Price
 {
     protected bool $isLocked = false;
 
-    protected object $lockedBy;
+    protected ?object $lockedBy;
 
     protected static array $modifiers = [
-        AbstractTradeAction::class,
+        AbstractTradeActionHandler::class,
         TradeLoop::class,
         Position::class
     ];
     protected array $history = [];
-
 
     public function __construct(protected float     $price,
                                 protected ?\Closure $onChange = null)
@@ -35,10 +34,12 @@ class Price
             throw new \InvalidArgumentException('Unlocker must be the same as locker.');
         }
         $this->isLocked = false;
+        $this->lockedBy = null;
     }
 
     public function lock(object $lockedBy): void
     {
+        $this->assertUnlocked();
         $this->assertModifier($lockedBy);
         $this->lockedBy = $lockedBy;
         $this->isLocked = true;
@@ -49,9 +50,12 @@ class Price
         return $this->price;
     }
 
-    public function set(float $price, string $reason): void
+    public function set(float $price, string $reason, bool $force = false): void
     {
-        $this->assertUnlocked();
+        if (!$force)
+        {
+            $this->assertUnlocked();
+        }
 
         if ($price === $this->price)
         {
@@ -66,7 +70,7 @@ class Price
         $this->history[] = [
             'from'   => $this->price,
             'to'     => $price,
-            'reason' => $reason
+            'reason' => $force ? 'FORCED: ' . $reason : $reason
         ];
         $this->price = $price;
     }
