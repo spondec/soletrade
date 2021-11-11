@@ -8,6 +8,7 @@ use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Trade\Calc;
 use App\Trade\Indicator\Fib;
+use App\Trade\Strategy\TradeAction\MoveStop;
 use Illuminate\Support\Collection;
 
 class FibScalp extends AbstractStrategy
@@ -86,8 +87,15 @@ class FibScalp extends AbstractStrategy
                     $fib->bind($setup, 'close_price', $firstTarget, timestamp: $setup->timestamp);
                     $this->bind($setup, 'price', 'last_signal_price');
 
-                    $reward = Calc::roi($isBuy, $setup->price, $targetPrice) / 100;
-                    $risk = $reward / 1;
+                    $targetRoi = Calc::roi($isBuy, $entryPrice = $setup->price, $targetPrice);
+                    $reward = $targetRoi / 100;
+                    $risk = $reward / 3;
+                    $setup->size = 100;
+
+                    $this->newAction($setup, MoveStop::class, [
+                        'target'         => ['roi' => $targetRoi / 2],
+                        'new_stop_price' => $entryPrice
+                    ]);
 
                     $this->bind($setup,
                         'stop_price',
