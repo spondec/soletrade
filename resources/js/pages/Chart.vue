@@ -22,7 +22,7 @@
         <vue-multiselect v-model="sel.indicators" :options="indicators" :multiple="true"/>
       </div>
     </div>
-    <DatePicker v-model="range" is-dark is-range is24hr>
+    <DatePicker v-model="range" :model-config="modelConfig" is-dark is-range is24hr>
       <template v-slot="{ inputValue, inputEvents }">
         <div class="flex justify-center items-center">
           <input v-on="inputEvents.start"
@@ -147,8 +147,16 @@ export default {
   data: function ()
   {
     return {
-
       range: {},
+      modelConfig: {
+        start: {
+          timeAdjust: '00:00:00',
+        },
+        end: {
+          timeAdjust: '23:59:59',
+        },
+      },
+
       toggle: true,
 
       loading: false,
