@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Evaluation;
 use App\Repositories\SymbolRepository;
-use App\Trade\Evaluation\Summary;
+use App\Trade\Evaluation\Summarizer;
 use App\Trade\HasName;
 use App\Trade\Log;
 use App\Trade\StrategyTester;
@@ -112,39 +112,23 @@ class ChartController extends Controller
             $result = $tester->runStrategy($symbol, $strategy);
 
             Log::execTimeStart('Evaluating and summarizing trades');
-            /** @var Summary[]|Collection $tradeSummary */
-            $tradeSummary = $result->trades()
-                ->map(fn(Collection $trades): Summary => $tester->summary($trades));
+            $summaryCollection = $result->trades()->map(static function (Collection $trades) use ($tester): array {
+                $summary = $tester->summary($trades);
+                $summary['evaluations'] = $summary['evaluations']->map(
+                    static fn(Evaluation $evaluation): Evaluation => $evaluation->fresh([
+                        'entry.bindings',
+                        'exit.bindings',
+                        'entry.signals.bindings',
+                        'exit.signals.bindings'
+                    ]));
+
+                return $summary;
+            });
             Log::execTimeFinish('Evaluating and summarizing trades');
-
-//            Log::execTimeStart('Evaluating and summarizing signals');
-//            /** @var Summary[]|Collection $signalSummary */
-//            $signalSummary = $result->signals()
-//                ->map(fn(Collection $signals): Summary => $tester->summary($signals));
-//            Log::execTimeFinish('Evaluating and summarizing signals');
-
-            Log::execTimeStart('Freshening evaluations');
-            $signalWith = [
-                'entry.bindings',
-                'exit.bindings'
-            ];
-
-//            $this->freshenEvaluations($signalSummary, $signalWith);
-
-            $tradeWith = array_merge($signalWith, [
-                'entry.signals.bindings',
-                'exit.signals.bindings'
-            ]);
-
-            $this->freshenEvaluations($tradeSummary, $tradeWith);
-            Log::execTimeFinish('Freshening evaluations');
 
             Log::execTimeStart('Preparing symbol');
             $symbol = $symbol->toArray();
-            $symbol['strategy'] = [
-                'trades' => $tradeSummary->toArray(),
-                //                'signals' => $signalSummary->toArray()
-            ];
+            $symbol['strategy'] = ['trades' => $summaryCollection->toArray()];
             Log::execTimeFinish('Preparing symbol');
 
             return $symbol;
@@ -153,16 +137,4 @@ class ChartController extends Controller
         return $symbol->toArray();
     }
 
-    /**
-     * @param Summary[] $summaries
-     */
-    protected function freshenEvaluations(Collection $summaries, array $with): void
-    {
-        foreach ($summaries as $summary)
-        {
-            $summary->evaluations(static function (Collection $evaluations) use ($with): Collection {
-                return $evaluations->map(fn(Evaluation $e): Evaluation => $e->fresh($with));
-            });
-        }
-    }
 }
