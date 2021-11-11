@@ -16,7 +16,7 @@ class Position
 
     protected ?int $exitTime = null;
 
-    protected array $trades = [];
+    protected array $transactions = [];
 
     protected float $multiplier = 1;
     protected float $amount = 0;
@@ -43,8 +43,7 @@ class Position
     {
         $this->remainingSize = static::MAX_SIZE;
         $this->assertSize($this->size);
-        $this->newTrade(true, $entry->get(), $size);
-        $this->entry->lock($this);
+        $this->newTransaction(true, $entry->get(), $size);
     }
 
     protected function assertSize(float $size): void
@@ -55,7 +54,7 @@ class Position
         }
     }
 
-    protected function newTrade(bool $increase, float $price, float $size): void
+    protected function newTransaction(bool $increase, float $price, float $size): void
     {
         if ($increase)
         {
@@ -82,7 +81,7 @@ class Position
             $this->remainingSize += $size;
         }
 
-        $this->trades[] = [
+        $this->transactions[] = [
             'increase' => $increase,
             'price'    => $price,
             'size'     => $size,
@@ -161,7 +160,7 @@ class Position
             throw new \LogicException('Attempted to close a position that is already closed.');
         }
 
-        $this->exit->lock($this);
+        $this->lockIfUnlocked($this->exit);
         $this->exitPrice = $this->exit->get();
 
         $this->saveRoi($this->exitPrice);
@@ -169,7 +168,15 @@ class Position
         $this->isClosed = true;
         $this->exitTime = $exitTime;
 
-        $this->newTrade(false, $this->exitPrice, $this->getUsedSize());
+        $this->newTransaction(false, $this->exitPrice, $this->getUsedSize());
+    }
+
+    protected function lockIfUnlocked(Price $price): void
+    {
+        if (!$price->isLocked())
+        {
+            $price->lock($this);
+        }
     }
 
     public function stop(int $exitTime): void
@@ -179,7 +186,7 @@ class Position
             throw new \LogicException('Attempted to stop a position that is already stopped.');
         }
 
-        $this->stop->lock($this);
+        $this->lockIfUnlocked($this->stop);
         $this->exitPrice = $this->stop->get();
 
         $this->saveRoi($this->exitPrice);
@@ -187,7 +194,7 @@ class Position
         $this->isStopped = true;
         $this->exitTime = $exitTime;
 
-        $this->newTrade(false, $this->exitPrice, $this->getUsedSize());
+        $this->newTransaction(false, $this->exitPrice, $this->getUsedSize());
     }
 
     protected function saveRoi(float $price): void
@@ -279,12 +286,12 @@ class Position
 
     public function increaseSize(float $size, float $price): void
     {
-        $this->newTrade(true, $price, $size);
+        $this->newTransaction(true, $price, $size);
     }
 
     public function decreaseSize(float $size, float $price): void
     {
-        $this->newTrade(false, $price, $size);
+        $this->newTransaction(false, $price, $size);
     }
 
     public function price(string $type): Price
@@ -292,8 +299,18 @@ class Position
         return $this->{$type};
     }
 
-    public function getTrades(): array
+    public function getTransactions(): array
     {
-        return $this->trades;
+        return $this->transactions;
+    }
+
+    public function isBuy(): bool
+    {
+        return $this->isBuy;
+    }
+
+    public function getMaxUsedSize(): float|int
+    {
+        return $this->maxUsedSize;
     }
 }
