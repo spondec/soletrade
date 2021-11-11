@@ -15,6 +15,7 @@ use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Indicator\AbstractIndicator;
 use App\Trade\Log;
+use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -25,11 +26,10 @@ abstract class AbstractStrategy
     use HasConfig;
     use CanBind;
 
-    protected array $config = [
-        'maxCandles' => 1000,
-        'startDate'  => null,
-        'endDate'    => null
-    ];
+    protected array $config = [];
+
+    protected \WeakMap $actions;
+
     private array $indicatorSetup;
     private array $tradeSetup;
     private ?Signal $lastSignal;
@@ -49,12 +49,6 @@ abstract class AbstractStrategy
 
     public function __construct(array $config = [])
     {
-        $defaultConfig = $this->getDefaultConfig();
-
-        $childConfig = $this->config;
-        $this->config = $defaultConfig;
-
-        $this->mergeConfig($childConfig);
         $this->mergeConfig($config);
 
         $this->indicators = new Collection();
@@ -65,6 +59,28 @@ abstract class AbstractStrategy
         ]);
 
         $this->bindMap = $this->getBindMap();
+
+        $this->actions = new \WeakMap();
+    }
+
+    public function newAction(TradeSetup $setup, string $actionClass, array $config)
+    {
+        if (!is_subclass_of($actionClass, AbstractTradeActionHandler::class))
+        {
+            throw new \InvalidArgumentException('Invalid trade action class: ' . $actionClass);
+        }
+
+        if (!isset($this->actions[$setup]))
+        {
+            $this->actions[$setup] = new Collection();
+        }
+
+        $this->actions[$setup][$actionClass] = $config;
+    }
+
+    public function actions(TradeSetup $setup): ?Collection
+    {
+        return $this->actions[$setup] ?? null;
     }
 
     protected function getDefaultConfig(): array
@@ -97,6 +113,10 @@ abstract class AbstractStrategy
 
     public function run(Symbol $symbol): void
     {
+        Log::execTimeStart('CandleUpdater::update()');
+        $symbol->exchange()->updater()->update($symbol);
+        Log::execTimeFinish('CandleUpdater::update()');
+
         Log::execTimeStart('AbstractStrategy::initIndicators()');
         $this->initIndicators($symbol);
         Log::execTimeFinish('AbstractStrategy::initIndicators()');
@@ -238,7 +258,7 @@ abstract class AbstractStrategy
     protected function setupTrade(Symbol $symbol, array $config, Collection $signals): TradeSetup
     {
         $signature = $this->registerTradeSetupSignature($config);
-        $tradeSetup = $this->createTrade($symbol, $signature);
+        $tradeSetup = $this->newTrade($symbol, $signature);
 
         return $this->fillTrade($tradeSetup, $signals);
     }
@@ -256,7 +276,7 @@ abstract class AbstractStrategy
         ]);
     }
 
-    protected function createTrade(Symbol $symbol, Signature $signature): TradeSetup
+    protected function newTrade(Symbol $symbol, Signature $signature): TradeSetup
     {
         $tradeSetup = new TradeSetup();
 
@@ -298,12 +318,27 @@ abstract class AbstractStrategy
     protected function saveTrade(TradeSetup $tradeSetup, Collection $signals): TradeSetup
     {
         $old = $tradeSetup;
-        DB::transaction(static function () use (&$tradeSetup, &$signals) {
+        $actions = $this->actions($old);
+        DB::transaction(function () use (&$tradeSetup, &$signals, &$actions) {
+
             /** @var TradeSetup $tradeSetup */
             $tradeSetup = $tradeSetup->updateUniqueOrCreate();
-            $ids = $signals->map(static fn(Signal $signal) => $signal->id)->all();
-            $tradeSetup->signals()->sync($ids);
+            $tradeSetup->actions()->delete();
+
+            if ($actions)
+            {
+                foreach ($actions as $class => $config)
+                {
+                    $tradeSetup->actions()->create([
+                        'class'  => $class,
+                        'config' => $config
+                    ]);
+                }
+            }
+
+            $tradeSetup->signals()->sync($signals->map(static fn(Signal $signal): int => $signal->id)->all());
         });
+
         $this->replaceBindable($old, $tradeSetup);
         $this->saveBindings($tradeSetup);
 
