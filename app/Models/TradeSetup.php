@@ -6,11 +6,13 @@ use App\Trade\Binding\Bindable;
 use App\Trade\Binding\HasBinding;
 use App\Trade\Calc;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property Signal[]  signals
  * @property Symbol    symbol
  * @property Signature signature
+ * @property TradeAction[] actions
  *
  * @property int       id
  * @property int       position_id
@@ -35,11 +37,16 @@ class TradeSetup extends Model implements Bindable
     protected $guarded = ['id'];
     protected $table = 'trade_setups';
 
+    protected array $unique = ['symbol_id', 'signature_id', 'name', 'timestamp', 'side'];
+
     protected $attributes = [
         'size' => 100
     ];
 
-    protected array $unique = ['symbol_id', 'signature_id', 'name', 'timestamp', 'side'];
+    public function actions(): HasMany
+    {
+        return $this->hasMany(TradeAction::class);
+    }
 
     public function signals(): BelongsToMany
     {
@@ -61,11 +68,6 @@ class TradeSetup extends Model implements Bindable
         return $this->hasMany(TakeProfit::class);
     }
 
-    public function isBuy()
-    {
-        return $this->side === Signal::BUY;
-    }
-
     public function toArray()
     {
         $result = parent::toArray();
@@ -79,6 +81,11 @@ class TradeSetup extends Model implements Bindable
         $result['stop_price'] = round($result['stop_price'] ?? 0, 2);
 
         return $result;
+    }
+
+    public function isBuy()
+    {
+        return $this->side === Signal::BUY;
     }
 
     public function setStopPrice(float $percent): void
