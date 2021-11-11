@@ -2,85 +2,53 @@
 
 namespace App\Trade\Evaluation;
 
-use App\Models\Signal;
+use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use JetBrains\PhpStorm\Pure;
 
 class TradeLoop
 {
     protected SymbolRepository $repo;
 
-    protected ?Position $position = null;
-
     protected string $interval = '1m';
-
-    protected array $log = [];
-    protected array $riskRewardHistory = [];
-
-    protected Price $entryPrice;
-    protected Price $closePrice;
-    protected Price $stopPrice;
+    protected Symbol $symbol;
 
     protected int $startDate;
     protected int $lastRunDate;
 
-    protected ?float $lowestEntryPrice = null;
-    protected ?float $highestEntryPrice = null;
-
-    protected ?float $lowestPrice = null;
-    protected ?float $highestPrice = null;
-
-    protected bool $isBuy;
-    protected bool $isAmbiguous = false;
-
-    protected bool $entered = false;
-    protected bool $exited = false;
-    protected bool $closed = false;
-    protected bool $stopped = false;
-
     protected Collection $candles;
 
     protected \stdClass $firstCandle;
+    protected float $entryPrice;
+    protected float $stopPrice;
 
-    protected float $_entryPrice;
-    protected float $_stopPrice;
-    protected float $_closePrice;
+    protected float $closePrice;
+
+    protected TradeStatus $status;
 
     public function __construct(protected TradeSetup $entry)
     {
+        $this->status = new TradeStatus($entry);
         $this->repo = App::make(SymbolRepository::class);
-        $this->isBuy = $this->entry->side === Signal::BUY;
-        $this->entryPrice = $this->newPrice($this->entry->price);
-        $this->closePrice = $this->newPrice($this->entry->close_price);
-        $this->stopPrice = $this->newPrice($this->entry->stop_price);
-        $this->firstCandle = $this->repo->fetchNextCandle($this->entry->symbol_id, $this->entry->timestamp);
-        $this->startDate = $this->firstCandle->t;
-    }
 
-    #[Pure] protected function newPrice(float $price, ?\Closure $onChange = null): Price
-    {
-        return new Price($price, $onChange);
+        $this->firstCandle = $this->repo->fetchNextCandle($entry->symbol_id, $entry->timestamp);
+        $this->startDate = $this->firstCandle->t;
+
+        $symbol = $this->entry->symbol;
+        $this->symbol = $this->repo->fetchSymbol($this->entry->symbol->exchange(), $symbol->symbol, $this->interval);
     }
 
     public function getLastCandle(): \stdClass
     {
-        return $this->repo->fetchCandle($this->entry->symbol,
-            $this->getLastRunDate(),
-            $this->getInterval());
+        return $this->repo->fetchCandle($this->entry->symbol, $this->lastRunDate, $this->interval);
     }
 
     public function getLastRunDate(): int
     {
         return $this->lastRunDate;
-    }
-
-    public function getInterval(): string
-    {
-        return $this->interval;
     }
 
     public function runToExit(TradeSetup $exit): ?Position
@@ -96,7 +64,7 @@ class TradeLoop
 
         $this->runLoop($candles, $savePoint);
 
-        return $this->position;
+        return $this->status->getPosition();
     }
 
     protected function assertExitDateGreaterThanEntryDate(int $startDate, int $endDate): void
@@ -114,170 +82,101 @@ class TradeLoop
 
     protected function runLoop(Collection $candles, SavePointAccess $savePoint): void
     {
+        if (!$candles->first())
+        {
+            throw new \LogicException('Can not loop through an empty set.');
+        }
+
         foreach ($candles as $candle)
         {
             $candle->l = (float)$candle->l;
             $candle->h = (float)$candle->h;
             $candle->t = (int)$candle->t;
 
-            if (!$this->entered)
+            if (!$this->status->isEntered())
             {
-                $this->_entryPrice = $this->getSavePoint($this->entryPrice, $savePoint, 'price', $candle->t);
-                $this->updateLowestHighestEntryPrice($candle);
-                $this->tryPositionEntry($this->_entryPrice, $candle);
+                $this->loadSavePointPrice($this->status->getEntryPrice(),
+                    $savePoint,
+                    'price',
+                    $candle->t);
+                $this->status->updateLowestHighestEntryPrice($candle);
+                $this->tryPositionEntry($candle);
             }
             else
             {
-                $this->logRiskReward($candle, $this->_entryPrice);
+                $this->status->logRiskReward($candle);
 
-                if (!$this->exited)
+                if (!$this->status->isExited())
                 {
-                    $this->_stopPrice = $this->getSavePoint($this->stopPrice, $savePoint, 'stop_price', $candle->t);
-                    $this->_closePrice = $this->getSavePoint($this->closePrice, $savePoint, 'close_price', $candle->t);
-                    $this->tryPositionExit($candle, $this->_stopPrice, $this->_closePrice);
+                    $this->loadSavePointPrice($this->status->getStopPrice(),
+                        $savePoint,
+                        'stop_price',
+                        $candle->t);
+                    $this->loadSavePointPrice($this->status->getClosePrice(),
+                        $savePoint,
+                        'close_price',
+                        $candle->t);
+                    $this->tryPositionExit($this->status->getPosition(),
+                        $candle);
                 }
             }
         }
 
         $this->lastRunDate = $candle->t;
-        $this->updateHighestLowestPrice();
+        $pivots = $this->fetchPivotsFromStartToLastRun();
+        $this->status->updateHighestLowestPrice($pivots['highest'], $pivots['lowest']);
     }
 
-    protected function getSavePoint(Price $price, SavePointAccess $savePoint, string $column, int $timestamp): float
+    protected function loadSavePointPrice(Price $price, SavePointAccess $savePoint, string $column, int $timestamp): void
     {
-        if ($price->isLocked())
+        if (!$price->isLocked() && $entryPrice = $savePoint->lastPoint($column, $timestamp))
         {
-            $entryPrice = $price->get();
-        }
-        else
-        {
-            $entryPrice = $savePoint->lastPoint($column, $timestamp) ?? $price->get();
             $price->set($entryPrice, 'SavePointAccess');
         }
-
-        return $entryPrice;
     }
 
-    protected function updateLowestHighestEntryPrice(\stdClass $candle): void
+    protected function tryPositionEntry(\stdClass $candle): void
     {
-        if ($this->lowestEntryPrice === null || $candle->l < $this->lowestEntryPrice)
+        if (Calc::inRange($this->status->getEntryPrice()->get(), $candle->h, $candle->l))
         {
-            $this->lowestEntryPrice = $candle->l;
-        }
-        if ($this->highestEntryPrice === null || $candle->h > $this->highestEntryPrice)
-        {
-            $this->highestEntryPrice = $candle->h;
+            $this->status->enterPosition($candle->t);
         }
     }
 
-    protected function tryPositionEntry(float $entryPrice, \stdClass $candle): void
+    protected function tryPositionExit(Position $position, \stdClass $candle): void
     {
-        if (Calc::inRange($entryPrice, $candle->h, $candle->l))
+        if (!$this->status->checkIsExited())
         {
-            $this->entryPrice->lock($this);
-            $this->position = $this->newPosition($this->entry,
-                $candle->t,
-                $this->entryPrice,
-                $this->closePrice,
-                $this->stopPrice);
-            $this->entered = true;
-        }
-    }
+            $stopped = $this->status->checkIsStopped($candle);
+            $closed = $this->status->checkIsClosed($candle);
 
-    protected function newPosition(TradeSetup $setup, int $entryTime, Price $entry, Price $exit, Price $stop): Position
-    {
-        return new Position($setup->isBuy(), $setup->size, $entryTime, $entry, $exit, $stop);
-    }
-
-    protected function logRiskReward(\stdClass $candle, float $entryPrice): void
-    {
-        if (!$this->lowestPrice)
-        {
-            $this->lowestPrice = $candle->l;
-        }
-        if (!$this->highestPrice)
-        {
-            $this->highestPrice = $candle->h;
-        }
-
-        $newLow = $candle->l < $this->lowestPrice;
-        $newHigh = $candle->h > $this->highestPrice;
-
-        if ($newLow || $newHigh)
-        {
-            if ($newLow)
+            if ($stopped || $closed)
             {
-                $this->lowestPrice = $candle->l;
-            }
-            if ($newHigh)
-            {
-                $this->highestPrice = $candle->h;
-            }
-
-            $this->riskRewardHistory[$candle->t] = [
-                'ratio'  => round(Calc::riskReward($this->isBuy,
-                    $entryPrice,
-                    $this->isBuy ? $this->highestPrice : $this->lowestPrice,
-                    $this->isBuy ? $this->lowestPrice : $this->highestPrice,
-                    $highRoi,
-                    $lowRoi), 2),
-                'reward' => $highRoi,
-                'risk'   => $lowRoi
-            ];
-        }
-    }
-
-    protected function tryPositionExit(\stdClass $candle, float $stopPrice, float $closePrice): void
-    {
-        $this->stopped = Calc::inRange($stopPrice, $candle->h, $candle->l);
-        $this->closed = Calc::inRange($closePrice, $candle->h, $candle->l);
-
-        if ($this->stopped || $this->closed)
-        {
-            $this->exited = true;
-
-            if ($this->stopped && $this->closed)
-            {
-                $this->isAmbiguous = true;
+                if (!$this->status->isAmbiguous())
+                {
+                    if ($stopped)
+                    {
+                        $position->stop($candle->t);
+                    }
+                    if ($closed)
+                    {
+                        $position->close($candle->t);
+                    }
+                }
             }
             else
             {
-                if ($this->stopped)
-                {
-                    $this->position->stop($candle->t);
-                }
-                if ($this->closed)
-                {
-                    $this->position->close($candle->t);
-                }
+                $this->status->runTradeActions($candle);
             }
         }
-        else
-        {
-            $this->runTradeActions($candle, $this->position);
-        }
     }
 
-    protected function runTradeActions(\stdClass $candle, Position $position): void
+    /**
+     * @return \stdClass[]
+     */
+    protected function fetchPivotsFromStartToLastRun(): array
     {
-
-    }
-
-    protected function updateHighestLowestPrice(): void
-    {
-        $price = $this->repo->fetchLowestHighestCandle($this->entry->symbol_id, $this->startDate, $this->lastRunDate);
-
-        $highest = $price['highest']->h;
-        $lowest = $price['lowest']->l;
-
-        if ($this->highestPrice === null || $highest > $this->highestPrice)
-        {
-            $this->highestPrice = $highest;
-        }
-        if ($this->lowestPrice === null || $lowest < $this->lowestPrice)
-        {
-            $this->lowestPrice = $lowest;
-        }
+        return $this->repo->fetchLowestHighestCandle($this->entry->symbol_id, $this->startDate, $this->lastRunDate);
     }
 
     public function continue(int $endDate): ?Position
@@ -293,7 +192,7 @@ class TradeLoop
         $savePoint = $this->newSavePointAccess($this->lastRunDate, $endDate);
 
         $this->runLoop($candles, $savePoint);
-        return $this->position;
+        return $this->status->getPosition();
     }
 
     public function run(int $chunk = 100): ?Position
@@ -314,61 +213,20 @@ class TradeLoop
             $this->runLoop($candles, $savePoint);
         }
 
-        return $this->position;
+        return $this->status->getPosition();
     }
 
-    public function riskRewardHistory(): array
+    public function status(): TradeStatus
     {
-        return $this->riskRewardHistory;
+        return $this->status;
     }
 
-    public function isAmbiguous(): bool
+    public function updateCandles(): void
     {
-        return $this->isAmbiguous;
+        $this->symbol->exchange()->updater()->update($this->symbol);
     }
-
-    #[Pure] public function getEntryPrice(): float
+    public function getSymbol(): Symbol
     {
-        return $this->entryPrice->get();
-    }
-
-    #[Pure] public function getClosePrice(): float
-    {
-        return $this->closePrice->get();
-    }
-
-    #[Pure] public function getStopPrice(): float
-    {
-        return $this->stopPrice->get();
-    }
-
-    public function getLowestPrice(): ?float
-    {
-        return $this->lowestPrice;
-    }
-
-    public function getHighestPrice(): ?float
-    {
-        return $this->highestPrice;
-    }
-
-    public function getLowestEntryPrice(): float
-    {
-        return $this->lowestEntryPrice;
-    }
-
-    public function getHighestEntryPrice(): float|int
-    {
-        return $this->highestEntryPrice;
-    }
-
-    public function getPosition(): ?Position
-    {
-        return $this->position;
-    }
-
-    public function getEntry(): TradeSetup
-    {
-        return $this->entry;
+        return $this->symbol;
     }
 }
