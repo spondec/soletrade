@@ -63,6 +63,11 @@ class Evaluator
     {
         $loop = new TradeLoop($evaluation->entry);
 
+        if (time() * 1000 >= $loop->getSymbol()->last_update + 60 * 1000)
+        {
+            $loop->updateCandles();
+        }
+
         $position = $loop->runToExit($evaluation->exit);
 
         if ($position)
@@ -70,7 +75,7 @@ class Evaluator
             $this->applyPositionLimitations($position, $evaluation, $loop);
         }
 
-        $this->fillEvaluation($evaluation, $loop, $position);
+        $this->fillEvaluation($evaluation, $loop->status(), $position);
     }
 
     protected function applyPositionLimitations(Position $position, Evaluation $evaluation, TradeLoop $loop): void
@@ -81,7 +86,7 @@ class Evaluator
             {
                 $candle = $loop->getLastCandle();
 
-                $position->price('stop')->set((float)$candle->c, 'Stopping at exit setup.');
+                $position->price('stop')->set((float)$candle->c, 'Stopping at exit setup.', true);
                 $position->stop((int)$candle->t);
             }
             else
@@ -98,20 +103,20 @@ class Evaluator
                 {
                     $candle = $loop->getLastCandle();
 
-                    $position->price('stop')->set((float)$candle->c, 'Trade timed out. Stopping.');
+                    $position->price('stop')->set((float)$candle->c, 'Trade timed out. Stopping.', true);
                     $position->stop((int)$candle->t);
                 }
             }
         }
     }
 
-    protected function fillEvaluation(Evaluation $evaluation, TradeLoop $loop, ?Position $position): void
+    protected function fillEvaluation(Evaluation $evaluation, TradeStatus $status, ?Position $position): void
     {
-        $evaluation->highest_price = $loop->getHighestPrice();
-        $evaluation->lowest_price = $loop->getLowestPrice();
-        $evaluation->entry_price = $loop->getEntryPrice();
-        $evaluation->stop_price = $loop->getStopPrice();
-        $evaluation->close_price = $loop->getClosePrice();
+        $evaluation->highest_price = $status->getHighestPrice();
+        $evaluation->lowest_price = $status->getLowestPrice();
+        $evaluation->entry_price = $status->getEntryPrice()->get();
+        $evaluation->stop_price = $status->getStopPrice()->get();
+        $evaluation->close_price = $status->getClosePrice()->get();
 
         $log = [];
 
@@ -119,10 +124,11 @@ class Evaluator
         {
             $evaluation->is_entry_price_valid = true;
             $evaluation->entry_timestamp = $position->entryTime();
-            $evaluation->highest_entry_price = $loop->getHighestEntryPrice();
-            $evaluation->lowest_entry_price = $loop->getLowestEntryPrice();
-            $evaluation->is_ambiguous = $loop->isAmbiguous();
-            $evaluation->risk_reward_history = $loop->riskRewardHistory();
+            $evaluation->highest_entry_price = $status->getHighestEntryPrice();
+            $evaluation->lowest_entry_price = $status->getLowestEntryPrice();
+            $evaluation->is_ambiguous = $status->isAmbiguous();
+            $evaluation->risk_reward_history = $status->riskRewardHistory();
+            $evaluation->used_size = $position->getMaxUsedSize();
 
             if (!$evaluation->is_ambiguous)
             {
@@ -146,8 +152,8 @@ class Evaluator
                     'exit'  => $position->price('exit')->history(),
                     'stop'  => $position->price('stop')->history()
                 ],
-                'trades'        => [
-                    $position->getTrades()
+                'transactions'        => [
+                    $position->getTransactions()
                 ]
             ];
         }
