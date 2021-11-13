@@ -10,11 +10,6 @@ use Tests\TestCase;
 
 class SymbolRepositoryTest extends TestCase
 {
-    protected function getRepo(): SymbolRepository
-    {
-        return App::make(SymbolRepository::class);
-    }
-
     public function test_fetch_lower_interval_candles()
     {
         $repo = $this->getRepo();
@@ -39,8 +34,14 @@ class SymbolRepositoryTest extends TestCase
         {
             $this->assertTrue(Calc::inRange($c->t, $candles->last()->t, $candles->first()->t));
         }
+
         $this->assertEquals($candles->last()->t, $lowerIntervalCandles->last()->t);
         $this->assertEquals($candles->first()->t, $lowerIntervalCandles->first()->t);
         $this->assertEquals($lowerIntervalSymbol->id, $lowerIntervalCandles->first()->symbol_id);
+    }
+
+    protected function getRepo(): SymbolRepository
+    {
+        return App::make(SymbolRepository::class);
     }
 }
