@@ -24,6 +24,13 @@ class SymbolRepository
         }
     }
 
+    public function fetchLowerIntervalCandles(\stdClass $candle, Symbol $symbol, string $interval)
+    {
+        $nextCandle = $this->fetchNextCandle($candle->symbol_id, $candle->t);
+
+        return $this->fetchCandlesBetween($symbol, $candle->t, $nextCandle->t, $interval, true);
+    }
+
     public function mapCandles(array $candles, int $symbolId, CandleMap $map): array
     {
         $mapped = [];
@@ -74,7 +81,10 @@ class SymbolRepository
         ];
     }
 
-    public function fetchCandlesLimit(Symbol $symbol, int $startDate, int $limit, ?string $interval = null): Collection
+    public function fetchCandlesLimit(Symbol $symbol,
+                                      int $startDate,
+                                      int $limit,
+                                      ?string $interval = null): Collection
     {
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
@@ -93,7 +103,11 @@ class SymbolRepository
         return $candles;
     }
 
-    public function fetchCandlesBetween(Symbol $symbol, int $startDate, int $endDate, ?string $interval = null): Collection
+    public function fetchCandlesBetween(Symbol $symbol,
+                                        int $startDate,
+                                        int $endDate,
+                                        ?string $interval = null,
+                                        bool $includeStart = false): Collection
     {
         if ($startDate >= $endDate)
         {
@@ -104,7 +118,7 @@ class SymbolRepository
 
         $candles = DB::table('candles')
             ->where('symbol_id', $symbolId)
-            ->where('t', '>', $startDate)
+            ->where('t', $includeStart ? '>=' : '>', $startDate)
             ->where('t', '<=', $endDate)
             ->orderBy('t', 'ASC')
             ->get();
@@ -145,7 +159,7 @@ class SymbolRepository
 
         if (!$candle)
         {
-            throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed.");
+            throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed to get the next candle.");
         }
 
         return $candle;
@@ -177,7 +191,7 @@ class SymbolRepository
     /**
      * @param Symbol $symbol
      */
-    public function latestCandles(Symbol $symbol, string $direction = 'DESC', int $limit = 10): Collection
+    public function fetchLatestCandles(Symbol $symbol, string $direction = 'DESC', int $limit = 10): Collection
     {
         return DB::table('candles')
             ->where('symbol_id', $symbol->id)
@@ -198,7 +212,7 @@ class SymbolRepository
             ->get();
     }
 
-    public function intervals(): Collection
+    public function fetchIntervals(): Collection
     {
         return DB::table('symbols')
             ->selectRaw(DB::raw('DISTINCT(BINARY `interval`) as `interval`'))
