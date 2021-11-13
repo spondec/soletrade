@@ -46,7 +46,7 @@ class ChartController extends Controller
             'exchanges'  => $this->mapClassByName(Config::exchanges()),
             'symbols'    => Config::symbols(),
             'indicators' => $this->mapClassByName(Config::indicators()),
-            'intervals'  => $this->symbolRepo->intervals()
+            'intervals'  => $this->symbolRepo->fetchIntervals()
         ];
     }
 

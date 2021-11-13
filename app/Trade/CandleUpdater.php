@@ -80,7 +80,7 @@ class CandleUpdater
             do
             {
                 DB::select(DB::raw('LOCK TABLES candles WRITE, symbols WRITE'));
-                $currentCandles = $this->symbolRepo->latestCandles($symbol, 'DESC', 2);
+                $currentCandles = $this->symbolRepo->fetchLatestCandles($symbol, 'DESC', 2);
                 $currentLastCandle = $currentCandles->shift();
                 $start = $currentCandles->first()->t ?? 0;
 
