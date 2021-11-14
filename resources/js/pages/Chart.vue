@@ -22,6 +22,7 @@
         <vue-multiselect v-model="sel.indicators" :options="indicators" :multiple="true"/>
       </div>
     </div>
+
     <DatePicker v-model="range" :model-config="modelConfig" is-dark is-range is24hr>
       <template v-slot="{ inputValue, inputEvents }">
         <div class="flex justify-center items-center">
@@ -43,6 +44,11 @@
         </div>
       </template>
     </DatePicker>
+
+    <div class="mb-3">
+      <label class="form-label">Magnifier</label>
+      <vue-multiselect v-model="magnifier.interval" :allow-empty="false" :options="intervals"/>
+    </div>
 
     <div class="chart-container" ref="chart">
       <v-spinner v-if="this.loading"/>
@@ -76,7 +82,8 @@
                     <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
                     <h1 class="text-lg">Failed: {{ setup.summary.failed }}</h1>
                   </div>
-                  <trade-table chart-id="chart" v-bind:trades="setup.evaluations" @dateClick="showRange"></trade-table>
+                  <trade-table chart-id="chart" v-bind:trades="setup.evaluations" @dateClick="showRange"
+                               @magnify="magnify"></trade-table>
                 </div>
               </div>
             </tab>
@@ -102,7 +109,8 @@
                     <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
                     <h1 class="text-lg">Failed: {{ setup.summary.failed }}</h1>
                   </div>
-                  <trade-table chart-id="chart" v-bind:trades="setup.evaluations" @dateClick="showRange"></trade-table>
+                  <trade-table chart-id="chart" v-bind:trades="setup.evaluations" @dateClick="showRange"
+                               @magnify="magnify"></trade-table>
                 </div>
               </div>
             </tab>
@@ -122,8 +130,7 @@ import VSpinner from "../components/VSpinner";
 import TradeTable from "../components/TradeTable";
 
 import ApiService from "../services/ApiService";
-
-import {createChart, CrosshairMode} from 'lightweight-charts';
+import Chart from "../services/Chart";
 
 import VueMultiselect from 'vue-multiselect'
 
@@ -142,7 +149,11 @@ export default {
           handler: 'onSelect',
           deep: true
         },
-        range: 'onSelect'
+        range: 'onSelect',
+        magnifier: {
+          handler: 'magnifyUpdate',
+          deep: true
+        }
       },
   data: function ()
   {
@@ -156,6 +167,14 @@ export default {
           timeAdjust: '23:59:59',
         },
       },
+
+      magnifier: {
+        startDate: null,
+        endDate: null,
+        interval: null,
+      },
+
+      magnifiedCharts: [],
 
       toggle: true,
 
@@ -181,64 +200,14 @@ export default {
         exchange: null,
         symbol: null,
         interval: null,
-        indicators: [],
+        indicators: []
       },
 
       candlesPerRequest: 1000,
       isCrossHairMoving: false,
 
       charts: [],
-      series: [],
-      seriesOptions: {
-        // priceFormat: {
-        //   type: 'price',
-        //   precision: 2,
-        //   minMove: 0.0000000001,
-        // },
-      },
-      options: {
-        width: 400,
-        height: 600,
-
-        // priceFormat: {
-        //   type: 'price',
-        //   precision: 10,
-        //   minMove: 0.000000001,
-        // },
-
-        rightPriceScale: {
-          visible: true,
-          borderColor: 'rgba(197, 203, 206, 1)',
-          // precision: 10,
-          width: 60
-        },
-        leftPriceScale: {
-          // visible: true,
-          // borderColor: 'rgba(197, 203, 206, 1)',
-        },
-        layout: {
-          backgroundColor: 'rgb(0,0,0)',
-          textColor: 'white',
-        },
-        grid: {
-          horzLines: {
-            color: 'rgb(59,59,59)',
-          },
-          vertLines: {
-            color: 'rgb(59,59,59)',
-          },
-        },
-        crosshair: {
-          mode: CrosshairMode.Normal
-        },
-        timeScale: {
-          borderColor: 'rgba(197, 203, 206, 1)',
-          timeVisible: true,
-        },
-        handleScroll: {
-          vertTouchDrag: false,
-        },
-      }
+      series: []
     }
   },
 
@@ -264,14 +233,78 @@ export default {
 
   methods: {
 
+    magnifyUpdate: async function ()
+    {
+      if (!this.magnifier.startDate || !this.magnifier.endDate || !this.magnifier.interval)
+      {
+        return;
+      }
+
+      const range = {
+        start: new Date(this.magnifier.startDate).toISOString(),
+        end: new Date(this.magnifier.endDate).toISOString()
+      }
+
+      console.log(range)
+      const symbol = this.prepareSymbol(await ApiService.candles(this.sel.exchange,
+          this.sel.symbol,
+          this.magnifier.interval,
+          null,
+          null,
+          null,
+          range));
+
+      console.log(symbol);
+      //separate magnifier container
+      const container = this.$refs.chart;
+
+      for (let i in this.magnifiedCharts)
+      {
+        this.magnifiedCharts[i].remove();
+      }
+      this.magnifiedCharts = [];
+
+      this.magnifiedCharts[0] = this.newChart(container);
+      const candlestickSeries = this.magnifiedCharts[0].addCandlestickSeries();
+
+      candlestickSeries.setData(symbol.candles);
+      const indicators = this.symbol.indicators;
+
+      const handlers = this.handlers();
+      for (let key in indicators)
+      {
+        let handler = handlers[key]
+        let magnified = handler['magnify'](this.magnifier.startDate / 1000, this.magnifier.endDate / 1000, indicators[key])
+        let chart;
+        if (handler['requiresNewChart'])
+        {
+          chart = this.newChart(container);
+          this.magnifiedCharts.push(newChart);
+        } else
+        {
+          chart = this.magnifiedCharts[0];
+        }
+        let series = handler['init'](magnified, chart)
+        handler['update'](series, magnified)
+      }
+    },
+
+    magnify: function (startDate, endDate)
+    {
+      if (!startDate || !endDate)
+      {
+        throw Error('startDate or endDate is undefined');
+      }
+
+      this.magnifier.startDate = startDate;
+      this.magnifier.endDate = endDate;
+    },
+
     showRange: function (timestampA, timestampB)
     {
       for (let i in this.charts)
       {
-        this.charts[i].timeScale().setVisibleRange({
-          from: timestampA / 1000,
-          to: timestampB / 1000,
-        });
+        this.charts[i].showRange(timestampA / 1000, timestampB / 1000);
       }
     },
 
@@ -336,6 +369,7 @@ export default {
       return {
 
         Fib: {
+          requiresNewChart: false,
           prepare: (data, length) =>
           {
             for (let key in data)
@@ -349,9 +383,8 @@ export default {
             }
             return data;
           },
-          init: (data) =>
+          init: (data, chart) =>
           {
-            const chart = this.charts[0];
             const colors = {
               0: '#7c7c7c',
               236: '#e03333',
@@ -368,13 +401,11 @@ export default {
             for (let i in data)
             {
               series[i] = chart.addLineSeries({
-                ...{
-                  color: colors[i],
-                  lastValueVisible: true,
-                  lineWidth: 1,
-                  crosshairMarkerVisible: false,
-                  priceLineVisible: false,
-                }, ...this.seriesOptions
+                color: colors[i],
+                lastValueVisible: true,
+                lineWidth: 1,
+                crosshairMarkerVisible: false,
+                priceLineVisible: false,
               });
             }
 
@@ -387,9 +418,20 @@ export default {
           },
           setMarkers: markers =>
           {
+          },
+          magnify: (start, end, data = []) =>
+          {
+            const magnified = {};
+
+            for (let key in data)
+            {
+              magnified[key] = data[key].filter(item => item.time >= start && item.time <= end)
+            }
+            return magnified;
           }
         },
         RSI: {
+          requiresNewChart: true,
           prepare: (data, length) =>
           {
             data = this.objectMap((val, key) =>
@@ -401,10 +443,9 @@ export default {
 
             return data;
           },
-          init: (data, container) =>
+          init: (data, chart) =>
           {
-            const chart = this.createChart(container, this.options);
-            const lineSeries = chart.addLineSeries(this.seriesOptions);
+            const lineSeries = chart.addLineSeries();
 
             lineSeries.createPriceLine({
               price: 70.0,
@@ -427,6 +468,7 @@ export default {
           }
         },
         MACD: {
+          requiresNewChart: true,
           prepare: (data, length) =>
           {
             for (let key in data)
@@ -456,41 +498,32 @@ export default {
 
             return data;
           },
-
-          init: (data, container) =>
+          init: (data, chart) =>
           {
-            const chart = this.createChart(container, this.options);
             let series = {};
 
             series.divergence = chart.addHistogramSeries({
-              ...{
-                lineWidth: 1,
-                // title: 'divergence',
-                crosshairMarkerVisible: true,
-              }, ...this.seriesOptions
+              lineWidth: 1,
+              // title: 'divergence',
+              crosshairMarkerVisible: true,
             });
 
             series.macd = chart.addLineSeries({
-              ...{
-                color: '#0094ff',
-                lineWidth: 1,
-                // title: 'macd',
-                crosshairMarkerVisible: true
-              }, ...this.seriesOptions
+              color: '#0094ff',
+              lineWidth: 1,
+              // title: 'macd',
+              crosshairMarkerVisible: true
             });
 
             series.signal = chart.addLineSeries({
-              ...{
-                color: '#ff6a00',
-                lineWidth: 1,
-                // title: 'signal',
-                crosshairMarkerVisible: true,
-              }, ...this.seriesOptions
+              color: '#ff6a00',
+              lineWidth: 1,
+              // title: 'signal',
+              crosshairMarkerVisible: true,
             });
 
             return series;
           },
-
           update: (series, data) =>
           {
             for (let i in series)
@@ -543,7 +576,7 @@ export default {
       }
     },
 
-    prepareIndicators: function (indicators, length)
+    prepareIndicatorData: function (indicators, length)
     {
       const handlers = this.handlers();
 
@@ -564,10 +597,13 @@ export default {
 
       for (let key in handlers)
       {
-        if (indicators[key])
+        let data = indicators[key];
+        if (data)
         {
-          this.series[key] = handlers[key]['init'](indicators[key], container);
-          handlers[key]['update'](this.series[key], indicators[key]);
+          let handler = handlers[key];
+          let chart = handler['requiresNewChart'] ? this.createChart(container) : this.charts[0];
+          this.series[key] = handler['init'](data, chart);
+          handler['update'](this.series[key], data);
         }
       }
     },
@@ -581,19 +617,6 @@ export default {
         shape: data.side === 'BUY' ? 'arrowUp' : 'arrowDown',
         text: typeof namePrefix === String ? namePrefix + ': ' + data.name : data.name
       }
-    },
-
-    initCandlestickSeries: function (chart, data)
-    {
-      const candlestickSeries = chart.addCandlestickSeries(this.seriesOptions);
-      candlestickSeries.setData(data);
-
-      // const histogramSeries = this.charts[0].addHistogramSeries({
-      //   color: '#FFF5EE',
-      // });
-      // histogramSeries.setData(this.symbol.volumes);
-
-      return candlestickSeries;
     },
 
     initMarkers: function ()
@@ -651,7 +674,7 @@ export default {
         return;
       }
 
-      this.removeChart();
+      this.purge();
 
       await this.updateSymbol();
 
@@ -659,8 +682,12 @@ export default {
 
       const container = this.$refs.chart;
 
-      const chart = this.createChart(container, this.options);
-      this.series['candlestick'] = this.initCandlestickSeries(chart, this.symbol.candles);
+      const chart = this.createChart(container);
+      const candlestickSeries = chart.addCandlestickSeries();
+      candlestickSeries.setData(this.symbol.candles);
+
+      this.series['candlestick'] = candlestickSeries;
+
       this.initIndicators(container);
       this.initMarkers();
       this.registerEvents();
@@ -729,14 +756,18 @@ export default {
       }
     },
 
-    createChart: function (container, options)
+    newChart: function (container, options = {})
     {
       if (!container) throw Error('Chart container was not found.');
 
       options.height = container.offsetHeight;
       options.width = container.offsetWidth;
 
-      const chart = createChart(container, options);
+      return new Chart(container, options);
+    },
+    createChart: function (container, options = {})
+    {
+      const chart = this.newChart(container, options);
       this.charts.push(chart);
 
       return chart;
@@ -752,7 +783,7 @@ export default {
       }
 
       for (let i in this.charts)
-        this.charts[i].resize(container.offsetWidth, container.offsetHeight, false);
+        this.charts[i].resize(container.offsetWidth, container.offsetHeight);
     },
 
     onSelect: function ()
@@ -760,7 +791,7 @@ export default {
       this.replaceCandlestickChart();
     },
 
-    removeChart: function ()
+    purge: function ()
     {
       if (this.charts.length)
       {
@@ -797,7 +828,7 @@ export default {
         return {time: x.t / 1000, open: x.o, close: x.c, high: x.h, low: x.l}
       });
 
-      symbol.indicators = this.prepareIndicators(symbol.indicators, symbol.candles.length)
+      symbol.indicators = this.prepareIndicatorData(symbol.indicators, symbol.candles.length)
 
       return symbol;
     },

@@ -98,6 +98,11 @@ class ChartController extends Controller
         $symbol = $this->symbolRepo->fetchSymbol(exchange: $exchange::instance(), symbolName: $symbolName, interval: $interval);
         abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
 
+        if ($symbol->last_update <= $end)
+        {
+            $symbol->exchange()->updater()->update($symbol);
+        }
+
         $candles = $symbol->candles($range ? null : $limit, $start, $end);
         $this->symbolRepo->initIndicators($symbol, $candles, $indicators);
 

@@ -2,6 +2,7 @@
   <table class="table table-responsive text-white">
     <thead>
     <tr>
+      <th>Magnifier</th>
       <th>Details</th>
       <th>Side</th>
       <th>Entry</th>
@@ -27,12 +28,16 @@
     </tr>
     </thead>
     <tbody>
+
     <tr v-for="trade in paginated" class="bg-opacity-50" v-bind:class="{
         'bg-danger': trade.realized_roi < 0,
         'bg-success': trade.realized_roi > 0,
         'bg-warning' : !trade.is_entry_price_valid,
         'bg-info': trade.is_ambiguous
       }">
+      <td>
+        <button type="button" v-on:click="magnify(trade.entry.timestamp, trade.exit.timestamp)">Magnify</button>
+      </td>
       <td>
         <vue-json-pretty :path="'res'" :data="trade" :deep="0"></vue-json-pretty>
       </td>
@@ -101,7 +106,7 @@ import 'vue-json-pretty/lib/styles.css';
 export default {
   name: "TradeTable",
   props: ['trades', 'chartId'],
-  emits: ['dateClick'],
+  emits: ['dateClick', 'magnify'],
   components: {Pagination, VueJsonPretty},
 
   data: function ()
@@ -119,6 +124,11 @@ export default {
   },
 
   methods: {
+
+    magnify: function (startDate, endDate)
+    {
+      this.$emit('magnify', startDate, endDate);
+    },
 
     dateClick: function (a, b)
     {
