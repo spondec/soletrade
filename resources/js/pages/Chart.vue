@@ -233,6 +233,15 @@ export default {
 
   methods: {
 
+    purgeMagnifierCharts()
+    {
+      for (let i in this.magnifiedCharts)
+      {
+        this.magnifiedCharts[i].remove();
+      }
+      this.magnifiedCharts = [];
+    },
+
     magnifyUpdate: async function ()
     {
       if (!this.magnifier.startDate || !this.magnifier.endDate || !this.magnifier.interval)
@@ -258,11 +267,7 @@ export default {
       //separate magnifier container
       const container = this.$refs.chart;
 
-      for (let i in this.magnifiedCharts)
-      {
-        this.magnifiedCharts[i].remove();
-      }
-      this.magnifiedCharts = [];
+      this.purgeMagnifierCharts();
 
       this.magnifiedCharts[0] = this.newChart(container);
       const candlestickSeries = this.magnifiedCharts[0].addCandlestickSeries();
@@ -674,7 +679,8 @@ export default {
         return;
       }
 
-      this.purge();
+      this.purgeMainCharts();
+      this.purgeMagnifierCharts();
 
       await this.updateSymbol();
 
@@ -755,7 +761,6 @@ export default {
           handlers[key]['update'](this.series[key], this.symbol.indicators[key]);
       }
     },
-
     newChart: function (container, options = {})
     {
       if (!container) throw Error('Chart container was not found.');
@@ -765,6 +770,7 @@ export default {
 
       return new Chart(container, options);
     },
+
     createChart: function (container, options = {})
     {
       const chart = this.newChart(container, options);
@@ -791,7 +797,7 @@ export default {
       this.replaceCandlestickChart();
     },
 
-    purge: function ()
+    purgeMainCharts: function ()
     {
       if (this.charts.length)
       {
