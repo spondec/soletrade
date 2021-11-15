@@ -5,7 +5,7 @@ namespace App\Trade;
 use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
 use App\Trade\Exchange\AbstractExchange;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 
@@ -33,13 +33,7 @@ class CandleUpdater
     {
         $startTime = time();
 
-        $this->symbolRepo->insertIgnoreSymbols($this->symbols,
-            $id = $this->exchange->id(),
-            $interval);
-
-        $symbols = $this->symbolRepo->fetchSymbols($this->symbols,
-            $interval,
-            $id);
+        $symbols = $this->indexSymbols($interval);
 
         if ($filter) $symbols = $symbols->filter($filter)->values();
 
@@ -119,5 +113,29 @@ class CandleUpdater
         {
             DB::select(DB::raw('UNLOCK TABLES'));
         }
+    }
+
+    public function bulkIndexSymbols(array $intervals): Collection
+    {
+        $symbols = [];
+        foreach ($intervals as $interval)
+        {
+            $symbols[$interval] = $this->indexSymbols($interval);
+        }
+
+        return new Collection($symbols);
+    }
+
+    public function indexSymbols(string $interval): Collection
+    {
+        $this->symbolRepo->insertIgnoreSymbols($this->symbols,
+            $id = $this->exchange->id(),
+            $interval);
+
+        $symbols = $this->symbolRepo->fetchSymbols($this->symbols,
+            $interval,
+            $id);
+
+        return $symbols;
     }
 }
