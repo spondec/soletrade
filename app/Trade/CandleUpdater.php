@@ -28,22 +28,19 @@ class CandleUpdater
         $this->limit = $this->exchange->getMaxCandlesPerRequest();
     }
 
-    protected function insertSymbols(string $interval)
-    {
-        $this->symbolRepo->insertIgnoreSymbols($this->symbols,
-            $exchangeId = $this->exchange->id(),
-            $interval);
-        return $this->symbolRepo->fetchSymbols($this->symbols,
-            $interval,
-            $exchangeId);
-    }
-
     /** @return Symbol[] */
     public function updateByInterval(string $interval, int $maxRunTime = 0, ?\Closure $filter = null): ?Collection
     {
         $startTime = time();
 
-        $symbols = $this->insertSymbols($interval);
+        $this->symbolRepo->insertIgnoreSymbols($this->symbols,
+            $id = $this->exchange->id(),
+            $interval);
+
+        $symbols = $this->symbolRepo->fetchSymbols($this->symbols,
+            $interval,
+            $id);
+
         if ($filter) $symbols = $symbols->filter($filter)->values();
 
         if (!$symbols->first())
