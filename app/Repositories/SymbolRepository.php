@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Symbol;
 use App\Trade\CandleMap;
 use App\Trade\Exchange\AbstractExchange;
+use App\Trade\Log;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\ArrayShape;
@@ -81,9 +82,9 @@ class SymbolRepository
         ];
     }
 
-    public function fetchCandlesLimit(Symbol $symbol,
-                                      int $startDate,
-                                      int $limit,
+    public function fetchCandlesLimit(Symbol  $symbol,
+                                      int     $startDate,
+                                      int     $limit,
                                       ?string $interval = null): Collection
     {
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
@@ -103,11 +104,11 @@ class SymbolRepository
         return $candles;
     }
 
-    public function fetchCandlesBetween(Symbol $symbol,
-                                        int $startDate,
-                                        int $endDate,
+    public function fetchCandlesBetween(Symbol  $symbol,
+                                        int     $startDate,
+                                        int     $endDate,
                                         ?string $interval = null,
-                                        bool $includeStart = false): Collection
+                                        bool    $includeStart = false): Collection
     {
         if ($startDate >= $endDate)
         {
@@ -136,7 +137,7 @@ class SymbolRepository
         return !$interval || $symbol->interval === $interval ? $symbol->id :
             DB::table('symbols')
                 ->where('exchange_id', $symbol->exchange_id)
-                ->where('interval', $interval)
+                ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval)
                 ->where('symbol', $symbol->symbol)
                 ->get('id')->first()->id;
     }
@@ -200,16 +201,30 @@ class SymbolRepository
             ->get();
     }
 
+    public function findSymbols(AbstractExchange|int $exchange, string|array $symbolName, string $interval): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Symbol::query()
+            ->where('exchange_id', is_int($exchange) ? $exchange : $exchange::instance()->id())
+            ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval);
+
+        if (is_array($symbolName))
+        {
+            $query->whereIn('symbol', $symbolName);
+        }
+        else
+        {
+            $query->where('symbol', $symbolName);
+        }
+
+        return $query;
+    }
+
     /**
      * @return Symbol[]
      */
     public function fetchSymbols(array $symbols, string $interval, int $exchangeId): Collection
     {
-        return Symbol::query()
-            ->whereIn('symbol', $symbols)
-            ->where('interval', $interval)
-            ->where('exchange_id', $exchangeId)
-            ->get();
+        return $this->findSymbols($exchangeId, $symbols, $interval)->get();
     }
 
     public function fetchIntervals(): Collection
@@ -227,14 +242,24 @@ class SymbolRepository
             ->first();
     }
 
+    public function fetchSymbolFromExchange(AbstractExchange $exchange, string $symbolName, string $interval)
+    {
+        Log::execTimeStart('SymbolRepository::fetchSymbolFromExchange()');
+        $filter = static fn(Symbol $symbol): bool => $symbol->symbol == $symbolName && $symbol->interval == $interval;
+        $symbol = $exchange::instance()
+            ->updater()
+            ->updateByInterval(interval: $interval, filter: $filter)
+            ?->first();
+        Log::execTimeFinish('SymbolRepository::fetchSymbolFromExchange()');
+
+        return $symbol;
+    }
+
     public function fetchSymbol(AbstractExchange $exchange, string $symbolName, string $interval): ?Symbol
     {
         /** @var Symbol $symbol */
-        $symbol = Symbol::query()
-            ->where('exchange_id', $exchange::instance()->id())
-            ->where('symbol', $symbolName)
-            ->where('interval', $interval)
-            ->first();
+        $symbol = $this->findSymbols($exchange, $symbolName, $interval)->first();
+
         return $symbol;
     }
 }
