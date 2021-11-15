@@ -8,26 +8,19 @@ namespace App\Trade\Evaluation;
 
 use App\Models\Evaluation;
 use App\Models\Signal;
+use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
-use App\Trade\HasConfig;
+use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Facades\App;
 
 class Evaluator
 {
-    use HasConfig;
-
     protected SymbolRepository $symbolRepo;
 
-    protected array $config = [
-        'timeout'    => 1440, //trade duration in minutes - exceeding trades will be closed
-        'stopAtExit' => true //close trade at exit setup
-    ];
-
-    public function __construct(array $config = [])
+    public function __construct(protected AbstractStrategy $strategy)
     {
-        $this->mergeConfig($config);
         $this->symbolRepo = App::make(SymbolRepository::class);
     }
 
@@ -61,9 +54,11 @@ class Evaluator
 
     protected function realizeWithExit(Evaluation $evaluation): void
     {
-        $loop = new TradeLoop($evaluation->entry);
+        $evaluationSymbol = $this->getEvaluationSymbol($entry = $evaluation->entry);
 
-        if (time() * 1000 >= $loop->getSymbol()->last_update + 60 * 1000)
+        $loop = new TradeLoop($entry, $evaluationSymbol);
+
+        if (time() * 1000 >= $loop->getEvaluationSymbol()->last_update + 60 * 1000)
         {
             $loop->updateCandles();
         }
@@ -78,11 +73,21 @@ class Evaluator
         $this->fillEvaluation($evaluation, $loop->status(), $position);
     }
 
+    protected function getEvaluationSymbol(TradeSetup $entry): Symbol
+    {
+        $symbol = $entry->symbol;
+        $exchange = $symbol->exchange();
+        $symbolName = $symbol->symbol;
+        $evaluationInterval = $this->strategy->config('evaluationInterval');
+        return $this->symbolRepo->fetchSymbol($exchange, $symbolName, $evaluationInterval)
+            ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
+    }
+
     protected function applyPositionLimitations(Position $position, Evaluation $evaluation, TradeLoop $loop): void
     {
         if ($position->isOpen())
         {
-            if ($this->config('stopAtExit'))
+            if ($this->strategy->config('stopAtExit'))
             {
                 $candle = $loop->getLastCandle();
 
@@ -91,7 +96,7 @@ class Evaluator
             }
             else
             {
-                $endDate = $evaluation->entry_timestamp + $this->config['timeout'] * 60 * 1000;
+                $endDate = $evaluation->entry_timestamp + $this->strategy->config('timeout') * 60 * 1000;
 
                 if ($endDate > $loop->getLastRunDate())
                 {
@@ -152,7 +157,7 @@ class Evaluator
                     'exit'  => $position->price('exit')->history(),
                     'stop'  => $position->price('stop')->history()
                 ],
-                'transactions'        => [
+                'transactions' => [
                     $position->getTransactions()
                 ]
             ];

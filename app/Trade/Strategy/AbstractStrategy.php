@@ -63,7 +63,16 @@ abstract class AbstractStrategy
         $this->actions = new \WeakMap();
     }
 
-    public function newAction(TradeSetup $setup, string $actionClass, array $config)
+    abstract protected function indicatorSetup(): array;
+
+    abstract protected function tradeSetup(): array;
+
+    protected function getBindMap(): array
+    {
+        return ['last_signal_price' => 'price'];
+    }
+
+    public function newAction(TradeSetup $setup, string $actionClass, array $config): void
     {
         if (!is_subclass_of($actionClass, AbstractTradeActionHandler::class))
         {
@@ -76,29 +85,6 @@ abstract class AbstractStrategy
         }
 
         $this->actions[$setup][$actionClass] = $config;
-    }
-
-    public function actions(TradeSetup $setup): ?Collection
-    {
-        return $this->actions[$setup] ?? null;
-    }
-
-    protected function getDefaultConfig(): array
-    {
-        return [
-            'maxCandles' => 1000,
-            'startDate'  => null,
-            'endDate'    => null
-        ];
-    }
-
-    abstract protected function indicatorSetup(): array;
-
-    abstract protected function tradeSetup(): array;
-
-    protected function getBindMap(): array
-    {
-        return ['last_signal_price' => 'price'];
     }
 
     public function trades(): Collection
@@ -351,9 +337,26 @@ abstract class AbstractStrategy
         return $tradeSetup;
     }
 
+    public function actions(TradeSetup $setup): ?Collection
+    {
+        return $this->actions[$setup] ?? null;
+    }
+
     public function indicator(int $id): AbstractIndicator
     {
         return $this->indicators[$id];
+    }
+
+    protected final function getDefaultConfig(): array
+    {
+        return [
+            'maxCandles'         => 1000,
+            'startDate'          => null,
+            'endDate'            => null,
+            'timeout'            => 1440, //trade duration in minutes - exceeding trades will be closed
+            'stopAtExit'         => true, //close trade at exit setup
+            'evaluationInterval' => '1m'
+        ];
     }
 
     protected function getSavePoints(string|int $bind, Signature $signature): array

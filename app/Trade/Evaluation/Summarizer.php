@@ -7,29 +7,23 @@ namespace App\Trade\Evaluation;
 use App\Models\Evaluation;
 use App\Models\Summary;
 use App\Trade\Calc;
-use App\Trade\HasConfig;
+use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Collection;
 
 class Summarizer
 {
-    use HasConfig;
-
-    protected array $config = [
-        'feeRatio'   => 0.001,
-        'riskReward' => [
-            'interval' => '1m',
-            'total'    => 15
-        ]
-    ];
-
     protected array $highestRoi;
     protected array $lowestRoi;
 
     protected float $balance = 100;
 
-    public function __construct(array $config = [])
+    public function __construct(protected AbstractStrategy $strategy)
     {
-        $this->mergeConfig($config);
+    }
+
+    public function strategy(): AbstractStrategy
+    {
+        return $this->strategy;
     }
 
     /**
@@ -55,7 +49,7 @@ class Summarizer
 
         if ($isEntryValid && !$isAmbiguous && $relativeRoi)
         {
-            $this->balance = $this->cutCommission($this->balance, $evaluation->used_size, $this->config['feeRatio'] * 2);
+            $this->balance = $this->cutCommission($this->balance, $evaluation->used_size, $this->strategy->config('feeRatio') * 2);
             $pnl = Calc::pnl($this->balance, $relativeRoi);
 
             $this->balance += $pnl;
@@ -99,7 +93,7 @@ class Summarizer
     protected function setupSummary(): Summary
     {
         $summary = new Summary();
-        $summary->fee_ratio = $this->config['feeRatio'];
+        $summary->fee_ratio = $this->strategy->config('feeRatio');
 
         return $summary;
     }

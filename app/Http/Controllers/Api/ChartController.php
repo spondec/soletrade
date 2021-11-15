@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Evaluation;
+use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
-use App\Trade\Evaluation\Summarizer;
 use App\Trade\HasName;
 use App\Trade\Log;
 use App\Trade\StrategyTester;
@@ -95,7 +95,17 @@ class ChartController extends Controller
         $start = $range ? Carbon::parse($range['start'])->getTimestampMs() : null;
         $end = $range ? Carbon::parse($range['end'])->getTimestampMs() : null;
 
-        $symbol = $this->symbolRepo->fetchSymbol(exchange: $exchange::instance(), symbolName: $symbolName, interval: $interval);
+        $symbol = $this->getSymbol($exchange, $symbolName, $interval);
+
+        if (!$symbol)
+        {
+            $filter = static fn(Symbol $symbol): bool => $symbol->symbol == $symbolName && $symbol->interval == $interval;
+            $symbol = $exchange::instance()
+                ->updater()
+                ->updateByInterval(interval: $interval, filter: $filter)
+                ?->first();
+        }
+
         abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
 
         if ($symbol->last_update <= $end)
@@ -108,13 +118,11 @@ class ChartController extends Controller
 
         if ($strategy)
         {
-            $tester = new StrategyTester(App::make(SymbolRepository::class), [
-                'strategy' => [
-                    'startDate' => $start,
-                    'endDate'   => $end
-                ]
+            $tester = new StrategyTester(App::make(SymbolRepository::class), $strategy, [
+                'startDate' => $start,
+                'endDate'   => $end
             ]);
-            $result = $tester->runStrategy($symbol, $strategy);
+            $result = $tester->runStrategy($symbol);
 
             Log::execTimeStart('Evaluating and summarizing trades');
             $summaryCollection = $result->trades()->map(static function (Collection $trades) use ($tester): array {
@@ -140,6 +148,18 @@ class ChartController extends Controller
         }
 
         return $symbol->toArray();
+    }
+
+    /**
+     * @param AbstractExchange|string $exchange
+     * @param string                  $symbolName
+     * @param string                  $interval
+     *
+     * @return \App\Models\Symbol|null
+     */
+    protected function getSymbol(AbstractExchange|string $exchange, string $symbolName, string $interval): ?\App\Models\Symbol
+    {
+        return $this->symbolRepo->fetchSymbol(exchange: $exchange::instance(), symbolName: $symbolName, interval: $interval);
     }
 
 }

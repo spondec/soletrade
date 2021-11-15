@@ -2,7 +2,6 @@
 
 namespace App\Trade;
 
-use App\Models\Signal;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
@@ -12,50 +11,35 @@ use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use JetBrains\PhpStorm\ArrayShape;
+use App\Models\Summary;
 
 class StrategyTester
 {
     use HasConfig;
 
-    protected array $config = [
-        'strategy'   => [
+    protected array $config = [];
+
+    protected final function getDefaultConfig(): array
+    {
+        return [
             'maxCandles' => null,
             'startDate'  => null,
             'endDate'    => null
-        ],
-        'evaluator'  => [],
-        'summarizer' => []
-    ];
+        ];
+    }
+
+    protected AbstractStrategy $strategy;
 
     protected Evaluator $evaluator;
     protected Summarizer $summarizer;
 
-    public function __construct(protected SymbolRepository $symbolRepo, array $config = [])
+    public function __construct(protected SymbolRepository $symbolRepo, string $strategyClass, array $config = [])
     {
         $this->mergeConfig($config);
+        $this->strategy = $this->setupStrategy($strategyClass, $config);
 
-        $this->evaluator = App::make(Evaluator::class, ['config' => $config['evaluator'] ?? []]);
-        $this->summarizer = App::make(Summarizer::class, ['config' => $config['summarizer'] ?? []]);
-    }
-
-    public function runStrategy(Symbol $symbol, string $strategyClass, array $config = []): AbstractStrategy
-    {
-        $strategy = $this->setupStrategy($strategyClass, $config);
-
-        Log::execTimeStart('AbstractStrategy::run()');
-        $strategy->run($symbol);
-        Log::execTimeFinish('AbstractStrategy::run()');
-
-        return $strategy;
-    }
-
-    #[ArrayShape(['evaluations' => "\Illuminate\Support\Collection|\App\Models\Evaluation[]", 'summary' => "\App\Models\Summary"])]
-    public function summary(Collection $trades): array
-    {
-        return [
-            'evaluations' => $evaluations = $this->evaluate($trades),
-            'summary'     => $this->summarizer->summarize($evaluations)
-        ];
+        $this->evaluator = App::make(Evaluator::class, ['strategy' => $this->strategy]);
+        $this->summarizer = App::make(Summarizer::class, ['strategy' => $this->strategy]);
     }
 
     protected function setupStrategy(string $class, array $config): AbstractStrategy
@@ -65,13 +49,31 @@ class StrategyTester
             throw new \InvalidArgumentException('Invalid strategy class: ' . $class);
         }
 
-        $config = array_merge_recursive_distinct($this->config['strategy'], $config);
+        $config = array_merge_recursive_distinct($this->config, $config);
 
         return new $class(config: $config);
     }
 
+    public function runStrategy(Symbol $symbol): AbstractStrategy
+    {
+        Log::execTimeStart('AbstractStrategy::run()');
+        $this->strategy->run($symbol);
+        Log::execTimeFinish('AbstractStrategy::run()');
+
+        return $this->strategy;
+    }
+
+    #[ArrayShape(['evaluations' => "\Illuminate\Support\Collection|\App\Models\Evaluation[]", 'summary' => Summary::class])]
+    public function summary(Collection $trades): array
+    {
+        return [
+            'evaluations' => $evaluations = $this->evaluate($trades),
+            'summary'     => $this->summarizer->summarize($evaluations)
+        ];
+    }
+
     /**
-     * @param TradeSetup[]|Signal[] $trades
+     * @param TradeSetup[] $trades
      */
     protected function evaluate(Collection $trades): Collection
     {
