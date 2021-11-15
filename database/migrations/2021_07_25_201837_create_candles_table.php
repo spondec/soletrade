@@ -15,7 +15,7 @@ class CreateCandlesTable extends Migration
     {
         Schema::create('candles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('symbol_id')->index();
+            $table->foreignId('symbol_id')->index()->constrained();
             $table->bigInteger('t')->index();
             $table->decimal('o');
             $table->decimal('c');

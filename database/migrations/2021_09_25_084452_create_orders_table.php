@@ -15,8 +15,8 @@ class CreateOrdersTable extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('trade_setup_id')->nullable();
-            $table->foreignId('exchange_id');
+            $table->foreignId('trade_setup_id')->nullable()->constrained();
+            $table->foreignId('exchange_id')->constrained();
             $table->boolean('is_open')->default(true);
             $table->enum('status', [
                 'CLOSED',

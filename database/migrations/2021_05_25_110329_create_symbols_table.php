@@ -16,8 +16,8 @@ class CreateSymbolsTable extends Migration
         Schema::create('symbols', function (Blueprint $table) {
             $table->id();
             $table->string('symbol', 20)->index();
-            $table->string('interval', 3)->index();
-            $table->foreignId('exchange_id');
+            $table->string('interval', 3)->charset('utf8mb4')->collation('utf8mb4_bin');
+            $table->foreignId('exchange_id')->constrained();
             $table->bigInteger('last_update', unsigned: true)->default(0);
             $table->unique(['exchange_id', 'symbol', 'interval']);
             $table->timestamps();

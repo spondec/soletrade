@@ -15,8 +15,8 @@ class CreateSignalsTable extends Migration
     {
         Schema::create('signals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('symbol_id');
-            $table->foreignId('indicator_id');
+            $table->foreignId('symbol_id')->constrained();
+            $table->foreignId('indicator_id')->constrained('signatures');
             $table->integer('signature_id');
             $table->string('name', 50)->index();
             $table->enum('side', ['BUY', 'SELL']);

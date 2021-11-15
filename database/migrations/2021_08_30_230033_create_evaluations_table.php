@@ -16,8 +16,8 @@ class CreateEvaluationsTable extends Migration
         Schema::create('evaluations', function (Blueprint $table) {
             $table->id();
             $table->string('type');
-            $table->foreignId('entry_id');
-            $table->foreignId('exit_id')->nullable();
+            $table->foreignId('entry_id')->constrained('trade_setups');
+            $table->foreignId('exit_id')->nullable()->constrained('trade_setups');
             $table->float('realized_roi')->nullable();
             $table->float('relative_roi')->nullable();
             $table->float('highest_roi')->nullable();

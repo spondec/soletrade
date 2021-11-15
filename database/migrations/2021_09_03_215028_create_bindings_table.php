@@ -17,7 +17,7 @@ class CreateBindingsTable extends Migration
             $table->id();
             $table->string('bindable_type');
             $table->foreignId('bindable_id');
-            $table->foreignId('signature_id');
+            $table->foreignId('signature_id')->constrained();
             $table->string('column');
             $table->string('class');
             $table->string('name');

@@ -15,7 +15,7 @@ class CreateSavePointsTable extends Migration
     {
         Schema::create('save_points', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('binding_signature_id')->unsigned();
+            $table->foreignId('binding_signature_id')->constrained('signatures');
             $table->bigInteger('timestamp');
             $table->decimal('value');
             $table->unique(['binding_signature_id', 'timestamp']);

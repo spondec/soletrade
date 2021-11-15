@@ -15,7 +15,7 @@ class CreateTradeActionsTable extends Migration
     {
         Schema::create('trade_actions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('trade_setup_id');
+            $table->foreignId('trade_setup_id')->constrained();
             $table->string('class');
             $table->json('config');
             $table->boolean('is_taken')->default(false);

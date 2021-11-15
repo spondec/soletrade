@@ -16,7 +16,7 @@ class CreatePositionsTable extends Migration
         Schema::create('positions', function (Blueprint $table) {
             $table->id();
             $table->boolean('is_open')->default(true);
-            $table->foreignId('exchange_id');
+            $table->foreignId('exchange_id')->constrained();
             $table->string('symbol', 20);
             $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('quantity');
