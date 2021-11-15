@@ -13,9 +13,6 @@ class TradeLoop
 {
     protected SymbolRepository $repo;
 
-    protected string $interval = '1m';
-    protected Symbol $symbol;
-
     protected int $startDate;
     protected int $lastRunDate;
 
@@ -29,21 +26,27 @@ class TradeLoop
 
     protected TradeStatus $status;
 
-    public function __construct(protected TradeSetup $entry)
+    public function __construct(protected TradeSetup $entry, protected Symbol $evaluationSymbol)
     {
+        $this->assertTradeSymbolMatchesEvaluationSymbol();
         $this->status = new TradeStatus($entry);
         $this->repo = App::make(SymbolRepository::class);
 
         $this->firstCandle = $this->repo->fetchNextCandle($entry->symbol_id, $entry->timestamp);
         $this->startDate = $this->firstCandle->t;
+    }
 
-        $symbol = $this->entry->symbol;
-        $this->symbol = $this->repo->fetchSymbol($this->entry->symbol->exchange(), $symbol->symbol, $this->interval);
+    protected function assertTradeSymbolMatchesEvaluationSymbol(): void
+    {
+        if ($this->entry->symbol->symbol !== $this->evaluationSymbol->symbol)
+        {
+            throw new \InvalidArgumentException('Evaluation symbol name does not match with the TradeSetup symbol name.');
+        }
     }
 
     public function getLastCandle(): \stdClass
     {
-        return $this->repo->fetchCandle($this->entry->symbol, $this->lastRunDate, $this->interval);
+        return $this->repo->fetchCandle($this->entry->symbol, $this->lastRunDate, $this->evaluationSymbol->interval);
     }
 
     public function getLastRunDate(): int
@@ -59,7 +62,7 @@ class TradeLoop
         $candles = $this->repo->fetchCandlesBetween($this->entry->symbol,
             $this->firstCandle->t,
             $lastCandle->t,
-            $this->interval);
+            $this->evaluationSymbol->interval);
         $savePoint = $this->newSavePointAccess($this->firstCandle->t, $lastCandle->t);
 
         $this->runLoop($candles, $savePoint);
@@ -183,12 +186,12 @@ class TradeLoop
     {
         $this->assertExitDateGreaterThanEntryDate($this->lastRunDate, $endDate);
         $symbol = $this->entry->symbol;
-        $intervalId = $this->repo->findSymbolIdForInterval($symbol, $this->interval);
+        $intervalId = $this->repo->findSymbolIdForInterval($symbol, $this->evaluationSymbol->interval);
         $startDate = $this->repo->fetchNextCandle($intervalId, $this->lastRunDate)->t;
         $candles = $this->repo->fetchCandlesBetween($symbol,
             $startDate,
             $endDate,
-            $this->interval);
+            $this->evaluationSymbol->interval);
         $savePoint = $this->newSavePointAccess($this->lastRunDate, $endDate);
 
         $this->runLoop($candles, $savePoint);
@@ -202,7 +205,7 @@ class TradeLoop
             $candles = $this->repo->fetchCandlesLimit($this->entry->symbol,
                 $startDate ?? $this->firstCandle->t,
                 $chunk,
-                $this->interval);
+                $this->evaluationSymbol->interval);
 
             if (!$first = $candles->first())
             {
@@ -223,10 +226,11 @@ class TradeLoop
 
     public function updateCandles(): void
     {
-        $this->symbol->exchange()->updater()->update($this->symbol);
+        $this->evaluationSymbol->exchange()->updater()->update($this->evaluationSymbol);
     }
-    public function getSymbol(): Symbol
+
+    public function getEvaluationSymbol(): Symbol
     {
-        return $this->symbol;
+        return $this->evaluationSymbol;
     }
 }
