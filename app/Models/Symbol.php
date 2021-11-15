@@ -89,11 +89,11 @@ class Symbol extends Model
         }
         if ($end)
         {
-            $query->where('t', '<', $end);
+            $query->where('t', '<=', $end);
         }
         if ($start)
         {
-            $query->where('t', '>', $start);
+            $query->where('t', '>=', $start);
         }
 
         $candles = $query->get();
