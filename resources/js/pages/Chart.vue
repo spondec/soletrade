@@ -7,28 +7,28 @@
       </div>
       <div class="mb-3">
         <label class="form-label">Exchange</label>
-        <vue-multiselect v-model="sel.exchange" :options="exchanges" :allow-empty="false"/>
+        <vue-multiselect v-model="sel.exchange" :allow-empty="false" :options="exchanges"/>
       </div>
       <div class="mb-3">
         <label class="form-label">Symbol</label>
-        <vue-multiselect v-model="sel.symbol" :options="symbols[sel.exchange]" :allow-empty="false"/>
+        <vue-multiselect v-model="sel.symbol" :allow-empty="false" :options="symbols[sel.exchange]"/>
       </div>
       <div class="mb-3">
         <label class="form-label">Interval</label>
-        <vue-multiselect v-model="sel.interval" :options="intervals" :allow-empty="false"/>
+        <vue-multiselect v-model="sel.interval" :allow-empty="false" :options="intervals"/>
       </div>
       <div class="mb-3">
         <label class="form-label">Indicators</label>
-        <vue-multiselect v-model="sel.indicators" :options="indicators" :multiple="true"/>
+        <vue-multiselect v-model="sel.indicators" :multiple="true" :options="indicators"/>
       </div>
     </div>
 
     <DatePicker v-model="range" :model-config="modelConfig" is-dark is-range is24hr>
       <template v-slot="{ inputValue, inputEvents }">
         <div class="flex justify-center items-center">
-          <input v-on="inputEvents.start"
-                 :value="inputValue.start"
-                 class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"/>
+          <input :value="inputValue.start"
+                 class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                 v-on="inputEvents.start"/>
           <svg class="w-4 h-4 mx-2"
                fill="none"
                stroke="currentColor"
@@ -38,9 +38,9 @@
                   stroke-linejoin="round"
                   stroke-width="2"/>
           </svg>
-          <input v-on="inputEvents.end"
-                 :value="inputValue.end"
-                 class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"/>
+          <input :value="inputValue.end"
+                 class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                 v-on="inputEvents.end"/>
         </div>
       </template>
     </DatePicker>
@@ -50,7 +50,7 @@
       <vue-multiselect v-model="magnifier.interval" :allow-empty="false" :options="intervals"/>
     </div>
 
-    <div class="chart-container" ref="chart">
+    <div ref="chart" class="chart-container">
       <v-spinner v-if="this.loading"/>
       <p v-else-if="!this.symbol" class="text-lg-center">Requested chart is not available.</p>
       <div v-if="symbol && symbol.strategy">
@@ -179,7 +179,6 @@ export default {
       toggle: true,
 
       loading: false,
-      notFound: false,
 
       cache: [],
       useCache: false,
@@ -204,7 +203,6 @@ export default {
       },
 
       candlesPerRequest: 1000,
-      isCrossHairMoving: false,
 
       charts: [],
       series: []
@@ -242,6 +240,11 @@ export default {
       this.magnifiedCharts = [];
     },
 
+    magnifyMarkers: function (start, end, markers)
+    {
+      return markers.filter(item => item.time >= start && item.time <= end)
+    },
+
     magnifyUpdate: async function ()
     {
       if (!this.magnifier.startDate || !this.magnifier.endDate || !this.magnifier.interval)
@@ -249,12 +252,15 @@ export default {
         return;
       }
 
+      const start = this.magnifier.startDate / 1000;
+      const end = this.magnifier.endDate / 1000;
+
       const range = {
         start: new Date(this.magnifier.startDate).toISOString(),
         end: new Date(this.magnifier.endDate).toISOString()
       }
-
       console.log(range)
+
       const symbol = this.prepareSymbol(await ApiService.candles(this.sel.exchange,
           this.sel.symbol,
           this.magnifier.interval,
@@ -264,22 +270,23 @@ export default {
           range));
 
       console.log(symbol);
-      //separate magnifier container
+
+      //TODO separate magnifier container
       const container = this.$refs.chart;
-
       this.purgeMagnifierCharts();
-
       this.magnifiedCharts[0] = this.newChart(container);
+
       const candlestickSeries = this.magnifiedCharts[0].addCandlestickSeries();
-
+      candlestickSeries.setMarkers(this.magnifyMarkers(start, end, this.symbol.markers.trades));
       candlestickSeries.setData(symbol.candles);
-      const indicators = this.symbol.indicators;
 
+      const indicators = this.symbol.indicators;
       const handlers = this.handlers();
+
       for (let key in indicators)
       {
         let handler = handlers[key]
-        let magnified = handler['magnify'](this.magnifier.startDate / 1000, this.magnifier.endDate / 1000, indicators[key])
+        let magnified = handler['magnify'](start, end, indicators[key])
         let chart;
         if (handler['requiresNewChart'])
         {
@@ -329,21 +336,6 @@ export default {
 
       for (let i in this.charts)
       {
-        // this.charts[i].subscribeCrosshairMove(param =>
-        // {
-        //   if (!param.point) return;
-        //   if (!param.time) return;
-        //   if (this.isCrossHairMoving) return;
-        //
-        //   this.isCrossHairMoving = true;
-        //
-        //   for (let j in this.charts)
-        //     if (j !== i)
-        //       this.charts[j].moveCrosshair(param.point);
-        //
-        //   this.isCrossHairMoving = false;
-        // });
-
         this.charts[i].timeScale().subscribeVisibleLogicalRangeChange(range =>
         {
           for (let j in this.charts)
@@ -637,6 +629,7 @@ export default {
           {
             markers = this.prepareSignalMarkers(markers, strategy.trades[id].evaluations, true);
           }
+          this.symbol.markers.trades = markers;
           this.series['candlestick'].setMarkers(markers);
         }
 
@@ -835,6 +828,8 @@ export default {
       });
 
       symbol.indicators = this.prepareIndicatorData(symbol.indicators, symbol.candles.length)
+
+      symbol.markers = {trades: [], signals: []};
 
       return symbol;
     },
