@@ -4,15 +4,25 @@ namespace Trade\Evaluation;
 
 use App\Models\Evaluation;
 use App\Trade\Evaluation\Summarizer;
+use App\Trade\Strategy\AbstractStrategy;
 use PHPUnit\Framework\TestCase;
 
 class SummaryTest extends TestCase
 {
+    protected function getStrategy(): AbstractStrategy
+    {
+        $strategy = \Mockery::mock(AbstractStrategy::class);
+        $strategy->expects('config')
+            ->with('feeRatio')
+            ->andReturn(0.001);
+
+        return $strategy;
+    }
+
     public function test_evaluation_count()
     {
         $evaluation = $this->getTenPercentPositiveRoiBuyEvaluation();
-
-        $summarizer = new Summarizer();
+        $summarizer = new Summarizer($this->getStrategy());
         $summary = $summarizer->summarize($evaluations = collect([$evaluation]));
 
         $this->assertEquals($evaluations->count(), $summary->total);
@@ -22,9 +32,9 @@ class SummaryTest extends TestCase
     {
         $evaluation = $this->getTenPercentPositiveRoiBuyEvaluation();
 
-        $summarizer = new Summarizer();
+        $summarizer = new Summarizer($this->getStrategy());
         $summary = $summarizer->summarize(collect([$evaluation]));
-        $feeRatio = $summarizer->config('feeRatio');
+        $feeRatio = $summarizer->strategy()->config('feeRatio');
 
         $this->assertEquals($feeRatio, $summary->fee_ratio);
         $this->assertEquals($this->calcFeeIncludedRoi(10, $feeRatio), $summary->roi);
