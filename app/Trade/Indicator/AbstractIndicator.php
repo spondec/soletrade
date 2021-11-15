@@ -39,12 +39,16 @@ abstract class AbstractIndicator
     private int $gap = 0;
     private int $index = 0;
 
+    protected SymbolRepository $symbolRepo;
+
     public function __construct(protected Symbol     $symbol,
                                 protected Collection $candles,
                                 array                $config = [],
                                 protected ?\Closure  $signalCallback = null)
     {
         $this->mergeConfig($config);
+
+        $this->symbolRepo = App::make(SymbolRepository::class);
 
         /** @var Signature signature */
         $this->signature = $this->register([
@@ -281,6 +285,11 @@ abstract class AbstractIndicator
     public function data(): Collection
     {
         return $this->data;
+    }
+
+    public function symbolRepo(): SymbolRepository
+    {
+        return $this->symbolRepo;
     }
 
     protected function getBindable(): array
