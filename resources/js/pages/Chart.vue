@@ -245,6 +245,36 @@ export default {
       return markers.filter(item => item.time >= start && item.time <= end)
     },
 
+    reduceSeriesData: function (start, end, seriesData)
+    {
+      let acc = Array.isArray(seriesData) ? [] : {};
+
+      for (let i in seriesData)
+      {
+        let item = seriesData[i];
+        if (item.time)
+        {
+          if (item.time >= start && item.time <= end)
+          {
+            acc.push(item);
+          } else
+          {
+            let last = acc[acc.length - 1];
+
+            if (last && last.time < end)
+            {
+              acc.push(item);
+            }
+          }
+        } else
+        {
+          acc[i] = this.reduceSeriesData(start, end, item);
+        }
+      }
+
+      return acc;
+    },
+
     magnifyUpdate: async function ()
     {
       if (!this.magnifier.startDate || !this.magnifier.endDate || !this.magnifier.interval)
@@ -259,7 +289,6 @@ export default {
         start: new Date(this.magnifier.startDate).toISOString(),
         end: new Date(this.magnifier.endDate).toISOString()
       }
-      console.log(range)
 
       const symbol = this.prepareSymbol(await ApiService.candles(this.sel.exchange,
           this.sel.symbol,
@@ -268,8 +297,6 @@ export default {
           null,
           null,
           range));
-
-      console.log(symbol);
 
       //TODO separate magnifier container
       const container = this.$refs.chart;
@@ -286,7 +313,7 @@ export default {
       for (let key in indicators)
       {
         let handler = handlers[key]
-        let magnified = handler['magnify'](start, end, indicators[key])
+        let magnified = this.reduceSeriesData(start, end, indicators[key])
         let chart;
         if (handler['requiresNewChart'])
         {
@@ -299,7 +326,8 @@ export default {
         let series = handler['init'](magnified, chart)
         handler['update'](series, magnified)
       }
-    },
+    }
+    ,
 
     magnify: function (startDate, endDate)
     {
@@ -310,7 +338,8 @@ export default {
 
       this.magnifier.startDate = startDate;
       this.magnifier.endDate = endDate;
-    },
+    }
+    ,
 
     showRange: function (timestampA, timestampB)
     {
@@ -318,7 +347,8 @@ export default {
       {
         this.charts[i].showRange(timestampA / 1000, timestampB / 1000);
       }
-    },
+    }
+    ,
 
     registerEvents: function ()
     {
@@ -347,7 +377,8 @@ export default {
           }
         });
       }
-    },
+    }
+    ,
 
     objectMap: function (callback, object)
     {
@@ -359,7 +390,8 @@ export default {
       }
 
       return o;
-    },
+    }
+    ,
 
     handlers: function ()
     {
@@ -415,16 +447,6 @@ export default {
           },
           setMarkers: markers =>
           {
-          },
-          magnify: (start, end, data = []) =>
-          {
-            const magnified = {};
-
-            for (let key in data)
-            {
-              magnified[key] = data[key].filter(item => item.time >= start && item.time <= end)
-            }
-            return magnified;
           }
         },
         RSI: {
@@ -532,7 +554,8 @@ export default {
           }
         }
       }
-    },
+    }
+    ,
 
     calcInterval: function (collection, key)
     {
@@ -555,7 +578,8 @@ export default {
       }
 
       return {start: start, interval: interval};
-    },
+    }
+    ,
 
     fillFrontGaps: function (length, indicator, value = 0)
     {
@@ -571,7 +595,8 @@ export default {
           indicator.unshift({time: time, value: value});
         }
       }
-    },
+    }
+    ,
 
     prepareIndicatorData: function (indicators, length)
     {
@@ -585,7 +610,8 @@ export default {
         }
       }
       return indicators;
-    },
+    }
+    ,
 
     initIndicators: function (container)
     {
@@ -603,18 +629,20 @@ export default {
           handler['update'](this.series[key], data);
         }
       }
-    },
+    }
+    ,
 
     prepareSignalMarker: function (data, namePrefix)
     {
       return {
-        time: data.timestamp / 1000,
+        time: data.price_date / 1000,
         position: data.side === 'BUY' ? 'belowBar' : 'aboveBar',
         color: data.side === 'BUY' ? '#00ff68' : '#ff0062',
         shape: data.side === 'BUY' ? 'arrowUp' : 'arrowDown',
         text: typeof namePrefix === String ? namePrefix + ': ' + data.name : data.name
       }
-    },
+    }
+    ,
 
     initMarkers: function ()
     {
@@ -630,6 +658,7 @@ export default {
             markers = this.prepareSignalMarkers(markers, strategy.trades[id].evaluations, true);
           }
           this.symbol.markers.trades = markers;
+          console.log(markers)
           this.series['candlestick'].setMarkers(markers);
         }
 
@@ -650,7 +679,8 @@ export default {
           }
         }
       }
-    },
+    }
+    ,
 
     prepareSignalMarkers: function (markers, collection, prefix = false)
     {
@@ -661,7 +691,8 @@ export default {
       }
 
       return markers.sort((a, b) => (a.time - b.time));
-    },
+    }
+    ,
 
     replaceCandlestickChart: async function ()
     {
@@ -690,12 +721,14 @@ export default {
       this.initIndicators(container);
       this.initMarkers();
       this.registerEvents();
-    },
+    }
+    ,
 
     cacheKey: function ()
     {
       return this.sel.exchange + this.sel.symbol + this.sel.interval + this.sel.indicators;
-    },
+    }
+    ,
 
     updateSymbol: async function ()
     {
@@ -718,7 +751,8 @@ export default {
 
       if (this.useCache)
         this.cache[key] = {symbol: this.symbol, limit: this.limit};
-    },
+    }
+    ,
 
     lazyLoad: async function ()
     {
@@ -733,7 +767,8 @@ export default {
 
       this.loading = false;
       this.limitReached = length === this.symbol.candles.length;
-    },
+    }
+    ,
 
     updateSeries: async function ()
     {
@@ -753,7 +788,8 @@ export default {
         if (this.symbol.indicators[key])
           handlers[key]['update'](this.series[key], this.symbol.indicators[key]);
       }
-    },
+    }
+    ,
     newChart: function (container, options = {})
     {
       if (!container) throw Error('Chart container was not found.');
@@ -762,7 +798,8 @@ export default {
       options.width = container.offsetWidth;
 
       return new Chart(container, options);
-    },
+    }
+    ,
 
     createChart: function (container, options = {})
     {
@@ -770,25 +807,28 @@ export default {
       this.charts.push(chart);
 
       return chart;
-    },
+    }
+    ,
 
     resize: function ()
     {
       const container = this.$refs.chart;
 
-      if (!container || !this.charts[0])
-      {
-        return;
-      }
+      if (container && this.charts.length)
+        for (let i in this.charts)
+          this.charts[i].resize(container.offsetWidth, container.offsetHeight);
 
-      for (let i in this.charts)
-        this.charts[i].resize(container.offsetWidth, container.offsetHeight);
-    },
+      if (this.magnifiedCharts.length)
+        for (let i in this.magnifiedCharts)
+          this.magnifiedCharts[i].resize(container.offsetWidth, container.offsetHeight);
+    }
+    ,
 
     onSelect: function ()
     {
       this.replaceCandlestickChart();
-    },
+    }
+    ,
 
     purgeMainCharts: function ()
     {
@@ -800,7 +840,8 @@ export default {
         this.charts = [];
         this.symbol = null;
       }
-    },
+    }
+    ,
 
     fetchSymbol: async function ()
     {
@@ -811,7 +852,8 @@ export default {
           this.limit,
           this.sel.strategy,
           this.range);
-    },
+    }
+    ,
 
     prepareSymbol: function (symbol)
     {
@@ -832,13 +874,15 @@ export default {
       symbol.markers = {trades: [], signals: []};
 
       return symbol;
-    },
+    }
+    ,
 
     resetLimit: function ()
     {
       this.limit = this.candlesPerRequest;
       this.limitReached = false;
-    },
+    }
+    ,
 
     init: function ()
     {

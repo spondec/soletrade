@@ -36,7 +36,10 @@
         'bg-info': trade.is_ambiguous
       }">
       <td>
-        <button type="button" v-on:click="magnify(trade.entry.timestamp, trade.exit.timestamp)">Magnify</button>
+        <button type="button"
+                v-on:click="magnify(trade.entry.timestamp, Math.max(trade.exit_timestamp, trade.exit.price_date))">
+          Magnify
+        </button>
       </td>
       <td>
         <vue-json-pretty :path="'res'" :data="trade" :deep="0"></vue-json-pretty>
@@ -47,7 +50,7 @@
       <td>
         <a v-bind:href="'#' + chartId"
            v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
-          {{ timestampToString(trade.entry.timestamp) }}
+          {{ timestampToString(trade.entry.price_date) }}
         </a>
       </td>
       <td>
@@ -67,7 +70,7 @@
       <td>
         <a v-bind:href="'#' + chartId"
            v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
-          {{ timestampToString(trade.exit.timestamp) }}
+          {{ timestampToString(trade.exit.price_date) }}
         </a>
       </td>
       <!--      <td>{{ round(trade.lowest_price) || 'N/A' }}</td>-->
