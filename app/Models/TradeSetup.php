@@ -9,26 +9,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property Signal[]  signals
- * @property Symbol    symbol
- * @property Signature signature
+ * @property Signal[]      signals
+ * @property Symbol        symbol
+ * @property Signature     signature
  * @property TradeAction[] actions
  *
- * @property int       id
- * @property int       position_id
- * @property int       signature_id
- * @property int       signal_count
- * @property int       timestamp
- * @property int       symbol_id
- * @property string    name
- * @property string    side
- * @property float     price
- * @property float     size
- * @property float     close_price
- * @property float     stop_price
- * @property array     take_profits
- * @property mixed     created_at
- * @property mixed     updated_at
+ * @property int           id
+ * @property int           position_id
+ * @property int           signature_id
+ * @property int           signal_count
+ * @property int           timestamp
+ * @property int           price_date
+ * @property int           symbol_id
+ * @property string        name
+ * @property string        side
+ * @property float         price
+ * @property float         size
+ * @property float         close_price
+ * @property float         stop_price
+ * @property array         take_profits
+ * @property mixed         created_at
+ * @property mixed         updated_at
  */
 class TradeSetup extends Model implements Bindable
 {

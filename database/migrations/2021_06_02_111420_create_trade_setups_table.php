@@ -26,6 +26,7 @@ class CreateTradeSetupsTable extends Migration
             $table->decimal('stop_price')->nullable();
             $table->integer('signal_count');
             $table->bigInteger('timestamp');
+            $table->bigInteger('price_date');
 
             $table->unique(['symbol_id', 'signature_id', 'name', 'side', 'timestamp']);
             $table->timestamps();

@@ -282,6 +282,7 @@ abstract class AbstractStrategy
         $tradeSetup->side = $lastSignal->side;
         $tradeSetup->timestamp = $lastSignal->timestamp;
         $tradeSetup->price = $lastSignal->price;
+        $tradeSetup->price_date = $lastSignal->price_date;
 
         return $tradeSetup;
     }
