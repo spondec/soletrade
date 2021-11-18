@@ -17,7 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int       indicator_id
  * @property int       symbol_id
  * @property int       timestamp
- * @property bool      confirmed
+ * @property int       price_date
+ * @property bool      is_confirmed
  * @property string    name
  * @property string    side
  * @property string    signature_id

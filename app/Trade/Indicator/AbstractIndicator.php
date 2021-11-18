@@ -117,9 +117,7 @@ abstract class AbstractIndicator
     {
         $this->index = -1;
 
-        /** @var SymbolRepository $repo */
-        $repo = App::make(SymbolRepository::class);
-        $lastCandle = $repo->fetchLastCandle($this->symbol);
+        $lastCandle = $this->symbolRepo->fetchLastCandle($this->symbol);
 
         $iterator = $this->data->getIterator();
 
@@ -138,12 +136,10 @@ abstract class AbstractIndicator
             if ($signal)
             {
                 $signal->timestamp = $openTime;
-                $signal->confirmed = $nextOpenTime || ($lastCandle && $lastCandle->t > $openTime);//the candle is closed
+                $signal->price_date = $this->getPriceDate($openTime, $nextOpenTime);
+                $signal->is_confirmed = $nextOpenTime || ($lastCandle && $lastCandle->t > $openTime);//the candle is closed
 
-                $old = $signal;
-                $this->replaceBindable($old, $signal = $signal->updateUniqueOrCreate());
                 $this->saveSignal($signal);
-                $this->signals[] = $signal;
             }
             else
             {
@@ -163,7 +159,7 @@ abstract class AbstractIndicator
                 ->where('indicator_id', $this->signature->id)
                 ->where('signature_id', $this->signalSignature->id)
                 ->whereIn('timestamp', $unconfirmed)
-                ->update(['confirmed' => false]);
+                ->update(['is_confirmed' => false]);
         }
     }
 
@@ -183,8 +179,14 @@ abstract class AbstractIndicator
      */
     protected function saveSignal(Signal $signal): void
     {
+        $old = $signal;
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+        $this->replaceBindable($old, $signal = $signal->updateUniqueOrCreate());
+
         $signal->save();
         $this->saveBindings($signal);
+
+        $this->signals[] = $signal;
     }
 
     public function prev(): mixed
@@ -319,5 +321,21 @@ abstract class AbstractIndicator
     #[Pure] protected function closes(): array
     {
         return array_column($this->candles->all(), 'c');
+    }
+
+    protected function getPriceDate(int $openTime, int|null $nextOpenTime): int
+    {
+        if ($nextOpenTime)
+        {
+            return $nextOpenTime - 1;
+        }
+
+        if ($nextCandle = $this->symbolRepo
+            ->fetchNextCandle($this->symbol->id, $openTime))
+        {
+            return $nextCandle->t - 1;
+        }
+
+        return $this->symbol->last_update;
     }
 }

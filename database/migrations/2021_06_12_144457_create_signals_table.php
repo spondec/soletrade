@@ -17,12 +17,13 @@ class CreateSignalsTable extends Migration
             $table->id();
             $table->foreignId('symbol_id')->constrained();
             $table->foreignId('indicator_id')->constrained('signatures');
-            $table->integer('signature_id');
+            $table->foreignId('signature_id')->constrained();
             $table->string('name', 50)->index();
             $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('price');
             $table->bigInteger('timestamp');
-            $table->boolean('confirmed')->default(false);
+            $table->bigInteger('price_date');
+            $table->boolean('is_confirmed')->default(false);
             $table->json('info')->nullable(true);
             $table->unique(['symbol_id', 'indicator_id', 'signature_id', 'timestamp']);
             $table->timestamps();
