@@ -10,6 +10,7 @@ class CreateSymbolsTable extends Migration
      * Run the migrations.
      *
      * @return void
+     *
      */
     public function up()
     {
@@ -17,7 +18,7 @@ class CreateSymbolsTable extends Migration
             $table->id();
             $table->string('symbol', 20)->index();
             $table->string('interval', 3)->charset('utf8mb4')->collation('utf8mb4_bin');
-            $table->foreignId('exchange_id')->constrained();
+            $table->foreignId('exchange_id');
             $table->bigInteger('last_update', unsigned: true)->default(0);
             $table->unique(['exchange_id', 'symbol', 'interval']);
             $table->timestamps();
