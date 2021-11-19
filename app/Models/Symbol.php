@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Trade\Indicator\AbstractIndicator;
+use App\Trade\Log;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -113,6 +114,16 @@ class Symbol extends Model
         }
 
         $this->indicators[$indicator->name()] = $indicator;
+    }
+
+    public function updateCandles(?int $timeout = null, int $maxRunTime = 0): void
+    {
+        if (!$timeout || $this->last_update + $timeout <= time() * 1000)
+        {
+            Log::execTimeStart($task = "Updating $this->symbol-$this->interval candles");
+            $this->exchange()->updater()->update($this, $maxRunTime);
+            Log::execTimeFinish($task);
+        }
     }
 
     public function indicator(string $name): AbstractIndicator
