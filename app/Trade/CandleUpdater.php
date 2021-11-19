@@ -63,7 +63,7 @@ class CandleUpdater
 
     public function update(Symbol $symbol, int $maxRunTime = 0): bool
     {
-        Log::execTimeStart("Updating $symbol->symbol-$symbol->interval candles");
+        Log::execTimeStart($task = "Updating $symbol->symbol-$symbol->interval candles");
         $startTime = time();
         $id = $symbol->id;
 
@@ -113,7 +113,7 @@ class CandleUpdater
         } finally
         {
             DB::unprepared('UNLOCK TABLES');
-            Log::execTimeFinish("Updating $symbol->symbol-$symbol->interval candles");
+            Log::execTimeFinish($task);
         }
     }
 
