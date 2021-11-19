@@ -120,9 +120,7 @@ class Symbol extends Model
     {
         if (!$timeout || $this->last_update + $timeout <= time() * 1000)
         {
-            Log::execTimeStart($task = "Updating $this->symbol-$this->interval candles");
             $this->exchange()->updater()->update($this, $maxRunTime);
-            Log::execTimeFinish($task);
         }
     }
 

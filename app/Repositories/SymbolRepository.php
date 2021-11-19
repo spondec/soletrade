@@ -259,13 +259,11 @@ class SymbolRepository
 
     public function fetchSymbolFromExchange(AbstractExchange $exchange, string $symbolName, string $interval)
     {
-        Log::execTimeStart('SymbolRepository::fetchSymbolFromExchange()');
         $filter = static fn(Symbol $symbol): bool => $symbol->symbol == $symbolName && $symbol->interval == $interval;
         $symbol = $exchange::instance()
             ->updater()
             ->updateByInterval(interval: $interval, filter: $filter)
             ?->first();
-        Log::execTimeFinish('SymbolRepository::fetchSymbolFromExchange()');
 
         return $symbol;
     }

@@ -63,6 +63,7 @@ class CandleUpdater
 
     public function update(Symbol $symbol, int $maxRunTime = 0): bool
     {
+        Log::execTimeStart("Updating $symbol->symbol-$symbol->interval candles");
         $startTime = time();
         $id = $symbol->id;
 
@@ -70,7 +71,7 @@ class CandleUpdater
         {
             do
             {
-                DB::select(DB::raw('LOCK TABLES candles WRITE, symbols WRITE'));
+                DB::unprepared('LOCK TABLES candles WRITE, symbols WRITE');
                 $currentCandles = $this->symbolRepo->fetchLatestCandles($symbol, 'DESC', 2);
                 $currentLastCandle = $currentCandles->shift();
                 $start = $currentCandles->first()->t ?? 0;
@@ -111,7 +112,8 @@ class CandleUpdater
             return true;
         } finally
         {
-            DB::select(DB::raw('UNLOCK TABLES'));
+            DB::unprepared('UNLOCK TABLES');
+            Log::execTimeFinish("Updating $symbol->symbol-$symbol->interval candles");
         }
     }
 

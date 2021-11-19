@@ -107,9 +107,7 @@ abstract class AbstractStrategy
 
     public function run(Symbol $symbol): void
     {
-        Log::execTimeStart('CandleUpdater::update()');
         $symbol->exchange()->updater()->update($symbol);
-        Log::execTimeFinish('CandleUpdater::update()');
 
         Log::execTimeStart('AbstractStrategy::initIndicators()');
         $this->initIndicators($symbol);
