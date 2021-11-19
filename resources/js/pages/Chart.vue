@@ -240,11 +240,6 @@ export default {
       this.magnifiedCharts = [];
     },
 
-    magnifyMarkers: function (start, end, markers)
-    {
-      return markers.filter(item => item.time >= start && item.time <= end)
-    },
-
     reduceSeriesData: function (start, end, seriesData)
     {
       let acc = Array.isArray(seriesData) ? [] : {};
@@ -304,7 +299,7 @@ export default {
       this.magnifiedCharts[0] = this.newChart(container);
 
       const candlestickSeries = this.magnifiedCharts[0].addCandlestickSeries();
-      candlestickSeries.setMarkers(this.magnifyMarkers(start, end, this.symbol.markers.trades));
+      candlestickSeries.setMarkers(this.reduceSeriesData(start, end, this.symbol.markers.trades));
       candlestickSeries.setData(symbol.candles);
 
       const indicators = this.symbol.indicators;
@@ -658,7 +653,6 @@ export default {
             markers = this.prepareSignalMarkers(markers, strategy.trades[id].evaluations, true);
           }
           this.symbol.markers.trades = markers;
-          console.log(markers)
           this.series['candlestick'].setMarkers(markers);
         }
 
