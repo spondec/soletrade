@@ -32,7 +32,7 @@ class TradeLoop
         $this->status = new TradeStatus($entry);
         $this->repo = App::make(SymbolRepository::class);
 
-        $this->firstCandle = $this->repo->fetchNextCandle($entry->symbol_id, $entry->timestamp);
+        $this->firstCandle = $this->repo->assertNextCandle($entry->symbol_id, $entry->price_date);
         $this->startDate = $this->firstCandle->t;
     }
 
@@ -56,10 +56,10 @@ class TradeLoop
 
     public function runToExit(TradeSetup $exit): ?Position
     {
-        $this->assertExitDateGreaterThanEntryDate($this->entry->timestamp, $exit->timestamp);
+        $this->assertExitDateGreaterThanEntryDate($this->entry->price_date, $exit->price_date);
 
-        $lastCandle = $this->repo->fetchNextCandle($this->entry->symbol_id, $exit->timestamp);
-        $candles = $this->repo->fetchCandlesBetween($this->entry->symbol,
+        $lastCandle = $this->repo->assertNextCandle($this->entry->symbol_id, $exit->price_date);
+        $candles = $this->repo->assertCandlesBetween($this->entry->symbol,
             $this->firstCandle->t,
             $lastCandle->t,
             $this->evaluationSymbol->interval);
@@ -90,8 +90,14 @@ class TradeLoop
             throw new \LogicException('Can not loop through an empty set.');
         }
 
-        foreach ($candles as $candle)
+        $iterator = $candles->getIterator();
+
+        while ($iterator->valid())
         {
+            $candle = $iterator->current();
+            $iterator->next();
+            $nextCandle = $iterator->current();
+
             $candle->l = (float)$candle->l;
             $candle->h = (float)$candle->h;
             $candle->t = (int)$candle->t;
@@ -103,7 +109,7 @@ class TradeLoop
                     'price',
                     $candle->t);
                 $this->status->updateLowestHighestEntryPrice($candle);
-                $this->tryPositionEntry($candle);
+                $this->tryPositionEntry($candle, $nextCandle);
             }
             else
             {
@@ -120,7 +126,7 @@ class TradeLoop
                         'close_price',
                         $candle->t);
                     $this->tryPositionExit($this->status->getPosition(),
-                        $candle);
+                        $candle, $nextCandle);
                 }
             }
         }
@@ -138,15 +144,30 @@ class TradeLoop
         }
     }
 
-    protected function tryPositionEntry(\stdClass $candle): void
+    protected function getPriceDate(\stdClass $candle, ?\stdClass $next): int
+    {
+        if ($next)
+        {
+            return $next->t - 1000;
+        }
+
+        if ($nextCandle = $this->repo->assertNextCandle($this->evaluationSymbol->id, $candle->t))
+        {
+            return $nextCandle->t - 1000;
+        }
+
+        return $this->evaluationSymbol->last_update;
+    }
+
+    protected function tryPositionEntry(\stdClass $candle, ?\stdClass $nextCandle): void
     {
         if (Calc::inRange($this->status->getEntryPrice()->get(), $candle->h, $candle->l))
         {
-            $this->status->enterPosition($candle->t);
+            $this->status->enterPosition($this->getPriceDate($candle, $nextCandle));
         }
     }
 
-    protected function tryPositionExit(Position $position, \stdClass $candle): void
+    protected function tryPositionExit(Position $position, \stdClass $candle, ?\stdClass $nextCandle): void
     {
         if (!$this->status->checkIsExited())
         {
@@ -159,17 +180,17 @@ class TradeLoop
                 {
                     if ($stopped)
                     {
-                        $position->stop($candle->t);
+                        $position->stop($priceDate = $this->getPriceDate($candle, $nextCandle));
                     }
                     if ($closed)
                     {
-                        $position->close($candle->t);
+                        $position->close($priceDate ?? $this->getPriceDate($candle, $nextCandle));
                     }
                 }
             }
             else
             {
-                $this->status->runTradeActions($candle);
+                $this->status->runTradeActions($candle, $this->getPriceDate($candle, $nextCandle));
             }
         }
     }
@@ -179,7 +200,7 @@ class TradeLoop
      */
     protected function fetchPivotsFromStartToLastRun(): array
     {
-        return $this->repo->fetchLowestHighestCandle($this->entry->symbol_id, $this->startDate, $this->lastRunDate);
+        return $this->repo->assertLowestHighestCandle($this->entry->symbol_id, $this->startDate, $this->lastRunDate);
     }
 
     public function continue(int $endDate): ?Position
@@ -187,8 +208,8 @@ class TradeLoop
         $this->assertExitDateGreaterThanEntryDate($this->lastRunDate, $endDate);
         $symbol = $this->entry->symbol;
         $intervalId = $this->repo->findSymbolIdForInterval($symbol, $this->evaluationSymbol->interval);
-        $startDate = $this->repo->fetchNextCandle($intervalId, $this->lastRunDate)->t;
-        $candles = $this->repo->fetchCandlesBetween($symbol,
+        $startDate = $this->repo->assertNextCandle($intervalId, $this->lastRunDate)->t;
+        $candles = $this->repo->assertCandlesBetween($symbol,
             $startDate,
             $endDate,
             $this->evaluationSymbol->interval);
@@ -202,7 +223,7 @@ class TradeLoop
     {
         while (true)
         {
-            $candles = $this->repo->fetchCandlesLimit($this->entry->symbol,
+            $candles = $this->repo->assertCandlesLimit($this->entry->symbol,
                 $startDate ?? $this->firstCandle->t,
                 $chunk,
                 $this->evaluationSymbol->interval);

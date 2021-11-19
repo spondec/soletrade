@@ -93,11 +93,11 @@ class TradeStatus
         }
     }
 
-    public function runTradeActions(\stdClass $candle): void
+    public function runTradeActions(\stdClass $candle, int $priceDate): void
     {
         foreach ($this->actionHandlers as $key => $handler)
         {
-            if ($action = $handler->run($candle))
+            if ($action = $handler->run($candle, $priceDate))
             {
                 $action->save();
                 unset($this->actionHandlers[$key]);
