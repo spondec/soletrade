@@ -2,6 +2,8 @@
 
 namespace App\Trade;
 
+use ccxt\Exchange;
+
 class Calc
 {
     public static function pnl(float $balance, float $roi): float|int
@@ -42,5 +44,10 @@ class Calc
         }
 
         return $roi;
+    }
+
+    public static function duration(string $interval): int
+    {
+        return Exchange::parse_timeframe($interval);
     }
 }
