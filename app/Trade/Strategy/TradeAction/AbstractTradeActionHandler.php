@@ -42,7 +42,7 @@ abstract class AbstractTradeActionHandler
 
     }
 
-    public function run(\stdClass $candle): ?TradeAction
+    public function run(\stdClass $candle, int $priceDate): ?TradeAction
     {
         if (!$this->isTaken && $this->performAction($candle))
         {
@@ -53,7 +53,7 @@ abstract class AbstractTradeActionHandler
 
             $this->isTaken = true;
             $this->action->is_taken = true;
-            $this->action->timestamp = $candle->t;
+            $this->action->timestamp = $priceDate;
             return $this->action;
         }
 
