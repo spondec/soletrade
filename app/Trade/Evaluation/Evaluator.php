@@ -115,8 +115,9 @@ class Evaluator
         }
     }
 
-    protected function fillEvaluation(Evaluation $evaluation, TradeStatus $status, ?Position $position): void
+    protected function fillEvaluation(Evaluation $evaluation, TradeStatus $status): void
     {
+        $position = $status->getPosition();
         $evaluation->highest_price = $status->getHighestPrice();
         $evaluation->lowest_price = $status->getLowestPrice();
         $evaluation->entry_price = $status->getEntryPrice()->get();
@@ -200,21 +201,21 @@ class Evaluator
             return;
         }
 
-        $candles = $repo->fetchCandlesBetween($symbol, $entryTime, $exitTime, '1m');
-        $lowHigh = $repo->fetchLowestHighestCandle($symbol->id, $candles->first()->t, $candles->last()->t);
+        $candles = $repo->assertCandlesBetween($symbol, $entryTime, $exitTime, '1m');
+        $lowHigh = $repo->assertLowestHighestCandle($symbol->id, $candles->first()->t, $candles->last()->t);
         $lowest = $lowHigh['lowest'];
         $highest = $lowHigh['highest'];
 
         if ($lowest->t > $entryTime)
         {
-            $evaluation->lowest_price_to_highest_exit = $repo->fetchLowestHighestCandle($symbol->id,
+            $evaluation->lowest_price_to_highest_exit = $repo->assertLowestHighestCandle($symbol->id,
                 $entryTime,
                 $highest->t)['lowest']->l;
         }
 
         if ($highest->t > $entryTime)
         {
-            $evaluation->highest_price_to_lowest_exit = $repo->fetchLowestHighestCandle($symbol->id,
+            $evaluation->highest_price_to_lowest_exit = $repo->assertLowestHighestCandle($symbol->id,
                 $entryTime,
                 $lowest->t)['highest']->h;
         }
