@@ -13,23 +13,28 @@ use JetBrains\PhpStorm\ArrayShape;
 class SymbolRepository
 {
     /**
-     * @param string[] $indicators
+     * @param string[]|array[] $indicators
      */
     public function initIndicators(Symbol     $symbol,
                                    Collection $candles,
                                    array      $indicators): void
     {
-        foreach ($indicators as $class)
+        foreach ($indicators as $class => $config)
         {
-            $symbol->addIndicator(new $class(symbol: $symbol, candles: $candles));
+            if (!is_array($config))
+            {
+                $class = $config;
+                $config = [];
+            }
+            $symbol->addIndicator(new $class(symbol: $symbol, candles: $candles, config: $config));
         }
     }
 
     public function fetchLowerIntervalCandles(\stdClass $candle, Symbol $symbol, string $interval)
     {
-        $nextCandle = $this->fetchNextCandle($candle->symbol_id, $candle->t);
+        $nextCandle = $this->assertNextCandle($candle->symbol_id, $candle->t);
 
-        return $this->fetchCandlesBetween($symbol, $candle->t, $nextCandle->t, $interval, true);
+        return $this->assertCandlesBetween($symbol, $candle->t, $nextCandle->t, $interval, true);
     }
 
     public function mapCandles(array $candles, int $symbolId, CandleMap $map): array
@@ -56,7 +61,7 @@ class SymbolRepository
      * @return \stdClass[]
      */
     #[ArrayShape(['lowest' => "\stdClass", 'highest' => "\stdClass"])]
-    public function fetchLowestHighestCandle(int $symbolId, int $startDate, int $endDate): array
+    public function assertLowestHighestCandle(int $symbolId, int $startDate, int $endDate): array
     {
         if ($startDate >= $endDate)
         {
@@ -82,19 +87,25 @@ class SymbolRepository
         ];
     }
 
-    public function fetchCandlesLimit(Symbol  $symbol,
-                                      int     $startDate,
-                                      int     $limit,
-                                      ?string $interval = null): Collection
+    public function assertCandlesLimit(Symbol  $symbol,
+                                       int     $startDate,
+                                       ?int    $limit,
+                                       ?string $interval = null,
+                                       bool    $includeStart = false): Collection
     {
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         $candles = DB::table('candles')
             ->where('symbol_id', $symbolId)
-            ->where('t', '>', $startDate)
-            ->orderBy('t', 'ASC')
-            ->limit($limit)
-            ->get();
+            ->where('t', $includeStart ? '>=' : '>', $startDate)
+            ->orderBy('t', 'ASC');
+
+        if ($limit)
+        {
+            $candles->limit($limit);
+        }
+
+        $candles = $candles->get();
 
         if (!$candles->first())
         {
@@ -104,11 +115,11 @@ class SymbolRepository
         return $candles;
     }
 
-    public function fetchCandlesBetween(Symbol  $symbol,
-                                        int     $startDate,
-                                        int     $endDate,
-                                        ?string $interval = null,
-                                        bool    $includeStart = false): Collection
+    public function assertCandlesBetween(Symbol  $symbol,
+                                         int     $startDate,
+                                         int     $endDate,
+                                         ?string $interval = null,
+                                         bool    $includeStart = false): Collection
     {
         if ($startDate >= $endDate)
         {
@@ -150,17 +161,21 @@ class SymbolRepository
             ->first();
     }
 
-    public function fetchNextCandle(int $symbolId, int $timestamp): \stdClass
+
+    public function fetchNextCandle(int $symbolId, int $timestamp): ?\stdClass
     {
-        $candle = DB::table('candles')
+        return DB::table('candles')
             ->where('symbol_id', $symbolId)
             ->where('t', '>', $timestamp)
             ->orderBy('t', 'ASC')
             ->first();
+    }
 
-        if (!$candle)
+    public function assertNextCandle(int $symbolId, int $timestamp): \stdClass
+    {
+        if (!$candle = $this->fetchNextCandle($symbolId, $timestamp))
         {
-            throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed to get the next candle.");
+            throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed.");
         }
 
         return $candle;

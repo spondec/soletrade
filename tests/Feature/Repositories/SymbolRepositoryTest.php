@@ -6,10 +6,36 @@ use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class SymbolRepositoryTest extends TestCase
 {
+
+    public function test_fetch_next_candle()
+    {
+        $repo = $this->getRepo();
+
+        /** @var Symbol $symbol */
+        $symbol = Symbol::query()
+            ->where('symbol', 'BTC/USDT')
+            ->where('interval', '1h')
+            ->firstOrFail();
+
+        $candles = DB::table('candles')
+            ->where('symbol_id', $symbol->id)
+            ->orderBy('t', 'ASC')
+            ->limit(2)
+            ->get();
+
+        $this->assertCount(2, $candles);
+
+        $nextCandle = $repo->assertNextCandle($symbol->id, $candles->first()->t);
+        $this->assertEquals($candles->last()->t, $nextCandle->t);
+        $nextCandle = $repo->assertNextCandle($symbol->id, $candles->last()->t - 1);
+        $this->assertEquals($candles->last()->t, $nextCandle->t);
+    }
+
     public function test_fetch_lower_interval_candles()
     {
         $repo = $this->getRepo();
