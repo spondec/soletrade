@@ -8,6 +8,7 @@ use App\Trade\CandleMap;
 use App\Trade\HasName;
 use App\Trade\CandleUpdater;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
@@ -47,7 +48,7 @@ abstract class AbstractExchange
         $this->setup();
         $this->register();
 
-        $this->updater = new CandleUpdater($this);
+        $this->updater = App::make(CandleUpdater::class, ['exchange' => $this]);
     }
 
     /**
