@@ -8,9 +8,11 @@ use JetBrains\PhpStorm\ArrayShape;
 class Fib extends AbstractIndicator
 {
     protected array $config = [
-        'period'              => 144,
-        'levels'              => [236, 382, 500, 618, 786]
+        'period' => 144,
+        'levels' => [236, 382, 500, 618, 786]
     ];
+
+    protected bool $isProgressive = true;
 
     /**
      * Upward means the retracement goes from low to high.

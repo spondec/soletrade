@@ -9,6 +9,7 @@ use App\Models\Signal;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
+use App\Repositories\SymbolRepository;
 use App\Trade\Binding\CanBind;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
@@ -17,6 +18,7 @@ use App\Trade\Indicator\AbstractIndicator;
 use App\Trade\Log;
 use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 
 abstract class AbstractStrategy
@@ -27,9 +29,7 @@ abstract class AbstractStrategy
     use CanBind;
 
     protected array $config = [];
-
     protected \WeakMap $actions;
-
     private array $indicatorSetup;
     private array $tradeSetup;
     private ?Signal $lastSignal;
@@ -46,10 +46,18 @@ abstract class AbstractStrategy
      * @var AbstractIndicator[]
      */
     private Collection $indicators;
+    /**
+     * @var AbstractIndicator[]
+     */
+    private Collection $helperIndicators;
+
+    protected SymbolRepository $symbolRepo;
 
     public function __construct(array $config = [])
     {
         $this->mergeConfig($config);
+
+        $this->symbolRepo = App::make(SymbolRepository::class);
 
         $this->indicators = new Collection();
         $this->indicatorSetup = $this->indicatorSetup();
@@ -120,6 +128,8 @@ abstract class AbstractStrategy
             start: $this->config['startDate'],
             end: $this->config['endDate']);
 
+        $this->initHelperIndicators($symbol, $candles);
+
         foreach ($this->indicatorSetup as $class => $setup)
         {
             /** @var AbstractIndicator $indicator */
@@ -131,6 +141,40 @@ abstract class AbstractStrategy
             $this->indicators[$indicator->id()] = $indicator;
             $symbol->addIndicator(indicator: $indicator);
         }
+
+    }
+
+    protected function initHelperIndicators(Symbol $symbol, Collection $candles): void
+    {
+        $helpers = [];
+        foreach ($this->helperIndicators() as $class => $config)
+        {
+            /** @var Symbol $helperSymbol */
+            $helperSymbol = Symbol::query()
+                ->where('exchange_id', $symbol->exchange_id)
+                ->where('symbol', $config['symbol'] ?? $symbol->symbol)
+                ->where('interval', $config['interval'] ?? $symbol->interval)
+                ->firstOrFail();
+
+            $helperSymbol->updateCandles();
+
+            $nextCandle = $this->symbolRepo->fetchNextCandle($symbol->id, $candles->last()->t);
+            $helperCandles = $helperSymbol->candles(start: $candles->first()->t, end: $nextCandle ? $nextCandle->t : null);
+
+            unset($config['interval']);
+            unset($config['symbol']);
+
+            /** @var AbstractIndicator $helperIndicator */
+            $helperIndicator = new $class(symbol: $helperSymbol, candles: $helperCandles, config: $config);
+            $helpers[$class] = $helperIndicator;
+        }
+
+        $this->helperIndicators = new Collection($helpers);
+    }
+
+    protected function helperIndicators(): array
+    {
+        return [];
     }
 
     protected function getConfigSignals(Symbol $symbol): Collection
@@ -346,6 +390,11 @@ abstract class AbstractStrategy
     public function indicator(int $id): AbstractIndicator
     {
         return $this->indicators[$id];
+    }
+
+    public function helperIndicator(string $class): AbstractIndicator
+    {
+        return $this->helperIndicators[$class];
     }
 
     protected final function getDefaultConfig(): array

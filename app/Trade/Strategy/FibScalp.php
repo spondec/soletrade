@@ -7,40 +7,58 @@ namespace App\Trade\Strategy;
 use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Trade\Calc;
+use App\Trade\Indicator\ATR;
 use App\Trade\Indicator\Fib;
 use App\Trade\Strategy\TradeAction\MoveStop;
 use Illuminate\Support\Collection;
 
 class FibScalp extends AbstractStrategy
 {
+    protected string $progressiveInterval = '15m';
+
+    protected function helperIndicators(): array
+    {
+        return [
+            ATR::class => [
+                'interval' => $this->progressiveInterval
+            ]
+        ];
+    }
+
     protected function indicatorSetup(): array
     {
         return [
             Fib::class => [
                 'config' => [
                     'period'              => 144,
-                    'distanceToLevel'     => 1,
+                    'atrMultiplier'       => 1,
                     'totalBarsAfterLevel' => 3,
                     'levels'              => [236, 382, 500, 618, 786, 886, 114],
+                    'progressiveInterval' => $this->progressiveInterval
                 ],
-                'signal' => static function (Signal $signal, Fib $indicator, array $value): ?Signal {
-                    $fib = Fib::nearestLevel($value, $closePrice = $indicator->closePrice());
-                    $level = $fib['level'];
+                'signal' => function (Signal $signal, Fib $indicator, array $value): ?Signal {
+
+                    $candle = $indicator->candle();
+                    $timestamp = $candle->t;
+                    $price = (float)$candle->c;
+
+                    $fib = Fib::nearestLevel($value, $price);
+                    $fibLevel = $fib['level'];
                     $fibPrice = $fib['price'];
 
-                    if ($level !== 0 && $level !== 1000)
+                    if ($fibLevel !== 0 && $fibLevel !== 1000)
                     {
-                        $distance = $fib['distance'];
+                        $atr = $this->helperIndicator(ATR::class)->data()[$timestamp];
 
-                        if ($distance <= $indicator->config('distanceToLevel'))
+                        if (abs($fibPrice - $price) <= $atr)
                         {
-                            $priceBelowFib = $closePrice < $fibPrice;
+                            $priceBelowFib = $price < $fibPrice;
 
                             $bars = $indicator->config('totalBarsAfterLevel');
 
                             for ($i = 1; $i <= $bars; $i++)
                             {
-                                $prevCandle = $indicator->candle($i);
+                                $prevCandle = $indicator->candle($i * -1);
 
                                 if ($prevCandle->h < $fibPrice !== $priceBelowFib ||
                                     $prevCandle->l < $fibPrice !== $priceBelowFib)
@@ -51,8 +69,8 @@ class FibScalp extends AbstractStrategy
 
                             $signal->side = $side = $priceBelowFib ? Signal::SELL : Signal::BUY;
                             $signal->info = array_merge($fib, ['prices' => $value]);
-                            $signal->name = $indicator->buildSignalName(['side' => $side, 'level' => $fib['level']]);
-                            $indicator->bind($signal, 'price', $fib['level']);
+                            $signal->name = $indicator->buildSignalName(['side' => $side, 'level' => $fibLevel]);
+                            $indicator->bind($signal, 'price', $fibLevel);
 
                             return $signal;
                         }
@@ -89,7 +107,7 @@ class FibScalp extends AbstractStrategy
 
                     $targetRoi = Calc::roi($isBuy, $entryPrice = $setup->price, $targetPrice);
                     $reward = $targetRoi / 100;
-                    $risk = $reward / 3;
+                    $risk = $reward / 2;
                     $setup->size = 100;
 
                     $this->newAction($setup, MoveStop::class, [
