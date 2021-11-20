@@ -19,10 +19,6 @@ class TradeLoop
     protected Collection $candles;
 
     protected \stdClass $firstCandle;
-    protected float $entryPrice;
-    protected float $stopPrice;
-
-    protected float $closePrice;
 
     protected TradeStatus $status;
 
@@ -140,7 +136,7 @@ class TradeLoop
     {
         if (!$price->isLocked() && $entryPrice = $savePoint->lastPoint($column, $timestamp))
         {
-            $price->set($entryPrice, 'SavePointAccess');
+            $price->set($entryPrice, $timestamp, 'SavePoint: ' . $savePoint->getBindingName($column));
         }
     }
 
