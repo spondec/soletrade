@@ -3,6 +3,7 @@
 namespace App\Trade\Evaluation;
 
 use App\Trade\Calc;
+use App\Trade\ChangeLog;
 use JetBrains\PhpStorm\Pure;
 
 class Position
@@ -16,7 +17,7 @@ class Position
 
     protected ?int $exitTime = null;
 
-    protected array $transactions = [];
+    protected ChangeLog $transactions;
 
     protected float $multiplier = 1;
     protected float $amount = 0;
@@ -43,7 +44,16 @@ class Position
     {
         $this->remainingSize = static::MAX_SIZE;
         $this->assertSize($this->size);
-        $this->newTransaction(true, $entry->get(), $size);
+        $this->transactions = new ChangeLog($t = [
+            'increase' => true,
+            'price'    => $this->entry->get(),
+            'size'     => $this->size
+        ]);
+        $this->newTransaction($t['increase'],
+            $t['price'],
+            $t['size'],
+            $this->entryTime,
+            'Position entry');
     }
 
     protected function assertSize(float $size): void
@@ -54,7 +64,7 @@ class Position
         }
     }
 
-    protected function newTransaction(bool $increase, float $price, float $size): void
+    protected function newTransaction(bool $increase, float $price, float $size, int $timestamp, string $reason): void
     {
         if ($increase)
         {
@@ -81,11 +91,11 @@ class Position
             $this->remainingSize += $size;
         }
 
-        $this->transactions[] = [
+        $this->transactions->new([
             'increase' => $increase,
             'price'    => $price,
             'size'     => $size,
-        ];
+        ], $timestamp, $reason);
 
         if ($this->isOpen() && !$this->getAssetAmount())
         {
@@ -157,7 +167,7 @@ class Position
     {
         if ($this->isClosed)
         {
-            throw new \LogicException('Attempted to close a position that is already closed.');
+            throw new \LogicException('Attempted to close an already closed position.');
         }
 
         $this->lockIfUnlocked($this->exit);
@@ -168,7 +178,11 @@ class Position
         $this->isClosed = true;
         $this->exitTime = $exitTime;
 
-        $this->newTransaction(false, $this->exitPrice, $this->getUsedSize());
+        $this->newTransaction(false,
+            $this->exitPrice,
+            $this->getUsedSize(),
+            $exitTime,
+            'Position exit.');
     }
 
     protected function lockIfUnlocked(Price $price): void
@@ -183,7 +197,7 @@ class Position
     {
         if ($this->isStopped)
         {
-            throw new \LogicException('Attempted to stop a position that is already stopped.');
+            throw new \LogicException('Attempted to stop an already stopped position.');
         }
 
         $this->lockIfUnlocked($this->stop);
@@ -194,7 +208,11 @@ class Position
         $this->isStopped = true;
         $this->exitTime = $exitTime;
 
-        $this->newTransaction(false, $this->exitPrice, $this->getUsedSize());
+        $this->newTransaction(false,
+            $this->exitPrice,
+            $this->getUsedSize(),
+            $exitTime,
+            'Position stop.');
     }
 
     protected function saveRoi(float $price): void
@@ -284,14 +302,14 @@ class Position
         return $this->entryTime;
     }
 
-    public function increaseSize(float $size, float $price): void
+    public function increaseSize(float $size, float $price, int $timestamp, string $reason): void
     {
-        $this->newTransaction(true, $price, $size);
+        $this->newTransaction(true, $price, $size, $timestamp, $reason);
     }
 
-    public function decreaseSize(float $size, float $price): void
+    public function decreaseSize(float $size, float $price, int $timestamp, string $reason): void
     {
-        $this->newTransaction(false, $price, $size);
+        $this->newTransaction(false, $price, $size, $timestamp, $reason);
     }
 
     public function price(string $type): Price
@@ -301,7 +319,7 @@ class Position
 
     public function getTransactions(): array
     {
-        return $this->transactions;
+        return $this->transactions->get();
     }
 
     public function isBuy(): bool

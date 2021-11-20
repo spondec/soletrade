@@ -2,6 +2,7 @@
 
 namespace App\Trade\Evaluation;
 
+use App\Trade\ChangeLog;
 use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
 
 class Price
@@ -15,11 +16,12 @@ class Price
         TradeLoop::class,
         Position::class
     ];
-    protected array $history = [];
+    protected ChangeLog $log;
 
     public function __construct(protected float     $price,
                                 protected ?\Closure $onChange = null)
     {
+        $this->log = new ChangeLog($this->price);
     }
 
     public function isLocked(): bool
@@ -50,7 +52,7 @@ class Price
         return $this->price;
     }
 
-    public function set(float $price, string $reason, bool $force = false): void
+    public function set(float $price, int $timestamp, string $reason, bool $force = false): void
     {
         if (!$force)
         {
@@ -67,11 +69,9 @@ class Price
             ($this->onChange)(price: $this, from: $this->price, to: $price);
         }
 
-        $this->history[] = [
-            'from'   => $this->price,
-            'to'     => $price,
-            'reason' => $force ? 'FORCED: ' . $reason : $reason
-        ];
+        $this->log->new($price,
+            $timestamp,
+            $force ? 'FORCED: ' . $reason : $reason);
         $this->price = $price;
     }
 
@@ -85,7 +85,7 @@ class Price
 
     public function history(): array
     {
-        return $this->history;
+        return $this->log->get();
     }
 
     protected function assertModifier(object $modifier): void
