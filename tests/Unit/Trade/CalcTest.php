@@ -7,26 +7,6 @@ use PHPUnit\Framework\TestCase;
 
 class CalcTest extends TestCase
 {
-    public function testRoi()
-    {
-
-    }
-
-    public function testRiskReward()
-    {
-
-    }
-
-    public function testPnl()
-    {
-
-    }
-
-    public function testInRange()
-    {
-
-    }
-
     public function testDuration()
     {
         $this->assertEquals(60, Calc::duration('1m'));

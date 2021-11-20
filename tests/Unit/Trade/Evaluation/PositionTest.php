@@ -63,7 +63,7 @@ class PositionTest extends TestCase
         $this->assertEquals($this->calcRelativeRoi(-50, $size), $pos->relativeExitRoi());
 
         $pos = $this->getPosition(true, $size = 1, 1, 1.5);
-        $pos->decreaseSize(0.5, 2);
+        $pos->decreaseSize(0.5, 2, time(), '');
         $this->assertEquals(100, $pos->roi(2));
         $this->assertEquals(75, $pos->roi(1.5));
 
@@ -81,7 +81,7 @@ class PositionTest extends TestCase
     {
         $pos = $this->getPosition(true, 100, 1);
         $before = $pos->roi(0.5);
-        $pos->decreaseSize(50, 0.5);
+        $pos->decreaseSize(50, 0.5, time(), '');
         $after = $pos->roi(0.5);
         $this->assertEquals($before, $after);
     }
@@ -101,7 +101,7 @@ class PositionTest extends TestCase
         $this->assertEquals($this->calcRelativeRoi(-50, $size), $pos->relativeExitRoi());
 
         $pos = $this->getPosition(true, $size = 100, 1, 2);
-        $pos->decreaseSize(50, 0.5);
+        $pos->decreaseSize(50, 0.5, time(), '');
         $this->assertEquals(-25, $pos->roi(1));
         $this->assertEquals(0, $pos->roi(1.5));
         $this->assertEquals(25, $pos->roi(2));
@@ -122,7 +122,7 @@ class PositionTest extends TestCase
         $this->assertEquals(-200, $pos->roi(3));
 
         $pos = $this->getPosition(false, 100, 1);
-        $pos->decreaseSize(50, 0);
+        $pos->decreaseSize(50, 0, time(), '');
         $this->assertEquals(100, $pos->roi(0));
         $this->assertEquals(75, $pos->roi(0.5));
         $this->assertEquals(150, $pos->roi(-1));
@@ -139,7 +139,7 @@ class PositionTest extends TestCase
         $this->assertEquals(200, $pos->roi(-1));
 
         $pos = $this->getPosition(false, 100, 1);
-        $pos->decreaseSize(50, 2);
+        $pos->decreaseSize(50, 2, time(), '');
         $this->assertEquals(-100, $pos->roi(2));
         $this->assertEquals(-50, $pos->roi(1));
         $this->assertEquals(0, $pos->roi(0));
@@ -159,7 +159,7 @@ class PositionTest extends TestCase
         $pos = $this->getPosition(true, 1, 1);
 
         $this->expectExceptionMessage('Reduce size can not be greater than used size.');
-        $pos->decreaseSize(2, 1);
+        $pos->decreaseSize(2, 1, time(), '');
     }
 
     public function test_get_asset_amount(): void
@@ -167,14 +167,14 @@ class PositionTest extends TestCase
         $pos = $this->getPosition(true, 1, 1);
         $this->assertEquals(1, $pos->getAssetAmount());
 
-        $pos->increaseSize(1, 0.5);
+        $pos->increaseSize(1, 0.5, time(), '');
         $this->assertEquals(3, $pos->getAssetAmount());
 
-        $pos->increaseSize(1, 0.1);
+        $pos->increaseSize(1, 0.1, time(), '');
         $this->assertEquals(13, $pos->getAssetAmount());
 
         $this->expectExceptionMessage('Position is open but no asset left.');
-        $pos->decreaseSize(3, 1);
+        $pos->decreaseSize(3, 1, time(), '');
     }
 
     public function test_relative_buy_roi(): void
@@ -200,10 +200,10 @@ class PositionTest extends TestCase
         $pos = $this->getPosition(true, 2, 1);
         $this->assertEquals(2, $pos->getUsedSize());
 
-        $pos->decreaseSize(1, 1);
+        $pos->decreaseSize(1, 1, time(), '');
         $this->assertEquals(1, $pos->getUsedSize());
 
-        $pos->increaseSize(5, 5);
+        $pos->increaseSize(5, 5, time(), '');
         $this->assertEquals(6, $pos->getUsedSize());
     }
 
@@ -212,7 +212,7 @@ class PositionTest extends TestCase
         $pos = $this->getPosition(true, 2, 1);
         $this->assertEquals(1, $pos->getBreakEvenPrice());
 
-        $pos->increaseSize(1, 0.5);
+        $pos->increaseSize(1, 0.5, time(), '');
         $this->assertEquals(0.75, $pos->getBreakEvenPrice());
     }
 
@@ -221,10 +221,10 @@ class PositionTest extends TestCase
         $pos = $this->getPosition(true, 10, 10);
         $this->assertEquals(0, $pos->roi(10));
 
-        $pos->increaseSize(10, 5);
+        $pos->increaseSize(10, 5, time(), '');
         $this->assertEquals(-25, $pos->roi(5));
 
-        $pos->increaseSize(10, 20);
+        $pos->increaseSize(10, 20, time(), '');
         $this->assertEquals(133.33333333333, $pos->roi(20));
 
         $this->assertEquals(0, $pos->roi($pos->getBreakEvenPrice()));
@@ -234,7 +234,7 @@ class PositionTest extends TestCase
     {
         $pos = $this->getPosition(true, 1, 1);
         $this->expectExceptionMessage('The requested size is bigger than the remaining size.');
-        $pos->increaseSize(Position::MAX_SIZE + 1, 1);
+        $pos->increaseSize(Position::MAX_SIZE + 1, 1, time(), '');
     }
 
     public function test_sell_roi(): void
@@ -242,10 +242,10 @@ class PositionTest extends TestCase
         $pos = $this->getPosition(false, 10, 10);
         $this->assertEquals(0, $pos->roi(10));
 
-        $pos->increaseSize(10, 5);
+        $pos->increaseSize(10, 5, time(), '');
         $this->assertEquals(25, $pos->roi(5));
 
-        $pos->increaseSize(10, 2.5);
+        $pos->increaseSize(10, 2.5, time(), '');
         $this->assertEquals(41.666666666667, $pos->roi(2.5));
 
         $this->assertEquals(0, $pos->roi($pos->getBreakEvenPrice()));
