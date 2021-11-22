@@ -169,8 +169,7 @@ export default {
       },
 
       magnifier: {
-        startDate: null,
-        endDate: null,
+        trade: null,
         interval: null,
       },
 
@@ -242,7 +241,7 @@ export default {
 
     reduceSeriesData: function (start, end, seriesData)
     {
-      let acc = Array.isArray(seriesData) ? [] : {};
+      const acc = Array.isArray(seriesData) ? [] : {};
 
       for (let i in seriesData)
       {
@@ -269,25 +268,52 @@ export default {
 
       return acc;
     },
+    prepareMagnifiedPriceLog: function (log, start)
+    {
+      return Object.values(log.map(function (entry)
+          {
+            if (entry.timestamp === null)
+            {
+              return {
+                value: entry.value,
+                time: start
+              };
+            } else
+            {
+              return {
+                value: entry.value,
+                time: entry.timestamp / 1000
+              };
+            }
+          }).reduce(function (acc, entry)
+          {
+            acc[entry.time] = entry;
 
+            return acc;
+          }, {})
+      );
+    },
     magnifyUpdate: async function ()
     {
-      if (!this.magnifier.startDate || !this.magnifier.endDate || !this.magnifier.interval)
+      const trade = this.magnifier.trade;
+      const interval = this.magnifier.interval;
+
+      if (!trade || !interval)
       {
         return;
       }
 
-      const start = this.magnifier.startDate / 1000;
-      const end = this.magnifier.endDate / 1000;
+      const start = trade.entry.timestamp / 1000;
+      const end = Math.max(trade.exit_timestamp, trade.exit.price_date) / 1000;
 
       const range = {
-        start: new Date(this.magnifier.startDate).toISOString(),
-        end: new Date(this.magnifier.endDate).toISOString()
+        start: new Date(start * 1000).toISOString(),
+        end: new Date(end * 1000).toISOString()
       }
 
       const symbol = this.prepareSymbol(await ApiService.candles(this.sel.exchange,
           this.sel.symbol,
-          this.magnifier.interval,
+          interval,
           null,
           null,
           null,
@@ -302,6 +328,29 @@ export default {
       candlestickSeries.setMarkers(this.reduceSeriesData(start, end, this.symbol.markers.trades));
       candlestickSeries.setData(symbol.candles);
 
+      const priceHistory = trade.log.position.price_history;
+
+      const entrySeries = this.magnifiedCharts[0].addLineSeries({
+        color: 'rgb(255,255,255)',
+        lineWidth: 1,
+      });
+      const entryData = this.prepareMagnifiedPriceLog(priceHistory.entry, start);
+      entrySeries.setData(entryData);
+
+      const stopSeries = this.magnifiedCharts[0].addLineSeries({
+        color: '#ff0000',
+        lineWidth: 1,
+      });
+      const stopData = this.prepareMagnifiedPriceLog(priceHistory.stop, start);
+      stopSeries.setData(stopData);
+
+      const exitSeries = this.magnifiedCharts[0].addLineSeries({
+        color: '#4aff00',
+        lineWidth: 1,
+      });
+      const exitData = this.prepareMagnifiedPriceLog(priceHistory.exit, start);
+      exitSeries.setData(exitData);
+
       const indicators = this.symbol.indicators;
       const handlers = this.handlers();
 
@@ -313,7 +362,7 @@ export default {
         if (handler['requiresNewChart'])
         {
           chart = this.newChart(container);
-          this.magnifiedCharts.push(newChart);
+          this.magnifiedCharts.push(chart);
         } else
         {
           chart = this.magnifiedCharts[0];
@@ -321,20 +370,21 @@ export default {
         let series = handler['init'](magnified, chart)
         handler['update'](series, magnified)
       }
-    }
-    ,
+      //
+      // const secondaryCharts = [...this.magnifiedCharts];
+      // secondaryCharts.shift();
+      // this.registerVisibleLogicalRangeChangeEvent(secondaryCharts)
+    },
 
-    magnify: function (startDate, endDate)
+    magnify: function (trade)
     {
-      if (!startDate || !endDate)
+      if (!trade)
       {
-        throw Error('startDate or endDate is undefined');
+        throw Error('Argument trade is undefined.');
       }
 
-      this.magnifier.startDate = startDate;
-      this.magnifier.endDate = endDate;
-    }
-    ,
+      this.magnifier.trade = trade;
+    },
 
     showRange: function (timestampA, timestampB)
     {
@@ -342,10 +392,24 @@ export default {
       {
         this.charts[i].showRange(timestampA / 1000, timestampB / 1000);
       }
-    }
-    ,
+    },
 
-    registerEvents: function ()
+    registerVisibleLogicalRangeChangeEvent: function (charts)
+    {
+      for (let i in charts)
+      {
+        charts[i].timeScale().subscribeVisibleLogicalRangeChange(range =>
+        {
+          for (let j in charts)
+          {
+            if (j !== i)
+            {
+              charts[j].timeScale().setVisibleLogicalRange(range);
+            }
+          }
+        });
+      }
+    }, registerChartEvents: function ()
     {
       this.charts[0].timeScale().subscribeVisibleLogicalRangeChange(newVisibleLogicalRange =>
       {
@@ -359,21 +423,8 @@ export default {
         }
       });
 
-      for (let i in this.charts)
-      {
-        this.charts[i].timeScale().subscribeVisibleLogicalRangeChange(range =>
-        {
-          for (let j in this.charts)
-          {
-            if (j !== i)
-            {
-              this.charts[j].timeScale().setVisibleLogicalRange(range);
-            }
-          }
-        });
-      }
-    }
-    ,
+      this.registerVisibleLogicalRangeChangeEvent(this.charts);
+    },
 
     objectMap: function (callback, object)
     {
@@ -385,8 +436,7 @@ export default {
       }
 
       return o;
-    }
-    ,
+    },
 
     handlers: function ()
     {
@@ -549,8 +599,7 @@ export default {
           }
         }
       }
-    }
-    ,
+    },
 
     calcInterval: function (collection, key)
     {
@@ -573,8 +622,7 @@ export default {
       }
 
       return {start: start, interval: interval};
-    }
-    ,
+    },
 
     fillFrontGaps: function (length, indicator, value = 0)
     {
@@ -590,8 +638,7 @@ export default {
           indicator.unshift({time: time, value: value});
         }
       }
-    }
-    ,
+    },
 
     prepareIndicatorData: function (indicators, length)
     {
@@ -605,8 +652,7 @@ export default {
         }
       }
       return indicators;
-    }
-    ,
+    },
 
     initIndicators: function (container)
     {
@@ -624,8 +670,7 @@ export default {
           handler['update'](this.series[key], data);
         }
       }
-    }
-    ,
+    },
 
     prepareSignalMarker: function (data, namePrefix)
     {
@@ -636,8 +681,7 @@ export default {
         shape: data.side === 'BUY' ? 'arrowUp' : 'arrowDown',
         text: typeof namePrefix === String ? namePrefix + ': ' + data.name : data.name
       }
-    }
-    ,
+    },
 
     initMarkers: function ()
     {
@@ -673,8 +717,7 @@ export default {
           }
         }
       }
-    }
-    ,
+    },
 
     prepareSignalMarkers: function (markers, collection, prefix = false)
     {
@@ -685,8 +728,7 @@ export default {
       }
 
       return markers.sort((a, b) => (a.time - b.time));
-    }
-    ,
+    },
 
     replaceCandlestickChart: async function ()
     {
@@ -714,15 +756,13 @@ export default {
 
       this.initIndicators(container);
       this.initMarkers();
-      this.registerEvents();
-    }
-    ,
+      this.registerChartEvents();
+    },
 
     cacheKey: function ()
     {
       return this.sel.exchange + this.sel.symbol + this.sel.interval + this.sel.indicators;
-    }
-    ,
+    },
 
     updateSymbol: async function ()
     {
@@ -745,8 +785,7 @@ export default {
 
       if (this.useCache)
         this.cache[key] = {symbol: this.symbol, limit: this.limit};
-    }
-    ,
+    },
 
     lazyLoad: async function ()
     {
@@ -761,8 +800,7 @@ export default {
 
       this.loading = false;
       this.limitReached = length === this.symbol.candles.length;
-    }
-    ,
+    },
 
     updateSeries: async function ()
     {
@@ -782,8 +820,7 @@ export default {
         if (this.symbol.indicators[key])
           handlers[key]['update'](this.series[key], this.symbol.indicators[key]);
       }
-    }
-    ,
+    },
     newChart: function (container, options = {})
     {
       if (!container) throw Error('Chart container was not found.');
@@ -792,8 +829,7 @@ export default {
       options.width = container.offsetWidth;
 
       return new Chart(container, options);
-    }
-    ,
+    },
 
     createChart: function (container, options = {})
     {
@@ -801,8 +837,7 @@ export default {
       this.charts.push(chart);
 
       return chart;
-    }
-    ,
+    },
 
     resize: function ()
     {
@@ -815,14 +850,12 @@ export default {
       if (this.magnifiedCharts.length)
         for (let i in this.magnifiedCharts)
           this.magnifiedCharts[i].resize(container.offsetWidth, container.offsetHeight);
-    }
-    ,
+    },
 
     onSelect: function ()
     {
       this.replaceCandlestickChart();
-    }
-    ,
+    },
 
     purgeMainCharts: function ()
     {
@@ -834,8 +867,7 @@ export default {
         this.charts = [];
         this.symbol = null;
       }
-    }
-    ,
+    },
 
     fetchSymbol: async function ()
     {
@@ -846,8 +878,7 @@ export default {
           this.limit,
           this.sel.strategy,
           this.range);
-    }
-    ,
+    },
 
     prepareSymbol: function (symbol)
     {
@@ -868,15 +899,13 @@ export default {
       symbol.markers = {trades: [], signals: []};
 
       return symbol;
-    }
-    ,
+    },
 
     resetLimit: function ()
     {
       this.limit = this.candlesPerRequest;
       this.limitReached = false;
-    }
-    ,
+    },
 
     init: function ()
     {

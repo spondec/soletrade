@@ -37,7 +37,7 @@
       }">
       <td>
         <button type="button"
-                v-on:click="magnify(trade.entry.timestamp, Math.max(trade.exit_timestamp, trade.exit.price_date))">
+                v-on:click="magnify(trade)">
           Magnify
         </button>
       </td>
@@ -128,9 +128,9 @@ export default {
 
   methods: {
 
-    magnify: function (startDate, endDate)
+    magnify: function (trade)
     {
-      this.$emit('magnify', startDate, endDate);
+      this.$emit('magnify', trade);
     },
 
     dateClick: function (a, b)
