@@ -39,7 +39,7 @@ class MoveStop extends AbstractTradeActionHandler
         $this->lockIfUnlocked($this->stop, $this);
     }
 
-    protected function stopIfShould(\stdClass $candle): void
+    protected function stopIfShould(\stdClass $candle, int $priceDate): void
     {
         if (!$this->position->isOpen())
         {
@@ -52,28 +52,28 @@ class MoveStop extends AbstractTradeActionHandler
         {
             if ($candle->c <= $stopPrice)
             {
-                $this->setStop($candle->c, 'The stop price is missed. Stopping at close price.');
-                $this->position->stop($candle->t);
+                $this->setStop($candle->c, $priceDate, 'The stop price was missed. Stopping at close price.');
+                $this->position->stop($priceDate);
             }
         }
         else if ($candle->c >= $stopPrice)
         {
-            $this->setStop($candle->c, 'The stop price is missed. Stopping at close price.');
-            $this->position->stop($candle->t);
+            $this->setStop($candle->c, $priceDate, 'The stop price was missed. Stopping at close price.');
+            $this->position->stop($priceDate);
         }
     }
 
-    protected function setStop(float $price, string $reason): void
+    protected function setStop(float $price, int $timestamp, string $reason): void
     {
         if ($this->stop->isLocked())
         {
             $this->stop->unlock($this);
         }
 
-        $this->stop->set($price, $this->prepareReason($reason));
+        $this->stop->set($price, $timestamp, $this->prepareReason($reason));
     }
 
-    protected function performAction(\stdClass $candle): bool
+    protected function performAction(\stdClass $candle, int $priceDate): bool
     {
         $newStop = $this->config('new_stop_price');
 
@@ -83,20 +83,18 @@ class MoveStop extends AbstractTradeActionHandler
             {
                 if ($candle->h >= $targetPrice)
                 {
-                    $this->setStop($newStop, "Move stop to $newStop if the price is higher than or equal to $targetPrice");
-                    $this->stopIfShould($candle);
+                    $this->setStop($newStop, $priceDate, "Move stop to $newStop if the price is higher than or equal to $targetPrice");
+                    $this->stopIfShould($candle, $priceDate);
                     return true;
                 }
             }
             else
-            {
                 if ($candle->l <= $targetPrice)
                 {
-                    $this->setStop($newStop, "Move stop to $newStop if the price is lower than or equal to $targetPrice");
-                    $this->stopIfShould($candle);
+                    $this->setStop($newStop, $priceDate, "Move stop to $newStop if the price is lower than or equal to $targetPrice");
+                    $this->stopIfShould($candle, $priceDate);
                     return true;
                 }
-            }
         }
         else if ($targetRoi = $this->config('target.roi'))
         {
@@ -104,20 +102,18 @@ class MoveStop extends AbstractTradeActionHandler
             {
                 if ($this->position->roi($candle->h) >= $targetRoi)
                 {
-                    $this->setStop($newStop, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
-                    $this->stopIfShould($candle);
+                    $this->setStop($newStop, $priceDate, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
+                    $this->stopIfShould($candle, $priceDate);
                     return true;
                 }
             }
             else
-            {
-                if ($this->position->roi($candle->l) <= $targetRoi)
+                if ($this->position->roi($candle->l) >= $targetRoi)
                 {
-                    $this->setStop($newStop, "Move stop to $newStop if the ROI is lower than or equal to %$targetRoi");
-                    $this->stopIfShould($candle);
+                    $this->setStop($newStop, $priceDate, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
+                    $this->stopIfShould($candle, $priceDate);
                     return true;
                 }
-            }
         }
 
         return false;

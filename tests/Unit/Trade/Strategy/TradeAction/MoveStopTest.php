@@ -10,18 +10,18 @@ use PHPUnit\Framework\TestCase;
 
 class MoveStopTest extends TestCase
 {
-    public function test_run_with_config_target_roi_with_close_price_above_new_stop_price()
+    public function test_buy_with_target_roi_50_and_close_price_above_new_stop_price_should_leave_position_open_and_move_stop_to_entry()
     {
         $position = new Position(true,
             100,
             time(),
-            new Price(1),
+            new Price($entry = 1),
             new Price(2),
             new Price(0.5));
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
-            'new_stop_price' => 1
+            'new_stop_price' => $entry
         ]);
 
         $candle = [
@@ -40,18 +40,48 @@ class MoveStopTest extends TestCase
         $this->assertEquals(1, $position->price('stop')->get());
     }
 
-    public function test_run_with_config_target_roi_with_close_price_below_new_stop_price()
+    public function test_sell_with_target_roi_50_and_close_price_below_new_stop_price_should_leave_position_open_and_move_stop_to_entry()
+    {
+        $position = new Position(false,
+            100,
+            time(),
+            new Price($entry = 2),
+            new Price(1),
+            new Price(3));
+
+        $moveStop = $this->newMoveStop($position, [
+            'target'         => ['roi' => 50],
+            'new_stop_price' => $entry
+        ]);
+
+        $candle = [
+            'h' => 2,
+            'l' => 1,
+            'o' => 1.1,
+            'c' => 1.5,
+            't' => time(),
+        ];
+
+        $this->assertEquals(3, $position->price('stop')->get());
+
+        $moveStop->run((object)$candle, $candle['t']);
+
+        $this->assertTrue($position->isOpen(), 'Position is expected to be open but is closed.');
+        $this->assertEquals(2, $position->price('stop')->get());
+    }
+
+    public function test_buy_with_target_roi_50_and_close_price_below_new_stop_price_should_close_position_at_close_price()
     {
         $position = new Position(true,
             100,
             time(),
-            new Price(1),
+            new Price($entry = 1),
             new Price(2),
             new Price(0.5));
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
-            'new_stop_price' => 1
+            'new_stop_price' => $entry
         ]);
 
         $candle = [
@@ -68,6 +98,36 @@ class MoveStopTest extends TestCase
 
         $this->assertTrue(!$position->isOpen(), 'Position is expected to be closed but is open.');
         $this->assertEquals(0.9, $position->price('stop')->get());
+    }
+
+    public function test_sell_with_target_roi_50_and_close_price_above_new_stop_price_should_close_position_at_close_price()
+    {
+        $position = new Position(false,
+            100,
+            time(),
+            new Price($entry = 2),
+            new Price(1),
+            new Price(3));
+
+        $moveStop = $this->newMoveStop($position, [
+            'target'         => ['roi' => 50],
+            'new_stop_price' => $entry
+        ]);
+
+        $candle = [
+            'h' => 3,
+            'l' => 1,
+            'o' => 1.1,
+            'c' => 2.1,
+            't' => time(),
+        ];
+
+        $this->assertEquals(3, $position->price('stop')->get());
+
+        $moveStop->run((object)$candle, $candle['t']);
+
+        $this->assertTrue(!$position->isOpen(), 'Position is expected to be closed but is open.');
+        $this->assertEquals(2.1, $position->price('stop')->get());
     }
 
     protected function newMoveStop(Position $position, array $config): MoveStop
