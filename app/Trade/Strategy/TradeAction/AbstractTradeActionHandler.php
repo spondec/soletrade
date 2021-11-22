@@ -44,7 +44,7 @@ abstract class AbstractTradeActionHandler
 
     public function run(\stdClass $candle, int $priceDate): ?TradeAction
     {
-        if (!$this->isTaken && $this->performAction($candle))
+        if (!$this->isTaken && $this->performAction($candle, $priceDate))
         {
             if ($this->config('lock'))
             {
@@ -60,7 +60,7 @@ abstract class AbstractTradeActionHandler
         return null;
     }
 
-    abstract protected function performAction(\stdClass $candle): bool;
+    abstract protected function performAction(\stdClass $candle, int $priceDate): bool;
 
     protected function applyLocks(): void
     {
