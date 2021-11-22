@@ -422,7 +422,7 @@ abstract class AbstractStrategy
                 ->all();
         }
 
-        throw new \InvalidArgumentException("Could not get save points for bind: {$bind}");
+        throw new \InvalidArgumentException("Could not get save points for binding: {$bind}");
     }
 
     protected function getBindable(): array
