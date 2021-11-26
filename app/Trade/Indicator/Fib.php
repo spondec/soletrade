@@ -160,31 +160,14 @@ class Fib extends AbstractIndicator
                 $highest = max($highs);
                 $lowest = min($lows);
 
-                $keys = array_keys($highs, $highest);
-                $highestPosition = (int)end($keys);
-
-                $keys = array_keys($lows, $lowest);
-                $lowestPosition = (int)end($keys);
                 $new = [];
 
-                if ($lowestPosition < $highestPosition)
+                $new[0] = $highest;
+                foreach ($levels as $level)
                 {
-                    $new[0] = $highest;
-                    foreach ($levels as $level)
-                    {
-                        $new[$level] = $highest - ($highest - $lowest) * ($level / 1000);
-                    }
-                    $new[1000] = $highest - ($highest - $lowest) * 1.000;
+                    $new[$level] = $highest - ($highest - $lowest) * ($level / 1000);
                 }
-                else
-                {
-                    $new[0] = $lowest;
-                    foreach ($levels as $level)
-                    {
-                        $new[$level] = ($highest - $lowest) * ($level / 1000) + $lowest;
-                    }
-                    $new[1000] = ($highest - $lowest) * 1.000 + $lowest;
-                }
+                $new[1000] = $highest - ($highest - $lowest) * 1.000;
 
                 $fib[] = $new;
 
