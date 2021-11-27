@@ -17,4 +17,14 @@ class BindingRepository
             ->orderBy('timestamp', 'ASC')
             ->get(['value', 'timestamp']);
     }
+
+    public function insertSavePoints(array $points): void
+    {
+        foreach (array_chunk($points, 1000) as $chunk)
+        {
+            DB::table('save_points')->upsert($chunk,
+                ['timestamp', 'binding_signature_id'],
+                ['value']);
+        }
+    }
 }

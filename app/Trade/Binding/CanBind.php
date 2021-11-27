@@ -5,8 +5,9 @@ namespace App\Trade\Binding;
 use App\Models\Binding;
 use App\Models\Model;
 use App\Models\Signature;
+use App\Repositories\BindingRepository;
 use App\Trade\HasSignature;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\App;
 
 trait CanBind
 {
@@ -16,6 +17,8 @@ trait CanBind
     private ?\WeakMap $bindings = null;
 
     private array $handledCache = [];
+
+    private BindingRepository $bindingRepo;
 
     /**
      * @param Model $model
@@ -29,6 +32,7 @@ trait CanBind
                                ?int       $timestamp = null): Binding
     {
         $this->assertBindExists($bind);
+        $this->bindingRepo = App::make(BindingRepository::class);
 
         $value = $this->getBindValue($bind, $timestamp);
 
@@ -51,6 +55,11 @@ trait CanBind
         $model->setAttribute($column, $value);
 
         return $binding;
+    }
+
+    public function isBindable(mixed $bind): bool
+    {
+        return in_array($bind, $this->bindable);
     }
 
     private function assertBindExists(string|int $bind): void
@@ -81,12 +90,7 @@ trait CanBind
             {
                 $points = $this->processSavePoints($points, $id, $callback);
 
-                foreach (array_chunk($points, 1000) as $chunk)
-                {
-                    DB::table('save_points')->upsert($chunk,
-                        ['timestamp', 'binding_signature_id'],
-                        ['value']);
-                }
+                $this->bindingRepo->insertSavePoints($points);
             }
 
             $this->handledCache[$id] = true;
