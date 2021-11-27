@@ -64,10 +64,10 @@ class StrategyTester
     }
 
     #[ArrayShape(['evaluations' => "\Illuminate\Support\Collection|\App\Models\Evaluation[]", 'summary' => Summary::class])]
-    public function summary(Collection $trades): array
+    public function summary(): array
     {
         return [
-            'evaluations' => $evaluations = $this->evaluate($trades),
+            'evaluations' => $evaluations = $this->evaluate(),
             'summary'     => $this->summarizer->summarize($evaluations)
         ];
     }
@@ -75,29 +75,37 @@ class StrategyTester
     /**
      * @param TradeSetup[] $trades
      */
-    protected function evaluate(Collection $trades): Collection
+    protected function evaluate(): Collection
     {
-        $evaluations = new Collection();
-        $lastCandle = $this->symbolRepo->fetchLastCandle($trades->first()->symbol);
-
-        foreach ($trades as $trade)
+        $evaluations = [];
+        $evaluation = null;
+        if ($first = $this->strategy->getFirstTrade())
         {
-            if (!isset($entry))
-            {
-                $entry = $trade;
-                continue;
-            }
+            $lastCandle = $this->symbolRepo->fetchLastCandle($first->symbol);
 
-            if ($entry->side !== $trade->side &&
-                $entry->timestamp < $lastCandle->t &&
-                $trade->timestamp < $lastCandle->t)
+            /** @var TradeSetup[] $pending */
+            $pending = [];
+            while ($next = $this->strategy->getNextTrade($first))
             {
-                $evaluations[] = $this->evaluator->evaluate($entry, $trade);
+                $pending[] = $first;
 
-                $entry = $trade;
+                if ($first->isBuy() != $next->isBuy())
+                {
+                    foreach ($pending as $setup)
+                    {
+                        if (!$evaluation || ($evaluation && $evaluation->exit_timestamp < $setup->price_date))
+                            if ($setup->timestamp < $lastCandle->t && $next->timestamp < $lastCandle->t)
+                            {
+                                $evaluations[] = $evaluation = $this->evaluator->evaluate($setup, $next);
+                            }
+
+                    }
+                    $pending = [];
+                }
+                $first = $next;
             }
         }
 
-        return $evaluations;
+        return new Collection($evaluations);
     }
 }
