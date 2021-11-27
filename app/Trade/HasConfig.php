@@ -27,7 +27,14 @@ trait HasConfig
 
         foreach ($keys as $k)
         {
-            $value = &$value[$k];
+            if (array_key_exists($k, $value))
+            {
+                $value = &$value[$k];
+            }
+            else
+            {
+                throw new \InvalidArgumentException('Undefined config key: ' . $k);
+            }
         }
 
         return $value;
