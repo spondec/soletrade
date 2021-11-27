@@ -50,4 +50,9 @@ class Calc
     {
         return Exchange::parse_timeframe($interval);
     }
+
+    public static function avg(array $numbers): float
+    {
+        return array_sum($numbers) / count($numbers);
+    }
 }
