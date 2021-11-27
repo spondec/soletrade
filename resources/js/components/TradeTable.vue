@@ -30,8 +30,8 @@
     <tbody>
 
     <tr v-for="trade in paginated" class="bg-opacity-50" v-bind:class="{
-        'bg-danger': trade.realized_roi < 0,
-        'bg-success': trade.realized_roi > 0,
+        'bg-danger': trade.relative_roi < 0,
+        'bg-success': trade.relative_roi > 0,
         'bg-warning' : !trade.is_entry_price_valid,
         'bg-info': trade.is_ambiguous
       }">
@@ -89,7 +89,7 @@
       </td>
       <!--      <td>{{ trade.highest_price }}</td>-->
       <!--      <td>{{ trade.lowest_price }}</td>-->
-      <td>{{ round(trade.realized_roi) || 'N/A' }}</td>
+      <td>{{ round(trade.relative_roi) || 'N/A' }}</td>
       <td>{{ round(trade.highest_roi) || 'N/A' }}</td>
       <td>{{ round(trade.lowest_to_highest_roi) || 'N/A' }}</td>
       <td>{{ round(trade.lowest_roi) || 'N/A' }}</td>
