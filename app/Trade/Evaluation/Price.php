@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade\Evaluation;
 
 use App\Trade\ChangeLog;
 use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
+use JetBrains\PhpStorm\Pure;
 
 class Price
 {
@@ -83,7 +86,7 @@ class Price
         }
     }
 
-    public function history(): array
+    #[Pure] public function history(): array
     {
         return $this->log->get();
     }
