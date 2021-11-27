@@ -11,6 +11,7 @@ use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Binding\CanBind;
+use App\Trade\Evaluation\TradeLoop;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
@@ -30,8 +31,9 @@ abstract class AbstractStrategy
 
     protected array $config = [];
     protected \WeakMap $actions;
-    private array $indicatorSetup;
-    private array $tradeSetup;
+    protected SymbolRepository $symbolRepo;
+    private array $indicatorConfig;
+    private array $tradeConfig;
     private ?Signal $lastSignal;
     private array $bindMap;
     /**
@@ -51,8 +53,6 @@ abstract class AbstractStrategy
      */
     private Collection $helperIndicators;
 
-    protected SymbolRepository $symbolRepo;
-
     public function __construct(array $config = [])
     {
         $this->mergeConfig($config);
@@ -60,8 +60,8 @@ abstract class AbstractStrategy
         $this->symbolRepo = App::make(SymbolRepository::class);
 
         $this->indicators = new Collection();
-        $this->indicatorSetup = $this->indicatorSetup();
-        $this->tradeSetup = $this->tradeSetup();
+        $this->indicatorConfig = $this->indicatorConfig();
+        $this->tradeConfig = $this->tradeConfig();
         $this->signature = $this->register([
             'contents' => $this->contents()
         ]);
@@ -71,13 +71,62 @@ abstract class AbstractStrategy
         $this->actions = new \WeakMap();
     }
 
-    abstract protected function indicatorSetup(): array;
+    abstract protected function indicatorConfig(): array;
 
-    abstract protected function tradeSetup(): array;
+    abstract protected function tradeConfig(): array;
 
     protected function getBindMap(): array
     {
         return ['last_signal_price' => 'price'];
+    }
+
+    public function getFirstTrade(): ?TradeSetup
+    {
+        return $this->trades->first();
+    }
+
+    protected function findNextOppositeTrade(TradeSetup $tradeSetup): ?TradeSetup
+    {
+        $isBuy = $tradeSetup->isBuy();
+
+        while ($next = $this->findNextTrade($next ?? $tradeSetup))
+        {
+            if ($next->isBuy() !== $isBuy)
+            {
+                return $next;
+            }
+        }
+
+        return null;
+    }
+
+    public function getNextTrade(TradeSetup $tradeSetup): ?TradeSetup
+    {
+        if ($this->config('oppositeOnly'))
+        {
+            return $this->findNextOppositeTrade($tradeSetup);
+        }
+        return $this->findNextTrade($tradeSetup);
+    }
+
+    protected function findNextTrade(TradeSetup $tradeSetup): ?TradeSetup
+    {
+        $timestamp = $tradeSetup->timestamp;
+
+        $iterator = $this->trades->getIterator();
+
+        while ($iterator->valid())
+        {
+            if ($iterator->key() == $timestamp)
+            {
+                $iterator->next();
+                return $iterator->current();
+            }
+
+            $iterator->next();
+        }
+
+        return null;
     }
 
     public function newAction(TradeSetup $setup, string $actionClass, array $config): void
@@ -95,11 +144,6 @@ abstract class AbstractStrategy
         $this->actions[$setup][$actionClass] = $config;
     }
 
-    public function trades(): Collection
-    {
-        return $this->trades;
-    }
-
     public function signals(): Collection
     {
         return $this->signals;
@@ -107,7 +151,7 @@ abstract class AbstractStrategy
 
     public function run(Symbol $symbol): void
     {
-        $symbol->exchange()->updater()->update($symbol);
+        $symbol->updateCandles();
 
         Log::execTimeStart('AbstractStrategy::initIndicators()');
         $this->initIndicators($symbol);
@@ -128,7 +172,7 @@ abstract class AbstractStrategy
 
         $this->initHelperIndicators($symbol, $candles);
 
-        foreach ($this->indicatorSetup as $class => $setup)
+        foreach ($this->indicatorConfig as $class => $setup)
         {
             /** @var AbstractIndicator $indicator */
             $indicator = new $class(symbol: $symbol,
@@ -178,14 +222,12 @@ abstract class AbstractStrategy
     protected function getConfigSignals(Symbol $symbol): Collection
     {
         $signals = [];
-        foreach ($this->tradeSetup as $config)
+
+        /* @var \App\Trade\Indicator\AbstractIndicator $indicator */
+        foreach ($this->getConfigIndicators($this->tradeConfig) as $indicator)
         {
-            /* @var \App\Trade\Indicator\AbstractIndicator $indicator */
-            foreach ($this->getConfigIndicators($config) as $indicator)
-            {
-                $indicator = $symbol->indicator($indicator::name());
-                $signals[$indicator::class] = $indicator->signals();
-            }
+            $indicator = $symbol->indicator($indicator::name());
+            $signals[$indicator::class] = $indicator->signals();
         }
 
         return new Collection($signals);
@@ -213,62 +255,58 @@ abstract class AbstractStrategy
     {
         $setups = [];
 
-        foreach ($this->tradeSetup as $key => $config)
+        if (!$indicators = $this->getConfigIndicators($this->tradeConfig))
         {
-            if (!$indicators = $this->getConfigIndicators($config))
+            throw new \UnexpectedValueException('Invalid signal config for trade setup: ' . static::name());
+        }
+
+        $required = count($this->tradeConfig['signals']);
+        $signals = [];
+        $firstIndicator = $indicators[0];
+        $index = 0;
+
+        while (isset($this->signals[$firstIndicator][$index]))
+        {
+            foreach ($indicators as $k => $indicator)
             {
-                throw new \UnexpectedValueException('Invalid signal config for trade setup: ' . $key);
+                $isFirst = $k === 0;
+                /* @var Signal $signal */
+                foreach ($this->signals[$indicator] as $i => $signal)
+                {
+                    if ($isFirst)
+                    {
+                        if ($i < $index) continue;
+                        $index = $i + 1;
+                    }
+
+                    /** @var Signal $lastSignal */
+                    $lastSignal = end($signals);
+
+                    if (!$lastSignal || ($signal->timestamp >= $lastSignal->timestamp && $lastSignal->side === $signal->side))
+                    {
+                        if ($this->validateSignal($indicator, $this->tradeConfig, $signal))
+                        {
+                            $signals[] = $signal;
+                            break;
+                        }
+                    }
+                }
             }
 
-            $required = count($config['signals']);
+            if ($required === count($signals))
+            {
+                $this->lastSignal = $signal;
+                $signals = new Collection($signals);
+                $tradeSetup = $this->setupTrade($symbol, $this->tradeConfig, $signals);
+
+                if ($tradeSetup = $this->applyTradeSetupConfig($tradeSetup, $signals, $this->tradeConfig))
+                {
+                    $setups[$tradeSetup->timestamp] = $this->saveTrade($tradeSetup, $signals);
+                }
+                $this->lastSignal = null;
+            }
+
             $signals = [];
-            $firstIndicator = $indicators[0];
-            $index = 0;
-
-            while (isset($this->signals[$firstIndicator][$index]))
-            {
-                foreach ($indicators as $k => $indicator)
-                {
-                    $isFirst = $k === 0;
-                    /* @var Signal $signal */
-                    foreach ($this->signals[$indicator] as $i => $signal)
-                    {
-                        if ($isFirst)
-                        {
-                            if ($i < $index) continue;
-                            $index = $i + 1;
-                        }
-
-                        /** @var Signal $lastSignal */
-                        $lastSignal = end($signals);
-
-                        if (!$lastSignal || ($signal->timestamp >= $lastSignal->timestamp && $lastSignal->side === $signal->side))
-                        {
-                            if ($this->validateSignal($indicator, $config, $signal))
-                            {
-                                $signals[] = $signal;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if ($required === count($signals))
-                {
-                    $this->lastSignal = $signal;
-                    $signals = new Collection($signals);
-                    $tradeSetup = $this->setupTrade($symbol, $config, $signals);
-
-                    if ($tradeSetup = $this->applyTradeSetupConfig($tradeSetup, $signals, $config))
-                    {
-                        $setups[$key] = $setups[$key] ?? new Collection();
-                        $setups[$key][$tradeSetup->timestamp] = $this->saveTrade($tradeSetup, $signals);
-                    }
-                    $this->lastSignal = null;
-                }
-
-                $signals = [];
-            }
         }
 
         return new Collection($setups);
@@ -299,7 +337,7 @@ abstract class AbstractStrategy
             ],
             'trade_setup'     => $config,
             'indicator_setup' => array_map(
-                fn(string $class): array => $this->indicatorSetup[$class],
+                fn(string $class): array => $this->indicatorConfig[$class],
                 $this->getConfigIndicators($config))
         ]);
     }
@@ -385,6 +423,33 @@ abstract class AbstractStrategy
         return $this->actions[$setup] ?? null;
     }
 
+    public function newLoop(TradeSetup $entry): TradeLoop
+    {
+        $symbol = $this->getEvaluationSymbol($entry);
+
+        if (time() * 1000 >= $symbol->last_update + 60 * 1000)
+        {
+            $symbol->updateCandles();
+        }
+
+        return new TradeLoop($entry, $symbol, $this->config('loop'));
+    }
+
+    public function trades()
+    {
+        return $this->trades;
+    }
+
+    protected function getEvaluationSymbol(TradeSetup $entry): Symbol
+    {
+        $symbol = $entry->symbol;
+        $exchange = $symbol->exchange();
+        $symbolName = $symbol->symbol;
+        $evaluationInterval = $this->config('evaluationInterval');
+        return $this->symbolRepo->fetchSymbol($exchange, $symbolName, $evaluationInterval)
+            ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
+    }
+
     public function indicator(int $id): AbstractIndicator
     {
         return $this->indicators[$id];
@@ -401,9 +466,16 @@ abstract class AbstractStrategy
             'maxCandles'         => 1000,
             'startDate'          => null,
             'endDate'            => null,
-            'timeout'            => 1440, //trade duration in minutes - exceeding trades will be closed
-            'stopAtExit'         => true, //close trade at exit setup
-            'evaluationInterval' => '1m'
+            'oppositeOnly'       => false, //if true, multiple trades to the same direction won't be allowed
+            //evaluation
+            'loop'               => [
+                'timeout'    => 1440, //trade duration in minutes - exceeding trades will be closed
+                'stopAtExit' => true, //if true, close trade at exit setup
+            ],
+            'evaluationInterval' => '1m',
+
+            //summary
+            'feeRatio'           => 0.001
         ];
     }
 
