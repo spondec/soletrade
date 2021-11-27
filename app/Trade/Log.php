@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Trade;
 
+use App\Http\Middleware\ExecTimeMiddleware;
 use Illuminate\Support\Facades\Log as Logger;
 
 final class Log
@@ -28,6 +29,11 @@ final class Log
         ];
     }
 
+    protected static function logInfo(string $message)
+    {
+        Logger::info(ExecTimeMiddleware::getSessionPrefix() . $message);
+    }
+
     public static function execTimeStart(string $taskName): void
     {
         if (in_array($taskName, static::$tasks))
@@ -36,8 +42,7 @@ final class Log
         }
 
         static::$tasks[(string)microtime(true)] = $taskName;
-
-        Logger::info(sprintf('Started: %s', $taskName));
+        static::logInfo(sprintf('Started: %s', $taskName));
     }
 
     public static function execTimeFinish(string $taskName)
@@ -49,7 +54,7 @@ final class Log
 
         $execTime = microtime(true) - (float)$time;
 
-        Logger::info(sprintf('Finished in %s seconds: %s',
+        static::logInfo(sprintf('Finished in %s seconds: %s',
             round($execTime, 2), static::$tasks[$time]));
 
         unset(static::$tasks[$time]);
