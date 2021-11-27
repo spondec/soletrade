@@ -28,17 +28,17 @@ class ExecTimeMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        Log::info($this->getSessionPrefix() . 'Started...');
+        Log::info(static::getSessionPrefix() . 'Started...');
         return $next($request);
     }
 
-    protected function getSessionPrefix(): string
+    public static function getSessionPrefix(): string
     {
         return "[SESSION-" . static::$sessionId . "] ";
     }
 
     public function terminate()
     {
-        Log::info($this->getSessionPrefix() . 'Execution time: ' . round(microtime(true) - LARAVEL_START, 2) . ' seconds.');
+        Log::info(static::getSessionPrefix() . 'Execution time: ' . round(microtime(true) - LARAVEL_START, 2) . ' seconds.');
     }
 }
