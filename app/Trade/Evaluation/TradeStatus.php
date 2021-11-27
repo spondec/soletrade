@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade\Evaluation;
 
 use App\Models\TradeAction;
@@ -32,6 +34,7 @@ class TradeStatus
     {
         $this->isBuy = $this->entry->isBuy();
 
+        //TODO:: what if no stop/close price has been set?
         $this->entryPrice = $this->newPrice($this->entry->price);
         $this->closePrice = $this->newPrice($this->entry->close_price);
         $this->stopPrice = $this->newPrice($this->entry->stop_price);
@@ -70,7 +73,7 @@ class TradeStatus
 
     protected function initActionHandlers(): void
     {
-        foreach ($this->entry->actions as $action)
+        foreach ($this->entry->actions->filter(static fn(TradeAction $action) => !$action->is_taken) as $action)
         {
             $this->actionHandlers[] = $this->newActionHandler($this->position, $action);
         }
@@ -85,11 +88,11 @@ class TradeStatus
     {
         if ($this->highestPrice === null || $highest->h > $this->highestPrice)
         {
-            $this->highestPrice = $highest->h;
+            $this->highestPrice = (float)$highest->h;
         }
         if ($this->lowestPrice === null || $lowest->l < $this->lowestPrice)
         {
-            $this->lowestPrice = $lowest->l;
+            $this->lowestPrice = (float)$lowest->l;
         }
     }
 
