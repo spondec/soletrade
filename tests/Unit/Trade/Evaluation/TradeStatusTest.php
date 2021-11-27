@@ -18,9 +18,12 @@ class TradeStatusTest extends TestCase
 
         $action = Mockery::mock('alias:' . TradeAction::class);
         $action->config = [
-            'target'         => ['roi' => 10],
+            'target'         => [
+                'roi' => 10
+            ],
             'new_stop_price' => 1
         ];
+        $action->is_taken = false;
         $action->class = MoveStop::class;
         $action->expects('save')->andReturn(true);
 
@@ -37,7 +40,7 @@ class TradeStatusTest extends TestCase
             't' => time() + 1
         ];
 
-        $status->runTradeActions((object)$candle);
+        $status->runTradeActions((object)$candle, $candle['t']);
         $this->assertEquals(1, $status->getStopPrice()->get());
     }
 
