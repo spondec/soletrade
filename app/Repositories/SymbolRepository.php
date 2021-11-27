@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Models\Symbol;
 use App\Trade\CandleMap;
 use App\Trade\Exchange\AbstractExchange;
-use App\Trade\Log;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\ArrayShape;
@@ -160,7 +159,6 @@ class SymbolRepository
             ->where('t', $timestamp)
             ->first();
     }
-
 
     public function fetchNextCandle(int $symbolId, int $timestamp): ?\stdClass
     {
