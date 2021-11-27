@@ -11,7 +11,11 @@ use Illuminate\Database\Eloquent\Model;
  * @property int   loss
  * @property int   failed
  * @property float fee_ratio
+ * @property float total_fee
+ * @property array balance_history
  * @property float avg_roi
+ * @property float avg_profit_roi
+ * @property float avg_loss_roi
  * @property float avg_highest_roi
  * @property float avg_lowest_roi
  * @property float success_ratio
@@ -20,4 +24,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Summary extends Model
 {
+    protected $casts = [
+        'balance_history' => 'array'
+    ];
 }
