@@ -122,26 +122,24 @@ class ChartController extends Controller
                 'startDate' => $start,
                 'endDate'   => $end
             ]);
-            $result = $tester->runStrategy($symbol);
+
+            $tester->runStrategy($symbol);
 
             Log::execTimeStart('Evaluating and summarizing trades');
-            $summaryCollection = $result->trades()->map(static function (Collection $trades) use ($tester): array {
-                $summary = $tester->summary($trades);
-                $summary['evaluations'] = $summary['evaluations']->map(
-                    static fn(Evaluation $evaluation): Evaluation => $evaluation->fresh([
-                        'entry.bindings',
-                        'exit.bindings',
-                        'entry.signals.bindings',
-                        'exit.signals.bindings'
-                    ]));
+            $summary = $tester->summary();
+            $summary['evaluations'] = $summary['evaluations']->map(
+                static fn(Evaluation $evaluation): Evaluation => $evaluation->fresh([
+//                        'entry.bindings',
+//                        'exit.bindings',
+//                        'entry.signals.bindings',
+//                        'exit.signals.bindings'
+                ]));
 
-                return $summary;
-            });
             Log::execTimeFinish('Evaluating and summarizing trades');
 
             Log::execTimeStart('Preparing symbol');
             $symbol = $symbol->toArray();
-            $symbol['strategy'] = ['trades' => $summaryCollection->toArray()];
+            $symbol['strategy'] = ['trades' => $summary];
             Log::execTimeFinish('Preparing symbol');
 
             return $symbol;

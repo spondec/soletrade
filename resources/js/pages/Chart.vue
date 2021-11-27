@@ -62,54 +62,27 @@
                 @changed="toggle = !toggle">
             <tab name="Trade Setups">
               <div class="body divide-y my2">
-                <div v-for="(setup, id) in symbol.strategy.trades" id="trade-setups" class="my-2">
-                  <h1 class="text-2xl text-center">{{ id }}</h1>
+                <div id="trade-setups" class="my-2">
                   <div class="grid grid-cols-10 text-center">
                     <h1 class="text-lg" v-bind:class="{
-                        'text-danger': setup.summary.roi < 0,
-                        'text-success': setup.summary.roi > 0 }">
-                      {{ 'ROI: ' + setup.summary.roi + '%' }} </h1>
+                        'text-danger': symbol.strategy.trades.summary.roi < 0,
+                        'text-success': symbol.strategy.trades.summary.roi > 0 }">
+                      {{ 'ROI: ' + symbol.strategy.trades.summary.roi + '%' }} </h1>
                     <h1 class="text-lg" v-bind:class="{
-                        'text-danger': setup.summary.roi < 0,
-                        'text-success': setup.summary.roi > 0 }">
-                      {{ 'Average ROI: ' + setup.summary.avg_roi + '%' }} </h1>
-                    <h1 class="text-lg">Avg Highest ROI: {{ setup.summary.avg_highest_roi + '%' }}</h1>
-                    <h1 class="text-lg">Avg Lowest ROI: {{ setup.summary.avg_lowest_roi + '%' }}</h1>
-                    <h1 class="text-lg">Risk/Reward: {{ setup.summary.risk_reward_ratio }}</h1>
-                    <h1 class="text-lg">Success Ratio: {{ setup.summary.success_ratio }}</h1>
-                    <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
-                    <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
-                    <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
-                    <h1 class="text-lg">Failed: {{ setup.summary.failed }}</h1>
+                        'text-danger': symbol.strategy.trades.summary.roi < 0,
+                        'text-success': symbol.strategy.trades.summary.roi > 0 }">
+                      {{ 'Avg ROI: ' + symbol.strategy.trades.summary.avg_roi + '%' }} </h1>
+                    <h1 class="text-lg">Avg Profit: {{ symbol.strategy.trades.summary.avg_profit_roi + '%' }}</h1>
+                    <h1 class="text-lg">Avg Loss: {{ symbol.strategy.trades.summary.avg_loss_roi + '%' }}</h1>
+                    <h1 class="text-lg">Risk/Reward: {{ symbol.strategy.trades.summary.risk_reward_ratio }}</h1>
+                    <h1 class="text-lg">Success Ratio: {{ symbol.strategy.trades.summary.success_ratio }}</h1>
+                    <h1 class="text-lg">Profit: {{ symbol.strategy.trades.summary.profit }}</h1>
+                    <h1 class="text-lg">Loss: {{ symbol.strategy.trades.summary.loss }}</h1>
+                    <h1 class="text-lg">Ambiguous: {{ symbol.strategy.trades.summary.ambiguous }}</h1>
+                    <h1 class="text-lg">Failed: {{ symbol.strategy.trades.summary.failed }}</h1>
                   </div>
-                  <trade-table chart-id="chart" v-bind:trades="setup.evaluations" @dateClick="showRange"
-                               @magnify="magnify"></trade-table>
-                </div>
-              </div>
-            </tab>
-            <tab name="Signals">
-              <div class="body divide-y">
-                <div v-for="(setup, id) in symbol.strategy.signals" id="signals" class="my-2">
-                  <h1 class="text-2xl text-center">{{ id }}</h1>
-                  <div class="grid grid-cols-10 text-center">
-                    <h1 class="text-lg" v-bind:class="{
-                        'text-danger': setup.summary.roi < 0,
-                        'text-success': setup.summary.roi > 0 }">
-                      {{ 'ROI: ' + setup.summary.roi + '%' }} </h1>
-                    <h1 class="text-lg " v-bind:class="{
-                        'text-danger': setup.summary.roi < 0,
-                        'text-success': setup.summary.roi > 0 }">
-                      {{ 'Average ROI: ' + setup.summary.avg_roi + '%' }} </h1>
-                    <h1 class="text-lg">Avg Highest ROI: {{ setup.summary.avg_highest_roi + '%' }}</h1>
-                    <h1 class="text-lg">Avg Lowest ROI: {{ setup.summary.avg_lowest_roi + '%' }}</h1>
-                    <h1 class="text-lg">Risk/Reward: {{ setup.summary.risk_reward_ratio }}</h1>
-                    <h1 class="text-lg">Success Ratio: {{ setup.summary.success_ratio }}</h1>
-                    <h1 class="text-lg">Profit: {{ setup.summary.profit }}</h1>
-                    <h1 class="text-lg">Loss: {{ setup.summary.loss }}</h1>
-                    <h1 class="text-lg">Ambiguous: {{ setup.summary.ambiguous }}</h1>
-                    <h1 class="text-lg">Failed: {{ setup.summary.failed }}</h1>
-                  </div>
-                  <trade-table chart-id="chart" v-bind:trades="setup.evaluations" @dateClick="showRange"
+                  <trade-table chart-id="chart" v-bind:trades="symbol.strategy.trades.evaluations"
+                               @dateClick="showRange"
                                @magnify="magnify"></trade-table>
                 </div>
               </div>
@@ -203,6 +176,7 @@ export default {
 
       candlesPerRequest: 1000,
 
+      balanceChart: null,
       charts: [],
       series: []
     }
@@ -328,28 +302,30 @@ export default {
       candlestickSeries.setMarkers(this.reduceSeriesData(start, end, this.symbol.markers.trades));
       candlestickSeries.setData(symbol.candles);
 
-      const priceHistory = trade.log.position.price_history;
+      if (trade.log.position)
+      {
+        const priceHistory = trade.log.position.price_history;
+        const entrySeries = this.magnifiedCharts[0].addLineSeries({
+          color: 'rgb(255,255,255)',
+          lineWidth: 1,
+        });
+        const entryData = this.prepareMagnifiedPriceLog(priceHistory.entry, start);
+        entrySeries.setData(entryData);
 
-      const entrySeries = this.magnifiedCharts[0].addLineSeries({
-        color: 'rgb(255,255,255)',
-        lineWidth: 1,
-      });
-      const entryData = this.prepareMagnifiedPriceLog(priceHistory.entry, start);
-      entrySeries.setData(entryData);
+        const stopSeries = this.magnifiedCharts[0].addLineSeries({
+          color: '#ff0000',
+          lineWidth: 1,
+        });
+        const stopData = this.prepareMagnifiedPriceLog(priceHistory.stop, start);
+        stopSeries.setData(stopData);
 
-      const stopSeries = this.magnifiedCharts[0].addLineSeries({
-        color: '#ff0000',
-        lineWidth: 1,
-      });
-      const stopData = this.prepareMagnifiedPriceLog(priceHistory.stop, start);
-      stopSeries.setData(stopData);
-
-      const exitSeries = this.magnifiedCharts[0].addLineSeries({
-        color: '#4aff00',
-        lineWidth: 1,
-      });
-      const exitData = this.prepareMagnifiedPriceLog(priceHistory.exit, start);
-      exitSeries.setData(exitData);
+        const exitSeries = this.magnifiedCharts[0].addLineSeries({
+          color: '#4aff00',
+          lineWidth: 1,
+        });
+        const exitData = this.prepareMagnifiedPriceLog(priceHistory.exit, start);
+        exitSeries.setData(exitData);
+      }
 
       const indicators = this.symbol.indicators;
       const handlers = this.handlers();
@@ -692,39 +668,21 @@ export default {
         if (strategy.trades)
         {
           let markers = [];
-          for (let id in strategy.trades)
-          {
-            markers = this.prepareSignalMarkers(markers, strategy.trades[id].evaluations, true);
-          }
+
+          markers = this.prepareSignalMarkers(markers, strategy.trades.evaluations, true);
+
           this.symbol.markers.trades = markers;
           this.series['candlestick'].setMarkers(markers);
-        }
-
-        if (strategy.signals)
-        {
-          const handlers = this.handlers();
-          for (let id in strategy.signals)
-          {
-            if (handlers[id] === undefined)
-              throw  Error('No handler found for ' + id);
-
-            if (handlers[id].setMarkers === undefined)
-              throw Error(id + ' handler must contain a setMarkers() function for handling markers.');
-
-            let markers = [];
-            markers = this.prepareSignalMarkers(markers, strategy.signals[id].evaluations);
-            handlers[id].setMarkers(markers);
-          }
         }
       }
     },
 
-    prepareSignalMarkers: function (markers, collection, prefix = false)
+    prepareSignalMarkers: function (markers, evaluations, prefix = false)
     {
-      for (let id in collection)
+      for (let id in evaluations)
       {
-        markers.push(this.prepareSignalMarker(collection[id]['entry'], prefix ? prefix + ' - ' + 'Entry' : ''));
-        markers.push(this.prepareSignalMarker(collection[id]['exit'], prefix ? prefix + ' - ' + 'Exit' : ''));
+        markers.push(this.prepareSignalMarker(evaluations[id]['entry'], prefix ? prefix + ' - ' + 'Entry' : ''));
+        markers.push(this.prepareSignalMarker(evaluations[id]['exit'], prefix ? prefix + ' - ' + 'Exit' : ''));
       }
 
       return markers.sort((a, b) => (a.time - b.time));
@@ -741,21 +699,44 @@ export default {
 
       this.purgeMainCharts();
       this.purgeMagnifierCharts();
+      if (this.balanceChart)
+      {
+        this.balanceChart.remove();
+        this.balanceChart = null;
+      }
 
       await this.updateSymbol();
 
       if (!this.symbol) return;
-
       const container = this.$refs.chart;
 
+      if (this.symbol.strategy)
+      {
+        this.balanceChart = this.newChart(container);
+        const lineSeries = this.balanceChart.addLineSeries();
+        const balanceHistory = this.symbol.strategy.trades.summary.balance_history;
+
+        const mapped = [];
+        for (let i in balanceHistory)
+        {
+          mapped.push({
+            time: i / 1000,
+            value: balanceHistory[i]
+          });
+        }
+
+        lineSeries.setData(mapped);
+      }
       const chart = this.createChart(container);
+
       const candlestickSeries = chart.addCandlestickSeries();
+
       candlestickSeries.setData(this.symbol.candles);
-
       this.series['candlestick'] = candlestickSeries;
-
       this.initIndicators(container);
+
       this.initMarkers();
+
       this.registerChartEvents();
     },
 
