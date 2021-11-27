@@ -121,7 +121,7 @@ class Fib extends AbstractIndicator
 
     protected function getBindable(): array
     {
-        return $this->config['levels'];
+        return array_filter($this->config['levels'], static fn(int $level): bool => !in_array($level, [0, 1000]));
     }
 
     protected function getBindPrice(mixed $bind): float
