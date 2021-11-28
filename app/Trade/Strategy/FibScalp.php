@@ -25,14 +25,12 @@ class FibScalp extends AbstractStrategy
         ];
     }
 
-    protected function indicatorSetup(): array
+    protected function indicatorConfig(): array
     {
         return [
             Fib::class => [
                 'config' => [
                     'period'              => 144,
-                    'atrMultiplier'       => 1,
-                    'totalBarsAfterLevel' => 3,
                     'levels'              => [236, 382, 500, 618, 786, 886, 114],
                     'progressiveInterval' => $this->progressiveInterval
                 ],
@@ -49,25 +47,27 @@ class FibScalp extends AbstractStrategy
                     if ($fibLevel !== 0 && $fibLevel !== 1000)
                     {
                         $atr = $this->helperIndicator(ATR::class)->data()[$timestamp];
+                        $multiplier = 3;
 
-                        if (abs($fibPrice - $price) <= $atr)
+                        $isPriceBelowFibLevel = $price < $fibPrice;
+                        $distance = $isPriceBelowFibLevel ? $fibPrice - $price : $price - $fibPrice;
+
+                        if ($distance > 0 && $distance <= $atr * $multiplier)
                         {
-                            $priceBelowFib = $price < $fibPrice;
+                            $totalBarsAfterLevel = 2;
 
-                            $bars = $indicator->config('totalBarsAfterLevel');
-
-                            for ($i = 1; $i <= $bars; $i++)
+                            for ($i = 1; $i <= $totalBarsAfterLevel; $i++)
                             {
                                 $prevCandle = $indicator->candle($i * -1);
 
-                                if ($prevCandle->h < $fibPrice !== $priceBelowFib ||
-                                    $prevCandle->l < $fibPrice !== $priceBelowFib)
+                                if ($prevCandle->h < $fibPrice !== $isPriceBelowFibLevel ||
+                                    $prevCandle->l < $fibPrice !== $isPriceBelowFibLevel)
                                 {
                                     return null;
                                 }
                             }
 
-                            $signal->side = $side = $priceBelowFib ? Signal::SELL : Signal::BUY;
+                            $signal->side = $side = $isPriceBelowFibLevel ? Signal::SELL : Signal::BUY;
                             $signal->info = array_merge($fib, ['prices' => $value]);
                             $signal->name = $indicator->buildSignalName(['side' => $side, 'level' => $fibLevel]);
                             $indicator->bind($signal, 'price', $fibLevel);
@@ -82,48 +82,54 @@ class FibScalp extends AbstractStrategy
         ];
     }
 
-    protected function tradeSetup(): array
+    protected function tradeConfig(): array
     {
         return [
-            'Fib' => [
-                'signals'  => [
-                    Fib::class
-                ],
-                'callback' => function (TradeSetup $setup, Collection $signals): ?TradeSetup {
+            'signals'  => [
+                Fib::class
+            ],
+            'callback' => function (TradeSetup $setup, Collection $signals): ?TradeSetup {
 
-                    /** @var Signal $signal */
-                    $signal = $signals->last();
-                    $fib = $signal->info;
+                /** @var Signal $signal */
+                $signal = $signals->last();
+                $fib = $signal->info;
 
-                    $targetLevels = Fib::targetLevels($fib['prices'], $fib['level'], $isBuy = $setup->isBuy());
+                $targetLevels = Fib::targetLevels($fib['prices'], $fib['level'], $isBuy = $setup->isBuy());
 
-                    $firstTarget = $targetLevels[0];
-                    $targetPrice = $fib['prices'][$firstTarget];
+                $firstTarget = $targetLevels[0];
+                $firstTargetPrice = $fib['prices'][$firstTarget];
 
-                    /** @var Fib $fib */
-                    $fib = $this->indicator($signal->indicator_id);
+                /** @var Fib $fib */
+                $fib = $this->indicator($signal->indicator_id);
+
+                if ($fib->isBindable($firstTarget))
+                {
                     $fib->bind($setup, 'close_price', $firstTarget, timestamp: $setup->timestamp);
-                    $this->bind($setup, 'price', 'last_signal_price');
-
-                    $targetRoi = Calc::roi($isBuy, $entryPrice = $setup->price, $targetPrice);
-                    $reward = $targetRoi / 100;
-                    $risk = $reward / 2;
-                    $setup->size = 100;
-
-                    $this->newAction($setup, MoveStop::class, [
-                        'target'         => ['roi' => $targetRoi / 2],
-                        'new_stop_price' => $entryPrice
-                    ]);
-
-                    $this->bind($setup,
-                        'stop_price',
-                        'last_signal_price',
-                        $isBuy
-                            ? static fn(float $price): float => $price - $price * $risk
-                            : static fn(float $price): float => $price + $price * $risk);
-                    return $setup;
                 }
-            ]
+                else
+                {
+                    $setup->close_price = $firstTargetPrice;
+                }
+                $this->bind($setup, 'price', 'last_signal_price');
+
+                $targetRoi = Calc::roi($isBuy, $entryPrice = $setup->price, $firstTargetPrice);
+                $reward = $targetRoi / 100;
+                $risk = $reward / 2;
+                $setup->size = 100;
+
+                $this->newAction($setup, MoveStop::class, [
+                    'target'         => ['roi' => $targetRoi / 2],
+                    'new_stop_price' => $entryPrice
+                ]);
+
+                $this->bind($setup,
+                    'stop_price',
+                    'last_signal_price',
+                    $isBuy
+                        ? static fn(float $price): float => $price - $price * $risk
+                        : static fn(float $price): float => $price + $price * $risk);
+                return $setup;
+            }
         ];
     }
 }
