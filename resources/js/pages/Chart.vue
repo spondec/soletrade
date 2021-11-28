@@ -242,6 +242,17 @@ export default {
 
       return acc;
     },
+    preparePriceChangeMarker: function (log, color, size = 0.5)
+    {
+      return {
+        time: log.time,
+        position: 'belowBar',
+        color: color,
+        shape: 'circle',
+        size: size,
+        text: log.reason ? log.reason : ''
+      }
+    },
     prepareMagnifiedPriceLog: function (log, start)
     {
       return Object.values(log.map(function (entry)
@@ -250,13 +261,15 @@ export default {
             {
               return {
                 value: entry.value,
-                time: start
+                time: start,
+                reason: entry.reason
               };
             } else
             {
               return {
                 value: entry.value,
-                time: entry.timestamp / 1000
+                time: entry.timestamp / 1000,
+                reason: entry.reason
               };
             }
           }).reduce(function (acc, entry)
@@ -305,26 +318,35 @@ export default {
       if (trade.log.position)
       {
         const priceHistory = trade.log.position.price_history;
+        const entryColor = 'rgb(255,255,255)';
         const entrySeries = this.magnifiedCharts[0].addLineSeries({
-          color: 'rgb(255,255,255)',
+          color: entryColor,
           lineWidth: 1,
+          lineType: 1,
         });
-        const entryData = this.prepareMagnifiedPriceLog(priceHistory.entry, start);
-        entrySeries.setData(entryData);
+        const entryLog = this.prepareMagnifiedPriceLog(priceHistory.entry, start);
+        entrySeries.setData(entryLog.map(item => ({time: item.time, value: item.value})));
+        entrySeries.setMarkers(entryLog.map(item => this.preparePriceChangeMarker(item, entryColor)))
 
+        const stopColor = '#ff0000';
         const stopSeries = this.magnifiedCharts[0].addLineSeries({
-          color: '#ff0000',
+          color: stopColor,
           lineWidth: 1,
+          lineType: 1,
         });
-        const stopData = this.prepareMagnifiedPriceLog(priceHistory.stop, start);
-        stopSeries.setData(stopData);
+        const stopLog = this.prepareMagnifiedPriceLog(priceHistory.stop, start);
+        stopSeries.setData(stopLog.map(item => ({time: item.time, value: item.value})));
+        stopSeries.setMarkers(stopLog.map(item => this.preparePriceChangeMarker(item, stopColor)))
 
+        const exitColor = '#4aff00';
         const exitSeries = this.magnifiedCharts[0].addLineSeries({
-          color: '#4aff00',
+          color: exitColor,
           lineWidth: 1,
+          lineType: 1,
         });
-        const exitData = this.prepareMagnifiedPriceLog(priceHistory.exit, start);
-        exitSeries.setData(exitData);
+        const exitLog = this.prepareMagnifiedPriceLog(priceHistory.exit, start);
+        exitSeries.setData(exitLog.map(item => ({time: item.time, value: item.value})));
+        exitSeries.setMarkers(exitLog.map(item => this.preparePriceChangeMarker(item, exitColor)))
       }
 
       const indicators = this.symbol.indicators;
