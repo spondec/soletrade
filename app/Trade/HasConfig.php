@@ -35,7 +35,7 @@ trait HasConfig
                 throw new \UnexpectedValueException("Config key does match: $key");
             }
 
-            if (is_array($value))
+            if (is_array($value) && !array_is_list($value))
             {
                 $this->assertKeyMatch($original[$key], $value);
             }
