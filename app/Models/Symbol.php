@@ -103,14 +103,14 @@ class Symbol extends Model
 
     public function addIndicator(AbstractIndicator $indicator): void
     {
+        if ($indicator->symbol() !== $this)
+        {
+            throw new \InvalidArgumentException("Indicator {$indicator::name()} doesn't belong to this symbol instance.");
+        }
+
         if (!$this->indicators)
         {
             $this->indicators = new Collection();
-        }
-
-        if ($indicator->symbol() !== $this)
-        {
-            throw new \InvalidArgumentException("{$indicator::name()} doesn't belong to this instance.");
         }
 
         $this->indicators[$indicator->name()] = $indicator;
