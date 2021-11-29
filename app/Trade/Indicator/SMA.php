@@ -4,7 +4,7 @@ namespace App\Trade\Indicator;
 
 class SMA extends AbstractIndicator
 {
-    protected array $config = ['timePeriod' => 2];
+    protected array $config = ['timePeriod' => 8];
 
     protected function run(): array
     {
