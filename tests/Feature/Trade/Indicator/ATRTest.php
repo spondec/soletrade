@@ -5,8 +5,6 @@ namespace Tests\Feature\Trade\Indicator;
 use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
 use App\Trade\Indicator\ATR;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\App;
 use Tests\TestCase;
 
