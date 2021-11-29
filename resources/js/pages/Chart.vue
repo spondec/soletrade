@@ -110,6 +110,10 @@ import VueMultiselect from 'vue-multiselect'
 import {Tabs, Tab} from 'vue3-tabs-component';
 
 import {DatePicker} from 'v-calendar';
+import MACD from "../indicators/MACD";
+import RSI from "../indicators/RSI";
+import SimpleLineSeries from "../indicators/SimpleLineSeries";
+import Fib from "../indicators/Fib";
 
 export default {
   title: "Chart",
@@ -147,6 +151,7 @@ export default {
       },
 
       magnifiedCharts: [],
+      indicatorHandlers: null,
 
       toggle: true,
 
@@ -195,6 +200,8 @@ export default {
     this.sel.exchange = data.exchanges[0];
     this.sel.symbol = 'BTC/USDT';
     this.sel.interval = '1h';
+
+    this.indicatorHandlers = this.handlers();
   },
 
   mounted()
@@ -280,6 +287,23 @@ export default {
           }, {})
       );
     },
+
+    getIndicatorHandler: function (name)
+    {
+      const handler = this.indicatorHandlers[name];
+      if (handler === undefined)
+      {
+        throw Error('No handler found for ' + name);
+      }
+
+      if (handler instanceof Function)
+      {
+        this.indicatorHandlers[name] = handler();
+      }
+
+      return this.indicatorHandlers[name];
+    },
+
     magnifyUpdate: async function ()
     {
       const trade = this.magnifier.trade;
@@ -350,14 +374,13 @@ export default {
       }
 
       const indicators = this.symbol.indicators;
-      const handlers = this.handlers();
 
-      for (let key in indicators)
+      for (let name in indicators)
       {
-        let handler = handlers[key]
-        let magnified = this.reduceSeriesData(start, end, indicators[key])
+        let handler = this.getIndicatorHandler(name);
+        let magnified = this.reduceSeriesData(start, end, indicators[name])
         let chart;
-        if (handler['requiresNewChart'])
+        if (handler.requiresNewChart)
         {
           chart = this.newChart(container);
           this.magnifiedCharts.push(chart);
@@ -365,8 +388,8 @@ export default {
         {
           chart = this.magnifiedCharts[0];
         }
-        let series = handler['init'](magnified, chart)
-        handler['update'](series, magnified)
+        let series = handler.init(magnified, chart)
+        handler.update(series, magnified)
       }
       //
       // const secondaryCharts = [...this.magnifiedCharts];
@@ -407,7 +430,8 @@ export default {
           }
         });
       }
-    }, registerChartEvents: function ()
+    },
+    registerChartEvents: function ()
     {
       this.charts[0].timeScale().subscribeVisibleLogicalRangeChange(newVisibleLogicalRange =>
       {
@@ -424,230 +448,21 @@ export default {
       this.registerVisibleLogicalRangeChangeEvent(this.charts);
     },
 
-    objectMap: function (callback, object)
-    {
-      let o = [];
-
-      for (let key in object)
-      {
-        o.push(callback(object[key], key));
-      }
-
-      return o;
-    },
-
     handlers: function ()
     {
       return {
-
-        Fib: {
-          requiresNewChart: false,
-          prepare: (data, length) =>
-          {
-            for (let key in data)
-            {
-              data[key] = this.objectMap((val, k) =>
-              {
-                return {time: k / 1000, value: val};
-              }, data[key]);
-
-              this.fillFrontGaps(length, data[key]);
-            }
-            return data;
-          },
-          init: (data, chart) =>
-          {
-            const colors = {
-              0: '#7c7c7c',
-              236: '#e03333',
-              382: '#e0d733',
-              500: '#148cb2',
-              618: '#36fa00',
-              702: '#dd00ff',
-              786: '#ff4500',
-              886: '#00d8ff',
-              1000: '#ffffff',
-            }
-            let series = {};
-
-            for (let i in data)
-            {
-              series[i] = chart.addLineSeries({
-                color: colors[i],
-                lastValueVisible: true,
-                lineWidth: 1,
-                crosshairMarkerVisible: false,
-                priceLineVisible: false,
-              });
-            }
-
-            return series;
-          },
-          update: (series, data) =>
-          {
-            for (let i in series)
-              series[i].setData(data[i]);
-          },
-          setMarkers: markers =>
-          {
-          }
-        },
-        RSI: {
-          requiresNewChart: true,
-          prepare: (data, length) =>
-          {
-            data = this.objectMap((val, key) =>
-            {
-              return {time: key / 1000, value: val}
-            }, data);
-
-            this.fillFrontGaps(length, data);
-
-            return data;
-          },
-          init: (data, chart) =>
-          {
-            const lineSeries = chart.addLineSeries();
-
-            lineSeries.createPriceLine({
-              price: 70.0,
-              color: 'gray',
-            });
-            lineSeries.createPriceLine({
-              price: 30.0,
-              color: 'gray',
-            });
-
-            return lineSeries;
-          },
-          update: (series, data) =>
-          {
-            series.setData(data);
-          },
-          setMarkers: markers =>
-          {
-            this.series.RSI.setMarkers(markers);
-          }
-        },
-        MACD: {
-          requiresNewChart: true,
-          prepare: (data, length) =>
-          {
-            for (let key in data)
-            {
-              data[key] = this.objectMap((val, k) =>
-              {
-                return {time: k / 1000, value: val};
-              }, data[key]);
-
-              this.fillFrontGaps(length, data[key]);
-            }
-
-            let prevHist = 0;
-            for (let i in data.divergence)
-            {
-              var point = data.divergence[i];
-              var hist = data.macd[i].value - data.signal[i].value;
-
-              if (point.value > 0)
-                if (prevHist > hist) point.color = '#B2DFDB';
-                else point.color = '#26a69a';
-              else if (prevHist < hist) point.color = '#FFCDD2';
-              else point.color = '#EF5350';
-
-              prevHist = hist;
-            }
-
-            return data;
-          },
-          init: (data, chart) =>
-          {
-            let series = {};
-
-            series.divergence = chart.addHistogramSeries({
-              lineWidth: 1,
-              // title: 'divergence',
-              crosshairMarkerVisible: true,
-            });
-
-            series.macd = chart.addLineSeries({
-              color: '#0094ff',
-              lineWidth: 1,
-              // title: 'macd',
-              crosshairMarkerVisible: true
-            });
-
-            series.signal = chart.addLineSeries({
-              color: '#ff6a00',
-              lineWidth: 1,
-              // title: 'signal',
-              crosshairMarkerVisible: true,
-            });
-
-            return series;
-          },
-          update: (series, data) =>
-          {
-            for (let i in series)
-              series[i].setData(data[i]);
-          },
-          setMarkers: markers =>
-          {
-            this.series.MACD.macd.setMarkers(markers);
-          }
-        }
-      }
-    },
-
-    calcInterval: function (collection, key)
-    {
-      let start = 0;
-      let interval = 0;
-
-      for (let i in collection)
-      {
-        if (!start) start = collection[i][key];
-        else if (!interval)
-        {
-          interval = collection[i][key] - start;
-
-          if (!Number.isInteger(interval))
-          {
-            throw Error('Index interval must be a integer.');
-          }
-          break;
-        }
-      }
-
-      return {start: start, interval: interval};
-    },
-
-    fillFrontGaps: function (length, indicator, value = 0)
-    {
-      const gap = length - Object.keys(indicator).length;
-
-      if (gap > 0)
-      {
-        let {start, interval} = this.calcInterval(indicator, 'time');
-        let time = start;
-        for (let i = 0; i < gap; i++)
-        {
-          time -= interval;
-          indicator.unshift({time: time, value: value});
-        }
+        ATR: () => new SimpleLineSeries(true, {color: 'rgb(255,0,0)'}),
+        Fib: () => new Fib(),
+        RSI: () => new RSI(),
+        MACD: () => new MACD()
       }
     },
 
     prepareIndicatorData: function (indicators, length)
     {
-      const handlers = this.handlers();
-
-      for (let key in handlers)
+      for (let name in indicators)
       {
-        if (indicators[key])
-        {
-          indicators[key] = handlers[key]['prepare'](indicators[key], length);
-        }
+        indicators[name] = this.getIndicatorHandler(name).prepare(indicators[name], length);
       }
       return indicators;
     },
@@ -655,17 +470,16 @@ export default {
     initIndicators: function (container)
     {
       const indicators = this.symbol.indicators;
-      const handlers = this.handlers();
 
-      for (let key in handlers)
+      for (let name in indicators)
       {
-        let data = indicators[key];
+        let data = indicators[name];
         if (data)
         {
-          let handler = handlers[key];
-          let chart = handler['requiresNewChart'] ? this.createChart(container) : this.charts[0];
-          this.series[key] = handler['init'](data, chart);
-          handler['update'](this.series[key], data);
+          let handler = this.getIndicatorHandler(name);
+          let chart = handler.requiresNewChart ? this.createChart(container) : this.charts[0];
+          this.series[name] = handler.init(data, chart);
+          handler.update(this.series[name], data);
         }
       }
     },
@@ -735,7 +549,9 @@ export default {
       if (this.symbol.strategy)
       {
         this.balanceChart = this.newChart(container);
-        const lineSeries = this.balanceChart.addLineSeries();
+        const lineSeries = this.balanceChart.addLineSeries({
+          lineType: 1
+        });
         const balanceHistory = this.symbol.strategy.trades.summary.balance_history;
 
         const mapped = [];
@@ -816,12 +632,9 @@ export default {
         console.log(e)
       }
 
-      const handlers = this.handlers();
-
-      for (let key in handlers)
+      for (let name in this.symbol.indicators)
       {
-        if (this.symbol.indicators[key])
-          handlers[key]['update'](this.series[key], this.symbol.indicators[key]);
+        this.getIndicatorHandler(name).update(this.series[name], this.symbol.indicators[name]);
       }
     },
     newChart: function (container, options = {})
