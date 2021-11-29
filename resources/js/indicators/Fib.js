@@ -42,6 +42,7 @@ export default class Fib extends Indicator
                 color: colors[i],
                 lastValueVisible: true,
                 lineWidth: 1,
+                lineType: 1,
                 crosshairMarkerVisible: false,
                 priceLineVisible: false,
             });
