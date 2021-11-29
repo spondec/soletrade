@@ -208,6 +208,10 @@ abstract class AbstractStrategy
 
             /** @var AbstractIndicator $helperIndicator */
             $helperIndicator = new $class(symbol: $helperSymbol, candles: $helperCandles, config: $config);
+            if ($helperIndicator->symbol() === $symbol)
+            {
+                $symbol->addIndicator($helperIndicator);
+            }
             $helpers[$class] = $helperIndicator;
         }
 
