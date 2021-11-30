@@ -333,7 +333,7 @@ export default {
       //TODO separate magnifier container
       const container = this.$refs.chart;
       this.purgeMagnifierCharts();
-      this.magnifiedCharts[0] = this.newChart(container);
+      this.magnifiedCharts[0] = this.newChart(container, symbol.symbol + symbol.interval);
 
       const candlestickSeries = this.magnifiedCharts[0].addCandlestickSeries();
       candlestickSeries.setMarkers(this.reduceSeriesData(start, end, this.symbol.markers.trades));
@@ -382,7 +382,7 @@ export default {
         let chart;
         if (handler.requiresNewChart)
         {
-          chart = this.newChart(container);
+          chart = this.newChart(container, name);
           this.magnifiedCharts.push(chart);
         } else
         {
@@ -451,7 +451,9 @@ export default {
     handlers: function ()
     {
       return {
-        ATR: () => new SimpleLineSeries(true, {color: 'rgb(255,0,0)'}),
+        ATR: () => new SimpleLineSeries(true, {color: 'rgb(255,0,0)', lineWidth: 1, lineType: 0}),
+        SMA: () => new SimpleLineSeries(false, {color: 'rgb(0,153,255)', lineWidth: 1, lineType: 0}),
+        EMA: () => new SimpleLineSeries(false, {color: 'rgb(49,255,0)', lineWidth: 1, lineType: 0}),
         Fib: () => new Fib(),
         RSI: () => new RSI(),
         MACD: () => new MACD()
@@ -477,7 +479,7 @@ export default {
         if (data)
         {
           let handler = this.getIndicatorHandler(name);
-          let chart = handler.requiresNewChart ? this.createChart(container) : this.charts[0];
+          let chart = handler.requiresNewChart ? this.createChart(container, name) : this.charts[0];
           this.series[name] = handler.init(data, chart);
           handler.update(this.series[name], data);
         }
@@ -548,7 +550,7 @@ export default {
 
       if (this.symbol.strategy)
       {
-        this.balanceChart = this.newChart(container);
+        this.balanceChart = this.newChart(container, 'Balance History');
         const lineSeries = this.balanceChart.addLineSeries({
           lineType: 1
         });
@@ -565,7 +567,7 @@ export default {
 
         lineSeries.setData(mapped);
       }
-      const chart = this.createChart(container);
+      const chart = this.createChart(container, this.symbol.symbol + this.symbol.interval);
 
       const candlestickSeries = chart.addCandlestickSeries();
 
@@ -637,19 +639,19 @@ export default {
         this.getIndicatorHandler(name).update(this.series[name], this.symbol.indicators[name]);
       }
     },
-    newChart: function (container, options = {})
+    newChart: function (container, name, options = {})
     {
       if (!container) throw Error('Chart container was not found.');
 
       options.height = container.offsetHeight;
       options.width = container.offsetWidth;
 
-      return new Chart(container, options);
+      return new Chart(container, name, options);
     },
 
-    createChart: function (container, options = {})
+    createChart: function (container, name, options = {})
     {
-      const chart = this.newChart(container, options);
+      const chart = this.newChart(container, name, options);
       this.charts.push(chart);
 
       return chart;

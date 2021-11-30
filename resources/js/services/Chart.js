@@ -2,13 +2,14 @@ import {createChart, CrosshairMode} from 'lightweight-charts';
 
 export default class Chart
 {
-    constructor(container, options = {})
+    constructor(container, name = '', options = {})
     {
         if (!container) throw Error('Chart container was not found.');
 
         options.height = container.offsetHeight;
         options.width = container.offsetWidth;
 
+        this.name = name;
         this.series = [];
         this.options = {...this.defaultOptions(), ...options};
         this.container = container;
@@ -26,6 +27,15 @@ export default class Chart
         return {
             width: 400,
             height: 600,
+
+            watermark: {
+                color: 'rgb(255,255,255)',
+                visible: true,
+                text: this.name,
+                fontSize: 12,
+                horzAlign: 'left',
+                vertAlign: 'top',
+            },
 
             rightPriceScale: {
                 visible: true,
