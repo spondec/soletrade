@@ -64,6 +64,8 @@ class SummaryTest extends TestCase
         $evaluation->is_stopped = false;
         $evaluation->is_ambiguous = false;
         $evaluation->is_entry_price_valid = 1;
+        $evaluation->entry_timestamp = time() - 86400;
+        $evaluation->exit_timestamp = time();
         return $evaluation;
     }
 
