@@ -2,8 +2,12 @@
 
 namespace App\Trade\Indicator;
 
+use App\Trade\Indicator\Helpers\CanCross;
+
 class MACD extends AbstractIndicator
 {
+    use CanCross;
+
     protected array $config = [
         'fastPeriod'   => 12,
         'slowPeriod'   => 26,
@@ -13,7 +17,7 @@ class MACD extends AbstractIndicator
     protected function run(): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        $macd = \trader_macd($this->closes(),
+        $macd = \trader_macd($this->candles->closes(),
             $this->config['fastPeriod'],
             $this->config['slowPeriod'],
             $this->config['signalPeriod']);

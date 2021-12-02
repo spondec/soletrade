@@ -9,6 +9,6 @@ class RSI extends AbstractIndicator
     protected function run(): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        return ($rsi = \trader_rsi($this->closes(), $this->config['timePeriod'])) ? $rsi : [];
+        return ($rsi = \trader_rsi($this->candles->closes(), $this->config['timePeriod'])) ? $rsi : [];
     }
 }

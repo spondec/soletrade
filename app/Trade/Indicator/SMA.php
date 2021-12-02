@@ -9,6 +9,6 @@ class SMA extends AbstractIndicator
     protected function run(): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        return ($sma = \trader_sma($this->closes(), $this->config['timePeriod'])) ? $sma : [];
+        return ($sma = \trader_sma($this->candles->closes(), $this->config['timePeriod'])) ? $sma : [];
     }
 }

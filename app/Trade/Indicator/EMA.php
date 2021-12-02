@@ -9,6 +9,6 @@ class EMA extends AbstractIndicator
     protected function run(): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        return ($ema = \trader_ema($this->closes(), $this->config['timePeriod'])) ? $ema : [];
+        return ($ema = \trader_ema($this->candles->closes(), $this->config['timePeriod'])) ? $ema : [];
     }
 }

@@ -9,6 +9,6 @@ class ATR extends AbstractIndicator
     protected function run(): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        return \trader_atr($this->highs(), $this->lows(), $this->closes(), $this->config['timePeriod']) ?: [];
+        return \trader_atr($this->candles->highs(), $this->candles->lows(), $this->candles->closes(), $this->config['timePeriod']) ?: [];
     }
 }
