@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use App\Trade\CandleCollection;
 use App\Trade\Indicator\AbstractIndicator;
-use App\Trade\Log;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -24,7 +24,7 @@ class Symbol extends Model
 
     protected $table = 'symbols';
 
-    protected ?Collection $candles = null;
+    protected ?CandleCollection $candles = null;
 
     /** @var AbstractIndicator[] */
     protected ?Collection $indicators = null;
@@ -55,7 +55,7 @@ class Symbol extends Model
         ]);
     }
 
-    public function candles(?int $limit = null, ?int $start = null, ?int $end = null): Collection
+    public function candles(?int $limit = null, ?int $start = null, ?int $end = null): CandleCollection
     {
         if (!$this->exists)
         {
@@ -98,7 +98,7 @@ class Symbol extends Model
         }
 
         $candles = $query->get();
-        return $this->candles = ($order === 'DESC' ? $candles->reverse()->values() : $candles);
+        return $this->candles = new CandleCollection($order === 'DESC' ? $candles->reverse()->values() : $candles);
     }
 
     public function addIndicator(AbstractIndicator $indicator): void
