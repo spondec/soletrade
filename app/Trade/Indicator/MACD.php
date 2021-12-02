@@ -24,9 +24,9 @@ class MACD extends AbstractIndicator
 
         if (!$macd) return [];
         return array_map(static fn($v, $k) => [
-            'm' => $v,           //macd
-            's' => $macd[1][$k], //signal
-            'd' => $macd[2][$k]  //divergence
+            'macd'       => $v,
+            'signal'     => $macd[1][$k],
+            'divergence' => $macd[2][$k]
         ], $macd[0], array_keys($macd[0]));
     }
 
@@ -36,9 +36,9 @@ class MACD extends AbstractIndicator
         $data = $this->data()->all();
 
         return [
-            'macd'       => array_combine($timestamps, array_column($data, 'm')),
-            'signal'     => array_combine($timestamps, array_column($data, 's')),
-            'divergence' => array_combine($timestamps, array_column($data, 'd'))
+            'macd'       => array_combine($timestamps, array_column($data, 'macd')),
+            'signal'     => array_combine($timestamps, array_column($data, 'signal')),
+            'divergence' => array_combine($timestamps, array_column($data, 'divergence'))
         ];
     }
 }
