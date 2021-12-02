@@ -30,11 +30,6 @@ class Position
 
     protected float $exitPrice;
 
-    public function getExitPrice(): float
-    {
-        return $this->exitPrice;
-    }
-
     public function __construct(protected bool  $isBuy,
                                 protected float $size,
                                 protected int   $entryTime,
@@ -143,6 +138,11 @@ class Position
         return $this->amount;
     }
 
+    public function getExitPrice(): float
+    {
+        return $this->exitPrice;
+    }
+
     public function setMultiplier(float $multiplier): void
     {
         $this->multiplier = $multiplier;
@@ -191,28 +191,6 @@ class Position
         {
             $price->lock($this);
         }
-    }
-
-    public function stop(int $exitTime): void
-    {
-        if ($this->isStopped)
-        {
-            throw new \LogicException('Attempted to stop an already stopped position.');
-        }
-
-        $this->lockIfUnlocked($this->stop);
-        $this->exitPrice = $this->stop->get();
-
-        $this->saveRoi($this->exitPrice);
-
-        $this->isStopped = true;
-        $this->exitTime = $exitTime;
-
-        $this->newTransaction(false,
-            $this->exitPrice,
-            $this->getUsedSize(),
-            $exitTime,
-            'Position stop.');
     }
 
     protected function saveRoi(float $price): void
@@ -280,6 +258,28 @@ class Position
         }
 
         return $this->calcShortRoi($lastPrice, $usedSize, self::MAX_SIZE);
+    }
+
+    public function stop(int $exitTime): void
+    {
+        if ($this->isStopped)
+        {
+            throw new \LogicException('Attempted to stop an already stopped position.');
+        }
+
+        $this->lockIfUnlocked($this->stop);
+        $this->exitPrice = $this->stop->get();
+
+        $this->saveRoi($this->exitPrice);
+
+        $this->isStopped = true;
+        $this->exitTime = $exitTime;
+
+        $this->newTransaction(false,
+            $this->exitPrice,
+            $this->getUsedSize(),
+            $exitTime,
+            'Position stop.');
     }
 
     public function relativeExitRoi(): float
