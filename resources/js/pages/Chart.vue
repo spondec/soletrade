@@ -735,7 +735,7 @@ export default {
 
 <style lang="scss">
 
-html, body, #app, .container {
+html, body, #app, .main-container {
   height: 100%;
 }
 

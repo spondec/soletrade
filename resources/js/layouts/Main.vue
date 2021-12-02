@@ -50,7 +50,7 @@
       </div>
     </div>
   </nav>
-  <div class="container text-white">
+  <div class="main-container text-white">
     <h1 class="card-title text-white text-4xl text-center m-2" v-if="title">{{ title }}</h1>
     <slot></slot>
   </div>
