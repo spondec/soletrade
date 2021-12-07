@@ -13,7 +13,6 @@ use App\Trade\Config;
 use App\Trade\Exchange\AbstractExchange;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 class ChartController extends Controller
@@ -145,6 +144,7 @@ class ChartController extends Controller
             return $symbol;
         }
 
+        $symbol->updateCandlesIfOlderThan(60);
         return $symbol->toArray();
     }
 
