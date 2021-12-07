@@ -3,14 +3,20 @@
 namespace App\Trade\Binding;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Collection;
 
 /**
- * @extends \App\Models\Model
- * @property \Illuminate\Database\Eloquent\Collection|\App\Models\Binding[] bindings
  * @method morphMany(string $class, string $string)
  */
 trait HasBinding
 {
+    public Collection $bindings;
+
+    protected function initializeHasBinding(): void
+    {
+        $this->bindings = new Collection();
+    }
+
     public function bindings(): MorphMany
     {
         return $this->morphMany(\App\Models\Binding::class, 'bindable');
