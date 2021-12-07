@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Trade\Strategy;
 
-use App\Models\Binding;
 use App\Models\Signal;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
-use App\Trade\Binding\CanBind;
 use App\Trade\Evaluation\TradeLoop;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
@@ -27,7 +25,6 @@ abstract class AbstractStrategy
     use HasName;
     use HasSignature;
     use HasConfig;
-    use CanBind;
 
     protected array $config = [];
     protected \WeakMap $actions;
@@ -35,7 +32,6 @@ abstract class AbstractStrategy
     private array $indicatorConfig;
     private array $tradeConfig;
     private ?Signal $lastSignal;
-    private array $bindMap;
     /**
      * @var TradeSetup[]
      */
@@ -53,6 +49,8 @@ abstract class AbstractStrategy
      */
     private Collection $helperIndicators;
 
+    protected Symbol $evaluationSymbol;
+
     public function __construct(array $config = [])
     {
         $this->mergeConfig($config);
@@ -63,10 +61,8 @@ abstract class AbstractStrategy
         $this->indicatorConfig = $this->indicatorConfig();
         $this->tradeConfig = $this->tradeConfig();
         $this->signature = $this->register([
-            'contents' => $this->contents()
-        ]);
-
-        $this->bindMap = $this->getBindMap();
+                                               'contents' => $this->contents()
+                                           ]);
 
         $this->actions = new \WeakMap();
     }
@@ -74,11 +70,6 @@ abstract class AbstractStrategy
     abstract protected function indicatorConfig(): array;
 
     abstract protected function tradeConfig(): array;
-
-    protected function getBindMap(): array
-    {
-        return ['last_signal_price' => 'price'];
-    }
 
     public function getFirstTrade(): ?TradeSetup
     {
@@ -153,6 +144,9 @@ abstract class AbstractStrategy
     {
         $symbol->updateCandles();
 
+        $this->evaluationSymbol = $this->getEvaluationSymbol($symbol);
+        $this->evaluationSymbol->updateCandlesIfOlderThan(60);
+
         Log::execTimeStart('AbstractStrategy::initIndicators()');
         $this->initIndicators($symbol);
         Log::execTimeFinish('AbstractStrategy::initIndicators()');
@@ -167,8 +161,8 @@ abstract class AbstractStrategy
     protected function initIndicators(Symbol $symbol): void
     {
         $candles = $symbol->candles(limit: $this->config['maxCandles'],
-            start: $this->config['startDate'],
-            end: $this->config['endDate']);
+            start:                         $this->config['startDate'],
+            end:                           $this->config['endDate']);
 
         $this->initHelperIndicators($symbol, $candles);
 
@@ -176,9 +170,9 @@ abstract class AbstractStrategy
         {
             /** @var AbstractIndicator $indicator */
             $indicator = new $class(symbol: $symbol,
-                candles: $candles,
-                config: is_array($setup) ? $setup['config'] ?? [] : [],
-                signalCallback: $setup instanceof \Closure ? $setup : $setup['signal'] ?? null);
+                candles:                    $candles,
+                config:                     is_array($setup) ? $setup['config'] ?? [] : [],
+                signalCallback:             $setup instanceof \Closure ? $setup : $setup['signal'] ?? null);
 
             $this->indicators[$indicator->id()] = $indicator;
             $symbol->addIndicator(indicator: $indicator);
@@ -193,10 +187,10 @@ abstract class AbstractStrategy
         {
             /** @var Symbol $helperSymbol */
             $helperSymbol = Symbol::query()
-                ->where('exchange_id', $symbol->exchange_id)
-                ->where('symbol', $config['symbol'] ?? $symbol->symbol)
-                ->where('interval', $config['interval'] ?? $symbol->interval)
-                ->firstOrFail();
+                                  ->where('exchange_id', $symbol->exchange_id)
+                                  ->where('symbol', $config['symbol'] ?? $symbol->symbol)
+                                  ->where('interval', $config['interval'] ?? $symbol->interval)
+                                  ->firstOrFail();
 
             $helperSymbol->updateCandles();
 
@@ -336,14 +330,14 @@ abstract class AbstractStrategy
     protected function registerTradeSetupSignature(array $config): Signature
     {
         return $this->register([
-            'strategy'        => [
-                'signature' => $this->signature->hash
-            ],
-            'trade_setup'     => $config,
-            'indicator_setup' => array_map(
-                fn(string $class): array => $this->indicatorConfig[$class],
-                $this->getConfigIndicators($config))
-        ]);
+                                   'strategy'        => [
+                                       'signature' => $this->signature->hash
+                                   ],
+                                   'trade_setup'     => $config,
+                                   'indicator_setup' => array_map(
+                                       fn(string $class): array => $this->indicatorConfig[$class],
+                                       $this->getConfigIndicators($config))
+                               ]);
     }
 
     protected function newTrade(Symbol $symbol, Signature $signature): TradeSetup
@@ -401,17 +395,14 @@ abstract class AbstractStrategy
                 foreach ($actions as $class => $config)
                 {
                     $tradeSetup->actions()->create([
-                        'class'  => $class,
-                        'config' => $config
-                    ]);
+                                                       'class'  => $class,
+                                                       'config' => $config
+                                                   ]);
                 }
             }
 
             $tradeSetup->signals()->sync($signals->map(static fn(Signal $signal): int => $signal->id)->all());
         });
-
-        $this->replaceBindable($old, $tradeSetup);
-        $this->saveBindings($tradeSetup);
 
         foreach ($this->indicators as $indicator)
         {
@@ -429,14 +420,7 @@ abstract class AbstractStrategy
 
     public function newLoop(TradeSetup $entry): TradeLoop
     {
-        $symbol = $this->getEvaluationSymbol($entry);
-
-        if (time() * 1000 >= $symbol->last_update + 60 * 1000)
-        {
-            $symbol->updateCandles();
-        }
-
-        return new TradeLoop($entry, $symbol, $this->config('loop'));
+        return new TradeLoop($entry, $this->evaluationSymbol, $this->config('loop'));
     }
 
     public function trades()
@@ -444,9 +428,8 @@ abstract class AbstractStrategy
         return $this->trades;
     }
 
-    protected function getEvaluationSymbol(TradeSetup $entry): Symbol
+    protected function getEvaluationSymbol(Symbol $symbol): Symbol
     {
-        $symbol = $entry->symbol;
         $exchange = $symbol->exchange();
         $symbolName = $symbol->symbol;
         $evaluationInterval = $this->config('evaluationInterval');
@@ -454,9 +437,9 @@ abstract class AbstractStrategy
             ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
     }
 
-    public function indicator(int $id): AbstractIndicator
+    protected function indicator(Signal $signal): AbstractIndicator
     {
-        return $this->indicators[$id];
+        return $this->indicators[$signal->indicator_id] ?? throw new \InvalidArgumentException('Indicator not found.');
     }
 
     public function helperIndicator(string $class): AbstractIndicator
@@ -481,54 +464,5 @@ abstract class AbstractStrategy
             //summary
             'feeRatio'           => 0.001
         ];
-    }
-
-    protected function getSavePoints(string|int $bind, Signature $signature): array
-    {
-        $data = $signature->data;
-
-        if ($bind === 'last_signal_price' && ($id = $data['extra']['last_signal_binding_signature_id']))
-        {
-            return DB::table('save_points')
-                ->where('binding_signature_id', $id)
-                ->where('timestamp', '>=', $this->config['startDate'])
-                ->where('timestamp', '<=', $this->config['endDate'])
-                ->get(['timestamp', 'value'])
-                ->map(fn($v) => (array)$v)
-                ->all();
-        }
-
-        throw new \InvalidArgumentException("Could not get save points for binding: {$bind}");
-    }
-
-    protected function getBindable(): array
-    {
-        return ['last_signal_price'];
-    }
-
-    protected function getBindingSignatureExtra(string|int $bind): array
-    {
-        return [
-            'last_signal_binding_signature_id' => $this->fetchSignalBindingSignature($this->lastSignal,
-                $this->bindMap['last_signal_price'])->id
-        ];
-    }
-
-    private function fetchSignalBindingSignature(Signal $signal, string $column): Signature
-    {
-        /** @var Binding $binding */
-        $binding = $signal->bindings()
-            ->with('signature')
-            ->where('column', $column)
-            ->first();
-
-        return $binding->signature;
-    }
-
-    protected function getBindValue(int|string $bind, ?int $timestamp = null): mixed
-    {
-        $column = $this->bindMap[$bind] ?? $bind;
-
-        return $this->lastSignal->getAttribute($column);
     }
 }
