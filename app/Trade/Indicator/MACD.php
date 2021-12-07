@@ -2,6 +2,7 @@
 
 namespace App\Trade\Indicator;
 
+use App\Trade\CandleCollection;
 use App\Trade\Indicator\Helpers\CanCross;
 
 class MACD extends AbstractIndicator
@@ -14,13 +15,13 @@ class MACD extends AbstractIndicator
         'signalPeriod' => 9,
     ];
 
-    protected function run(): array
+    protected function calculate(CandleCollection $candles): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        $macd = \trader_macd($this->candles->closes(),
-            $this->config['fastPeriod'],
-            $this->config['slowPeriod'],
-            $this->config['signalPeriod']);
+        $macd = \trader_macd($candles->closes(),
+                             $this->config['fastPeriod'],
+                             $this->config['slowPeriod'],
+                             $this->config['signalPeriod']);
 
         if (!$macd) return [];
         return array_map(static fn($v, $k) => [

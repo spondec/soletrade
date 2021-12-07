@@ -2,7 +2,7 @@
 
 namespace App\Trade\Indicator;
 
-use App\Models\Signature;
+use App\Trade\CandleCollection;
 use JetBrains\PhpStorm\ArrayShape;
 
 class Fib extends AbstractIndicator
@@ -13,6 +13,7 @@ class Fib extends AbstractIndicator
     ];
 
     protected bool $isProgressive = true;
+    protected bool $recalculate = false;
 
     /**
      * Upward means the retracement goes from low to high.
@@ -109,14 +110,9 @@ class Fib extends AbstractIndicator
         return 'FIB-' . $params['side'] . '_' . $params['level'];
     }
 
-    protected function getBindValue(string|int $bind, ?int $timestamp = null): float
+    protected function getBind(int|string $bind, mixed $value): mixed
     {
-        if ($timestamp)
-        {
-            return $this->data()[$timestamp][$bind];
-        }
-
-        return $this->current()[$bind];
+        return $value[$bind];
     }
 
     protected function getBindable(): array
@@ -140,7 +136,7 @@ class Fib extends AbstractIndicator
         sort($levels);
     }
 
-    protected function run(): array
+    protected function calculate(CandleCollection $candles): array
     {
         $levels = $this->config['levels'];
         $period = (int)$this->config['period'];
@@ -150,7 +146,7 @@ class Fib extends AbstractIndicator
         $lows = [];
         $bars = 0;
 
-        foreach ($this->candles as $candle)
+        foreach ($candles as $candle)
         {
             $highs[] = (float)$candle->h;
             $lows[] = (float)$candle->l;
@@ -181,20 +177,5 @@ class Fib extends AbstractIndicator
         }
 
         return $fib;
-    }
-
-    protected function getSavePoints(int|string $bind, Signature $signature): array
-    {
-        $points = [];
-
-        foreach ($this->data() as $timestamp => $fib)
-        {
-            $points[] = [
-                'timestamp' => $timestamp,
-                'value'     => $fib[$bind]
-            ];
-        }
-
-        return $points;
     }
 }

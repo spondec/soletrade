@@ -2,13 +2,15 @@
 
 namespace App\Trade\Indicator;
 
+use App\Trade\CandleCollection;
+
 class ATR extends AbstractIndicator
 {
     protected array $config = ['timePeriod' => 14];
 
-    protected function run(): array
+    protected function calculate(CandleCollection $candles): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        return \trader_atr($this->candles->highs(), $this->candles->lows(), $this->candles->closes(), $this->config['timePeriod']) ?: [];
+        return \trader_atr($candles->highs(), $candles->lows(), $candles->closes(), $this->config['timePeriod']) ?: [];
     }
 }
