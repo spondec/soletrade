@@ -17,7 +17,6 @@ class CreateTradeSetupsTable extends Migration
             $table->id();
             $table->foreignId('symbol_id')->constrained();
             $table->foreignId('signature_id')->constrained();
-            $table->foreignId('position_id')->nullable()->constrained();
             $table->string('name');
             $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('price');
