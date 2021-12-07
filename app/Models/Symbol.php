@@ -116,12 +116,17 @@ class Symbol extends Model
         $this->indicators[$indicator->name()] = $indicator;
     }
 
-    public function updateCandles(?int $timeout = null, int $maxRunTime = 0): void
+    public function updateCandlesIfOlderThan(int $seconds, int $maxRunTime = 0)
     {
-        if (!$timeout || $this->last_update + $timeout <= time() * 1000)
+        if ($this->last_update + $seconds * 1000 <= time() * 1000)
         {
-            $this->exchange()->updater()->update($this, $maxRunTime);
+            $this->updateCandles($maxRunTime);
         }
+    }
+
+    public function updateCandles(int $maxRunTime = 0): void
+    {
+        $this->exchange()->updater()->update($this, $maxRunTime);
     }
 
     public function indicator(string $name): AbstractIndicator
