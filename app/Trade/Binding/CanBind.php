@@ -4,52 +4,28 @@ namespace App\Trade\Binding;
 
 use App\Models\Binding;
 use App\Models\Model;
-use App\Models\Signature;
-use App\Repositories\BindingRepository;
-use App\Trade\HasSignature;
-use Illuminate\Support\Facades\App;
 
+/** @implements Binder */
 trait CanBind
 {
-    use HasSignature;
-
-    private ?array $bindable = null;
     private ?\WeakMap $bindings = null;
 
-    private array $handledCache = [];
-
-    private BindingRepository $bindingRepo;
-
-    /**
-     * @param Model $model
-     *
-     * @throws \Exception
-     */
-    final public function bind(Bindable   $model,
-                               string     $column,
-                               string|int $bind,
-                               ?\Closure  $callback = null,
-                               ?int       $timestamp = null): Binding
+    final public function bind(Bindable&Model $model,
+                               string         $column,
+                               string|int     $bind,
+                               ?\Closure      $callback = null,
+                               ?int           $timestamp = null): Binding
     {
         $this->assertBindExists($bind);
-        $this->bindingRepo = App::make(BindingRepository::class);
 
         $value = $this->getBindValue($bind, $timestamp);
-
-        $signature = $this->register([
-            'bind'     => $bind,
-            'callback' => $callback,
-            'extra'    => $this->getBindingSignatureExtra($bind)
-        ]);
-
-        $this->handleSavePoints($signature, $bind, $callback);
 
         if ($callback)
         {
             $value = $callback($value);
         }
 
-        $binding = $this->setupBinding($model, $column, $bind, $signature);
+        $binding = $this->setupBinding($model, $column, $bind);
         $this->setBinding($model, $binding, $callback);
 
         $model->setAttribute($column, $value);
@@ -57,23 +33,13 @@ trait CanBind
         return $binding;
     }
 
-    public function isBindable(mixed $bind): bool
-    {
-        return in_array($bind, $this->bindable);
-    }
-
     private function assertBindExists(string|int $bind): void
     {
-        if ($this->bindable === null)
+        if ($bindable = $this->getBindable())
         {
-            $this->bindable = $this->getBindable();
-        }
-
-        if ($this->bindable)
-        {
-            if (!in_array($bind, $this->bindable))
+            if (!in_array($bind, $bindable))
             {
-                throw  new \InvalidArgumentException("$bind was not defined as a bindable.");
+                throw new \InvalidArgumentException("$bind was not defined as a bindable.");
             }
         }
         else
@@ -82,68 +48,22 @@ trait CanBind
         }
     }
 
-    protected function handleSavePoints(Signature $signature, string|int $bind, ?\Closure $callback): void
-    {
-        if (!isset($this->handledCache[$id = $signature->id]))
-        {
-            if ($points = $this->getSavePoints(bind: $bind, signature: $signature))
-            {
-                $points = $this->processSavePoints($points, $id, $callback);
-
-                $this->bindingRepo->insertSavePoints($points);
-            }
-
-            $this->handledCache[$id] = true;
-        }
-    }
-
-    private function processSavePoints(array $points, int $signatureId, ?\Closure $callback): array
-    {
-        if ($callback)
-        {
-            foreach ($points as $key => $point)
-            {
-                $points[$key]['value'] = $callback($point['value']);
-                $points[$key]['binding_signature_id'] = $signatureId;
-            }
-        }
-        else
-        {
-            foreach ($points as $key => $point)
-            {
-                $points[$key]['binding_signature_id'] = $signatureId;
-            }
-        }
-
-        return $points;
-    }
-
-    /**
-     * @param Model $model
-     */
-    private function setupBinding(Bindable $model, string $column, string|int $bind, Signature $signature): Binding
+    private function setupBinding(Bindable&Model $model, string $column, string|int $bind): Binding
     {
         $binding = $this->getBinding($model, $column) ?? new Binding();
         $binding->column = $column;
         $binding->class = static::class;
         $binding->name = $bind;
-        $binding->signature()->associate($signature);
 
         return $binding;
     }
 
-    /**
-     * @param Model $model
-     */
-    private function getBinding(Bindable $model, string $column): ?Binding
+    private function getBinding(Bindable&Model $model, string $column): ?Binding
     {
         return $this->bindings[$model][$column]['binding'] ?? null;
     }
 
-    /**
-     * @param Model $model
-     */
-    private function setBinding(Bindable $model, Binding $binding, ?\Closure $callback): void
+    private function setBinding(Bindable&Model $model, Binding $binding, ?\Closure $callback): void
     {
         if (!$this->bindings)
         {
@@ -161,17 +81,12 @@ trait CanBind
         $this->bindings[$model][$column]['callback'] = $callback;
     }
 
-    protected function getBindingSignatureExtra(string|int $bind): array
+    public function isBindable(mixed $bind): bool
     {
-        return [];
+        return in_array($bind, $this->getBindable());
     }
 
-    abstract protected function getSavePoints(string|int $bind, Signature $signature): array;
-
-    /**
-     * @param Model $model
-     */
-    public function saveBindings(Bindable $model): void
+    public function saveBindings(Bindable&Model $model): void
     {
         if (!$model->exists)
         {
@@ -181,28 +96,28 @@ trait CanBind
         if ($bindings = $this->getBindings($model))
         {
             /** @var Binding $binding */
-            foreach ($bindings as $column)
+            foreach ($bindings as $column => $item)
             {
-                $binding = $column['binding'];
-                $callback = $column['callback'];
+                $binding = $item['binding'];
+                $callback = $item['callback'];
 
                 $binding->bindable()->associate($model);
-                $this->setBinding($model, $binding->updateUniqueOrCreate(), $callback);
+                $this->setBinding($model, $binding = $binding->updateUniqueOrCreate(), $callback);
+                $binding->setBinder($this, $callback);
+                $model->bindings[$column] = $binding;
             }
         }
     }
 
     /**
-     * @param Model $model
-     *
-     * @return Binding[]
+     * @return Binding[]|array
      */
-    private function getBindings(Bindable $model): ?array
+    private function getBindings(Bindable&Model $model): ?array
     {
         return $this->bindings[$model] ?? null;
     }
 
-    public function replaceBindable(Bindable $current, Bindable $new): void
+    public function replaceBindable(Bindable&Model $current, Bindable&Model $new): void
     {
         if ($bindings = $this->bindings[$current] ?? false)
         {
@@ -215,6 +130,4 @@ trait CanBind
      * @return string[]
      */
     abstract protected function getBindable(): array;
-
-    abstract protected function getBindValue(int|string $bind, ?int $timestamp = null): mixed;
 }

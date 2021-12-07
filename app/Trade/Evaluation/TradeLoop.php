@@ -2,6 +2,7 @@
 
 namespace App\Trade\Evaluation;
 
+use App\Models\Binding;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
@@ -64,12 +65,11 @@ final class TradeLoop
 
         $lastCandle = $this->repo->assertNextCandle($this->entry->symbol_id, $exit->price_date);
         $candles = $this->repo->assertCandlesBetween($this->entry->symbol,
-            $startDate = $this->lastRunDate ?? $this->firstCandle->t,
-            $lastCandle->t,
-            $this->evaluationSymbol->interval);
-        $savePoint = $this->newSavePointAccess($startDate, $lastCandle->t);
+                                                     $this->lastRunDate ?? $this->firstCandle->t,
+                                                     $lastCandle->t,
+                                                     $this->evaluationSymbol->interval);
 
-        $this->runLoop($candles, $savePoint);
+        $this->runLoop($candles);
 
         $position = $this->getPosition();
 
@@ -78,12 +78,12 @@ final class TradeLoop
             if ($this->config('stopAtExit'))
             {
                 $this->stopPositionAtClosePrice($position,
-                    $this->getLastCandle(),
-                    'Stopping at exit setup.');
+                                                $this->getLastCandle(),
+                                                'Stopping at exit setup.');
             }
 
-            if ($this->shouldLoopContinue($this->getPriceDate($candle = $this->getLastCandle(),
-                $this->repo->fetchNextCandle($this->evaluationSymbol->id, $candle->t))))
+            if ($this->shouldContinue($this->getPriceDate($candle = $this->getLastCandle(),
+                                                          $this->repo->fetchNextCandle($this->evaluationSymbol->id, $candle->t))))
             {
                 $this->continue($this->endDate);
             }
@@ -100,20 +100,27 @@ final class TradeLoop
         }
     }
 
-    protected function newSavePointAccess(int $startDate, int $endDate): SavePointAccess
+    protected function runLoop(Collection $candles): void
     {
-        return new SavePointAccess($this->entry, $startDate, $endDate);
-    }
-
-    protected function runLoop(Collection $candles, SavePointAccess $savePoint): void
-    {
-        if (!$candles->first())
+        if (!$first = $candles->first())
         {
             throw new \LogicException('Can not loop through an empty set.');
         }
 
+        $evaluationSymbol = $this->evaluationSymbol;
+        $symbolId = $first->symbol_id;
+
+        if (($evaluationSymbol && $symbolId != $evaluationSymbol->id) || (!$evaluationSymbol && $this->entry->symbol->id != $symbolId))
+        {
+            throw new \InvalidArgumentException('Invalid candles provided.');
+        }
+
         $iterator = $candles->getIterator();
         $timeout = $this->getTimeout();
+
+        $entry = $this->status->getEntryPrice();
+        $exit = $this->status->getClosePrice();
+        $stop = $this->status->getStopPrice();
 
         while ($iterator->valid())
         {
@@ -127,10 +134,7 @@ final class TradeLoop
 
             if (!$this->status->isEntered())
             {
-                $this->loadSavePointPrice($this->status->getEntryPrice(),
-                    $savePoint,
-                    'price',
-                    $candle->t);
+                $this->loadBindingPrice($entry, 'price', $candle->t, $evaluationSymbol);
                 $this->status->updateLowestHighestEntryPrice($candle);
                 $this->tryPositionEntry($candle, $nextCandle);
             }
@@ -140,22 +144,13 @@ final class TradeLoop
 
                 if (!$this->status->isExited())
                 {
-                    $this->loadSavePointPrice($this->status->getStopPrice(),
-                        $savePoint,
-                        'stop_price',
-                        $candle->t);
-                    $this->loadSavePointPrice($this->status->getClosePrice(),
-                        $savePoint,
-                        'close_price',
-                        $candle->t);
-                    $this->tryPositionExit($position = $this->getPosition(),
-                        $candle, $nextCandle);
+                    $this->loadBindingPrice($stop, 'stop_price', $candle->t, $evaluationSymbol);
+                    $this->loadBindingPrice($exit, 'close_price', $candle->t, $evaluationSymbol);
+                    $this->tryPositionExit($position ?? $position = $this->getPosition(), $candle, $nextCandle);
 
                     if ($timeout && $this->hasPositionTimedOut($position, $this->getPriceDate($candle, $nextCandle)))
                     {
-                        $this->stopPositionAtClosePrice($position,
-                            $candle,
-                            'Trade timed out. Stopping.');
+                        $this->stopPositionAtClosePrice($position, $candle, 'Trade timed out. Stopping.');
                     }
 
                     //TODO break at exit?
@@ -178,11 +173,15 @@ final class TradeLoop
         return false;
     }
 
-    protected function loadSavePointPrice(Price $price, SavePointAccess $savePoint, string $column, int $timestamp): void
+    protected function loadBindingPrice(Price $price, string $column, int $timestamp, ...$params): void
     {
-        if (!$price->isLocked() && $entryPrice = $savePoint->lastPoint($column, $timestamp))
+        if (!$price->isLocked())
         {
-            $price->set($entryPrice, $timestamp, 'SavePoint: ' . $savePoint->getBindingName($column));
+            $binding = $this->entry->bindings[$column] ?? null;
+            if ($binding && $entryPrice = $binding->getBindValue($timestamp, ...$params))
+            {
+                $price->set($entryPrice, $timestamp, 'Binding: ' . $binding->name);
+            }
         }
     }
 
@@ -255,9 +254,9 @@ final class TradeLoop
     protected function stopPositionAtClosePrice(Position $position, \stdClass $candle, string $reason): void
     {
         $position->price('stop')->set((float)$candle->c,
-            $priceDate = $this->getPriceDate($candle, null),
-            $reason,
-            true);
+                                      $priceDate = $this->getPriceDate($candle, null),
+                                      $reason,
+                                      true);
         $position->stop($priceDate);
     }
 
@@ -275,7 +274,7 @@ final class TradeLoop
         return $this->repo->fetchCandle($this->entry->symbol, $this->lastRunDate, $this->evaluationSymbol->interval);
     }
 
-    protected function shouldLoopContinue(int $priceDate): bool
+    protected function shouldContinue(int $priceDate): bool
     {
         return $this->endDate > $priceDate;
     }
@@ -287,12 +286,11 @@ final class TradeLoop
         $intervalId = $this->repo->findSymbolIdForInterval($symbol, $this->evaluationSymbol->interval);
         $startDate = $this->repo->assertNextCandle($intervalId, $this->lastRunDate)->t;
         $candles = $this->repo->assertCandlesBetween($symbol,
-            $startDate,
-            $endDate,
-            $this->evaluationSymbol->interval);
-        $savePoint = $this->newSavePointAccess($this->lastRunDate, $endDate);
+                                                     $startDate,
+                                                     $endDate,
+                                                     $this->evaluationSymbol->interval);
 
-        $this->runLoop($candles, $savePoint);
+        $this->runLoop($candles);
         return $this->getPosition();
     }
 

@@ -8,7 +8,9 @@ use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\Signal;
 use App\Repositories\SymbolRepository;
+use App\Trade\Binding\Binder;
 use App\Trade\Binding\CanBind;
+use App\Trade\CandleCollection;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
@@ -18,7 +20,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\Pure;
 
-abstract class AbstractIndicator
+abstract class AbstractIndicator implements Binder
 {
     protected array $config = [];
 
@@ -27,6 +29,11 @@ abstract class AbstractIndicator
     use HasConfig;
     use CanBind;
 
+    protected SymbolRepository $symbolRepo;
+    protected bool $isProgressive = false;
+    protected bool $recalculate = true;
+    protected \stdClass $progressingCandle;
+    protected Symbol $progressiveSymbol;
     private ?int $prev = null;
     private ?int $current = null;
     private ?int $next = null;
@@ -39,32 +46,24 @@ abstract class AbstractIndicator
     private int $gap = 0;
     private int $index = 0;
 
-    protected SymbolRepository $symbolRepo;
+    /** @var \Iterator[] */
+    private array $progressiveIterators = [];
+    private array $progressiveCandles = [];
+    private array $progressiveData = [];
 
-    protected bool $isProgressive = false;
-    protected \stdClass $progressingCandle;
-    protected Symbol $progressiveSymbol;
-
-    protected final function getDefaultConfig(): array
-    {
-        return [
-            'progressiveInterval' => null
-        ];
-    }
-
-    public function __construct(protected Symbol     $symbol,
-                                protected Collection $candles,
-                                array                $config = [],
-                                protected ?\Closure  $signalCallback = null)
+    public function __construct(protected Symbol         $symbol,
+                                private CandleCollection $candles,
+                                array                    $config = [],
+                                protected ?\Closure      $signalCallback = null)
     {
         $this->mergeConfig($config);
         $this->symbolRepo = App::make(SymbolRepository::class);
 
         /** @var Signature signature */
         $this->signature = $this->register([
-            'contents' => $this->contents(),
-            'config'   => $this->config
-        ]);
+                                               'contents' => $this->contents(),
+                                               'config'   => $this->config
+                                           ]);
 
         $this->loadConfigDependencies();
 
@@ -73,7 +72,7 @@ abstract class AbstractIndicator
 
         if ($count = $candles->count())
         {
-            $data = $this->run();
+            $data = $this->calculate($this->candles);
             $this->gap = $count - count($data);
 
             if ($this->gap < 0)
@@ -86,9 +85,9 @@ abstract class AbstractIndicator
             if ($signalCallback)
             {
                 $this->signalSignature = $this->register([
-                    'config'             => $this->config,
-                    'signalCallbackHash' => ClosureHash::from($this->signalCallback)
-                ]);
+                                                             'config'             => $this->config,
+                                                             'signalCallbackHash' => ClosureHash::from($this->signalCallback)
+                                                         ]);
                 $this->scan();
             }
         }
@@ -102,12 +101,32 @@ abstract class AbstractIndicator
         $this->current = $this->prev = $this->next = null;
     }
 
+    protected function loadConfigDependencies(): void
+    {
+        if ($this->isProgressive)
+        {
+            if ($progressiveInterval = $this->config('progressiveInterval'))
+            {
+                $this->progressiveSymbol = $this->symbolRepo->fetchSymbol(
+                    $this->symbol->exchange(),
+                    $this->symbol->symbol,
+                    $progressiveInterval);
+                $this->progressiveSymbol->updateCandles();
+            }
+            else
+            {
+                //not specified an interval in config
+                $this->isProgressive = false;
+            }
+        }
+    }
+
     protected function setup(): void
     {
 
     }
 
-    abstract protected function run(): array;
+    abstract protected function calculate(CandleCollection $candles): array;
 
     #[Pure] protected function combineTimestamps(?array $data): array
     {
@@ -116,27 +135,119 @@ abstract class AbstractIndicator
             return [];
         }
 
-        $timestamps = array_slice($this->timestamps(), ($length = count($data)) * -1, $length);
+        $timestamps = array_slice($this->candles->timestamps(), ($length = count($data)) * -1, $length);
 
         return array_combine($timestamps, $data);
     }
 
-    #[Pure] protected function timestamps(): array
+    protected function scan(): void
     {
-        return array_column($this->candles->all(), 't');
+        $this->index = -1;
+
+        $lastCandle = $this->symbolRepo->fetchLastCandle($this->symbol);
+
+        $signal = $this->setupSignal();
+        $newSignal = null;
+
+        $iterator = $this->data->getIterator();
+        $unconfirmed = [];
+        while ($iterator->valid())
+        {
+            $value = $iterator->current();
+            $this->index++;
+            $openTime = $iterator->key();
+            $this->current = $openTime;
+            $iterator->next();
+            $nextOpenTime = $iterator->key();
+
+            if ($this->isProgressive)
+            {
+                $candles = $this->progressiveCandles($this->progressiveSymbol,
+                                                     $this->candles[$currentKey = $this->currentDataKey()],
+                                                     $this->candles[$currentKey + 1] ?? null);
+                while ($candles->valid())
+                {
+                    $candle = $this->progressingCandle = $candles->current();
+                    $candles->next();
+                    $next = $candles->current();
+
+                    if ($this->recalculate)
+                    {
+                        $value = $this->recalculateForProgressiveCandle($currentKey, $candle);
+                    }
+
+                    /** @var Signal $newSignal */
+                    if ($newSignal = ($this->signalCallback)(signal: $signal, indicator: $this, value: $value))
+                    {
+                        $priceDate = $this->getPriceDate($openTime = $candle->t,
+                                                         $nextOpenTime = $next?->t,
+                                                         $this->progressiveSymbol);
+                        break; //only one signal per candle is allowed
+                    }
+                    $priceDate = null;
+                }
+            }
+            else
+            {
+                /** @var Signal $newSignal */
+                $newSignal = ($this->signalCallback)(signal: $signal, indicator: $this, value: $value);
+            }
+
+            if ($newSignal)
+            {
+                $newSignal->timestamp = $openTime;
+                $newSignal->price_date = $priceDate ?? $this->getPriceDate($openTime,
+                                                                           $nextOpenTime,
+                                                                           $this->symbol);
+                $newSignal->is_confirmed = $nextOpenTime || ($lastCandle && $lastCandle->t > $openTime);//the candle is closed
+
+                $this->saveSignal($newSignal);
+                $signal = $this->setupSignal();
+            }
+            else
+            {
+                //a possible signal that is no longer valid
+                // but might exist in the database
+                //needs to be marked as unconfirmed
+                $unconfirmed[] = $openTime;
+            }
+
+            $this->prev = $openTime;
+        }
+
+        if (isset($unconfirmed))
+        {
+            DB::table('signals')
+              ->where('symbol_id', $this->symbol->id)
+              ->where('indicator_id', $this->signature->id)
+              ->where('signature_id', $this->signalSignature->id)
+              ->whereIn('timestamp', $unconfirmed)
+              ->update(['is_confirmed' => false]);
+        }
     }
 
-    protected function progressingCandles(\stdClass $current, ?\stdClass $next): \Generator
+    public function setupSignal(): Signal
+    {
+        $signal = new Signal();
+
+        $signal->symbol()->associate($this->symbol);
+        $signal->indicator()->associate($this->signature);
+        $signal->signature()->associate($this->signalSignature);
+
+        return $signal;
+    }
+
+    protected function progressiveCandles(Symbol $progressiveSymbol, \stdClass $current, ?\stdClass $next): \Generator
     {
         $nextCandle = $next ?: $this->symbolRepo->fetchNextCandle($this->symbol->id, $current->t);
 
         if ($nextCandle)
         {
-            $candles = $this->symbolRepo->assertCandlesBetween($this->progressiveSymbol,
-                $current->t,
-                $nextCandle->t,
-                $this->progressiveSymbol->interval,
-                true);
+            $candles = $this->symbolRepo->assertCandlesBetween($progressiveSymbol,
+                                                               $current->t,
+                                                               $nextCandle->t,
+                                                               $progressiveSymbol->interval,
+                                                               true);
 
             if ($candles->last()->t >= $nextCandle->t)
             {
@@ -145,11 +256,11 @@ abstract class AbstractIndicator
         }
         else
         {
-            $candles = $this->symbolRepo->assertCandlesLimit($this->progressiveSymbol,
-                $current->t,
-                null,
-                $this->progressiveSymbol->interval,
-                true);
+            $candles = $this->symbolRepo->assertCandlesLimit($progressiveSymbol,
+                                                             $current->t,
+                                                             null,
+                                                             $progressiveSymbol->interval,
+                                                             true);
         }
 
         if ($candles->first()->t < $current->t || ($nextCandle && $candles->last()->t >= $nextCandle->t))
@@ -183,102 +294,28 @@ abstract class AbstractIndicator
                 $merged['l'] = $candle->l;
             }
 
-            yield (object)$merged;
+            yield $this->progressiveCandles[$merged['t']] = (object)$merged;
         }
     }
 
-    protected function scan(): void
+    protected function currentDataKey(): int
     {
-        $this->index = -1;
-
-        $lastCandle = $this->symbolRepo->fetchLastCandle($this->symbol);
-
-        $signal = $this->setupSignal();
-
-        $iterator = $this->data->getIterator();
-        $unconfirmed = [];
-        while ($iterator->valid())
-        {
-            $value = $iterator->current();
-            $this->index++;
-            $openTime = $iterator->key();
-            $this->current = $openTime;
-            $iterator->next();
-            $nextOpenTime = $iterator->key();
-
-            if ($this->isProgressive)
-            {
-                $candles = $this->progressingCandles(
-                    $this->candles[$this->index + $this->gap],
-                    $this->candles[$this->index + $this->gap + 1] ?? null);
-
-                while ($candles->valid())
-                {
-                    $this->progressingCandle = $candles->current();
-                    $candles->next();
-                    $next = $candles->current();
-
-                    /** @var Signal $newSignal */
-                    $newSignal = ($this->signalCallback)(signal: $signal, indicator: $this, value: $value);
-
-                    if ($newSignal)
-                    {
-                        $priceDate = $this->getPriceDate($this->progressingCandle->t,
-                            $next?->t,
-                            $this->progressiveSymbol);
-                        break;
-                    }
-                    $priceDate = null;
-                }
-            }
-            else
-            {
-                /** @var Signal $newSignal */
-                $newSignal = ($this->signalCallback)(signal: $signal, indicator: $this, value: $value);
-            }
-
-            if ($newSignal)
-            {
-                $newSignal->timestamp = $openTime;
-                $newSignal->price_date = $priceDate ?? $this->getPriceDate($openTime,
-                        $nextOpenTime,
-                        $this->symbol);
-                $newSignal->is_confirmed = $nextOpenTime || ($lastCandle && $lastCandle->t > $openTime);//the candle is closed
-
-                $this->saveSignal($newSignal);
-                $signal = $this->setupSignal();
-            }
-            else
-            {
-                //a possible signal that is no longer valid
-                // but might exist in the database
-                //needs to be marked as unconfirmed
-                $unconfirmed[] = $openTime;
-            }
-
-            $this->prev = $openTime;
-        }
-
-        if (isset($unconfirmed))
-        {
-            DB::table('signals')
-                ->where('symbol_id', $this->symbol->id)
-                ->where('indicator_id', $this->signature->id)
-                ->where('signature_id', $this->signalSignature->id)
-                ->whereIn('timestamp', $unconfirmed)
-                ->update(['is_confirmed' => false]);
-        }
+        return $this->index + $this->gap;
     }
 
-    public function setupSignal(): Signal
+    protected function getPriceDate(int $openTime, int|null $nextOpenTime, Symbol $symbol): int
     {
-        $signal = new Signal();
+        if ($nextOpenTime)
+        {
+            return $nextOpenTime - 1000;
+        }
 
-        $signal->symbol()->associate($this->symbol);
-        $signal->indicator()->associate($this->signature);
-        $signal->signature()->associate($this->signalSignature);
+        if ($nextCandle = $this->symbolRepo->fetchNextCandle($symbol->id, $openTime))
+        {
+            return $nextCandle->t - 1000;
+        }
 
-        return $signal;
+        return $symbol->last_update;
     }
 
     /**
@@ -286,14 +323,143 @@ abstract class AbstractIndicator
      */
     protected function saveSignal(Signal $signal): void
     {
-        $old = $signal;
-        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-        $this->replaceBindable($old, $signal = $signal->updateUniqueOrCreate());
+        $this->signals[] = $signal->updateUniqueOrCreate();
+    }
 
-        $signal->save();
-        $this->saveBindings($signal);
+    public function getBindValue(int|string $bind, ?int $timestamp = null, ?Symbol $progressiveSymbol = null): mixed
+    {
+        if (!$progressiveSymbol || !$this->recalculate)
+        {
+            if ($timestamp)
+            {
+                if (!$value = $this->getData($timestamp))
+                {
+                    return $this->getBind($bind, $this->assertClosestValue($timestamp));
+                }
 
-        $this->signals[] = $signal;
+                return $this->getBind($bind, $value);
+            }
+
+            return $this->getBind($bind, $this->current());
+        }
+
+        return $this->getBind($bind, $this->getProgressiveValue($progressiveSymbol, $timestamp));
+    }
+
+    protected function getData(int $timestamp): mixed
+    {
+        return $this->progressiveData[$timestamp] ?? $this->data[$timestamp] ?? null;
+    }
+
+    protected function getBind(int|string $bind, mixed $value): mixed
+    {
+        $this->throwBindingIsDisabled();
+    }
+
+    private function throwBindingIsDisabled(): never
+    {
+        throw new \LogicException('Binding is disabled by default. 
+        To enable it, override getBindable() and getBindValue().');
+    }
+
+    protected function assertClosestValue(int $timestamp)
+    {
+        foreach ($this->data as $t => $value)
+        {
+            if ($t > $timestamp)
+            {
+                return $_prev;
+            }
+            $_prev = $value;
+        }
+
+        throw new \LogicException("No close value for timestamp: $timestamp");
+    }
+
+    public function current(): mixed
+    {
+        return $this->data[$this->current] ?? throw new \LogicException('Indicator is not in a loop.');
+    }
+
+    protected function recalculateForProgressiveCandle(int $startIndex, \stdClass $candle): mixed
+    {
+        $data = $this->recalculate($this->getMinCandlesForRecalculation($startIndex, $candle));
+        return $this->progressiveData[$candle->t] = end($data);
+    }
+
+    protected function getProgressiveValue(Symbol $progressiveSymbol, int $timestamp): mixed
+    {
+        $this->assertSameSymbolDifferentInterval($progressiveSymbol);
+
+        if (($value = $this->getProgressiveData($timestamp)) === null)
+        {
+            $this->candles->findPrevNext($timestamp, $prev, $next, $prevKey, $nextKey);
+
+            if (!$candles = $this->getProgressiveIterator($key = "$prev->t-$next->t"))
+            {
+                $candles = $this->progressiveCandles($progressiveSymbol, $prev, $next);
+                $this->registerProgressiveIterator($key, $candles);
+            }
+
+            while ($candles->valid())
+            {
+                $candle = $candles->current();
+                $value = $this->recalculateForProgressiveCandle($prevKey, $candle);
+
+                $candles->next();
+
+                if ($candle->t == $timestamp)
+                {
+                    break;
+                }
+            }
+        }
+        return $value ?? throw new \LogicException("Progressive recalculation failed for timestamp: $timestamp");
+    }
+
+    protected function assertSameSymbolDifferentInterval(Symbol $symbol): void
+    {
+        if ($symbol->symbol !== $this->symbol->symbol || $symbol->exchange_id !== $this->symbol->exchange_id)
+        {
+            throw new \InvalidArgumentException("Argument \$symbol's name and exchange ID does not match with member symbol.");
+        }
+
+        if ($symbol->interval === $this->symbol->interval)
+        {
+            throw new \InvalidArgumentException("Argument \$symbol's interval should not be the same as member symbol's interval.");
+        }
+    }
+
+    protected function getProgressiveData(int $timestamp): mixed
+    {
+        return $this->progressiveData[$timestamp] ?? null;
+    }
+
+    protected function getProgressiveIterator(string $key): \Iterator
+    {
+        return $this->progressiveIterators[$key] ?? null;
+    }
+
+    protected function registerProgressiveIterator(string $key, \Iterator $iterator): void
+    {
+        $this->progressiveIterators[$key] = $iterator;
+    }
+
+    protected function recalculate(CandleCollection $candles): mixed
+    {
+        if (!$data = $this->calculate($candles))
+        {
+            throw new \LogicException('Recalculation resulted in zero values. Expected at least one.');
+        }
+
+        return $data;
+    }
+
+    protected function getMinCandlesForRecalculation(int $startIndex, \stdClass $candle): CandleCollection
+    {
+        $prevCandles = $this->candles->previousCandles($this->gap, $startIndex);
+        $prevCandles[$candle->t] = $candle;
+        return $prevCandles;
     }
 
     public function prev(): mixed
@@ -301,14 +467,19 @@ abstract class AbstractIndicator
         return $this->data[$this->prev];
     }
 
-    public function current(): mixed
-    {
-        return $this->data[$this->current];
-    }
-
     public function next(): mixed
     {
         return $this->data[$this->next];
+    }
+
+    public function id(): int
+    {
+        return $this->signature->id;
+    }
+
+    public function closePrice(): float
+    {
+        return (float)$this->candle()->c;
     }
 
     /**
@@ -331,60 +502,13 @@ abstract class AbstractIndicator
         return $candle;
     }
 
-    public function id(): int
-    {
-        return $this->signature->id;
-    }
-
-    public function crossOver(\Closure $x, \Closure $y): bool
-    {
-        if ($this->prev === null || $this->current === null)
-        {
-            return false;
-        }
-
-        $prevX = $x($this->data[$this->prev]);
-        $prevY = $y($this->data[$this->prev]);
-
-        $currentX = $x($this->data[$this->current]);
-        $currentY = $y($this->data[$this->current]);
-
-        return $prevX < $prevY && $currentX > $currentY;
-    }
-
-    public function crossUnder(\Closure $x, \Closure $y): bool
-    {
-        if ($this->prev === null || $this->current === null)
-        {
-            return false;
-        }
-
-        $prevX = $x($this->data[$this->prev]);
-        $prevY = $y($this->data[$this->prev]);
-
-        $currentX = $x($this->data[$this->current]);
-        $currentY = $y($this->data[$this->current]);
-
-        return $prevX > $prevY && $currentX < $currentY;
-    }
-
-    public function closePrice(): float
-    {
-        return (float)$this->candle()->c;
-    }
-
     #[Pure] public function raw(): array
     {
         return $this->data->all();
     }
 
-    public function candles(): Collection
-    {
-        return $this->candles;
-    }
-
     /**
-     * @return Signal[]
+     * @return Signal[]|Collection
      */
     public function signals(): Collection
     {
@@ -401,77 +525,15 @@ abstract class AbstractIndicator
         return $this->data;
     }
 
-    protected function getBindable(): array
-    {
-        return [];
-    }
-
-    protected function getBindingSignatureExtra(string|int $bind): array
+    final protected function getDefaultConfig(): array
     {
         return [
-            'symbol_id'    => $this->symbol->id,
-            'indicator_id' => $this->signature->id
+            'progressiveInterval' => null
         ];
     }
 
-    protected function getSavePoints(string|int $bind, Signature $signature): array
+    protected function getBindable(): array
     {
-        return [];
-    }
-
-    protected function getBindValue(int|string $bind, ?int $timestamp = null): mixed
-    {
-        throw new \LogicException('Binding is disabled by default. 
-        To enable it, override getBindable(), getBindValue() and getSavePoints().');
-    }
-
-    #[Pure] protected function closes(): array
-    {
-        return array_column($this->candles->all(), 'c');
-    }
-
-    #[Pure] protected function highs(): array
-    {
-        return array_column($this->candles->all(), 'h');
-    }
-
-    #[Pure] protected function lows(): array
-    {
-        return array_column($this->candles->all(), 'l');
-    }
-
-    protected function getPriceDate(int $openTime, int|null $nextOpenTime, Symbol $symbol): int
-    {
-        if ($nextOpenTime)
-        {
-            return $nextOpenTime - 1000;
-        }
-
-        if ($nextCandle = $this->symbolRepo->assertNextCandle($symbol->id, $openTime))
-        {
-            return $nextCandle->t - 1000;
-        }
-
-        return $symbol->last_update;
-    }
-
-    protected function loadConfigDependencies(): void
-    {
-        if ($this->isProgressive)
-        {
-            if ($progressiveInterval = $this->config('progressiveInterval'))
-            {
-                $this->progressiveSymbol = $this->symbolRepo->fetchSymbol(
-                    $this->symbol->exchange(),
-                    $this->symbol->symbol,
-                    $progressiveInterval);
-                $this->progressiveSymbol->updateCandles();
-            }
-            else
-            {
-                //not specified an interval in config
-                $this->isProgressive = false;
-            }
-        }
+        $this->throwBindingIsDisabled();
     }
 }
