@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Trade\Binding\Bindable;
 use App\Trade\Binding\HasBinding;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -28,10 +27,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property mixed     updated_at
  *
  */
-class Signal extends Model implements Bindable
+class Signal extends Model
 {
-    use HasBinding;
-
     const BUY = 'BUY';
     const SELL = 'SELL';
 
