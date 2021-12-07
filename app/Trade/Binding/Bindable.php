@@ -4,9 +4,10 @@ namespace App\Trade\Binding;
 
 use App\Models\Binding;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Collection;
 
 /**
- * @property Binding[] bindings
+ * @property Collection|Binding[] bindings
  */
 interface Bindable
 {
