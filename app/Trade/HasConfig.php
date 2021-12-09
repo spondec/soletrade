@@ -4,7 +4,7 @@ namespace App\Trade;
 
 trait HasConfig
 {
-    protected function mergeConfig(array &$config)
+    protected function mergeConfig(array &$config): void
     {
         if (method_exists($this, 'getDefaultConfig'))
         {
@@ -14,19 +14,14 @@ trait HasConfig
             //changes to config keys from the child class via $config property are expected
             //so do not try to match keys here
             $this->config = array_merge_recursive_distinct($defaultConfig, $childConfig);
+        }
 
-            //additions to config keys are not allowed, will match keys now
-            $this->assertKeyMatch($this->config, $config);
-            $this->config = array_merge_recursive_distinct($this->config, $config);
-        }
-        else
-        {
-            $this->assertKeyMatch($this->config, $config);
-            $this->config = array_merge_recursive_distinct($this->config, $config);
-        }
+        //additions to the config keys are not allowed, match keys now
+        $this->assertKeyMatch($this->config, $config);
+        $this->config = array_merge_recursive_distinct($this->config, $config);
     }
 
-    protected function assertKeyMatch(array &$original, array &$replacement)
+    protected function assertKeyMatch(array &$original, array &$replacement): void
     {
         foreach ($replacement as $key => &$value)
         {
