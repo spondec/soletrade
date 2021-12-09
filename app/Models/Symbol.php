@@ -81,8 +81,8 @@ class Symbol extends Model
         }
 
         $query = DB::table('candles')
-            ->where('symbol_id', $this->id)
-            ->orderBy('t', $order = $start ? 'ASC' : 'DESC');
+                   ->where('symbol_id', $this->id)
+                   ->orderBy('t', $order = $start ? 'ASC' : 'DESC');
 
         if ($limit)
         {
@@ -118,7 +118,7 @@ class Symbol extends Model
 
     public function updateCandlesIfOlderThan(int $seconds, int $maxRunTime = 0)
     {
-        if ($this->last_update + $seconds * 1000 <= time() * 1000)
+        if ($seconds > 0 && $this->last_update + $seconds * 1000 <= time() * 1000)
         {
             $this->updateCandles($maxRunTime);
         }
