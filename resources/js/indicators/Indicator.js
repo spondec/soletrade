@@ -1,8 +1,15 @@
 export default class Indicator
 {
-    constructor(newChart = true)
+    static paneCounter = 0;
+
+    constructor(newPane = true)
     {
-        this.requiresNewChart = newChart;
+        this.pane = newPane ? Indicator.getNewPane() : 0;
+    }
+
+    static getNewPane()
+    {
+        return ++this.paneCounter;
     }
 
     prepare(data, length)

@@ -379,15 +379,7 @@ export default {
       {
         let handler = this.getIndicatorHandler(name);
         let magnified = this.reduceSeriesData(start, end, indicators[name])
-        let chart;
-        if (handler.requiresNewChart)
-        {
-          chart = this.newChart(container, name);
-          this.magnifiedCharts.push(chart);
-        } else
-        {
-          chart = this.magnifiedCharts[0];
-        }
+        let chart = this.magnifiedCharts[0];
         let series = handler.init(magnified, chart)
         handler.update(series, magnified)
       }
@@ -469,7 +461,7 @@ export default {
       return indicators;
     },
 
-    initIndicators: function (container)
+    initIndicators: function ()
     {
       const indicators = this.symbol.indicators;
 
@@ -479,7 +471,7 @@ export default {
         if (data)
         {
           let handler = this.getIndicatorHandler(name);
-          let chart = handler.requiresNewChart ? this.createChart(container, name) : this.charts[0];
+          let chart = this.charts[0];
           this.series[name] = handler.init(data, chart);
           handler.update(this.series[name], data);
         }
@@ -573,7 +565,7 @@ export default {
 
       candlestickSeries.setData(this.symbol.candles);
       this.series['candlestick'] = candlestickSeries;
-      this.initIndicators(container);
+      this.initIndicators();
 
       this.initMarkers();
 
@@ -661,13 +653,16 @@ export default {
     {
       const container = this.$refs.chart;
 
-      if (container && this.charts.length)
+      if (this.charts.length)
         for (let i in this.charts)
           this.charts[i].resize(container.offsetWidth, container.offsetHeight);
 
       if (this.magnifiedCharts.length)
         for (let i in this.magnifiedCharts)
           this.magnifiedCharts[i].resize(container.offsetWidth, container.offsetHeight);
+
+      if (this.balanceChart)
+        this.balanceChart.resize(container.offsetWidth, container.offsetHeight);
     },
 
     onSelect: function ()
@@ -740,7 +735,7 @@ html, body, #app, .main-container {
 }
 
 .chart-container {
-  height: 30%;
+  height: 50%;
   margin-top: 10px;
 }
 

@@ -40,13 +40,15 @@ export default class MACD extends Indicator
             lineWidth: 1,
             // title: 'divergence',
             crosshairMarkerVisible: true,
+            pane: this.pane
         });
 
         series.macd = chart.addLineSeries({
             color: '#0094ff',
             lineWidth: 1,
             // title: 'macd',
-            crosshairMarkerVisible: true
+            crosshairMarkerVisible: true,
+            pane: this.pane
         });
 
         series.signal = chart.addLineSeries({
@@ -54,6 +56,7 @@ export default class MACD extends Indicator
             lineWidth: 1,
             // title: 'signal',
             crosshairMarkerVisible: true,
+            pane: this.pane
         });
 
         return series;

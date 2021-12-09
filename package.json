@@ -12,6 +12,8 @@
         "autoprefixer": "^10.3.1",
         "axios": "^0.21",
         "bootstrap": "^5.0.0-beta3",
+        "eslint": "^8.4.1",
+        "eslint-plugin-vue": "^8.2.0",
         "jquery": "^3.6",
         "laravel-mix": "^6.0.25",
         "lodash": "^4.17.19",
@@ -25,7 +27,7 @@
         "vue-loader": "^16.3.2"
     },
     "dependencies": {
-        "lightweight-charts": "^3.5.0",
+        "lightweight-charts": "github:ntf/lightweight-charts",
         "v-calendar": "^3.0.0-alpha.5",
         "v-pagination-3": "^0.1.6",
         "vue-json-pretty": "^2.0.4",

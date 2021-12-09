@@ -2,9 +2,9 @@ import Indicator from "./Indicator";
 
 export default class Fib extends Indicator
 {
-    constructor(newChart = false)
+    constructor(newPane = false)
     {
-        super(newChart);
+        super(newPane);
     }
 
     prepare(data, length)
