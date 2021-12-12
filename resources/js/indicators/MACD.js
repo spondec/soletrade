@@ -10,8 +10,6 @@ export default class MACD extends Indicator
             {
                 return {time: k / 1000, value: val};
             }, data[key]);
-
-            this.fillFrontGaps(length, data[key]);
         }
 
         let prevHist = 0;

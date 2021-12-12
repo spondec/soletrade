@@ -14,9 +14,6 @@ export default class SimpleLineSeries extends Indicator
         {
             return {time: key / 1000, value: val}
         }, data);
-
-        this.fillFrontGaps(length, data);
-
         return data;
     }
 

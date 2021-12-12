@@ -15,8 +15,6 @@ export default class Fib extends Indicator
             {
                 return {time: k / 1000, value: val};
             }, data[key]);
-
-            this.fillFrontGaps(length, data[key]);
         }
         return data;
     }

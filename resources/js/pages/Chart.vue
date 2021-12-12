@@ -110,10 +110,12 @@ import VueMultiselect from 'vue-multiselect'
 import {Tabs, Tab} from 'vue3-tabs-component';
 
 import {DatePicker} from 'v-calendar';
+
 import MACD from "../indicators/MACD";
 import RSI from "../indicators/RSI";
 import SimpleLineSeries from "../indicators/SimpleLineSeries";
 import Fib from "../indicators/Fib";
+import IndicatorManager from "../indicators/IndicatorManager";
 
 export default {
   title: "Chart",
@@ -151,7 +153,16 @@ export default {
       },
 
       magnifiedCharts: [],
-      indicatorHandlers: null,
+
+      indicatorHandlers: {
+        ATR: () => new SimpleLineSeries(true, {color: 'rgb(255,0,0)', lineWidth: 1, lineType: 0}),
+        SMA: () => new SimpleLineSeries(false, {color: 'rgb(0,153,255)', lineWidth: 1, lineType: 0}),
+        EMA: () => new SimpleLineSeries(false, {color: 'rgb(49,255,0)', lineWidth: 1, lineType: 0}),
+        Fib: () => new Fib(),
+        RSI: () => new RSI(),
+        MACD: () => new MACD()
+      },
+      indicatorManager: null,
 
       toggle: true,
 
@@ -201,7 +212,7 @@ export default {
     this.sel.symbol = 'BTC/USDT';
     this.sel.interval = '1h';
 
-    this.indicatorHandlers = this.handlers();
+    this.indicatorManager = new IndicatorManager(this.indicatorHandlers);
   },
 
   mounted()
@@ -260,6 +271,7 @@ export default {
         text: log.reason ? log.reason : ''
       }
     },
+
     prepareMagnifiedPriceLog: function (log, start)
     {
       return Object.values(log.map(function (entry)
@@ -290,18 +302,7 @@ export default {
 
     getIndicatorHandler: function (name)
     {
-      const handler = this.indicatorHandlers[name];
-      if (handler === undefined)
-      {
-        throw Error('No handler found for ' + name);
-      }
-
-      if (handler instanceof Function)
-      {
-        this.indicatorHandlers[name] = handler();
-      }
-
-      return this.indicatorHandlers[name];
+      return this.indicatorManager.handler(name);
     },
 
     magnifyUpdate: async function ()
@@ -393,7 +394,7 @@ export default {
     {
       if (!trade)
       {
-        throw Error('Argument trade is undefined.');
+        throw Error('trade is undefined.');
       }
 
       this.magnifier.trade = trade;
@@ -423,33 +424,25 @@ export default {
         });
       }
     },
-    registerChartEvents: function ()
+
+    registerLazyLoadEvent: function ()
     {
       this.charts[0].timeScale().subscribeVisibleLogicalRangeChange(newVisibleLogicalRange =>
       {
         if (!this.series['candlestick']) return;
 
         const barsInfo = this.series['candlestick'].barsInLogicalRange(newVisibleLogicalRange);
-        // if there less than 50 bars to the left of the visible area
         if (barsInfo !== null && barsInfo.barsBefore < 50)
         {
           this.lazyLoad();
         }
       });
-
-      this.registerVisibleLogicalRangeChangeEvent(this.charts);
     },
 
-    handlers: function ()
+    registerChartEvents: function ()
     {
-      return {
-        ATR: () => new SimpleLineSeries(true, {color: 'rgb(255,0,0)', lineWidth: 1, lineType: 0}),
-        SMA: () => new SimpleLineSeries(false, {color: 'rgb(0,153,255)', lineWidth: 1, lineType: 0}),
-        EMA: () => new SimpleLineSeries(false, {color: 'rgb(49,255,0)', lineWidth: 1, lineType: 0}),
-        Fib: () => new Fib(),
-        RSI: () => new RSI(),
-        MACD: () => new MACD()
-      }
+      this.registerLazyLoadEvent();
+      this.registerVisibleLogicalRangeChangeEvent(this.charts);
     },
 
     prepareIndicatorData: function (indicators, length)
@@ -485,7 +478,7 @@ export default {
         position: data.side === 'BUY' ? 'belowBar' : 'aboveBar',
         color: data.side === 'BUY' ? '#00ff68' : '#ff0062',
         shape: data.side === 'BUY' ? 'arrowUp' : 'arrowDown',
-        text: typeof namePrefix === String ? namePrefix + ': ' + data.name : data.name
+        text: namePrefix !== undefined ? namePrefix + ': ' + data.name : data.name
       }
     },
 
@@ -518,6 +511,35 @@ export default {
       return markers.sort((a, b) => (a.time - b.time));
     },
 
+    initBalanceHistoryChart: function (container)
+    {
+      this.balanceChart = this.newChart(container, 'Balance History');
+      const lineSeries = this.balanceChart.addLineSeries({
+        lineType: 0
+      });
+      const balanceHistory = this.symbol.strategy.trades.summary.balance_history;
+
+      const mapped = [];
+      for (let i in balanceHistory)
+      {
+        mapped.push({
+          time: i / 1000,
+          value: balanceHistory[i]
+        });
+      }
+
+      lineSeries.setData(mapped);
+    },
+
+    purgeBalanceHistoryChart: function ()
+    {
+      if (this.balanceChart)
+      {
+        this.balanceChart.remove();
+        this.balanceChart = null;
+      }
+    },
+
     replaceCandlestickChart: async function ()
     {
       this.resetLimit();
@@ -529,46 +551,26 @@ export default {
 
       this.purgeMainCharts();
       this.purgeMagnifierCharts();
-      if (this.balanceChart)
-      {
-        this.balanceChart.remove();
-        this.balanceChart = null;
-      }
+      this.purgeBalanceHistoryChart();
 
       await this.updateSymbol();
 
       if (!this.symbol) return;
+
       const container = this.$refs.chart;
 
       if (this.symbol.strategy)
       {
-        this.balanceChart = this.newChart(container, 'Balance History');
-        const lineSeries = this.balanceChart.addLineSeries({
-          lineType: 1
-        });
-        const balanceHistory = this.symbol.strategy.trades.summary.balance_history;
-
-        const mapped = [];
-        for (let i in balanceHistory)
-        {
-          mapped.push({
-            time: i / 1000,
-            value: balanceHistory[i]
-          });
-        }
-
-        lineSeries.setData(mapped);
+        this.initBalanceHistoryChart(container);
       }
+
       const chart = this.createChart(container, this.symbol.symbol + this.symbol.interval);
-
       const candlestickSeries = chart.addCandlestickSeries();
-
       candlestickSeries.setData(this.symbol.candles);
       this.series['candlestick'] = candlestickSeries;
+
       this.initIndicators();
-
       this.initMarkers();
-
       this.registerChartEvents();
     },
 
@@ -617,20 +619,14 @@ export default {
 
     updateSeries: async function ()
     {
-      try
-      {
-        this.series['candlestick'].setData(await this.symbol.candles);
-
-      } catch (e)
-      {
-        console.log(e)
-      }
+      this.series['candlestick'].setData(await this.symbol.candles);
 
       for (let name in this.symbol.indicators)
       {
         this.getIndicatorHandler(name).update(this.series[name], this.symbol.indicators[name]);
       }
     },
+
     newChart: function (container, name, options = {})
     {
       if (!container) throw Error('Chart container was not found.');
