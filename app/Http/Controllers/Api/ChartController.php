@@ -31,13 +31,14 @@ class ChartController extends Controller
         if ($exchange && $symbol && $interval)
         {
             $indicators = $this->mapClassByName(Config::indicators(), true);
-            return $this->candles(exchange: $exchange,
+            return $this->candles(
+                exchange:   $exchange,
                 symbolName: $symbol,
-                interval: $interval,
-                indicators: array_map(fn($v) => array_search($v, $indicators), $request->get('indicators', [])),
-                strategy: $this->getKeyByValue('strategy', $this->mapClassByName(Config::strategies(), true)),
-                range: json_decode($request->get('range'), true),
-                limit: $request->get('limit'));
+                interval:   $interval,
+                indicators: array_map(static fn($v) => array_search($v, $indicators), $request->get('indicators', [])),
+                strategy:   $this->getKeyByValue('strategy', $this->mapClassByName(Config::strategies(), true)),
+                range:      json_decode($request->get('range'), true, 512, JSON_THROW_ON_ERROR),
+                limit:      $request->get('limit'));
         }
 
         return [
@@ -61,7 +62,7 @@ class ChartController extends Controller
     /**
      * @param HasName[]|string[] $classes
      */
-    protected function mapClassByName(array $classes, bool $assoc = false)
+    protected function mapClassByName(array $classes, bool $assoc = false): array
     {
         $mapped = [];
         foreach ($classes as $class)
@@ -79,16 +80,13 @@ class ChartController extends Controller
         return $mapped;
     }
 
-    /**
-     * @param AbstractExchange $exchange
-     */
-    public function candles(string $exchange,
-                            string $symbolName,
-                            string $interval,
-                            array  $indicators,
-                            string $strategy = null,
-                            ?array $range = null,
-                            ?int   $limit = null): array
+    public function candles(string|AbstractExchange $exchange,
+                            string                  $symbolName,
+                            string                  $interval,
+                            array                   $indicators,
+                            string                  $strategy = null,
+                            ?array                  $range = null,
+                            ?int                    $limit = null): array
     {
 
         $start = $range ? Carbon::parse($range['start'])->getTimestampMs() : null;
@@ -99,10 +97,7 @@ class ChartController extends Controller
         if (!$symbol)
         {
             $filter = static fn(Symbol $symbol): bool => $symbol->symbol == $symbolName && $symbol->interval == $interval;
-            $symbol = $exchange::instance()
-                ->updater()
-                ->updateByInterval(interval: $interval, filter: $filter)
-                ?->first();
+            $symbol = $exchange::instance()->updater()->updateByInterval(interval: $interval, filter: $filter)?->first();
         }
 
         abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
@@ -132,7 +127,7 @@ class ChartController extends Controller
 //                        'exit.bindings',
 //                        'entry.signals.bindings',
 //                        'exit.signals.bindings'
-                ]));
+                                                                                    ]));
 
             Log::execTimeFinish('Evaluating and summarizing trades');
 
@@ -153,11 +148,10 @@ class ChartController extends Controller
      * @param string                  $symbolName
      * @param string                  $interval
      *
-     * @return \App\Models\Symbol|null
+     * @return Symbol|null
      */
-    protected function getSymbol(AbstractExchange|string $exchange, string $symbolName, string $interval): ?\App\Models\Symbol
+    protected function getSymbol(AbstractExchange|string $exchange, string $symbolName, string $interval): ?Symbol
     {
         return $this->symbolRepo->fetchSymbol(exchange: $exchange::instance(), symbolName: $symbolName, interval: $interval);
     }
-
 }
