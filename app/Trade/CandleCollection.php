@@ -5,6 +5,7 @@ namespace App\Trade;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 
+/** @property \stdClass[] items */
 class CandleCollection extends Collection
 {
     #[Pure] public function closes(): array
