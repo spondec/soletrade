@@ -2,7 +2,6 @@
 
 namespace App\Trade\Evaluation;
 
-use App\Models\Binding;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
@@ -18,8 +17,9 @@ final class TradeLoop
     use HasConfig;
 
     protected array $config = [
-        'stopAtExit' => true,
-        'timeout'    => 1440
+        'stopAtExit'    => true,
+        'timeout'       => 1440,
+        'logRiskReward' => true
     ];
 
     protected SymbolRepository $repo;
@@ -35,6 +35,9 @@ final class TradeLoop
 
     protected TradeStatus $status;
 
+    protected ?int $timeout;
+    protected bool $logRiskReward;
+
     public function __construct(protected TradeSetup $entry, protected Symbol $evaluationSymbol, array $config)
     {
         $this->mergeConfig($config);
@@ -44,6 +47,9 @@ final class TradeLoop
 
         $this->firstCandle = $this->repo->assertNextCandle($entry->symbol_id, $entry->price_date);
         $this->startDate = $this->firstCandle->t;
+
+        $this->timeout = $this->config('timeout');
+        $this->logRiskReward = $this->config('logRiskReward');
     }
 
     protected function assertTradeSymbolMatchesEvaluationSymbol(): void
@@ -116,7 +122,6 @@ final class TradeLoop
         }
 
         $iterator = $candles->getIterator();
-        $timeout = $this->getTimeout();
 
         $entry = $this->status->getEntryPrice();
         $exit = $this->status->getClosePrice();
@@ -140,7 +145,10 @@ final class TradeLoop
             }
             else
             {
-                $this->status->logRiskReward($candle);
+                if ($this->logRiskReward)
+                {
+                    $this->status->logRiskReward($candle);
+                }
 
                 if (!$this->status->isExited())
                 {
@@ -148,12 +156,14 @@ final class TradeLoop
                     $this->loadBindingPrice($exit, 'close_price', $candle->t, $evaluationSymbol);
                     $this->tryPositionExit($position ?? $position = $this->getPosition(), $candle, $nextCandle);
 
-                    if ($timeout && $this->hasPositionTimedOut($position, $this->getPriceDate($candle, $nextCandle)))
+                    if ($position->isOpen() && $this->timeout && $this->hasPositionTimedOut($this->getPriceDate($candle, $nextCandle)))
                     {
                         $this->stopPositionAtClosePrice($position, $candle, 'Trade timed out. Stopping.');
                     }
-
-                    //TODO break at exit?
+                }
+                else
+                {
+                    break;
                 }
             }
         }
@@ -161,16 +171,6 @@ final class TradeLoop
         $this->lastRunDate = $candle->t;
         $pivots = $this->fetchPivotsFromStartToLastRun();
         $this->status->updateHighestLowestPrice($pivots['highest'], $pivots['lowest']);
-    }
-
-    protected function getTimeout(): bool|int
-    {
-        if (($timeout = $this->config('timeout')) > 0)
-        {
-            return $timeout;
-        }
-
-        return false;
     }
 
     protected function loadBindingPrice(Price $price, string $column, int $timestamp, ...$params): void
@@ -191,9 +191,9 @@ final class TradeLoop
         {
             $this->status->enterPosition($this->getPriceDate($candle, $nextCandle));
 
-            if (($position = $this->getPosition()) && $timeout = $this->getTimeout())
+            if (($position = $this->getPosition()) && $this->timeout)
             {
-                $this->endDate = $position->entryTime() + $timeout * 60 * 1000;
+                $this->endDate = $position->entryTime() + $this->timeout * 60 * 1000;
             }
         }
     }
@@ -205,7 +205,7 @@ final class TradeLoop
             return $next->t - 1000;
         }
 
-        if ($nextCandle = $this->repo->assertNextCandle($this->evaluationSymbol->id, $candle->t))
+        if ($nextCandle = $this->repo->fetchNextCandle($this->evaluationSymbol->id, $candle->t))
         {
             return $nextCandle->t - 1000;
         }
@@ -246,9 +246,9 @@ final class TradeLoop
         }
     }
 
-    #[Pure] protected function hasPositionTimedOut(Position $position, int $priceDate): bool
+    #[Pure] protected function hasPositionTimedOut(int $priceDate): bool
     {
-        return $position->isOpen() && $this->endDate <= $priceDate;
+        return $this->endDate <= $priceDate;
     }
 
     protected function stopPositionAtClosePrice(Position $position, \stdClass $candle, string $reason): void
