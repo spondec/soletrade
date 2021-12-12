@@ -39,9 +39,7 @@ abstract class AbstractIndicator implements Binder
     private ?int $next = null;
     private Collection $data;
     private Signature $signalSignature;
-    /**
-     * @var Signal[]
-     */
+    /** @var Signal[] */
     private Collection $signals;
     private int $gap = 0;
     private int $index = 0;
@@ -111,7 +109,8 @@ abstract class AbstractIndicator implements Binder
                     $this->symbol->exchange(),
                     $this->symbol->symbol,
                     $progressiveInterval);
-                $this->progressiveSymbol->updateCandles();
+                $this->progressiveSymbol->updateCandlesIfOlderThan(
+                    (int)(($this->symbol->last_update - $this->progressiveSymbol->last_update) / 1000));
             }
             else
             {
@@ -163,7 +162,7 @@ abstract class AbstractIndicator implements Binder
             if ($this->isProgressive)
             {
                 $candles = $this->progressiveCandles($this->progressiveSymbol,
-                                                     $this->candles[$currentKey = $this->currentDataKey()],
+                                                     $this->candles[$currentKey = $this->currentCandleKey()],
                                                      $this->candles[$currentKey + 1] ?? null);
                 while ($candles->valid())
                 {
@@ -173,7 +172,7 @@ abstract class AbstractIndicator implements Binder
 
                     if ($this->recalculate)
                     {
-                        $value = $this->recalculateForProgressiveCandle($currentKey, $candle);
+                        $value = $this->recalculateProgressively($currentKey, $candle);
                     }
 
                     /** @var Signal $newSignal */
@@ -298,9 +297,32 @@ abstract class AbstractIndicator implements Binder
         }
     }
 
-    protected function currentDataKey(): int
+    protected function currentCandleKey(): int
     {
         return $this->index + $this->gap;
+    }
+
+    protected function recalculateProgressively(int $startIndex, \stdClass $candle): mixed
+    {
+        $data = $this->recalculate($this->getCalculableMinPrevCandles($startIndex, $candle));
+        return $this->progressiveData[$candle->t] = end($data);
+    }
+
+    protected function recalculate(CandleCollection $candles): array
+    {
+        if (!$data = $this->calculate($candles))
+        {
+            throw new \LogicException('Recalculation resulted in zero values. Expected at least one.');
+        }
+
+        return $data;
+    }
+
+    protected function getCalculableMinPrevCandles(int $startIndex, \stdClass $candle): CandleCollection
+    {
+        $prevCandles = $this->candles->previousCandles($this->gap, $startIndex);
+        $prevCandles[$candle->t] = $candle;
+        return $prevCandles;
     }
 
     protected function getPriceDate(int $openTime, int|null $nextOpenTime, Symbol $symbol): int
@@ -332,23 +354,13 @@ abstract class AbstractIndicator implements Binder
         {
             if ($timestamp)
             {
-                if (!$value = $this->getData($timestamp))
-                {
-                    return $this->getBind($bind, $this->assertClosestValue($timestamp));
-                }
-
-                return $this->getBind($bind, $value);
+                return $this->getBind($bind, $this->getEqualOrClosestValue($timestamp));
             }
 
             return $this->getBind($bind, $this->current());
         }
 
         return $this->getBind($bind, $this->getProgressiveValue($progressiveSymbol, $timestamp));
-    }
-
-    protected function getData(int $timestamp): mixed
-    {
-        return $this->progressiveData[$timestamp] ?? $this->data[$timestamp] ?? null;
     }
 
     protected function getBind(int|string $bind, mixed $value): mixed
@@ -362,8 +374,13 @@ abstract class AbstractIndicator implements Binder
         To enable it, override getBindable() and getBindValue().');
     }
 
-    protected function assertClosestValue(int $timestamp)
+    protected function getEqualOrClosestValue(int $timestamp)
     {
+        if ($value = $this->getData($timestamp))
+        {
+            return $value;
+        }
+
         foreach ($this->data as $t => $value)
         {
             if ($t > $timestamp)
@@ -373,18 +390,19 @@ abstract class AbstractIndicator implements Binder
             $_prev = $value;
         }
 
-        throw new \LogicException("No close value for timestamp: $timestamp");
+        return $value;
+
+//        throw new \LogicException("No closest value for timestamp: $timestamp");
+    }
+
+    protected function getData(int $timestamp): mixed
+    {
+        return $this->progressiveData[$timestamp] ?? $this->data[$timestamp] ?? null;
     }
 
     public function current(): mixed
     {
         return $this->data[$this->current] ?? throw new \LogicException('Indicator is not in a loop.');
-    }
-
-    protected function recalculateForProgressiveCandle(int $startIndex, \stdClass $candle): mixed
-    {
-        $data = $this->recalculate($this->getMinCandlesForRecalculation($startIndex, $candle));
-        return $this->progressiveData[$candle->t] = end($data);
     }
 
     protected function getProgressiveValue(Symbol $progressiveSymbol, int $timestamp): mixed
@@ -404,7 +422,7 @@ abstract class AbstractIndicator implements Binder
             while ($candles->valid())
             {
                 $candle = $candles->current();
-                $value = $this->recalculateForProgressiveCandle($prevKey, $candle);
+                $value = $this->recalculateProgressively($prevKey, $candle);
 
                 $candles->next();
 
@@ -443,23 +461,6 @@ abstract class AbstractIndicator implements Binder
     protected function registerProgressiveIterator(string $key, \Iterator $iterator): void
     {
         $this->progressiveIterators[$key] = $iterator;
-    }
-
-    protected function recalculate(CandleCollection $candles): mixed
-    {
-        if (!$data = $this->calculate($candles))
-        {
-            throw new \LogicException('Recalculation resulted in zero values. Expected at least one.');
-        }
-
-        return $data;
-    }
-
-    protected function getMinCandlesForRecalculation(int $startIndex, \stdClass $candle): CandleCollection
-    {
-        $prevCandles = $this->candles->previousCandles($this->gap, $startIndex);
-        $prevCandles[$candle->t] = $candle;
-        return $prevCandles;
     }
 
     public function prev(): mixed
@@ -508,7 +509,7 @@ abstract class AbstractIndicator implements Binder
     }
 
     /**
-     * @return Signal[]|Collection
+     * @return Signal[]
      */
     public function signals(): Collection
     {
