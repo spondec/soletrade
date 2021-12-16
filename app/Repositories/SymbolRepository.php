@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories;
 
 use App\Models\Symbol;
@@ -67,10 +69,11 @@ class SymbolRepository
             throw new \InvalidArgumentException('Start date can not be greater than or equal to end date.');
         }
 
-        $query = DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', '>=', $startDate)
-            ->where('t', '<=', $endDate);
+        /** @noinspection PhpStrictTypeCheckingInspection */
+        $query = DB::table(DB::raw('`candles` FORCE INDEX(candles_symbol_id_t_unique)'))
+                   ->where('symbol_id', $symbolId)
+                   ->where('t', '>=', $startDate)
+                   ->where('t', '<=', $endDate);
 
         $highest = $query->orderBy('l', 'ASC')->first();
         $lowest = $query->reorder('h', 'DESC')->first();
@@ -95,9 +98,9 @@ class SymbolRepository
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         $candles = DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', $includeStart ? '>=' : '>', $startDate)
-            ->orderBy('t', 'ASC');
+                     ->where('symbol_id', $symbolId)
+                     ->where('t', $includeStart ? '>=' : '>', $startDate)
+                     ->orderBy('t', 'ASC');
 
         if ($limit)
         {
@@ -128,11 +131,11 @@ class SymbolRepository
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         $candles = DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', $includeStart ? '>=' : '>', $startDate)
-            ->where('t', '<=', $endDate)
-            ->orderBy('t', 'ASC')
-            ->get();
+                     ->where('symbol_id', $symbolId)
+                     ->where('t', $includeStart ? '>=' : '>', $startDate)
+                     ->where('t', '<=', $endDate)
+                     ->orderBy('t', 'ASC')
+                     ->get();
 
         if (!$candles->first())
         {
@@ -146,27 +149,27 @@ class SymbolRepository
     {
         return !$interval || $symbol->interval === $interval ? $symbol->id :
             DB::table('symbols')
-                ->where('exchange_id', $symbol->exchange_id)
-                ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval)
-                ->where('symbol', $symbol->symbol)
-                ->get('id')->first()->id;
+              ->where('exchange_id', $symbol->exchange_id)
+              ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval)
+              ->where('symbol', $symbol->symbol)
+              ->get('id')->first()->id;
     }
 
-    public function fetchCandle(Symbol $symbol, int $timestamp, string $interval): \stdClass
+    public function fetchCandle(Symbol $symbol, int $timestamp, ?string $interval = null): \stdClass
     {
         return DB::table('candles')
-            ->where('symbol_id', $this->findSymbolIdForInterval($symbol, $interval))
-            ->where('t', $timestamp)
-            ->first();
+                 ->where('symbol_id', $interval ? $this->findSymbolIdForInterval($symbol, $interval) : $symbol->id)
+                 ->where('t', $timestamp)
+                 ->first();
     }
 
     public function fetchNextCandle(int $symbolId, int $timestamp): ?\stdClass
     {
         return DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', '>', $timestamp)
-            ->orderBy('t', 'ASC')
-            ->first();
+                 ->where('symbol_id', $symbolId)
+                 ->where('t', '>', $timestamp)
+                 ->orderBy('t', 'ASC')
+                 ->first();
     }
 
     public function assertNextCandle(int $symbolId, int $timestamp): \stdClass
@@ -198,8 +201,8 @@ class SymbolRepository
     public function updateCandle(int $id, array $values): int
     {
         return DB::table('candles')
-            ->where('id', $id)
-            ->update($values);
+                 ->where('id', $id)
+                 ->update($values);
     }
 
     /**
@@ -208,17 +211,17 @@ class SymbolRepository
     public function fetchLatestCandles(Symbol $symbol, string $direction = 'DESC', int $limit = 10): Collection
     {
         return DB::table('candles')
-            ->where('symbol_id', $symbol->id)
-            ->orderBy('t', $direction)
-            ->limit($limit)
-            ->get();
+                 ->where('symbol_id', $symbol->id)
+                 ->orderBy('t', $direction)
+                 ->limit($limit)
+                 ->get();
     }
 
     public function findSymbols(AbstractExchange|int $exchange, string|array $symbolName, string $interval): \Illuminate\Database\Eloquent\Builder
     {
         $query = Symbol::query()
-            ->where('exchange_id', is_int($exchange) ? $exchange : $exchange::instance()->id())
-            ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval);
+                       ->where('exchange_id', is_int($exchange) ? $exchange : $exchange::instance()->id())
+                       ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval);
 
         if (is_array($symbolName))
         {
@@ -243,25 +246,25 @@ class SymbolRepository
     public function fetchIntervals(): Collection
     {
         return DB::table('symbols')
-            ->selectRaw(DB::raw('DISTINCT(BINARY `interval`) as `interval`'))
-            ->get()->pluck('interval');
+                 ->selectRaw(DB::raw('DISTINCT(BINARY `interval`) as `interval`'))
+                 ->get()->pluck('interval');
     }
 
     public function fetchLastCandle(Symbol $symbol): \stdClass
     {
         return DB::table('candles')
-            ->where('symbol_id', $symbol->id)
-            ->orderBy('t', 'DESC')
-            ->first();
+                 ->where('symbol_id', $symbol->id)
+                 ->orderBy('t', 'DESC')
+                 ->first();
     }
 
     public function fetchSymbolFromExchange(AbstractExchange $exchange, string $symbolName, string $interval)
     {
         $filter = static fn(Symbol $symbol): bool => $symbol->symbol == $symbolName && $symbol->interval == $interval;
         $symbol = $exchange::instance()
-            ->updater()
-            ->updateByInterval(interval: $interval, filter: $filter)
-            ?->first();
+                           ->updater()
+                           ->updateByInterval(interval: $interval, filter: $filter)
+                           ?->first();
 
         return $symbol;
     }
