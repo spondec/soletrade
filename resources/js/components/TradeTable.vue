@@ -23,7 +23,6 @@
       <!--      <th>Lowest Price</th>-->
       <th>ROI %</th>
       <th>Highest ROI %</th>
-      <th>Low ROI %</th>
       <th>Lowest ROI %</th>
     </tr>
     </thead>
@@ -91,7 +90,6 @@
       <!--      <td>{{ trade.lowest_price }}</td>-->
       <td>{{ round(trade.relative_roi) || 'N/A' }}</td>
       <td>{{ round(trade.highest_roi) || 'N/A' }}</td>
-      <td>{{ round(trade.lowest_to_highest_roi) || 'N/A' }}</td>
       <td>{{ round(trade.lowest_roi) || 'N/A' }}</td>
     </tr>
     </tbody>
