@@ -9,18 +9,12 @@
       <th>Exit</th>
       <th>Entry Signal</th>
       <th>Entry Date</th>
-      <th>Exit Date</th>
       <th>Exit Signal</th>
-      <!--      <th>Lowest Price</th>-->
-      <!--      <th>Lowest Entry</th>-->
-      <!--      <th>Highest Entry</th>-->
-      <!--      <th>Highest Price</th>-->
+      <th>Exit Date</th>
       <th>Entry Price</th>
       <th>Exit Price</th>
       <th>Close Price</th>
       <th>Stop Price</th>
-      <!--      <th>Highest Price</th>-->
-      <!--      <th>Lowest Price</th>-->
       <th>ROI %</th>
       <th>Highest ROI %</th>
       <th>Lowest ROI %</th>
@@ -60,22 +54,18 @@
         <p v-else>N/A</p>
       </td>
       <td>
+        <a v-bind:href="'#' + chartId"
+           v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
+          {{ timestampToString(trade.exit.price_date) }}
+        </a>
+      </td>
+      <td>
         <a v-if="trade.entry_timestamp" v-bind:href="'#' + chartId"
            v-on:click="dateClick(trade.entry_timestamp, trade.exit_timestamp)">
           {{ timestampToString(trade.exit_timestamp) }}
         </a>
         <p v-else>N/A</p>
       </td>
-      <td>
-        <a v-bind:href="'#' + chartId"
-           v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
-          {{ timestampToString(trade.exit.price_date) }}
-        </a>
-      </td>
-      <!--      <td>{{ round(trade.lowest_price) || 'N/A' }}</td>-->
-      <!--      <td>{{ round(trade.lowest_entry_price) || 'N/A' }}</td>-->
-      <!--      <td>{{ round(trade.highest_entry_price) || 'N/A' }}</td>-->
-      <!--      <td>{{ round(trade.highest_price) || 'N/A' }}</td>-->
       <td v-bind:class="{ 'text-danger': !trade.is_entry_price_valid }">{{ round(trade.entry_price) }}</td>
       <td>{{ round(trade.exit_price) }}</td>
       <td>
@@ -86,8 +76,6 @@
         <p v-bind:class="{'text-warning': trade.is_stopped }">
           {{ round(trade.stop_price) || 'N/A' }}</p>
       </td>
-      <!--      <td>{{ trade.highest_price }}</td>-->
-      <!--      <td>{{ trade.lowest_price }}</td>-->
       <td>{{ round(trade.relative_roi) || 'N/A' }}</td>
       <td>{{ round(trade.highest_roi) || 'N/A' }}</td>
       <td>{{ round(trade.lowest_roi) || 'N/A' }}</td>
