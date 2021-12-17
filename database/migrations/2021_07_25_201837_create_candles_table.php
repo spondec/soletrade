@@ -19,8 +19,8 @@ class CreateCandlesTable extends Migration
             $table->bigInteger('t')->index();
             $table->decimal('o');
             $table->decimal('c');
-            $table->decimal('h')->index();
-            $table->decimal('l')->index();
+            $table->decimal('h');
+            $table->decimal('l');
             $table->decimal('v');
             $table->unique(['symbol_id', 't']);
         });
