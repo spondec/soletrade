@@ -272,6 +272,18 @@ export default {
       }
     },
 
+    prepareTransactionMarker: function (log, size = 0.5)
+    {
+      return {
+        time: log.timestamp / 1000,
+        position: 'belowBar',
+        color: log.value.increase ? '#05ea24' : '#e80505',
+        shape: 'square',
+        size: size,
+        text: (log.value.increase ? 'Increase' : 'Decrease') + ' ' + log.value.size + ': ' + (log.reason ? log.reason : '')
+      }
+    },
+
     prepareMagnifiedPriceLog: function (log, start)
     {
       return Object.values(log.map(function (entry)
@@ -342,6 +354,17 @@ export default {
 
       if (trade.log.position)
       {
+        const transactions = trade.log.position.transactions.reduce((acc, item) =>
+        {
+          if (item.timestamp)
+          {
+            acc.push(this.prepareTransactionMarker(item));
+          }
+          return acc;
+        }, []);
+
+        candlestickSeries.setMarkers(transactions);
+
         const priceHistory = trade.log.position.price_history;
         const entryColor = 'rgb(255,255,255)';
         const entrySeries = this.magnifiedCharts[0].addLineSeries({
