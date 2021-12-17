@@ -58,13 +58,10 @@ abstract class AbstractStrategy
         $this->symbolRepo = App::make(SymbolRepository::class);
 
         $this->indicators = new Collection();
+        $this->actions = new \WeakMap();
         $this->indicatorConfig = $this->indicatorConfig();
         $this->tradeConfig = $this->tradeConfig();
-        $this->signature = $this->register([
-                                               'contents' => $this->contents()
-                                           ]);
-
-        $this->actions = new \WeakMap();
+        $this->signature = $this->register(['contents' => $this->contents()]);
     }
 
     abstract protected function indicatorConfig(): array;
@@ -432,14 +429,14 @@ abstract class AbstractStrategy
     {
         $exchange = $symbol->exchange();
         $symbolName = $symbol->symbol;
-        $evaluationInterval = $this->config('evaluationInterval');
+        $evaluationInterval = $this->config('evaluationInterval', true);
         return $this->symbolRepo->fetchSymbol($exchange, $symbolName, $evaluationInterval)
             ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
     }
 
     protected function indicator(Signal $signal): AbstractIndicator
     {
-        return $this->indicators[$signal->indicator_id] ?? throw new \InvalidArgumentException('Indicator not found.');
+        return $this->indicators[$signal->indicator_id] ?? throw new \InvalidArgumentException('Signal indicator was not found.');
     }
 
     public function helperIndicator(string $class): AbstractIndicator
