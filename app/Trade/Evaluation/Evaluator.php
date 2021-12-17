@@ -102,9 +102,7 @@ class Evaluator
                     'exit'  => $position->price('exit')->history(),
                     'stop'  => $position->price('stop')->history()
                 ],
-                'transactions' => [
-                    $position->getTransactions()
-                ]
+                'transactions' => $position->getTransactions()
             ];
         }
         else
@@ -136,10 +134,10 @@ class Evaluator
         $buy = $evaluation->entry->side === Signal::BUY;
 
         $evaluation->highest_roi = Calc::roi($buy, $entryPrice,
-            (float)($buy ? $evaluation->highest_price : $evaluation->lowest_price));
+                                             (float)($buy ? $evaluation->highest_price : $evaluation->lowest_price));
         $evaluation->lowest_roi = Calc::roi($buy, $entryPrice,
-            (float)(!$buy ? $evaluation->highest_price : $evaluation->lowest_price));
+                                            (float)(!$buy ? $evaluation->highest_price : $evaluation->lowest_price));
         $evaluation->lowest_to_highest_roi = Calc::roi($buy, $entryPrice,
-            (float)($buy ? $evaluation->lowest_price_to_highest_exit : $evaluation->highest_price_to_lowest_exit));
+                                                       (float)($buy ? $evaluation->lowest_price_to_highest_exit : $evaluation->highest_price_to_lowest_exit));
     }
 }
