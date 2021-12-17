@@ -129,5 +129,5 @@ trait CanBind
     /**
      * @return string[]
      */
-    abstract protected function getBindable(): array;
+     abstract public function getBindable(): array;
 }

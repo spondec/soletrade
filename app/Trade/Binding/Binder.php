@@ -16,4 +16,9 @@ interface Binder
                          string|int     $bind,
                          ?\Closure      $callback = null,
                          ?int           $timestamp = null): Binding;
+
+    /**
+     * @return string[]
+     */
+    public function getBindable(): array;
 }

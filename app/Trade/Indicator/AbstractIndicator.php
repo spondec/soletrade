@@ -348,7 +348,7 @@ abstract class AbstractIndicator implements Binder
         $this->signals[] = $signal->updateUniqueOrCreate();
     }
 
-    public function getBindValue(int|string $bind, ?int $timestamp = null, ?Symbol $progressiveSymbol = null): mixed
+    final public function getBindValue(int|string $bind, ?int $timestamp = null, ?Symbol $progressiveSymbol = null): mixed
     {
         if (!$progressiveSymbol || !$this->recalculate)
         {
@@ -371,7 +371,7 @@ abstract class AbstractIndicator implements Binder
     private function throwBindingIsDisabled(): never
     {
         throw new \LogicException('Binding is disabled by default. 
-        To enable it, override getBindable() and getBindValue().');
+        To enable it, override getBindable() and getBind().');
     }
 
     protected function getEqualOrClosestValue(int $timestamp)
@@ -526,15 +526,15 @@ abstract class AbstractIndicator implements Binder
         return $this->data;
     }
 
+    public function getBindable(): array
+    {
+        $this->throwBindingIsDisabled();
+    }
+
     final protected function getDefaultConfig(): array
     {
         return [
             'progressiveInterval' => null
         ];
-    }
-
-    protected function getBindable(): array
-    {
-        $this->throwBindingIsDisabled();
     }
 }
