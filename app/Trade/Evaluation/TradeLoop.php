@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade\Evaluation;
 
 use App\Models\Symbol;
@@ -45,7 +47,7 @@ final class TradeLoop
         $this->status = new TradeStatus($entry);
         $this->repo = App::make(SymbolRepository::class);
 
-        $this->firstCandle = $this->repo->assertNextCandle($entry->symbol_id, $entry->price_date);
+        $this->firstCandle = $this->repo->assertNextCandle($this->evaluationSymbol->id, $entry->price_date);
         $this->startDate = $this->firstCandle->t;
 
         $this->timeout = $this->config('timeout');
@@ -69,11 +71,10 @@ final class TradeLoop
     {
         $this->assertExitDateGreaterThanEntryDate($this->entry->price_date, $exit->price_date);
 
-        $lastCandle = $this->repo->assertNextCandle($this->entry->symbol_id, $exit->price_date);
-        $candles = $this->repo->assertCandlesBetween($this->entry->symbol,
+        $lastCandle = $this->repo->assertNextCandle($this->evaluationSymbol->id, $exit->price_date);
+        $candles = $this->repo->assertCandlesBetween($this->evaluationSymbol,
                                                      $this->lastRunDate ?? $this->firstCandle->t,
-                                                     $lastCandle->t,
-                                                     $this->evaluationSymbol->interval);
+                                                     $lastCandle->t);
 
         $this->runLoop($candles);
 
@@ -114,9 +115,8 @@ final class TradeLoop
         }
 
         $evaluationSymbol = $this->evaluationSymbol;
-        $symbolId = $first->symbol_id;
 
-        if (($evaluationSymbol && $symbolId != $evaluationSymbol->id) || (!$evaluationSymbol && $this->entry->symbol->id != $symbolId))
+        if ($first->symbol_id != $evaluationSymbol->id)
         {
             throw new \InvalidArgumentException('Invalid candles provided.');
         }
@@ -266,12 +266,12 @@ final class TradeLoop
     #[ArrayShape(['lowest' => \stdClass::class, 'highest' => \stdClass::class])]
     protected function fetchPivotsFromStartToLastRun(): array
     {
-        return $this->repo->assertLowestHighestCandle($this->entry->symbol_id, $this->startDate, $this->lastRunDate);
+        return $this->repo->assertLowestHighestCandle($this->evaluationSymbol->id, $this->startDate, $this->lastRunDate);
     }
 
     public function getLastCandle(): \stdClass
     {
-        return $this->repo->fetchCandle($this->entry->symbol, $this->lastRunDate, $this->evaluationSymbol->interval);
+        return $this->repo->fetchCandle($this->evaluationSymbol, $this->lastRunDate);
     }
 
     protected function shouldContinue(int $priceDate): bool
@@ -282,13 +282,8 @@ final class TradeLoop
     public function continue(int $endDate): ?Position
     {
         $this->assertExitDateGreaterThanEntryDate($this->lastRunDate, $endDate);
-        $symbol = $this->entry->symbol;
-        $intervalId = $this->repo->findSymbolIdForInterval($symbol, $this->evaluationSymbol->interval);
-        $startDate = $this->repo->assertNextCandle($intervalId, $this->lastRunDate)->t;
-        $candles = $this->repo->assertCandlesBetween($symbol,
-                                                     $startDate,
-                                                     $endDate,
-                                                     $this->evaluationSymbol->interval);
+        $startDate = $this->repo->assertNextCandle($this->evaluationSymbol->id, $this->lastRunDate)->t;
+        $candles = $this->repo->assertCandlesBetween($this->evaluationSymbol, $startDate, $endDate);
 
         $this->runLoop($candles);
         return $this->getPosition();
