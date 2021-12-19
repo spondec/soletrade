@@ -54,41 +54,27 @@
       <v-spinner v-if="this.loading"/>
       <p v-else-if="!this.symbol" class="text-lg-center">Requested chart is not available.</p>
       <div v-if="symbol && symbol.strategy">
-        <div class="py-2">
-          <tabs nav-class="text-lg grid grid-cols-2 text-center bg-gray rounded border border-solid"
-                nav-item-active-class="bg-primary"
-                nav-item-class="py-2"
-                nav-item-disabled-class="bg-secondary"
-                @changed="toggle = !toggle">
-            <tab name="Trade Setups">
-              <div class="body divide-y my2">
-                <div id="trade-setups" class="my-2">
-                  <div class="grid grid-cols-10 text-center">
-                    <h1 class="text-lg" v-bind:class="{
+        <div class="grid grid-cols-10 text-center">
+          <h1 class="text-lg" v-bind:class="{
                         'text-danger': symbol.strategy.trades.summary.roi < 0,
                         'text-success': symbol.strategy.trades.summary.roi > 0 }">
-                      {{ 'ROI: ' + symbol.strategy.trades.summary.roi + '%' }} </h1>
-                    <h1 class="text-lg" v-bind:class="{
+            {{ 'ROI: ' + symbol.strategy.trades.summary.roi + '%' }} </h1>
+          <h1 class="text-lg" v-bind:class="{
                         'text-danger': symbol.strategy.trades.summary.roi < 0,
                         'text-success': symbol.strategy.trades.summary.roi > 0 }">
-                      {{ 'Avg ROI: ' + symbol.strategy.trades.summary.avg_roi + '%' }} </h1>
-                    <h1 class="text-lg">Avg Profit: {{ symbol.strategy.trades.summary.avg_profit_roi + '%' }}</h1>
-                    <h1 class="text-lg">Avg Loss: {{ symbol.strategy.trades.summary.avg_loss_roi + '%' }}</h1>
-                    <h1 class="text-lg">Risk/Reward: {{ symbol.strategy.trades.summary.risk_reward_ratio }}</h1>
-                    <h1 class="text-lg">Success Ratio: {{ symbol.strategy.trades.summary.success_ratio }}</h1>
-                    <h1 class="text-lg">Profit: {{ symbol.strategy.trades.summary.profit }}</h1>
-                    <h1 class="text-lg">Loss: {{ symbol.strategy.trades.summary.loss }}</h1>
-                    <h1 class="text-lg">Ambiguous: {{ symbol.strategy.trades.summary.ambiguous }}</h1>
-                    <h1 class="text-lg">Failed: {{ symbol.strategy.trades.summary.failed }}</h1>
-                  </div>
-                  <trade-table chart-id="chart" v-bind:trades="symbol.strategy.trades.evaluations"
-                               @dateClick="showRange"
-                               @magnify="magnify"/>
-                </div>
-              </div>
-            </tab>
-          </tabs>
+            {{ 'Avg ROI: ' + symbol.strategy.trades.summary.avg_roi + '%' }} </h1>
+          <h1 class="text-lg">Avg Profit: {{ symbol.strategy.trades.summary.avg_profit_roi + '%' }}</h1>
+          <h1 class="text-lg">Avg Loss: {{ symbol.strategy.trades.summary.avg_loss_roi + '%' }}</h1>
+          <h1 class="text-lg">Risk/Reward: {{ symbol.strategy.trades.summary.risk_reward_ratio }}</h1>
+          <h1 class="text-lg">Success Ratio: {{ symbol.strategy.trades.summary.success_ratio }}</h1>
+          <h1 class="text-lg">Profit: {{ symbol.strategy.trades.summary.profit }}</h1>
+          <h1 class="text-lg">Loss: {{ symbol.strategy.trades.summary.loss }}</h1>
+          <h1 class="text-lg">Ambiguous: {{ symbol.strategy.trades.summary.ambiguous }}</h1>
+          <h1 class="text-lg">Failed: {{ symbol.strategy.trades.summary.failed }}</h1>
         </div>
+        <trade-table chart-id="chart" v-bind:trades="symbol.strategy.trades.evaluations"
+                     @dateClick="showRange"
+                     @magnify="magnify"/>
       </div>
       <div v-show="balanceChart" ref="balanceChart" class="balance-chart"/>
       <div ref="chart" class="chart"/>
