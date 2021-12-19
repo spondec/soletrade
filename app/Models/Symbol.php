@@ -51,7 +51,10 @@ class Symbol extends Model
             'end'        => $this->end,
             'limit'      => $this->limit,
             'candles'    => $this->candles?->toArray() ?? [],
-            'indicators' => $this->indicators?->map(fn(AbstractIndicator $i) => $i->raw())?->toArray() ?? []
+            'indicators' => $this->indicators?->map(static fn(AbstractIndicator $i) => [
+                    'data'        => $i->raw($i->data()),
+                    'progressive' => $i->raw($i->progressiveData())
+                ])?->toArray() ?? []
         ]);
     }
 

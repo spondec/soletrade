@@ -29,25 +29,25 @@ abstract class AbstractIndicator implements Binder
     use HasConfig;
     use CanBind;
 
-    protected SymbolRepository $symbolRepo;
+    protected readonly SymbolRepository $symbolRepo;
     protected bool $isProgressive = false;
     protected bool $recalculate = true;
     protected \stdClass $progressingCandle;
-    protected Symbol $progressiveSymbol;
+    protected readonly Symbol $progressiveSymbol;
     private ?int $prev = null;
     private ?int $current = null;
     private ?int $next = null;
-    private Collection $data;
-    private Signature $signalSignature;
+    private readonly Collection $data;
+    private readonly Signature $signalSignature;
     /** @var Signal[] */
     private Collection $signals;
     private int $gap = 0;
     private int $index = 0;
 
     /** @var \Iterator[] */
-    private array $progressiveIterators = [];
-    private array $progressiveCandles = [];
-    private array $progressiveData = [];
+    private Collection $progressiveIterators;
+    private Collection $progressiveCandles;
+    private Collection $progressiveData;
 
     public function __construct(protected Symbol         $symbol,
                                 private CandleCollection $candles,
@@ -65,7 +65,11 @@ abstract class AbstractIndicator implements Binder
 
         $this->loadConfigDependencies();
 
-        $this->signals = new Collection([]);
+        $this->progressiveData = new Collection();
+        $this->progressiveIterators = new Collection();
+        $this->progressiveCandles = new Collection();
+        $this->signals = new Collection();
+
         $this->setup();
 
         if ($count = $candles->count())
@@ -348,6 +352,11 @@ abstract class AbstractIndicator implements Binder
         $this->signals[] = $signal->updateUniqueOrCreate();
     }
 
+    public function progressiveData(): Collection
+    {
+        return $this->progressiveData;
+    }
+
     final public function getBindValue(int|string $bind, ?int $timestamp = null, ?Symbol $progressiveSymbol = null): mixed
     {
         if (!$progressiveSymbol || !$this->recalculate)
@@ -503,9 +512,9 @@ abstract class AbstractIndicator implements Binder
         return $candle;
     }
 
-    #[Pure] public function raw(): array
+    #[Pure] public function raw(Collection $data): array
     {
-        return $this->data->all();
+        return $data->all();
     }
 
     /**

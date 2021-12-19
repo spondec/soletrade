@@ -3,6 +3,7 @@
 namespace App\Trade\Indicator;
 
 use App\Trade\CandleCollection;
+use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\ArrayShape;
 
 class Fib extends AbstractIndicator
@@ -90,11 +91,11 @@ class Fib extends AbstractIndicator
         ];
     }
 
-    public function raw(): array
+    public function raw(Collection $data): array
     {
         $raw = [];
 
-        foreach ($this->data() as $timestamp => $fibLevels)
+        foreach ($data as $timestamp => $fibLevels)
         {
             foreach ($fibLevels as $key => $val)
             {

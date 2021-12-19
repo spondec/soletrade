@@ -4,6 +4,7 @@ namespace App\Trade\Indicator;
 
 use App\Trade\CandleCollection;
 use App\Trade\Indicator\Helpers\CanCross;
+use Illuminate\Support\Collection;
 
 class MACD extends AbstractIndicator
 {
@@ -31,15 +32,14 @@ class MACD extends AbstractIndicator
         ], $macd[0], array_keys($macd[0]));
     }
 
-    public function raw(): array
+    public function raw(Collection $data): array
     {
-        $timestamps = $this->data()->keys()->all();
-        $data = $this->data()->all();
+        $timestamps = $data->keys()->all();
 
         return [
-            'macd'       => array_combine($timestamps, array_column($data, 'macd')),
-            'signal'     => array_combine($timestamps, array_column($data, 'signal')),
-            'divergence' => array_combine($timestamps, array_column($data, 'divergence'))
+            'macd'       => array_combine($timestamps, array_column($data->all(), 'macd')),
+            'signal'     => array_combine($timestamps, array_column($data->all(), 'signal')),
+            'divergence' => array_combine($timestamps, array_column($data->all(), 'divergence'))
         ];
     }
 }
