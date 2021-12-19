@@ -50,7 +50,7 @@
       <vue-multiselect v-model="magnifier.interval" :allow-empty="false" :options="intervals"/>
     </div>
 
-    <div ref="chart" class="chart-container">
+    <div class="chart-container">
       <v-spinner v-if="this.loading"/>
       <p v-else-if="!this.symbol" class="text-lg-center">Requested chart is not available.</p>
       <div v-if="symbol && symbol.strategy">
@@ -83,13 +83,15 @@
                   </div>
                   <trade-table chart-id="chart" v-bind:trades="symbol.strategy.trades.evaluations"
                                @dateClick="showRange"
-                               @magnify="magnify"></trade-table>
+                               @magnify="magnify"/>
                 </div>
               </div>
             </tab>
           </tabs>
         </div>
       </div>
+      <div v-show="balanceChart" ref="balanceChart" class="balance-chart"/>
+      <div ref="chart" class="chart"/>
     </div>
     <span id="chart" class="anchor"></span>
   </main-layout>
@@ -402,7 +404,7 @@ export default {
       for (let name in indicators)
       {
         let handler = this.getIndicatorHandler(name);
-        let magnified = this.reduceSeriesData(start, end, indicators[name])
+        let magnified = this.reduceSeriesData(start, end, indicators[name].data); //TODO use recalculated
         let chart = this.magnifiedCharts[0];
         let series = handler.init(magnified, chart)
         handler.update(series, magnified)
@@ -472,7 +474,8 @@ export default {
     {
       for (let name in indicators)
       {
-        indicators[name] = this.getIndicatorHandler(name).prepare(indicators[name], length);
+        indicators[name].data = this.getIndicatorHandler(name).prepare(indicators[name].data, length);
+        indicators[name].progressive = this.getIndicatorHandler(name).prepare(indicators[name].progressive, length);
       }
       return indicators;
     },
@@ -483,9 +486,10 @@ export default {
 
       for (let name in indicators)
       {
-        let data = indicators[name];
-        if (data)
+        let indicator = indicators[name];
+        if (indicator)
         {
+          let data = indicator.data;
           let handler = this.getIndicatorHandler(name);
           let chart = this.charts[0];
           this.series[name] = handler.init(data, chart);
@@ -537,6 +541,10 @@ export default {
     initBalanceHistoryChart: function (container)
     {
       this.balanceChart = this.newChart(container, 'Balance History');
+
+      container.style.display = 'block';
+      this.resize();
+
       const lineSeries = this.balanceChart.addLineSeries({
         lineType: 0
       });
@@ -580,14 +588,12 @@ export default {
 
       if (!this.symbol) return;
 
-      const container = this.$refs.chart;
-
       if (this.symbol.strategy)
       {
-        this.initBalanceHistoryChart(container);
+        this.initBalanceHistoryChart(this.$refs.balanceChart);
       }
 
-      const chart = this.createChart(container, this.symbol.symbol + this.symbol.interval);
+      const chart = this.createChart(this.$refs.chart, this.symbol.symbol + this.symbol.interval);
       const candlestickSeries = chart.addCandlestickSeries();
       candlestickSeries.setData(this.symbol.candles);
       this.series['candlestick'] = candlestickSeries;
@@ -646,7 +652,7 @@ export default {
 
       for (let name in this.symbol.indicators)
       {
-        this.getIndicatorHandler(name).update(this.series[name], this.symbol.indicators[name]);
+        this.getIndicatorHandler(name).update(this.series[name], this.symbol.indicators[name].data);
       }
     },
 
@@ -671,6 +677,7 @@ export default {
     resize: function ()
     {
       const container = this.$refs.chart;
+      const balanceContainer = this.$refs.balanceChart;
 
       if (this.charts.length)
         for (let i in this.charts)
@@ -681,7 +688,7 @@ export default {
           this.magnifiedCharts[i].resize(container.offsetWidth, container.offsetHeight);
 
       if (this.balanceChart)
-        this.balanceChart.resize(container.offsetWidth, container.offsetHeight);
+        this.balanceChart.resize(balanceContainer.offsetWidth, balanceContainer.offsetHeight);
     },
 
     onSelect: function ()
@@ -754,8 +761,16 @@ html, body, #app, .main-container {
 }
 
 .chart-container {
-  height: 50%;
+  height: 100%;
   margin-top: 10px;
+}
+
+.chart {
+  height: 50%;
+}
+
+.balance-chart {
+  height: 20%;
 }
 
 .multiselect__single {
