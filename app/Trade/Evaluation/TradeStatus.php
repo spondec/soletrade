@@ -43,7 +43,7 @@ class TradeStatus
         $this->actionHandlers = new Collection();
     }
 
-    #[Pure] protected function newPrice(float $price, ?\Closure $onChange = null): Price
+    protected function newPrice(float $price, ?\Closure $onChange = null): Price
     {
         return new Price($price, $onChange);
     }
@@ -265,12 +265,12 @@ class TradeStatus
         return $this->position;
     }
 
-    public function isStopped(): bool
+    #[Pure] public function isStopped(): bool
     {
         return !$this->isAmbiguous() ? $this->isStopped : false;
     }
 
-    public function isClosed(): bool
+    #[Pure] public function isClosed(): bool
     {
         return !$this->isAmbiguous() ? $this->isClosed : false;
     }
