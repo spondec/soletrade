@@ -417,7 +417,7 @@ abstract class AbstractStrategy
 
     public function newLoop(TradeSetup $entry): TradeLoop
     {
-        return new TradeLoop($entry, $this->evaluationSymbol, $this->config('loop'));
+        return new TradeLoop($entry, $this->evaluationSymbol, $this->config('evaluation.loop'));
     }
 
     public function trades()
@@ -429,14 +429,15 @@ abstract class AbstractStrategy
     {
         $exchange = $symbol->exchange();
         $symbolName = $symbol->symbol;
-        $evaluationInterval = $this->config('evaluationInterval', true);
+        $evaluationInterval = $this->config('evaluation.interval', true);
         return $this->symbolRepo->fetchSymbol($exchange, $symbolName, $evaluationInterval)
             ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
     }
 
     protected function indicator(Signal $signal): AbstractIndicator
     {
-        return $this->indicators[$signal->indicator_id] ?? throw new \InvalidArgumentException('Signal indicator was not found.');
+        return $this->indicators[$signal->indicator_id]
+            ?? throw new \InvalidArgumentException('Signal indicator was not found.');
     }
 
     public function helperIndicator(string $class): AbstractIndicator
@@ -447,19 +448,21 @@ abstract class AbstractStrategy
     protected final function getDefaultConfig(): array
     {
         return [
-            'maxCandles'         => 1000,
-            'startDate'          => null,
-            'endDate'            => null,
-            'oppositeOnly'       => false, //if true, multiple trades to the same direction won't be allowed
-            //evaluation
-            'loop'               => [
-                'timeout'    => 1440, //trade duration in minutes - exceeding trades will be closed
-                'stopAtExit' => true, //if true, close trade at exit setup
+            'maxCandles'   => 1000,
+            'startDate'    => null,
+            'endDate'      => null,
+            //when true, multiple trades to the same direction will be disregarded
+            'oppositeOnly' => false,
+            'evaluation'   => [
+                'loop'     => [
+                    //trade duration in minutes - exceeding trades will be stopped at close price
+                    'timeout'    => 1440,
+                    //when true, stop trade immediately at exit setup
+                    'stopAtExit' => true,
+                ],
+                'interval' => '1m'
             ],
-            'evaluationInterval' => '1m',
-
-            //summary
-            'feeRatio'           => 0.001
+            'feeRatio'     => 0.001
         ];
     }
 }
