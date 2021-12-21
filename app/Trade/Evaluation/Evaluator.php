@@ -66,8 +66,8 @@ class Evaluator
         $evaluation->highest_price = $status->getHighestPrice();
         $evaluation->lowest_price = $status->getLowestPrice();
         $evaluation->entry_price = $status->getEntryPrice()->get();
-        $evaluation->stop_price = $status->getStopPrice()->get();
-        $evaluation->close_price = $status->getClosePrice()->get();
+        $evaluation->stop_price = $status->getStopPrice()?->get();
+        $evaluation->close_price = $status->getClosePrice()?->get();
 
         $log = [];
 
@@ -98,9 +98,9 @@ class Evaluator
 
             $log['position'] = [
                 'price_history' => [
-                    'entry' => $position->price('entry')->history(),
-                    'exit'  => $position->price('exit')->history(),
-                    'stop'  => $position->price('stop')->history()
+                    'entry' => $status->getEntryPrice()->history(),
+                    'exit'  => $status->getClosePrice()?->history(),
+                    'stop'  => $status->getStopPrice()?->history()
                 ],
                 'transactions' => $position->getTransactions()
             ];
@@ -123,21 +123,17 @@ class Evaluator
         $evaluation->log = $log;
     }
 
-    protected function calcHighLowRoi(Evaluation $evaluation): void
+    protected function calcHighLowRoi(Evaluation $e): void
     {
-        if (!$evaluation->is_entry_price_valid || $evaluation->is_ambiguous)
+        if (!$e->is_entry_price_valid || $e->is_ambiguous)
         {
             return;
         }
 
-        $entryPrice = (float)$evaluation->entry_price;
-        $buy = $evaluation->entry->side === Signal::BUY;
+        $entryPrice = (float)$e->entry_price;
+        $buy = $e->entry->side === Signal::BUY;
 
-        $evaluation->highest_roi = Calc::roi($buy, $entryPrice,
-                                             (float)($buy ? $evaluation->highest_price : $evaluation->lowest_price));
-        $evaluation->lowest_roi = Calc::roi($buy, $entryPrice,
-                                            (float)(!$buy ? $evaluation->highest_price : $evaluation->lowest_price));
-        $evaluation->lowest_to_highest_roi = Calc::roi($buy, $entryPrice,
-                                                       (float)($buy ? $evaluation->lowest_price_to_highest_exit : $evaluation->highest_price_to_lowest_exit));
+        $e->highest_roi = Calc::roi($buy, $entryPrice, (float)($buy ? $e->highest_price : $e->lowest_price));
+        $e->lowest_roi = Calc::roi($buy, $entryPrice, (float)(!$buy ? $e->highest_price : $e->lowest_price));
     }
 }

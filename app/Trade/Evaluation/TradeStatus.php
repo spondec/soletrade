@@ -14,8 +14,8 @@ use JetBrains\PhpStorm\Pure;
 class TradeStatus
 {
     protected Price $entryPrice;
-    protected Price $closePrice;
-    protected Price $stopPrice;
+    protected ?Price $closePrice;
+    protected ?Price $stopPrice;
     /** @var AbstractTradeActionHandler[] */
     protected Collection $actionHandlers;
     protected Collection $riskRewardHistory;
@@ -35,9 +35,9 @@ class TradeStatus
         $this->isBuy = $this->entry->isBuy();
 
         //TODO:: what if no stop/close price has been set?
-        $this->entryPrice = $this->newPrice($this->entry->price);
-        $this->closePrice = $this->newPrice($this->entry->close_price);
-        $this->stopPrice = $this->newPrice($this->entry->stop_price);
+        $this->entryPrice = $this->newPrice((float)$this->entry->price);
+        $this->closePrice = $this->entry->close_price ? $this->newPrice($this->entry->close_price) : null;
+        $this->stopPrice = $this->entry->stop_price ? $this->newPrice($this->entry->stop_price) : null;
 
         $this->riskRewardHistory = new Collection();
         $this->actionHandlers = new Collection();
@@ -64,11 +64,11 @@ class TradeStatus
     protected function newPosition(int $entryTime): Position
     {
         return new Position($this->entry->isBuy(),
-            $this->entry->size,
-            $entryTime,
-            $this->entryPrice,
-            $this->closePrice,
-            $this->stopPrice);
+                            $this->entry->size,
+                            $entryTime,
+                            $this->entryPrice,
+                            $this->getClosePrice(),
+                            $this->getStopPrice());
     }
 
     protected function initActionHandlers(): void
@@ -116,9 +116,10 @@ class TradeStatus
     public function checkIsStopped(\stdClass $candle): bool
     {
         $this->assertPosition();
-        if ($this->isStopped = (Calc::inRange($this->stopPrice->get(),
-                $candle->h,
-                $candle->l) || $this->position?->isStopped()))
+        $stopPrice = $this->getStopPrice();
+        if ($stopPrice && $this->isStopped = (Calc::inRange($stopPrice->get(),
+                                                            $candle->h,
+                                                            $candle->l) || $this->position?->isStopped()))
         {
             $this->isExited = true;
         }
@@ -129,9 +130,10 @@ class TradeStatus
     public function checkIsClosed(\stdClass $candle): bool
     {
         $this->assertPosition();
-        if ($this->isClosed = (Calc::inRange($this->closePrice->get(),
-                $candle->h,
-                $candle->l) || $this->position?->isClosed()))
+        $closePrice = $this->getClosePrice();
+        if ($closePrice && $this->isClosed = (Calc::inRange($closePrice->get(),
+                                                            $candle->h,
+                                                            $candle->l) || $this->position?->isClosed()))
         {
             $this->isExited = true;
         }
@@ -197,11 +199,11 @@ class TradeStatus
 
             $this->riskRewardHistory[$candle->t] = [
                 'ratio'  => round(Calc::riskReward($this->isBuy,
-                    $this->entryPrice->get(),
-                    $this->isBuy ? $this->highestPrice : $this->lowestPrice,
-                    $this->isBuy ? $this->lowestPrice : $this->highestPrice,
-                    $highRoi,
-                    $lowRoi), 2),
+                                                   $this->entryPrice->get(),
+                                                   $this->isBuy ? $this->highestPrice : $this->lowestPrice,
+                                                   $this->isBuy ? $this->lowestPrice : $this->highestPrice,
+                                                   $highRoi,
+                                                   $lowRoi), 2),
                 'reward' => $highRoi,
                 'risk'   => $lowRoi
             ];
@@ -230,14 +232,14 @@ class TradeStatus
         return $this->entryPrice;
     }
 
-    #[Pure] public function getClosePrice(): Price
+    #[Pure] public function getClosePrice(): ?Price
     {
-        return $this->closePrice;
+        return $this->closePrice ?: $this->closePrice = $this->position?->price('exit');
     }
 
-    #[Pure] public function getStopPrice(): Price
+    #[Pure] public function getStopPrice(): ?Price
     {
-        return $this->stopPrice;
+        return $this->stopPrice ?: $this->stopPrice = $this->position?->price('stop');
     }
 
     public function getLowestPrice(): ?float

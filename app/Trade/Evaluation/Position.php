@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade\Evaluation;
 
 use App\Trade\Calc;
@@ -30,12 +32,12 @@ class Position
 
     protected float $exitPrice;
 
-    public function __construct(protected bool  $isBuy,
-                                protected float $size,
-                                protected int   $entryTime,
-                                protected Price $entry,
-                                protected Price $exit,
-                                protected Price $stop)
+    public function __construct(protected bool   $isBuy,
+                                protected float  $size,
+                                protected int    $entryTime,
+                                protected Price  $entry,
+                                protected ?Price $exit,
+                                protected ?Price $stop)
     {
         $this->remainingSize = static::MAX_SIZE;
         $this->assertSize($this->size);
@@ -45,10 +47,10 @@ class Position
             'size'     => $this->size
         ]);
         $this->newTransaction($t['increase'],
-            $t['price'],
-            $t['size'],
-            $this->entryTime,
-            'Position entry');
+                              $t['price'],
+                              $t['size'],
+                              $this->entryTime,
+                              'Position entry');
     }
 
     protected function assertSize(float $size): void
@@ -87,12 +89,12 @@ class Position
         }
 
         $this->transactions->new([
-            'increase' => $increase,
-            'price'    => $price,
-            'size'     => $size,
-        ], $timestamp, $reason);
+                                     'increase' => $increase,
+                                     'price'    => $price,
+                                     'size'     => $size,
+                                 ], $timestamp, $reason);
 
-        if ($this->isOpen() && !$this->getAssetAmount())
+        if (!$this->amount && $this->isOpen())
         {
             throw new \LogicException('Position is open but no asset left. Exit trades must be performed with stop() or close().');
         }
@@ -138,6 +140,26 @@ class Position
         return $this->amount;
     }
 
+    public function addStopPrice(Price $price): void
+    {
+        if ($this->stop)
+        {
+            throw new \LogicException('Stop price is already defined.');
+        }
+
+        $this->stop = $price;
+    }
+
+    public function addExitPrice(Price $price): void
+    {
+        if ($this->exit)
+        {
+            throw new \LogicException('Exit price is already defined.');
+        }
+
+        $this->exit = $price;
+    }
+
     public function getExitPrice(): float
     {
         return $this->exitPrice;
@@ -179,10 +201,10 @@ class Position
         $this->exitTime = $exitTime;
 
         $this->newTransaction(false,
-            $this->exitPrice,
-            $this->getUsedSize(),
-            $exitTime,
-            'Position exit.');
+                              $this->exitPrice,
+                              $this->getUsedSize(),
+                              $exitTime,
+                              'Position exit.');
     }
 
     protected function lockIfUnlocked(Price $price): void
@@ -276,10 +298,10 @@ class Position
         $this->exitTime = $exitTime;
 
         $this->newTransaction(false,
-            $this->exitPrice,
-            $this->getUsedSize(),
-            $exitTime,
-            'Position stop.');
+                              $this->exitPrice,
+                              $this->getUsedSize(),
+                              $exitTime,
+                              'Position stop.');
     }
 
     public function relativeExitRoi(): float
@@ -312,7 +334,7 @@ class Position
         $this->newTransaction(false, $price, $size, $timestamp, $reason);
     }
 
-    public function price(string $type): Price
+    public function price(string $type): ?Price
     {
         return $this->{$type};
     }

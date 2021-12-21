@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Trade\Binding\Bindable;
@@ -41,7 +43,9 @@ class TradeSetup extends Model implements Bindable
     protected array $unique = ['symbol_id', 'signature_id', 'name', 'timestamp', 'side'];
 
     protected $attributes = [
-        'size' => 100
+        'size'        => 100,
+        'close_price' => null,
+        'stop_price'  => null,
     ];
 
     public function actions(): HasMany
@@ -67,14 +71,9 @@ class TradeSetup extends Model implements Bindable
     public function toArray()
     {
         $result = parent::toArray();
-
-        $result['risk_reward_ratio'] = round(Calc::riskReward($this->isBuy(),
-            $result['price'],
-            $result['close_price'],
-            $result['stop_price']), 2);
-        $result['price'] = round($result['price'], 2);
-        $result['close_price'] = round($result['close_price'] ?? 0, 2);
-        $result['stop_price'] = round($result['stop_price'] ?? 0, 2);
+        $result['price'] = round((float)$result['price'], 2);
+        $result['close_price'] = $result['close_price'] ? round((float)$result['close_price'], 2) : null;
+        $result['stop_price'] = $result['stop_price'] ? round((float)$result['stop_price'], 2) : null;
 
         return $result;
     }
