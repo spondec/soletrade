@@ -11,7 +11,7 @@ class CandleCollectionTest extends TestCase
     {
         $collection = new CandleCollection(range(1, 10));
 
-        $res = $collection->previousCandles($count = 5, 5);
+        $res = $collection->previousCandles($count = 2, 5);
 
         $this->assertEquals(4, $res[0]);
         $this->assertEquals(5, $res[1]);
