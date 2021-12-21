@@ -27,7 +27,7 @@ final class TradeLoop
     protected SymbolRepository $repo;
 
     protected int $startDate;
-    protected int $endDate;
+    protected ?int $timeoutDate = null;
 
     protected ?int $lastRunDate = null;
 
@@ -82,21 +82,25 @@ final class TradeLoop
 
         if ($position && $position->isOpen())
         {
+            $candle = $this->getLastCandle();
             if ($this->config('stopAtExit'))
             {
                 $this->stopPositionAtClosePrice($position,
-                                                $this->getLastCandle(),
+                                                $candle,
                                                 'Stopping at exit setup.');
             }
-
-            if ($this->shouldContinue($this->getPriceDate($candle = $this->getLastCandle(),
-                                                          $this->repo->fetchNextCandle($this->evaluationSymbol->id, $candle->t))))
+            else if ($this->shouldContinue($this->getPriceDate($candle, null)))
             {
-                $this->continue($this->endDate);
+                $this->continue($this->timeoutDate);
             }
         }
 
         return $this->status;
+    }
+
+    protected function nextCandle(\stdClass $candle)
+    {
+        return $this->repo->fetchNextCandle($this->evaluationSymbol->id, $candle->t);
     }
 
     protected function assertExitDateGreaterThanEntryDate(int $startDate, int $endDate): void
@@ -173,9 +177,9 @@ final class TradeLoop
         $this->status->updateHighestLowestPrice($pivots['highest'], $pivots['lowest']);
     }
 
-    protected function loadBindingPrice(Price $price, string $column, int $timestamp, ...$params): void
+    protected function loadBindingPrice(?Price $price, string $column, int $timestamp, ...$params): void
     {
-        if (!$price->isLocked())
+        if ($price && !$price->isLocked())
         {
             $binding = $this->entry->bindings[$column] ?? null;
             if ($binding && $entryPrice = $binding->getBindValue($timestamp, ...$params))
@@ -191,9 +195,9 @@ final class TradeLoop
         {
             $this->status->enterPosition($this->getPriceDate($candle, $nextCandle));
 
-            if (($position = $this->getPosition()) && $this->timeout)
+            if (!$this->timeoutDate && $this->timeout && $position = $this->getPosition())
             {
-                $this->endDate = $position->entryTime() + $this->timeout * 60 * 1000;
+                $this->timeoutDate = $position->entryTime() + $this->timeout * 60 * 1000;
             }
         }
     }
@@ -205,7 +209,7 @@ final class TradeLoop
             return $next->t - 1000;
         }
 
-        if ($nextCandle = $this->repo->fetchNextCandle($this->evaluationSymbol->id, $candle->t))
+        if ($nextCandle = $this->nextCandle($candle))
         {
             return $nextCandle->t - 1000;
         }
@@ -248,15 +252,23 @@ final class TradeLoop
 
     #[Pure] protected function hasPositionTimedOut(int $priceDate): bool
     {
-        return $this->endDate <= $priceDate;
+        return $this->timeoutDate <= $priceDate;
     }
 
     protected function stopPositionAtClosePrice(Position $position, \stdClass $candle, string $reason): void
     {
-        $position->price('stop')->set((float)$candle->c,
-                                      $priceDate = $this->getPriceDate($candle, null),
-                                      $reason,
-                                      true);
+        $priceDate = $this->getPriceDate($candle, null);
+
+        if ($stop = $position->price('stop'))
+        {
+            $stop->set((float)$candle->c, $priceDate, $reason, true);
+        }
+        else
+        {
+            $position->addStopPrice($stop = new Price((float)$candle->c));
+            $stop->log($priceDate, $reason, true);
+        }
+
         $position->stop($priceDate);
     }
 
@@ -276,17 +288,16 @@ final class TradeLoop
 
     protected function shouldContinue(int $priceDate): bool
     {
-        return $this->endDate > $priceDate;
+        return $this->timeoutDate > $priceDate;
     }
 
-    public function continue(int $endDate): ?Position
+    public function continue(int $endDate): void
     {
         $this->assertExitDateGreaterThanEntryDate($this->lastRunDate, $endDate);
         $startDate = $this->repo->assertNextCandle($this->evaluationSymbol->id, $this->lastRunDate)->t;
         $candles = $this->repo->assertCandlesBetween($this->evaluationSymbol, $startDate, $endDate);
 
         $this->runLoop($candles);
-        return $this->getPosition();
     }
 
     public function status(): TradeStatus
