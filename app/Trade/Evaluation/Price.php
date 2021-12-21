@@ -72,10 +72,13 @@ class Price
             ($this->onChange)(price: $this, from: $this->price, to: $price);
         }
 
-        $this->log->new($price,
-            $timestamp,
-            $force ? 'FORCED: ' . $reason : $reason);
         $this->price = $price;
+        $this->log($timestamp, $reason, $force);
+    }
+
+    public function log(int $timestamp, string $reason, bool $force = false): void
+    {
+        $this->log->new($this->price, $timestamp, $force ? "FORCED: {$reason}" : $reason);
     }
 
     protected function assertUnlocked(): void
