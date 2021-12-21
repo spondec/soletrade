@@ -474,7 +474,7 @@ abstract class AbstractIndicator implements Binder
 
     public function prev(): mixed
     {
-        return $this->data[$this->prev];
+        return $this->data[$this->prev] ?? null;
     }
 
     public function next(): mixed
