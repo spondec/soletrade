@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Trade;
+declare(strict_types=1);
 
-use ccxt\Exchange;
+namespace App\Trade;
 
 class Calc
 {
@@ -23,8 +23,8 @@ class Calc
                                       ?float &$highRoi = null,
                                       ?float &$lowRoi = null): float
     {
-        $highRoi = self::roi($isBuy, $entry, $exit);
-        $lowRoi = self::roi($isBuy, $entry, $stop);
+        $highRoi = static::roi($isBuy, $entry, $exit);
+        $lowRoi = static::roi($isBuy, $entry, $stop);
 
         if ($lowRoi == 0)
         {
@@ -48,7 +48,7 @@ class Calc
 
     public static function duration(string $interval): int
     {
-        return Exchange::parse_timeframe($interval);
+        return \ccxt\Exchange::parse_timeframe($interval);
     }
 
     public static function avg(array $numbers): float
