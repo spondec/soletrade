@@ -6,19 +6,54 @@ trait HasConfig
 {
     protected function mergeConfig(array &$config): void
     {
+        $this->resolveKeys($config);
+        $this->resolveKeys($this->config);
+
         if (method_exists($this, 'getDefaultConfig'))
         {
-            $defaultConfig = $this->getDefaultConfig(); //defined by an abstract class, preferably
-            $childConfig = $this->config;               //defined by the instance class or inherited
+            $defaultConfig = $this->getDefaultConfig();       //defined by an abstract class, preferably
+            $childConfig = $this->config;                     //defined by the instance class or inherited
 
-            //changes to config keys from the child class via $config property are expected
+            //new config keys from the child class via $config property are expected
             //so do not try to match keys here
             $this->config = array_merge_recursive_distinct($defaultConfig, $childConfig);
         }
 
-        //additions to the config keys are not allowed, match keys now
+        //new config keys are not allowed, match keys now
         $this->assertKeyMatch($this->config, $config);
         $this->config = array_merge_recursive_distinct($this->config, $config);
+    }
+
+    protected function resolveKeys(array &$array): array
+    {
+        foreach ($array as $key => $value)
+        {
+            $keys = explode('.', $key);
+
+            if (isset($keys[1])) //has multiple dimensions
+            {
+                foreach ($keys as $k)
+                {
+                    if (!isset($ref))
+                    {
+                        $ref = &$array[$k];
+                    }
+                    else
+                    {
+                        $ref = &$ref[$k];
+                    }
+
+                    $ref = $ref ?? [];
+                }
+
+                $ref = $value;
+
+                unset($array[$key]);
+                unset($ref);
+            }
+        }
+
+        return $array;
     }
 
     protected function assertKeyMatch(array &$original, array &$replacement): void
