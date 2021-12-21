@@ -53,7 +53,6 @@ class SummaryTest extends TestCase
         $evaluation->entry_price = 100;
         $evaluation->stop_price = 50;
         $evaluation->close_price = 200;
-        $evaluation->realized_roi = 10;
         $evaluation->relative_roi = 10;
         $evaluation->highest_price = 110;
         $evaluation->lowest_price = 90;

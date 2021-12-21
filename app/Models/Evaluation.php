@@ -23,8 +23,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property float          stop_price
  * @property float          highest_price
  * @property float          lowest_price
- * @property float          lowest_price_to_highest_exit
- * @property float          highest_price_to_lowest_exit
  * @property float          highest_entry_price
  * @property float          lowest_entry_price
  * @property bool           is_entry_price_valid
