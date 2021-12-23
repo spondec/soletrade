@@ -6,25 +6,11 @@ trait HasConfig
 {
     protected function mergeConfig(array &$config): void
     {
-        $this->resolveKeys($config);
-        $this->resolveKeys($this->config);
-
-        if (method_exists($this, 'getDefaultConfig'))
-        {
-            $defaultConfig = $this->getDefaultConfig();       //defined by an abstract class, preferably
-            $childConfig = $this->config;                     //defined by the instance class or inherited
-
-            //new config keys from the child class via $config property are expected
-            //so do not try to match keys here
-            $this->config = array_merge_recursive_distinct($defaultConfig, $childConfig);
-        }
-
-        //new config keys are not allowed, match keys now
-        $this->assertKeyMatch($this->config, $config);
-        $this->config = array_merge_recursive_distinct($this->config, $config);
+        $this->buildDefaultConfig();
+        $this->buildUserConfig($config);
     }
 
-    protected function resolveKeys(array &$array): array
+    private function resolveKeys(array &$array): array
     {
         foreach ($array as $key => $value)
         {
@@ -56,7 +42,7 @@ trait HasConfig
         return $array;
     }
 
-    protected function assertKeyMatch(array &$original, array &$replacement): void
+    private function assertKeyMatch(array &$original, array &$replacement): void
     {
         foreach ($replacement as $key => &$value)
         {
@@ -95,5 +81,30 @@ trait HasConfig
         }
 
         return $value;
+    }
+
+    private function buildUserConfig(array &$config): void
+    {
+        $this->resolveKeys($config);
+
+        $this->assertKeyMatch($this->config, $config);
+        $this->config = array_merge_recursive_distinct($this->config, $config);
+    }
+
+    private function buildDefaultConfig(): void
+    {
+        $this->resolveKeys($this->config);
+
+        if (method_exists($this, 'getDefaultConfig'))
+        {
+            //parent class' config defaults
+            $defaultConfig = $this->getDefaultConfig();
+            //instance class' config defaults, overrides parent class' defaults
+            $childConfig = $this->config;
+
+            //new config definitions can be made by the instance class
+            //so do not try to match keys here
+            $this->config = array_merge_recursive_distinct($defaultConfig, $childConfig);
+        }
     }
 }
