@@ -2,6 +2,7 @@
 
 namespace App\Trade\Binding;
 
+use App\Models\Binding;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 
@@ -10,6 +11,7 @@ use Illuminate\Support\Collection;
  */
 trait HasBinding
 {
+    /** @var Binding[] */
     public Collection $bindings;
 
     protected function initializeHasBinding(): void
