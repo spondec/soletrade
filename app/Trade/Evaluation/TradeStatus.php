@@ -34,18 +34,24 @@ class TradeStatus
     {
         $this->isBuy = $this->entry->isBuy();
 
-        //TODO:: what if no stop/close price has been set?
-        $this->entryPrice = $this->newPrice((float)$this->entry->price);
-        $this->closePrice = $this->entry->close_price ? $this->newPrice($this->entry->close_price) : null;
-        $this->stopPrice = $this->entry->stop_price ? $this->newPrice($this->entry->stop_price) : null;
+        $this->initPrices();
 
         $this->riskRewardHistory = new Collection();
         $this->actionHandlers = new Collection();
     }
 
-    protected function newPrice(float $price, ?\Closure $onChange = null): Price
+    protected function initPrices(): void
     {
-        return new Price($price, $onChange);
+        $priceDate = $this->entry->price_date;
+
+        $this->entryPrice = $this->newPrice((float)$this->entry->price, $priceDate);
+        $this->closePrice = $this->entry->close_price ? $this->newPrice($this->entry->close_price, $priceDate) : null;
+        $this->stopPrice = $this->entry->stop_price ? $this->newPrice($this->entry->stop_price, $priceDate) : null;
+    }
+
+    protected function newPrice(float $price, int $timestamp, ?\Closure $onChange = null): Price
+    {
+        return new Price($price, $timestamp, $onChange);
     }
 
     public function enterPosition(int $entryTime): void
@@ -69,6 +75,16 @@ class TradeStatus
                             $this->entryPrice,
                             $this->getClosePrice(),
                             $this->getStopPrice());
+    }
+
+    #[Pure] public function getClosePrice(): ?Price
+    {
+        return $this->closePrice ?: $this->closePrice = $this->position?->price('exit');
+    }
+
+    #[Pure] public function getStopPrice(): ?Price
+    {
+        return $this->stopPrice ?: $this->stopPrice = $this->position?->price('stop');
     }
 
     protected function initActionHandlers(): void
@@ -108,11 +124,6 @@ class TradeStatus
         }
     }
 
-    public function isAmbiguous(): bool
-    {
-        return $this->isStopped && $this->isClosed;
-    }
-
     public function checkIsStopped(\stdClass $candle): bool
     {
         $this->assertPosition();
@@ -127,6 +138,14 @@ class TradeStatus
         return $this->isStopped;
     }
 
+    protected function assertPosition(): void
+    {
+        if (!$this->position)
+        {
+            throw new \LogicException('Position has not been initialized.');
+        }
+    }
+
     public function checkIsClosed(\stdClass $candle): bool
     {
         $this->assertPosition();
@@ -139,14 +158,6 @@ class TradeStatus
         }
 
         return $this->isClosed;
-    }
-
-    protected function assertPosition(): void
-    {
-        if (!$this->position)
-        {
-            throw new \LogicException('Position has not been initialized.');
-        }
     }
 
     public function checkIsExited(): bool
@@ -232,16 +243,6 @@ class TradeStatus
         return $this->entryPrice;
     }
 
-    #[Pure] public function getClosePrice(): ?Price
-    {
-        return $this->closePrice ?: $this->closePrice = $this->position?->price('exit');
-    }
-
-    #[Pure] public function getStopPrice(): ?Price
-    {
-        return $this->stopPrice ?: $this->stopPrice = $this->position?->price('stop');
-    }
-
     public function getLowestPrice(): ?float
     {
         return $this->lowestPrice;
@@ -270,6 +271,11 @@ class TradeStatus
     #[Pure] public function isStopped(): bool
     {
         return !$this->isAmbiguous() ? $this->isStopped : false;
+    }
+
+    public function isAmbiguous(): bool
+    {
+        return $this->isStopped && $this->isClosed;
     }
 
     #[Pure] public function isClosed(): bool
