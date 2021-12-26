@@ -8,16 +8,16 @@ class ChangeLog
 {
     protected array $log = [];
 
-    public function __construct(protected mixed $value)
+    public function __construct(protected mixed $value, int $timestamp, string $reason = 'Created')
     {
-        $this->new($this->value, 0, '');
+        $this->new($this->value, $timestamp, $reason);
     }
 
     public function new(mixed $value, int $timestamp, string $reason): void
     {
         $log = [
             'value'     => $value,
-            'timestamp' => $timestamp ?: null,
+            'timestamp' => $timestamp,
             'reason'    => $reason ?: null,
         ];
 
