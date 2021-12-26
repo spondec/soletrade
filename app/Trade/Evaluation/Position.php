@@ -19,7 +19,7 @@ class Position
 
     protected ?int $exitTime = null;
 
-    protected ChangeLog $transactions;
+    protected ChangeLog $transactionLog;
 
     protected float $multiplier = 1;
     protected float $amount = 0;
@@ -41,16 +41,14 @@ class Position
     {
         $this->remainingSize = static::MAX_SIZE;
         $this->assertSize($this->size);
-        $this->transactions = new ChangeLog($t = [
-            'increase' => true,
-            'price'    => $this->entry->get(),
-            'size'     => $this->size
-        ]);
-        $this->newTransaction($t['increase'],
-                              $t['price'],
-                              $t['size'],
-                              $this->entryTime,
-                              'Position entry');
+        $this->transactionLog = new ChangeLog(
+            [
+                'increase' => true,
+                'price'    => $this->entry->get(),
+                'size'     => $this->size
+            ], $this->entryTime, 'Position entry');
+
+        $this->enter();
     }
 
     protected function assertSize(float $size): void
@@ -88,11 +86,11 @@ class Position
             $this->remainingSize += $size;
         }
 
-        $this->transactions->new([
-                                     'increase' => $increase,
-                                     'price'    => $price,
-                                     'size'     => $size,
-                                 ], $timestamp, $reason);
+        $this->transactionLog->new([
+                                       'increase' => $increase,
+                                       'price'    => $price,
+                                       'size'     => $size,
+                                   ], $timestamp, $reason);
 
         if (!$this->amount && $this->isOpen())
         {
@@ -339,9 +337,9 @@ class Position
         return $this->{$type};
     }
 
-    public function getTransactions(): array
+    public function transactionLog(): ChangeLog
     {
-        return $this->transactions->get();
+        return $this->transactionLog;
     }
 
     public function isBuy(): bool
@@ -352,5 +350,14 @@ class Position
     public function getMaxUsedSize(): float|int
     {
         return $this->maxUsedSize;
+    }
+
+    protected function enter(): void
+    {
+        $this->newTransaction(true,
+                              $this->entry->get(),
+                              $this->size,
+                              $this->entryTime,
+                              'Position entry');
     }
 }

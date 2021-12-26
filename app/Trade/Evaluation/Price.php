@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Trade\Evaluation;
 
+use App\Trade\Binding\Bindable;
 use App\Trade\ChangeLog;
 use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
 use JetBrains\PhpStorm\Pure;
@@ -16,15 +17,16 @@ class Price
 
     protected static array $modifiers = [
         AbstractTradeActionHandler::class,
-        TradeLoop::class,
-        Position::class
+        Position::class,
+        Bindable::class
     ];
     protected ChangeLog $log;
 
     public function __construct(protected float     $price,
+                                int                 $timestamp,
                                 protected ?\Closure $onChange = null)
     {
-        $this->log = new ChangeLog($this->price);
+        $this->log = new ChangeLog($this->price, $timestamp);
     }
 
     public function isLocked(): bool
@@ -73,10 +75,10 @@ class Price
         }
 
         $this->price = $price;
-        $this->log($timestamp, $reason, $force);
+        $this->newLog($timestamp, $reason, $force);
     }
 
-    public function log(int $timestamp, string $reason, bool $force = false): void
+    public function newLog(int $timestamp, string $reason, bool $force = false): void
     {
         $this->log->new($this->price, $timestamp, $force ? "FORCED: {$reason}" : $reason);
     }
@@ -89,9 +91,9 @@ class Price
         }
     }
 
-    #[Pure] public function history(): array
+    #[Pure] public function log(): ChangeLog
     {
-        return $this->log->get();
+        return $this->log;
     }
 
     protected function assertModifier(object $modifier): void

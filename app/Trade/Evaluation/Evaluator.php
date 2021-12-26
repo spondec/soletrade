@@ -11,6 +11,7 @@ use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
+use App\Trade\ChangeLog;
 use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Facades\App;
 
@@ -98,11 +99,11 @@ class Evaluator
 
             $log['position'] = [
                 'price_history' => [
-                    'entry' => $status->getEntryPrice()->history(),
-                    'exit'  => $status->getClosePrice()?->history(),
-                    'stop'  => $status->getStopPrice()?->history()
+                    'entry' => $status->getEntryPrice()->log()->get(),
+                    'exit'  => $status->getClosePrice()?->log()?->get() ?? [],
+                    'stop'  => $status->getStopPrice()?->log()?->get() ?? []
                 ],
-                'transactions' => $position->getTransactions()
+                'transactions'  => $position->transactionLog()->get()
             ];
         }
         else
