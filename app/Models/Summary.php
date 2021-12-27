@@ -27,4 +27,14 @@ class Summary extends Model
     protected $casts = [
         'balance_history' => 'array'
     ];
+
+    protected $attributes = [
+        'avg_profit_roi'    => 0,
+        'avg_loss_roi'      => 0,
+        'risk_reward_ratio' => 0,
+        'loss'              => 0,
+        'profit'            => 0,
+        'failed'            => 0,
+        'ambiguous'         => 0
+    ];
 }
