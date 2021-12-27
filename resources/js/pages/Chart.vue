@@ -272,24 +272,14 @@ export default {
       }
     },
 
-    prepareMagnifiedPriceLog: function (log, start)
+    prepareMagnifiedPriceLog: function (log)
     {
       return Object.values(log.map(function (entry)
           {
-            if (entry.timestamp === null)
-            {
-              return {
-                value: entry.value,
-                time: start,
-                reason: entry.reason
-              };
-            } else
-            {
-              return {
-                value: entry.value,
-                time: entry.timestamp / 1000,
-                reason: entry.reason
-              };
+            return {
+              value: entry.value,
+              time: entry.timestamp / 1000,
+              reason: entry.reason
             }
           }).reduce(function (acc, entry)
           {
@@ -360,7 +350,7 @@ export default {
           lineWidth: 1,
           lineType: 1,
         });
-        const entryLog = this.prepareMagnifiedPriceLog(priceHistory.entry, start);
+        const entryLog = this.prepareMagnifiedPriceLog(priceHistory.entry);
         entrySeries.setData(entryLog.map(item => ({time: item.time, value: item.value})));
         entrySeries.setMarkers(entryLog.map(item => this.preparePriceChangeMarker(item, entryColor)))
 
@@ -370,7 +360,7 @@ export default {
           lineWidth: 1,
           lineType: 1,
         });
-        const stopLog = this.prepareMagnifiedPriceLog(priceHistory.stop, start);
+        const stopLog = this.prepareMagnifiedPriceLog(priceHistory.stop);
         stopSeries.setData(stopLog.map(item => ({time: item.time, value: item.value})));
         stopSeries.setMarkers(stopLog.map(item => this.preparePriceChangeMarker(item, stopColor)))
 
@@ -380,7 +370,7 @@ export default {
           lineWidth: 1,
           lineType: 1,
         });
-        const exitLog = this.prepareMagnifiedPriceLog(priceHistory.exit, start);
+        const exitLog = this.prepareMagnifiedPriceLog(priceHistory.exit);
         exitSeries.setData(exitLog.map(item => ({time: item.time, value: item.value})));
         exitSeries.setMarkers(exitLog.map(item => this.preparePriceChangeMarker(item, exitColor)))
       }
