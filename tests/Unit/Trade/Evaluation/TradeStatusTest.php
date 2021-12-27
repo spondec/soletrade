@@ -164,6 +164,7 @@ class TradeStatusTest extends TestCase
         $setup->price = $price;
         $setup->close_price = $closePrice;
         $setup->stop_price = $stopPrice;
+        $setup->price_date = time();
         return $setup;
     }
 

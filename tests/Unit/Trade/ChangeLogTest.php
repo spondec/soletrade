@@ -9,32 +9,27 @@ class ChangeLogTest extends TestCase
 {
     public function test_new()
     {
-        $changeLog = new ChangeLog(100);
-        $this->assertEquals([
-            [
-                'value'     => 100,
-                'timestamp' => 0,
-                'reason'    => ''
-            ]
-        ], $changeLog->get());
-        $changeLog->new(200, $time = time(), 'change');
-        $this->assertEquals([
-            [
-                'value'     => 100,
-                'timestamp' => 0,
-                'reason'    => ''
-            ],
-            ['value'     => 200,
-             'timestamp' => $time,
-             'reason'    => 'change'
-            ]
-        ], $changeLog->get());
+        $first = [
+            'value'     => 100,
+            'timestamp' => $time = time() * 1000,
+            'reason'    => 'Created'
+        ];
+        $next = [
+            'value'     => 200,
+            'timestamp' => $time + 1000,
+            'reason'    => 'change'
+        ];
+
+        $changeLog = new ChangeLog(...$first);
+
+        $this->assertEquals([$first], $changeLog->get());
+        $changeLog->new(...$next);
+        $this->assertEquals([$first, $next], $changeLog->get());
     }
 
     public function test_new_change_date_is_lower_than_the_last_change_date_throws_exception()
     {
-        $changeLog = new ChangeLog(100);
-        $changeLog->new(100, $time = time(), '');
+        $changeLog = new ChangeLog(100, $time = time() * 1000, 'Created');
         $this->expectExceptionMessage('New change date must be greater than last change date');
         $changeLog->new(200, $time - 1000, '');
     }

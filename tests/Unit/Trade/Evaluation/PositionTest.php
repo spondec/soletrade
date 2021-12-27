@@ -21,11 +21,11 @@ class PositionTest extends TestCase
     protected function getPosition(bool $isBuy, float $size, float $entry, float $exit = 0, float $stop = 0): Position
     {
         return new Position($isBuy,
-            $size,
-            time(),
-            new Price($entry),
-            new Price($exit),
-            new Price($stop)
+                            $size,
+                            time(),
+                            new Price($entry, time()),
+                            new Price($exit, time()),
+                            new Price($stop, time())
         );
     }
 
