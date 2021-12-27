@@ -6,7 +6,7 @@ namespace App\Models;
 
 use App\Trade\Binding\Bindable;
 use App\Trade\Binding\HasBinding;
-use App\Trade\Calc;
+use App\Trade\Evaluation\Price;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -51,6 +51,18 @@ class TradeSetup extends Model implements Bindable
     public function actions(): HasMany
     {
         return $this->hasMany(TradeAction::class);
+    }
+
+    public function loadBindingPrice(?Price $price, string $column, int $timestamp, ...$params): void
+    {
+        if ($price && !$price->isLocked())
+        {
+            $binding = $this->bindings[$column] ?? null;
+            if ($binding && $entryPrice = $binding->getBindValue($timestamp, ...$params))
+            {
+                $price->set($entryPrice, $timestamp, 'Binding: ' . $binding->name);
+            }
+        }
     }
 
     public function signals(): BelongsToMany
