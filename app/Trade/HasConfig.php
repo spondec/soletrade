@@ -29,7 +29,7 @@ trait HasConfig
                         $ref = &$ref[$k];
                     }
 
-                    $ref = $ref ?? [];
+                    $ref = $ref ?? [];//redundant?
                 }
 
                 $ref = $value;
