@@ -31,7 +31,7 @@ class SymbolRepository
         }
     }
 
-    public function fetchLowerIntervalCandles(\stdClass $candle, Symbol $symbol, string $interval)
+    public function fetchLowerIntervalCandles(\stdClass $candle, Symbol $symbol, string $interval): Collection
     {
         $nextCandle = $this->assertNextCandle($candle->symbol_id, $candle->t);
 
@@ -57,11 +57,9 @@ class SymbolRepository
     }
 
     /**
-     * @param \stdClass[] $candles
-     *
      * @return \stdClass[]
      */
-    #[ArrayShape(['lowest' => "\stdClass", 'highest' => "\stdClass"])]
+    #[ArrayShape(['lowest' => \stdClass::class, 'highest' => \stdClass::class])]
     public function assertLowestHighestCandle(int $symbolId, int $startDate, int $endDate): array
     {
         if ($startDate >= $endDate)
@@ -163,18 +161,18 @@ class SymbolRepository
                  ->first();
     }
 
-    public function fetchNextCandle(int $symbolId, int $timestamp): ?\stdClass
+    public function fetchNextCandle(Symbol|int $symbol, int $timestamp): ?\stdClass
     {
         return DB::table('candles')
-                 ->where('symbol_id', $symbolId)
+                 ->where('symbol_id', is_int($symbol) ? $symbol : $symbol->id)
                  ->where('t', '>', $timestamp)
                  ->orderBy('t', 'ASC')
                  ->first();
     }
 
-    public function assertNextCandle(int $symbolId, int $timestamp): \stdClass
+    public function assertNextCandle(Symbol|int $symbol, int $timestamp): \stdClass
     {
-        if (!$candle = $this->fetchNextCandle($symbolId, $timestamp))
+        if (!$candle = $this->fetchNextCandle($symbol, $timestamp))
         {
             throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed.");
         }
@@ -205,9 +203,6 @@ class SymbolRepository
                  ->update($values);
     }
 
-    /**
-     * @param Symbol $symbol
-     */
     public function fetchLatestCandles(Symbol $symbol, string $direction = 'DESC', int $limit = 10): Collection
     {
         return DB::table('candles')
@@ -260,20 +255,17 @@ class SymbolRepository
 
     public function fetchSymbolFromExchange(AbstractExchange $exchange, string $symbolName, string $interval)
     {
-        $filter = static fn(Symbol $symbol): bool => $symbol->symbol == $symbolName && $symbol->interval == $interval;
-        $symbol = $exchange::instance()
-                           ->updater()
-                           ->updateByInterval(interval: $interval, filter: $filter)
-                           ?->first();
-
-        return $symbol;
+        $filter = static fn(Symbol $symbol): bool => $symbol->symbol === $symbolName && $symbol->interval === $interval;
+        return $exchange::instance()
+                        ->updater()
+                        ->updateByInterval(interval: $interval, filter: $filter)
+                        ?->first();
     }
 
     public function fetchSymbol(AbstractExchange $exchange, string $symbolName, string $interval): ?Symbol
     {
         /** @var Symbol $symbol */
-        $symbol = $this->findSymbols($exchange, $symbolName, $interval)->first();
-
-        return $symbol;
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->findSymbols($exchange, $symbolName, $interval)->first();
     }
 }
