@@ -450,13 +450,15 @@ abstract class AbstractStrategy
             'oppositeOnly' => false,
             'evaluation'   => [
                 'loop'     => [
-                    //trade duration in minutes - exceeding trades will be stopped at close price
-                    'timeout'    => 1440,
-                    //when true, stop trade immediately at exit setup
-                    'stopAtExit' => true,
+                    //trade duration in minutes, 0 to disable
+                    //exceeding trades will be stopped at close price
+                    'timeout'     => 0,
+                    //when true, close trade immediately at exit setup
+                    'closeOnExit' => true,
                 ],
                 'interval' => '1m'
             ],
+            //trade commission cut, each trade costs two fees
             'feeRatio'     => 0.001
         ];
     }
