@@ -31,7 +31,6 @@ abstract class AbstractStrategy
     protected SymbolRepository $symbolRepo;
     private array $indicatorConfig;
     private array $tradeConfig;
-    private ?Signal $lastSignal;
     /**
      * @var TradeSetup[]
      */
@@ -290,7 +289,6 @@ abstract class AbstractStrategy
 
             if ($required === count($signals))
             {
-                $this->lastSignal = $signal;
                 $signals = new Collection($signals);
                 $tradeSetup = $this->setupTrade($symbol, $this->tradeConfig, $signals);
 
@@ -298,7 +296,6 @@ abstract class AbstractStrategy
                 {
                     $setups[$tradeSetup->timestamp] = $this->saveTrade($tradeSetup, $signals);
                 }
-                $this->lastSignal = null;
             }
 
             $signals = [];
@@ -391,10 +388,8 @@ abstract class AbstractStrategy
             {
                 foreach ($actions as $class => $config)
                 {
-                    $tradeSetup->actions()->create([
-                                                       'class'  => $class,
-                                                       'config' => $config
-                                                   ]);
+                    $tradeSetup->actions()->create(['class'  => $class,
+                                                    'config' => $config]);
                 }
             }
 
