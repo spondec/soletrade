@@ -29,7 +29,7 @@ export default class Indicator
 
     setMarkers(series, markers)
     {
-        throw Error('Indicator::setMarkers() should be overridden.');
+        throw Error('Indicator.setMarkers() should be overridden.');
     }
 
     objectMap(callback, object)
