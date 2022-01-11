@@ -2,10 +2,15 @@ import Indicator from "./Indicator";
 
 export default class SimpleLineSeries extends Indicator
 {
+    seriesOptions = {
+        priceLineVisible: false,
+        pane: this.pane
+    }
+
     constructor(newPane = true, seriesOptions = {})
     {
         super(newPane);
-        this.seriesOptions = seriesOptions;
+        this.seriesOptions = {...this.seriesOptions, ...seriesOptions};
     }
 
     prepare(data, length)
@@ -19,7 +24,7 @@ export default class SimpleLineSeries extends Indicator
 
     init(data, chart)
     {
-        return chart.addLineSeries({...this.seriesOptions, ...{pane: this.pane}});
+        return chart.addLineSeries(this.seriesOptions);
     }
 
     update(series, data)

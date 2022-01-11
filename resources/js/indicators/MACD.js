@@ -38,6 +38,7 @@ export default class MACD extends Indicator
             lineWidth: 1,
             // title: 'divergence',
             crosshairMarkerVisible: true,
+            priceLineVisible: false,
             pane: this.pane
         });
 
@@ -46,6 +47,7 @@ export default class MACD extends Indicator
             lineWidth: 1,
             // title: 'macd',
             crosshairMarkerVisible: true,
+            priceLineVisible: false,
             pane: this.pane
         });
 
@@ -54,6 +56,7 @@ export default class MACD extends Indicator
             lineWidth: 1,
             // title: 'signal',
             crosshairMarkerVisible: true,
+            priceLineVisible: false,
             pane: this.pane
         });
 
