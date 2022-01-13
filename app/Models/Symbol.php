@@ -33,17 +33,6 @@ class Symbol extends Model
     protected ?int $end = null;
     protected ?int $start = null;
 
-    public function getSignals(): Collection
-    {
-        $signals = new Collection();
-        foreach ($this->indicators as $indicator)
-        {
-            $signals[$indicator::name()] = $indicator->signals();
-        }
-//        usort($signals, fn(Signal $a, Signal $b) => $a->timestamp <=> $b->timestamp);
-        return $signals;
-    }
-
     public function toArray()
     {
         return array_merge(parent::toArray(), [
