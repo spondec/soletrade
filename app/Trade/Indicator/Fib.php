@@ -17,7 +17,7 @@ class Fib extends AbstractIndicator
     protected bool $recalculate = false;
 
     /**
-     * Upward means the retracement goes from low to high.
+     * Whether the retracement goes from low to high.
      */
     public static function isUpward(array $prices): bool
     {
