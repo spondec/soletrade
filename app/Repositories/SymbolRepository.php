@@ -31,13 +31,6 @@ class SymbolRepository
         }
     }
 
-    public function fetchLowerIntervalCandles(\stdClass $candle, Symbol $symbol, string $interval): Collection
-    {
-        $nextCandle = $this->assertNextCandle($candle->symbol_id, $candle->t);
-
-        return $this->assertCandlesBetween($symbol, $candle->t, $nextCandle->t, $interval, true);
-    }
-
     public function mapCandles(array $candles, int $symbolId, CandleMap $map): array
     {
         $mapped = [];
