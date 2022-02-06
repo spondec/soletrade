@@ -1,25 +1,16 @@
 <?php
 
-namespace Trade\Indicator;
+namespace Tests\Feature\Trade\Indicator;
 
-use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
 use App\Trade\Indicator\SMA;
-use Illuminate\Support\Facades\App;
-use Tests\TestCase;
 
-class SMATest extends TestCase
+class SMATest extends IndicatorTestCase
 {
     public function test_sma()
     {
-        /** @var SymbolRepository $repo */
-        $repo = App::make(SymbolRepository::class);
-
-        /** @var Symbol $symbol */
-        $symbol = Symbol::query()
-            ->where('symbol', 'BTC/USDT')
-            ->where('interval', '1h')
-            ->firstOrFail();
+        $repo = new SymbolRepository();
+        $symbol = $this->createCandles(100);
 
         $repo->initIndicators($symbol,
             $candles = $symbol->candles(100),

@@ -1,25 +1,17 @@
 <?php
 
-namespace Trade\Indicator;
+namespace Tests\Feature\Trade\Indicator;
 
-use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
 use App\Trade\Indicator\EMA;
-use Illuminate\Support\Facades\App;
-use Tests\TestCase;
 
-class EMATest extends TestCase
+class EMATest extends IndicatorTestCase
 {
     public function test_ema()
     {
-        /** @var SymbolRepository $repo */
-        $repo = App::make(SymbolRepository::class);
+        $repo = new SymbolRepository();
 
-        /** @var Symbol $symbol */
-        $symbol = Symbol::query()
-            ->where('symbol', 'BTC/USDT')
-            ->where('interval', '1h')
-            ->firstOrFail();
+        $symbol = $this->createCandles(100);
 
         $repo->initIndicators($symbol,
             $candles = $symbol->candles(100),
