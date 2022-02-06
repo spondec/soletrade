@@ -48,7 +48,7 @@ trait HasConfig
         {
             if (!array_key_exists($key, $original))
             {
-                throw new \UnexpectedValueException("Config key does match: $key");
+                throw new \UnexpectedValueException("Config key does not match: $key");
             }
 
             if (is_array($value) && !array_is_list($value))
