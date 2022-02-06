@@ -147,7 +147,7 @@ export default {
         SMA: () => new SimpleLineSeries(false, {color: 'rgb(0,153,255)', lineWidth: 1, lineType: 0}),
         EMA: () => new SimpleLineSeries(false, {color: 'rgb(49,255,0)', lineWidth: 1, lineType: 0}),
         Fib: () => new Fib(),
-        RSI: () => new RSI(),
+        RSI: () => new RSI(true, {color: 'rgb(170,42,252)', lineWidth: 1}),
         MACD: () => new MACD()
       },
       indicatorManager: null,

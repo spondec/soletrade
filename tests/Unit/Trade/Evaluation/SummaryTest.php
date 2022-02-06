@@ -67,5 +67,4 @@ class SummaryTest extends TestCase
         $evaluation->exit_timestamp = time();
         return $evaluation;
     }
-
 }
