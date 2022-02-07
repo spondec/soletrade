@@ -32,7 +32,7 @@ abstract class AbstractExchange
 
     private function __construct()
     {
-        $config = Config::get('exchange.' . static::name());
+        $config = Config::get('trade.exchanges.' . static::name());
 
         if (!$config)
         {
