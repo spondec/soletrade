@@ -17,8 +17,8 @@ abstract class AbstractExchange
     use HasName;
 
     protected static ?AbstractExchange $instance = null;
-    protected string $apiKey;
-    protected string $secretKey;
+    protected ?string $apiKey;
+    protected ?string $secretKey;
     protected mixed $api;
     protected Exchange $exchange;
 
