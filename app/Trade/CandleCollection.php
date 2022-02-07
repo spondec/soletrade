@@ -8,6 +8,8 @@ use JetBrains\PhpStorm\Pure;
 /** @property \stdClass[] items */
 class CandleCollection extends Collection
 {
+    protected array $overrides = [];
+
     #[Pure] public function closes(): array
     {
         return array_column($this->all(), 'c');
@@ -44,11 +46,11 @@ class CandleCollection extends Collection
         return new static(array_reverse($candles, false));
     }
 
-    public function findPrevNext(int        $timestamp,
-                                 ?\stdClass &$prev = null,
-                                 ?\stdClass &$next = null,
-                                 ?int       &$prevKey = null,
-                                 ?int       &$nextKey = null): void
+    public function findPrevNextCandle(int        $timestamp,
+                                       ?\stdClass &$prev = null,
+                                       ?\stdClass &$next = null,
+                                       ?int       &$prevKey = null,
+                                       ?int       &$nextKey = null): void
     {
         /**
          * @var int       $key
@@ -74,5 +76,17 @@ class CandleCollection extends Collection
             $_prev = $candle;
             $_prevKey = $key;
         }
+    }
+
+    public function overrideCandle(int $key, \stdClass $candle): void
+    {
+        $this->overrides[$key] = $this->items[$key];
+        $this->items[$key] = $candle;
+    }
+
+    public function forgetOverride(int $key): void
+    {
+        $this->items[$key] = $this->overrides[$key];
+        unset($this->overrides[$key]);
     }
 }
