@@ -19,7 +19,7 @@ class StrategyTester
 
     protected array $config = [];
 
-    protected final function getDefaultConfig(): array
+    final protected function getDefaultConfig(): array
     {
         return [
             'maxCandles' => null,
@@ -72,36 +72,47 @@ class StrategyTester
         ];
     }
 
-    /**
-     * @param TradeSetup[] $trades
-     */
     protected function evaluate(): Collection
     {
         $evaluations = [];
         $evaluation = null;
+
         if ($first = $this->strategy->getFirstTrade())
         {
-            $lastCandle = $this->symbolRepo->fetchLastCandle($first->symbol);
-
             /** @var TradeSetup[] $pending */
             $pending = [];
+
             while ($next = $this->strategy->getNextTrade($first))
             {
                 $pending[] = $first;
 
-                if ($first->isBuy() != $next->isBuy())
+                if ($first->isBuy() !== $next->isBuy())
                 {
                     foreach ($pending as $setup)
                     {
-                        if (!$evaluation || ($evaluation && $evaluation->exit_timestamp < $setup->price_date))
-                            if ($setup->timestamp < $lastCandle->t && $next->timestamp < $lastCandle->t)
-                            {
-                                $evaluations[] = $evaluation = $this->evaluator->evaluate($setup, $next);
-                            }
+                        $evaluate = false;
 
+                        if ($evaluation && $evaluation->isExited())
+                        {
+                            $_evaluation = $this->evaluator->evaluate($setup, $next);
+                            if ($evaluation->exit_timestamp <= $_evaluation->entry_timestamp)
+                            {
+                                $evaluations[] = $evaluation = $_evaluation;
+                            }
+                        }
+                        else
+                        {
+                            $evaluate = true; //first evaluation or failed entry
+                        }
+
+                        if ($evaluate)
+                        {
+                            $evaluations[] = $evaluation = $this->evaluator->evaluate($setup, $next);
+                        }
                     }
                     $pending = [];
                 }
+
                 $first = $next;
             }
         }
