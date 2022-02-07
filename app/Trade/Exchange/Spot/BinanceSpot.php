@@ -2,11 +2,9 @@
 
 namespace App\Trade\Exchange\Spot;
 
-use App\Trade\Exchange\Spot\Binance\BinanceSpot;
-
-class Binance extends AbstractSpotExchange
+class BinanceSpot extends AbstractSpotExchange
 {
-    use BinanceSpot;
+    use \App\Trade\Exchange\Spot\Binance\BinanceSpot;
 
     protected function availableOrderActions(): array
     {
@@ -17,5 +15,4 @@ class Binance extends AbstractSpotExchange
     {
         return 'SPOT';
     }
-
 }
