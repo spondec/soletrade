@@ -9,6 +9,10 @@ use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
+use App\Trade\CandleCollection;
+use App\Trade\Candles;
+use App\Trade\Config\IndicatorConfig;
+use App\Trade\Config\TradeConfig;
 use App\Trade\Evaluation\TradeLoop;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
@@ -18,7 +22,6 @@ use App\Trade\Log;
 use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 
 abstract class AbstractStrategy
 {
@@ -29,8 +32,12 @@ abstract class AbstractStrategy
     protected array $config = [];
     protected \WeakMap $actions;
     protected SymbolRepository $symbolRepo;
+    protected Symbol $evaluationSymbol;
+    protected CandleCollection $candles;
+    protected Symbol $symbol;
+    /** @var IndicatorConfig[] */
     private array $indicatorConfig;
-    private array $tradeConfig;
+    private TradeConfig $tradeConfig;
     /**
      * @var TradeSetup[]
      */
@@ -48,8 +55,6 @@ abstract class AbstractStrategy
      */
     private Collection $helperIndicators;
 
-    protected Symbol $evaluationSymbol;
-
     public function __construct(array $config = [])
     {
         $this->mergeConfig($config);
@@ -58,18 +63,78 @@ abstract class AbstractStrategy
 
         $this->indicators = new Collection();
         $this->actions = new \WeakMap();
-        $this->indicatorConfig = $this->indicatorConfig();
-        $this->tradeConfig = $this->tradeConfig();
+        $this->indicatorConfig = $this->newIndicatorConfig();
+        $this->tradeConfig = $this->newTradeConfig();
         $this->signature = $this->register(['contents' => $this->contents()]);
+    }
+
+    /**
+     * @return IndicatorConfig[]
+     */
+    private function newIndicatorConfig(): array
+    {
+        foreach ($config = $this->indicatorConfig() as $class => &$c)
+        {
+            $c['class'] = $class;
+            $c = IndicatorConfig::fromArray($c);
+        }
+
+        return $config;
     }
 
     abstract protected function indicatorConfig(): array;
 
+    private function newTradeConfig(): TradeConfig
+    {
+        $c = $this->tradeConfig();
+
+        $c['symbol'] = $this->symbol;
+        $c['signature'] = $this->getTradeConfigSignature($c);
+
+        return TradeConfig::fromArray($c);
+    }
+
     abstract protected function tradeConfig(): array;
+
+    protected function getTradeConfigSignature(array $config): Signature
+    {
+        return $this->register(
+            ['strategy'        => [
+                'signature' => $this->signature->hash
+            ],
+             'trade_setup'     => $config,
+             'indicator_setup' => array_map(
+                 fn(string $class): array => $this->indicatorConfig[$class]->toArray(),
+                 $this->getSignalClasses($config))
+            ]);
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function getSignalClasses(array $config): array
+    {
+        $indicators = [];
+        foreach ($config['signals'] as $key => $indicator)
+        {
+            $indicators[] = is_array($indicator) ? $key : $indicator;
+        }
+
+        return $indicators;
+    }
 
     public function getFirstTrade(): ?TradeSetup
     {
         return $this->trades->first();
+    }
+
+    public function getNextTrade(TradeSetup $tradeSetup): ?TradeSetup
+    {
+        if ($this->config('oppositeOnly'))
+        {
+            return $this->findNextOppositeTrade($tradeSetup);
+        }
+        return $this->findNextTrade($tradeSetup);
     }
 
     protected function findNextOppositeTrade(TradeSetup $tradeSetup): ?TradeSetup
@@ -87,18 +152,9 @@ abstract class AbstractStrategy
         return null;
     }
 
-    public function getNextTrade(TradeSetup $tradeSetup): ?TradeSetup
+    protected function findNextTrade(TradeSetup $trade): ?TradeSetup
     {
-        if ($this->config('oppositeOnly'))
-        {
-            return $this->findNextOppositeTrade($tradeSetup);
-        }
-        return $this->findNextTrade($tradeSetup);
-    }
-
-    protected function findNextTrade(TradeSetup $tradeSetup): ?TradeSetup
-    {
-        $timestamp = $tradeSetup->timestamp;
+        $timestamp = $trade->timestamp;
 
         $iterator = $this->trades->getIterator();
 
@@ -116,19 +172,19 @@ abstract class AbstractStrategy
         return null;
     }
 
-    public function newAction(TradeSetup $setup, string $actionClass, array $config): void
+    public function newAction(TradeSetup $trade, string $actionClass, array $config): void
     {
         if (!is_subclass_of($actionClass, AbstractTradeActionHandler::class))
         {
             throw new \InvalidArgumentException('Invalid trade action class: ' . $actionClass);
         }
 
-        if (!isset($this->actions[$setup]))
+        if (!isset($this->actions[$trade]))
         {
-            $this->actions[$setup] = new Collection();
+            $this->actions[$trade] = new Collection();
         }
 
-        $this->actions[$setup][$actionClass] = $config;
+        $this->actions[$trade][$actionClass] = $config;
     }
 
     public function signals(): Collection
@@ -138,42 +194,55 @@ abstract class AbstractStrategy
 
     public function run(Symbol $symbol): void
     {
-        $symbol->updateCandles();
+        $this->symbol = $symbol;
+        $this->symbol->updateCandles();
 
-        $this->evaluationSymbol = $this->getEvaluationSymbol($symbol);
+        $this->evaluationSymbol = $this->getEvaluationSymbol();
         $this->evaluationSymbol->updateCandlesIfOlderThan(60);
 
-        Log::execTimeStart('AbstractStrategy::initIndicators()');
-        $this->initIndicators($symbol);
-        Log::execTimeFinish('AbstractStrategy::initIndicators()');
+        Log::execTimeStart('populateCandles');
+        $this->populateCandles();
+        Log::execTimeStart('populateCandles');
 
-        $this->signals = $this->getConfigSignals($symbol);
+        Log::execTimeStart('initIndicators');
+        $this->initIndicators();
+        Log::execTimeFinish('initIndicators');
 
-        Log::execTimeStart('AbstractStrategy::findTrades()');
-        $this->trades = $this->findTrades($symbol);
-        Log::execTimeFinish('AbstractStrategy::findTrades()');
+        Log::execTimeStart('findTrades');
+        $this->findTrades();
+        Log::execTimeFinish('findTrades');
     }
 
-    protected function initIndicators(Symbol $symbol): void
+    protected function getEvaluationSymbol(): Symbol
     {
-        $candles = $symbol->candles(limit: $this->config['maxCandles'],
-            start:                         $this->config['startDate'],
-            end:                           $this->config['endDate']);
+        $exchange = $this->symbol->exchange();
+        $symbolName = $this->symbol->symbol;
+        $evaluationInterval = $this->config('evaluation.interval', true);
+        return $this->symbolRepo->fetchSymbol($exchange, $symbolName, $evaluationInterval)
+            ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
+    }
 
-        $this->initHelperIndicators($symbol, $candles);
+    protected function populateCandles(): void
+    {
+        $this->candles = $this->symbol->candles(limit: $this->config['maxCandles'],
+            start: $this->config['startDate'],
+            end: $this->config['endDate']);
+    }
+
+    protected function initIndicators(): void
+    {
+        $this->initHelperIndicators($this->symbol, $this->candles);
 
         foreach ($this->indicatorConfig as $class => $setup)
         {
             /** @var AbstractIndicator $indicator */
-            $indicator = new $class(symbol: $symbol,
-                candles:                    $candles,
-                config:                     is_array($setup) ? $setup['config'] ?? [] : [],
-                signalCallback:             $setup instanceof \Closure ? $setup : $setup['signal'] ?? null);
+            $indicator = new $class(symbol: $this->symbol,
+                candles: $this->candles,
+                config: is_array($setup) ? $setup['config'] ?? [] : []);
 
             $this->indicators[$indicator->id()] = $indicator;
-            $symbol->addIndicator(indicator: $indicator);
+            $this->symbol->addIndicator(indicator: $indicator);
         }
-
     }
 
     protected function initHelperIndicators(Symbol $symbol, Collection $candles): void
@@ -183,18 +252,17 @@ abstract class AbstractStrategy
         {
             /** @var Symbol $helperSymbol */
             $helperSymbol = Symbol::query()
-                                  ->where('exchange_id', $symbol->exchange_id)
-                                  ->where('symbol', $config['symbol'] ?? $symbol->symbol)
-                                  ->where('interval', $config['interval'] ?? $symbol->interval)
-                                  ->firstOrFail();
+                ->where('exchange_id', $symbol->exchange_id)
+                ->where('symbol', $config['symbol'] ?? $symbol->symbol)
+                ->where('interval', $config['interval'] ?? $symbol->interval)
+                ->firstOrFail();
 
             $helperSymbol->updateCandles();
 
             $nextCandle = $this->symbolRepo->fetchNextCandle($symbol->id, $candles->last()->t);
-            $helperCandles = $helperSymbol->candles(start: $candles->first()->t, end: $nextCandle ? $nextCandle->t : null);
+            $helperCandles = $helperSymbol->candles(start: $candles->first()->t, end: $nextCandle?->t);
 
-            unset($config['interval']);
-            unset($config['symbol']);
+            unset($config['interval'], $config['symbol']);
 
             /** @var AbstractIndicator $helperIndicator */
             $helperIndicator = new $class(symbol: $helperSymbol, candles: $helperCandles, config: $config);
@@ -213,150 +281,114 @@ abstract class AbstractStrategy
         return [];
     }
 
-    protected function getConfigSignals(Symbol $symbol): Collection
+    protected function findTrades(): void
     {
-        $signals = [];
+        $candleIterator = $this->candles->getIterator();
+        $candles = new Candles($candleIterator, $this->candles);
+        $creator = new TradeCreator($this->tradeConfig);
+        $hasSignal = !empty($this->tradeConfig->signals);
 
-        /* @var \App\Trade\Indicator\AbstractIndicator $indicator */
-        foreach ($this->getConfigIndicators($this->tradeConfig) as $indicator)
+        /** @var AbstractIndicator[]|Collection $indicators */
+        $indicators = $this->indicators
+            ->filter(static fn(AbstractIndicator $indicator): bool => in_array($indicator::class, $creator->signalClasses))
+            ->keyBy(static fn(AbstractIndicator $indicator): string => $indicator::class);
+
+        /** @var \Generator[] $generators */
+        $generators = $indicators->map(static fn(AbstractIndicator $indicator): \Generator => $indicator->scan(
+            $this->indicatorConfig[$indicator::class]['signal']));
+
+        $this->assertProgressiveness($indicators);
+
+        while ($candleIterator->valid())
         {
-            $indicator = $symbol->indicator($indicator::name());
-            $signals[$indicator::class] = $indicator->signals();
-        }
+            /** @var \stdClass $candle */
+            $candle = $candleIterator->current();
+            $key = $candleIterator->key();
+            $candleIterator->next();
+            $next = $candleIterator->current();
+            $priceDate = $this->symbolRepo->getPriceDate($candle->t, $next?->t, $this->symbol);
 
-        return new Collection($signals);
-    }
-
-    /**
-     * @return string[]
-     */
-    protected function getConfigIndicators(array $config): array
-    {
-        $indicators = [];
-        foreach ($config['signals'] as $key => $indicator)
-        {
-            $indicators[] = is_array($indicator) ? $key : $indicator;
-        }
-
-        return $indicators;
-    }
-
-    /**
-     * @return TradeSetup[]
-     * @throws \Exception
-     */
-    protected function findTrades(Symbol $symbol): Collection
-    {
-        $setups = [];
-
-        if (!$indicators = $this->getConfigIndicators($this->tradeConfig))
-        {
-            throw new \UnexpectedValueException('Invalid signal config for trade setup: ' . static::name());
-        }
-
-        $required = count($this->tradeConfig['signals']);
-        $signals = [];
-        $firstIndicator = $indicators[0];
-        $index = 0;
-
-        while (isset($this->signals[$firstIndicator][$index]))
-        {
-            foreach ($indicators as $k => $indicator)
+            if ($hasSignal)
             {
-                $isFirst = $k === 0;
-                /* @var Signal $signal */
-                foreach ($this->signals[$indicator] as $i => $signal)
+                do
                 {
-                    if ($isFirst)
+                    foreach ($indicators as $class => $indicator)
                     {
-                        if ($i < $index) continue;
-                        $index = $i + 1;
-                    }
+                        $result = $generators[$class]->current();
+                        $signal = $result['signal'];
 
-                    /** @var Signal $lastSignal */
-                    $lastSignal = end($signals);
+                        $this->runUnderCandle($key, $indicator->candle(), function () use ($candles, $creator, $signal) {
+                            if ($trade = $creator->findTrade($candles, $signal))
+                            {
+                                $creator->setActions($this->actions($trade));
+                                $savedTrade = $creator->save();
 
-                    if (!$lastSignal || ($signal->timestamp >= $lastSignal->timestamp && $lastSignal->side === $signal->side))
-                    {
-                        if ($this->validateSignal($indicator, $this->tradeConfig, $signal))
-                        {
-                            $signals[] = $signal;
-                            break;
-                        }
+                                foreach ($this->indicators as $i)
+                                {
+                                    $i->replaceBindable($trade, $savedTrade);
+                                    $i->saveBindings($savedTrade);
+                                }
+
+                                $this->trades[$trade->timestamp] = $trade = $savedTrade;
+                            }
+                        });
                     }
-                }
+                } while ($result['price_date'] <= $priceDate);
             }
-
-            if ($required === count($signals))
+            else
             {
-                $signals = new Collection($signals);
-                $tradeSetup = $this->setupTrade($symbol, $this->tradeConfig, $signals);
-
-                if ($tradeSetup = $this->applyTradeSetupConfig($tradeSetup, $signals, $this->tradeConfig))
-                {
-                    $setups[$tradeSetup->timestamp] = $this->saveTrade($tradeSetup, $signals);
-                }
+                //TODO:: handle no signal case
             }
-
-            $signals = [];
         }
-
-        return new Collection($setups);
     }
 
-    protected function validateSignal(string $indicator, array $config, Signal $signal): bool
+    protected function assertProgressiveness(array $indicators): void
     {
-        return !is_array($config['signals'][$indicator] ?? null) ||
-            in_array($signal->name, $config['signals'][$indicator]);
+        $isProgressive = null;
+        /** @var AbstractIndicator $i */
+        foreach ($indicators as $i)
+        {
+            if ($isProgressive === null)
+            {
+                $isProgressive = $i->isProgressive();
+            }
+            else if ($i->isProgressive() !== $isProgressive)
+            {
+                throw new \LogicException('All indicators must be either progressive or non-progressive');
+            }
+        }
     }
 
-    /**
-     * @param Signal[] $signals
-     */
-    protected function setupTrade(Symbol $symbol, array $config, Collection $signals): TradeSetup
+    protected function runUnderCandle(int $key, \stdClass $candle, \Closure $closure): void
     {
-        $signature = $this->registerTradeSetupSignature($config);
-        $tradeSetup = $this->newTrade($symbol, $signature);
-
-        return $this->fillTrade($tradeSetup, $signals);
+        $this->candles->overrideCandle($key, $candle);
+        try
+        {
+            $closure();
+        } finally
+        {
+            $this->candles->forgetOverride($key);
+        }
     }
 
-    protected function registerTradeSetupSignature(array $config): Signature
+    public function actions(TradeSetup $setup): ?Collection
     {
-        return $this->register([
-                                   'strategy'        => [
-                                       'signature' => $this->signature->hash
-                                   ],
-                                   'trade_setup'     => $config,
-                                   'indicator_setup' => array_map(
-                                       fn(string $class): array => $this->indicatorConfig[$class],
-                                       $this->getConfigIndicators($config))
-                               ]);
+        return $this->actions[$setup] ?? null;
     }
 
-    protected function newTrade(Symbol $symbol, Signature $signature): TradeSetup
+    public function newLoop(TradeSetup $entry): TradeLoop
     {
-        $tradeSetup = new TradeSetup();
-
-        $tradeSetup->symbol()->associate($symbol);
-        $tradeSetup->signature()->associate($signature);
-
-        return $tradeSetup;
+        return new TradeLoop($entry, $this->evaluationSymbol, $this->config('evaluation.loop'));
     }
 
-    protected function fillTrade(TradeSetup $tradeSetup, Collection $signals): TradeSetup
+    public function trades(): Collection
     {
-        /** @var Signal $lastSignal */
-        $lastSignal = $signals->last();
+        return $this->trades;
+    }
 
-        $tradeSetup->signal_count = count($signals);
-        $tradeSetup->name = $signals->map(static fn(Signal $signal): string => $signal->name)->implode('|');
-        $tradeSetup->side = $lastSignal->side;
-        $tradeSetup->timestamp = $lastSignal->timestamp;
-        $tradeSetup->price = $lastSignal->price;
-        $tradeSetup->price_date = $lastSignal->price_date;
-
-        return $tradeSetup;
+    public function helperIndicator(string $class): AbstractIndicator
+    {
+        return $this->helperIndicators[$class];
     }
 
     protected function applyTradeSetupConfig(TradeSetup $tradeSetup, Collection $signals, mixed $config): ?TradeSetup
@@ -371,76 +403,13 @@ abstract class AbstractStrategy
         return $tradeSetup;
     }
 
-    /**
-     * @throws \Exception
-     */
-    protected function saveTrade(TradeSetup $tradeSetup, Collection $signals): TradeSetup
-    {
-        $old = $tradeSetup;
-        $actions = $this->actions($old);
-        DB::transaction(function () use (&$tradeSetup, &$signals, &$actions) {
-
-            /** @var TradeSetup $tradeSetup */
-            $tradeSetup = $tradeSetup->updateUniqueOrCreate();
-            $tradeSetup->actions()->delete();
-
-            if ($actions)
-            {
-                foreach ($actions as $class => $config)
-                {
-                    $tradeSetup->actions()->create(['class'  => $class,
-                                                    'config' => $config]);
-                }
-            }
-
-            $tradeSetup->signals()->sync($signals->map(static fn(Signal $signal): int => $signal->id)->all());
-        });
-
-        foreach ($this->indicators as $indicator)
-        {
-            $indicator->replaceBindable($old, $tradeSetup);
-            $indicator->saveBindings($tradeSetup);
-        }
-
-        return $tradeSetup;
-    }
-
-    public function actions(TradeSetup $setup): ?Collection
-    {
-        return $this->actions[$setup] ?? null;
-    }
-
-    public function newLoop(TradeSetup $entry): TradeLoop
-    {
-        return new TradeLoop($entry, $this->evaluationSymbol, $this->config('evaluation.loop'));
-    }
-
-    public function trades()
-    {
-        return $this->trades;
-    }
-
-    protected function getEvaluationSymbol(Symbol $symbol): Symbol
-    {
-        $exchange = $symbol->exchange();
-        $symbolName = $symbol->symbol;
-        $evaluationInterval = $this->config('evaluation.interval', true);
-        return $this->symbolRepo->fetchSymbol($exchange, $symbolName, $evaluationInterval)
-            ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
-    }
-
     protected function indicator(Signal $signal): AbstractIndicator
     {
         return $this->indicators[$signal->indicator_id]
             ?? throw new \InvalidArgumentException('Signal indicator was not found.');
     }
 
-    public function helperIndicator(string $class): AbstractIndicator
-    {
-        return $this->helperIndicators[$class];
-    }
-
-    protected final function getDefaultConfig(): array
+    final protected function getDefaultConfig(): array
     {
         return [
             'maxCandles'   => 1000,
