@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Evaluation;
 use App\Models\Symbol;
+use App\Repositories\ConfigRepository;
 use App\Repositories\SymbolRepository;
 use App\Trade\HasName;
 use App\Trade\Log;
 use App\Trade\StrategyTester;
-use App\Trade\Config;
 use App\Trade\Exchange\AbstractExchange;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -17,7 +17,9 @@ use Illuminate\Support\Facades\App;
 
 class ChartController extends Controller
 {
-    public function __construct(protected Request $request, protected SymbolRepository $symbolRepo)
+    public function __construct(protected Request          $request,
+                                protected SymbolRepository $symbolRepo,
+                                protected ConfigRepository $configRepo)
     {
 
     }
@@ -25,27 +27,27 @@ class ChartController extends Controller
     public function index(Request $request): array
     {
         $symbol = $request->get('symbol');
-        $exchange = $this->getKeyByValue('exchange', $this->mapClassByName(Config::exchanges(), true));
+        $exchange = $this->getKeyByValue('exchange', $this->mapClassByName($this->configRepo->getExchanges(), true));
         $interval = $request->get('interval');
 
         if ($exchange && $symbol && $interval)
         {
-            $indicators = $this->mapClassByName(Config::indicators(), true);
+            $indicators = $this->mapClassByName($this->configRepo->getIndicators(), true);
             return $this->candles(
-                exchange:   $exchange,
+                exchange: $exchange,
                 symbolName: $symbol,
-                interval:   $interval,
-                indicators: array_map(static fn($v) => array_search($v, $indicators), $request->get('indicators', [])),
-                strategy:   $this->getKeyByValue('strategy', $this->mapClassByName(Config::strategies(), true)),
-                range:      json_decode($request->get('range'), true, 512, JSON_THROW_ON_ERROR),
-                limit:      $request->get('limit'));
+                interval: $interval,
+                indicators: \array_map(static fn($v) => \array_search($v, $indicators), $request->get('indicators', [])),
+                strategy: $this->getKeyByValue('strategy', $this->mapClassByName($this->configRepo->getStrategies(), true)),
+                range: \json_decode($request->get('range'), true, 512, JSON_THROW_ON_ERROR),
+                limit: $request->get('limit'));
         }
 
         return [
-            'strategies' => $this->mapClassByName(Config::strategies()),
-            'exchanges'  => $this->mapClassByName(Config::exchanges()),
-            'symbols'    => Config::symbols(),
-            'indicators' => $this->mapClassByName(Config::indicators()),
+            'strategies' => $this->mapClassByName($this->configRepo->getStrategies()),
+            'exchanges'  => $this->mapClassByName($this->configRepo->getExchanges()),
+            'symbols'    => $this->configRepo->getSymbols(),
+            'indicators' => $this->mapClassByName($this->configRepo->getIndicators()),
             'intervals'  => $this->symbolRepo->fetchIntervals()
         ];
     }
@@ -54,7 +56,7 @@ class ChartController extends Controller
     {
         if ($param = $this->request->get($name))
         {
-            return array_search($param, $items);
+            return \array_search($param, $items);
         }
         return null;
     }
@@ -127,7 +129,7 @@ class ChartController extends Controller
 //                        'exit.bindings',
 //                        'entry.signals.bindings',
 //                        'exit.signals.bindings'
-                                                                                    ]));
+                ]));
 
             Log::execTimeFinish('Evaluating and summarizing trades');
 

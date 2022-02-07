@@ -3,24 +3,28 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Trade\Config;
+use App\Repositories\ConfigRepository;
 use App\Trade\Exchange\AbstractExchange;
 
 class ExchangeController extends Controller
 {
-    public function index(): array
+    public function __construct(protected ConfigRepository $configRepo)
     {
-        return array_map(fn($v) => $v::instance()->info(), Config::exchanges());
     }
 
+    public function index(): array
+    {
+        return array_map(fn($v) => $v::instance()->info(), $this->configRepo->getExchanges());
+    }
+
+    /**
+     * @param string|AbstractExchange $exchange
+     */
     public function symbols(string $exchange): array
     {
-        if (in_array($exchange, Config::exchanges()))
+        if (in_array($exchange, $this->configRepo->getExchanges()))
         {
-            /** @var AbstractExchange $exchange */
-            $instance = $exchange::instance();
-
-            return $instance->symbols();
+            return $exchange::instance()->symbols();
         }
 
         throw new \HttpException("Exchange $exchange doesn't exist.");
@@ -30,8 +34,9 @@ class ExchangeController extends Controller
     {
         $balances = [];
 
-        foreach (Config::exchanges() as $exchange)
+        foreach ($this->configRepo->getExchanges() as $exchange)
         {
+            /** @var AbstractExchange $exchange */
             $exchange = $exchange::instance();
             $exchangeName = $exchange::name();
 
