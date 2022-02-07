@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Trade\CandleCollection;
 use App\Trade\Indicator\AbstractIndicator;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  */
 class Symbol extends Model
 {
-    use HasExchange;
+    use HasExchange, HasFactory;
 
     const INDICATOR_DIR = "\App\Trade\Indicator";
 
@@ -51,7 +52,7 @@ class Symbol extends Model
     {
         if (!$this->exists)
         {
-            throw new \LogicException('Can not get candles for unsaved symbol.');
+            throw new \LogicException('Can not get candles for an unsaved symbol.');
         }
 
         if ($end && $start && $limit)
