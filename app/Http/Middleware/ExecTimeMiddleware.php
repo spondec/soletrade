@@ -39,6 +39,11 @@ class ExecTimeMiddleware
 
     public function terminate()
     {
-        Log::info(static::getSessionPrefix() . 'Execution time: ' . round(microtime(true) - LARAVEL_START, 2) . ' seconds.');
+        if (defined('LARAVEL_START'))
+        {
+            Log::info(sprintf("%sExecution time: %s seconds.",
+                static::getSessionPrefix(),
+                round(microtime(true) - LARAVEL_START, 2)));
+        }
     }
 }
