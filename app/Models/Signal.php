@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Trade\Binding\HasBinding;
+use App\Trade\Indicator\AbstractIndicator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -29,6 +29,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Signal extends Model
 {
+    public readonly AbstractIndicator $indicator;
+
     const BUY = 'BUY';
     const SELL = 'SELL';
 
@@ -51,10 +53,10 @@ class Signal extends Model
         return $this->belongsTo(Symbol::class);
     }
 
+    //TODO:: rename this
     public function indicator(): BelongsTo
     {
         return $this->belongsTo(Signature::class);
-
     }
 
     public function signature(): BelongsTo
