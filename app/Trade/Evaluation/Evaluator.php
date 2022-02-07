@@ -11,14 +11,12 @@ use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
-use App\Trade\ChangeLog;
 use App\Trade\Strategy\AbstractStrategy;
 use Illuminate\Support\Facades\App;
 
 class Evaluator
 {
     protected SymbolRepository $symbolRepo;
-    protected array $entryDates;
 
     public function __construct(protected AbstractStrategy $strategy)
     {
@@ -124,17 +122,21 @@ class Evaluator
         $evaluation->log = $log;
     }
 
-    protected function calcHighLowRoi(Evaluation $e): void
+    protected function calcHighLowRoi(Evaluation $evaluation): void
     {
-        if (!$e->is_entry_price_valid || $e->is_ambiguous)
+        if (!$evaluation->is_entry_price_valid || $evaluation->is_ambiguous)
         {
             return;
         }
 
-        $entryPrice = (float)$e->entry_price;
-        $buy = $e->entry->side === Signal::BUY;
+        $entryPrice = (float)$evaluation->entry_price;
+        $buy = $evaluation->entry->side === Signal::BUY;
 
-        $e->highest_roi = Calc::roi($buy, $entryPrice, (float)($buy ? $e->highest_price : $e->lowest_price));
-        $e->lowest_roi = Calc::roi($buy, $entryPrice, (float)(!$buy ? $e->highest_price : $e->lowest_price));
+        $evaluation->highest_roi = Calc::roi($buy, $entryPrice, (float)($buy
+            ? $evaluation->highest_price
+            : $evaluation->lowest_price));
+        $evaluation->lowest_roi = Calc::roi($buy, $entryPrice, (float)(!$buy
+            ? $evaluation->highest_price
+            : $evaluation->lowest_price));
     }
 }
