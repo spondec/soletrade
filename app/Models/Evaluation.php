@@ -49,6 +49,11 @@ class Evaluation extends Model
         'log'                 => 'array'
     ];
 
+    public function isExited(): bool
+    {
+        return (bool)$this->exit_timestamp;
+    }
+
     public function entry(): MorphTo
     {
         return $this->morphTo('entry', 'type');
