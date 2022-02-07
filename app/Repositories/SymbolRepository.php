@@ -7,11 +7,12 @@ namespace App\Repositories;
 use App\Models\Symbol;
 use App\Trade\CandleMap;
 use App\Trade\Exchange\AbstractExchange;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\ArrayShape;
 
-class SymbolRepository
+class SymbolRepository extends Repository
 {
     /**
      * @param string[]|array[] $indicators
@@ -57,7 +58,7 @@ class SymbolRepository
     {
         if ($startDate >= $endDate)
         {
-            throw new \InvalidArgumentException('Start date can not be greater than or equal to end date.');
+            throw new \InvalidArgumentException('Start date can not be greater than or equal to the end date.');
         }
 
         /** @noinspection PhpStrictTypeCheckingInspection */
@@ -140,27 +141,47 @@ class SymbolRepository
     {
         return !$interval || $symbol->interval === $interval ? $symbol->id :
             DB::table('symbols')
-              ->where('exchange_id', $symbol->exchange_id)
-              ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval)
-              ->where('symbol', $symbol->symbol)
-              ->get('id')->first()->id;
+                ->where('exchange_id', $symbol->exchange_id)
+                ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval)
+                ->where('symbol', $symbol->symbol)
+                ->get('id')->first()->id;
+    }
+
+    public function findCandles(Symbol $symbol): Builder
+    {
+        return DB::table('candles')->where('symbol_id', $symbol->id);
     }
 
     public function fetchCandle(Symbol $symbol, int $timestamp, ?string $interval = null): \stdClass
     {
         return DB::table('candles')
-                 ->where('symbol_id', $interval ? $this->findSymbolIdForInterval($symbol, $interval) : $symbol->id)
-                 ->where('t', $timestamp)
-                 ->first();
+            ->where('symbol_id', $interval ? $this->findSymbolIdForInterval($symbol, $interval) : $symbol->id)
+            ->where('t', $timestamp)
+            ->first();
     }
 
     public function fetchNextCandle(Symbol|int $symbol, int $timestamp): ?\stdClass
     {
         return DB::table('candles')
-                 ->where('symbol_id', is_int($symbol) ? $symbol : $symbol->id)
-                 ->where('t', '>', $timestamp)
-                 ->orderBy('t', 'ASC')
-                 ->first();
+            ->where('symbol_id', is_int($symbol) ? $symbol : $symbol->id)
+            ->where('t', '>', $timestamp)
+            ->orderBy('t', 'ASC')
+            ->first();
+    }
+
+    public function getPriceDate(int $openTime, int|null $nextOpenTime, Symbol $symbol): int
+    {
+        if ($nextOpenTime)
+        {
+            return $nextOpenTime - 1000;
+        }
+
+        if ($nextCandle = $this->fetchNextCandle($symbol->id, $openTime))
+        {
+            return $nextCandle->t - 1000;
+        }
+
+        return $symbol->last_update;
     }
 
     public function assertNextCandle(Symbol|int $symbol, int $timestamp): \stdClass
