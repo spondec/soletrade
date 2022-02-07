@@ -26,8 +26,6 @@
     <php>
         <server name="APP_ENV" value="testing"/>
         <server name="BCRYPT_ROUNDS" value="4"/>
-        <server name="EXCHANGE_BINANCE_API_KEY" value=""/>
-        <server name="EXCHANGE_BINANCE_SECRET_KEY" value=""/>
         <server name="CACHE_DRIVER" value="array"/>
         <server name="DB_CONNECTION" value="mysql_testing"/>
         <server name="DB_DATABASE" value=":memory:"/>
