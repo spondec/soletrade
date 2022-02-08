@@ -11,14 +11,14 @@ use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
-use App\Trade\Strategy\AbstractStrategy;
+use App\Trade\Strategy\Strategy;
 use Illuminate\Support\Facades\App;
 
 class Evaluator
 {
     protected SymbolRepository $symbolRepo;
 
-    public function __construct(protected AbstractStrategy $strategy)
+    public function __construct(protected Strategy $strategy)
     {
         $this->symbolRepo = App::make(SymbolRepository::class);
     }

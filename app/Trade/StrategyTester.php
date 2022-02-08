@@ -7,7 +7,7 @@ use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Evaluation\Evaluator;
 use App\Trade\Evaluation\Summarizer;
-use App\Trade\Strategy\AbstractStrategy;
+use App\Trade\Strategy\Strategy;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use JetBrains\PhpStorm\ArrayShape;
@@ -28,7 +28,7 @@ class StrategyTester
         ];
     }
 
-    protected AbstractStrategy $strategy;
+    protected Strategy $strategy;
 
     protected Evaluator $evaluator;
     protected Summarizer $summarizer;
@@ -42,9 +42,9 @@ class StrategyTester
         $this->summarizer = App::make(Summarizer::class, ['strategy' => $this->strategy]);
     }
 
-    protected function setupStrategy(string $class, array $config): AbstractStrategy
+    protected function setupStrategy(string $class, array $config): Strategy
     {
-        if (!is_subclass_of($class, AbstractStrategy::class))
+        if (!is_subclass_of($class, Strategy::class))
         {
             throw new \InvalidArgumentException('Invalid strategy class: ' . $class);
         }
@@ -54,7 +54,7 @@ class StrategyTester
         return new $class(config: $config);
     }
 
-    public function runStrategy(Symbol $symbol): AbstractStrategy
+    public function runStrategy(Symbol $symbol): Strategy
     {
         Log::execTimeStart('AbstractStrategy::run()');
         $this->strategy->run($symbol);

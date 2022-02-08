@@ -4,14 +4,14 @@ namespace Trade\Evaluation;
 
 use App\Models\Evaluation;
 use App\Trade\Evaluation\Summarizer;
-use App\Trade\Strategy\AbstractStrategy;
+use App\Trade\Strategy\Strategy;
 use PHPUnit\Framework\TestCase;
 
 class SummaryTest extends TestCase
 {
-    protected function getStrategy(): AbstractStrategy
+    protected function getStrategy(): Strategy
     {
-        $strategy = \Mockery::mock(AbstractStrategy::class);
+        $strategy = \Mockery::mock(Strategy::class);
         $strategy->expects('config')
             ->with('feeRatio')
             ->zeroOrMoreTimes()

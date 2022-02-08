@@ -23,7 +23,7 @@ use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
-abstract class AbstractStrategy
+abstract class Strategy
 {
     use HasName;
     use HasSignature;

@@ -7,7 +7,7 @@ namespace App\Trade\Evaluation;
 use App\Models\Evaluation;
 use App\Models\Summary;
 use App\Trade\Calc;
-use App\Trade\Strategy\AbstractStrategy;
+use App\Trade\Strategy\Strategy;
 use Illuminate\Support\Collection;
 
 class Summarizer
@@ -25,7 +25,7 @@ class Summarizer
     protected array $profitRoi = [];
     protected array $lossRoi = [];
 
-    public function __construct(protected AbstractStrategy $strategy)
+    public function __construct(protected Strategy $strategy)
     {
         $this->feeRatio = $this->strategy->config('feeRatio');
         $this->summary = $this->setupSummary();
@@ -39,7 +39,7 @@ class Summarizer
         return $summary;
     }
 
-    public function strategy(): AbstractStrategy
+    public function strategy(): Strategy
     {
         return $this->strategy;
     }
