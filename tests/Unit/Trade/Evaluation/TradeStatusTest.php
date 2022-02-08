@@ -5,7 +5,7 @@ namespace Tests\Unit\Trade\Evaluation;
 use App\Models\TradeAction;
 use App\Models\TradeSetup;
 use App\Trade\Evaluation\TradeStatus;
-use App\Trade\Strategy\TradeAction\MoveStop;
+use App\Trade\Strategy\Action\MoveStop;
 use Illuminate\Support\Collection;
 use Mockery;
 use PHPUnit\Framework\TestCase;

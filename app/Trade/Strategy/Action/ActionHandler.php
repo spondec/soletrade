@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Strategy\TradeAction;
+namespace App\Trade\Strategy\Action;
 
 use App\Models\TradeAction;
 use App\Trade\Evaluation\Position;
@@ -8,7 +8,7 @@ use App\Trade\Evaluation\Price;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 
-abstract class TradeActionHandler
+abstract class ActionHandler
 {
     use HasConfig;
     use HasName;

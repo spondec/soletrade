@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Trade\Strategy\TradeAction;
+namespace App\Trade\Strategy\Action;
 
 use App\Trade\Evaluation\Price;
 
-class MoveStop extends TradeActionHandler
+class MoveStop extends ActionHandler
 {
     protected array $config = [
         'target'         => [

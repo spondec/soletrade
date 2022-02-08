@@ -7,7 +7,7 @@ namespace App\Trade\Evaluation;
 use App\Models\TradeAction;
 use App\Models\TradeSetup;
 use App\Trade\Calc;
-use App\Trade\Strategy\TradeAction\TradeActionHandler;
+use App\Trade\Strategy\Action\ActionHandler;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 
@@ -16,7 +16,7 @@ class TradeStatus
     protected Price $entryPrice;
     protected ?Price $closePrice;
     protected ?Price $stopPrice;
-    /** @var TradeActionHandler[] */
+    /** @var ActionHandler[] */
     protected Collection $actionHandlers;
     protected Collection $riskRewardHistory;
     protected ?float $lowestEntryPrice = null;
@@ -95,7 +95,7 @@ class TradeStatus
         }
     }
 
-    protected function newActionHandler(Position $position, TradeAction $tradeAction): TradeActionHandler
+    protected function newActionHandler(Position $position, TradeAction $tradeAction): ActionHandler
     {
         return new $tradeAction->class($position, $tradeAction);
     }
