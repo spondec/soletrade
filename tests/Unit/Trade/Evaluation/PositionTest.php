@@ -149,7 +149,7 @@ class PositionTest extends TestCase
     {
         $pos = $this->getPosition(true, 1, 1);
 
-        $this->expectExceptionMessage('Undefined property');
+        $this->expectWarning();
         /** @noinspection PhpExpressionResultUnusedInspection */
         $pos->price('invalid');
     }
