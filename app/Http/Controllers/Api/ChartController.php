@@ -7,10 +7,10 @@ use App\Models\Evaluation;
 use App\Models\Symbol;
 use App\Repositories\ConfigRepository;
 use App\Repositories\SymbolRepository;
+use App\Trade\Exchange\Exchange;
 use App\Trade\HasName;
 use App\Trade\Log;
-use App\Trade\StrategyTester;
-use App\Trade\Exchange\Exchange;
+use App\Trade\Strategy\Tester;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -114,7 +114,7 @@ class ChartController extends Controller
 
         if ($strategy)
         {
-            $tester = new StrategyTester(App::make(SymbolRepository::class), $strategy, [
+            $tester = new Tester(App::make(SymbolRepository::class), $strategy, [
                 'startDate' => $start,
                 'endDate'   => $end
             ]);

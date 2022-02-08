@@ -1,19 +1,21 @@
 <?php
 
-namespace App\Trade;
+namespace App\Trade\Strategy;
 
+use App\Models\Summary;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Evaluation\Evaluator;
 use App\Trade\Evaluation\Summarizer;
-use App\Trade\Strategy\Strategy;
+use App\Trade\HasConfig;
+use App\Trade\Log;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use JetBrains\PhpStorm\ArrayShape;
-use App\Models\Summary;
+use function array_merge_recursive_distinct;
 
-class StrategyTester
+class Tester
 {
     use HasConfig;
 
