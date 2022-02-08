@@ -6,7 +6,7 @@ namespace App\Trade\Evaluation;
 
 use App\Trade\Binding\Bindable;
 use App\Trade\ChangeLog;
-use App\Trade\Strategy\Action\ActionHandler;
+use App\Trade\Strategy\Action\Handler;
 use JetBrains\PhpStorm\Pure;
 
 class Price
@@ -16,7 +16,7 @@ class Price
     protected ?object $lockedBy;
 
     protected static array $modifiers = [
-        ActionHandler::class,
+        Handler::class,
         Position::class,
         Bindable::class
     ];
