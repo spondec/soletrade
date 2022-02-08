@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Trade\Evaluation;
 
+use App\Trade\Action\Handler;
 use App\Trade\Binding\Bindable;
 use App\Trade\ChangeLog;
-use App\Trade\Strategy\Action\Handler;
 use JetBrains\PhpStorm\Pure;
 
 class Price

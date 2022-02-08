@@ -3,9 +3,9 @@
 namespace Trade\Strategy\TradeAction;
 
 use App\Models\TradeAction;
+use App\Trade\Action\MoveStop;
 use App\Trade\Evaluation\Position;
 use App\Trade\Evaluation\Price;
-use App\Trade\Strategy\Action\MoveStop;
 use PHPUnit\Framework\TestCase;
 
 class MoveStopTest extends TestCase

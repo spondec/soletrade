@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Strategy\Action;
+namespace App\Trade\Action;
 
 use App\Models\TradeAction;
 use App\Trade\Evaluation\Position;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Strategy\Action;
+namespace App\Trade\Action;
 
 use App\Trade\Evaluation\Price;
 

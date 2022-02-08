@@ -6,8 +6,8 @@ namespace App\Trade\Evaluation;
 
 use App\Models\TradeAction;
 use App\Models\TradeSetup;
+use App\Trade\Action\Handler;
 use App\Trade\Calc;
-use App\Trade\Strategy\Action\Handler;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 
