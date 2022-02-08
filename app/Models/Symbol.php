@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Trade\CandleCollection;
-use App\Trade\Indicator\AbstractIndicator;
+use App\Trade\Indicator\Indicator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +27,7 @@ class Symbol extends Model
 
     protected ?CandleCollection $candles = null;
 
-    /** @var AbstractIndicator[] */
+    /** @var Indicator[] */
     protected ?Collection $indicators = null;
 
     protected ?int $limit = null;
@@ -41,7 +41,7 @@ class Symbol extends Model
             'end'        => $this->end,
             'limit'      => $this->limit,
             'candles'    => $this->candles?->toArray() ?? [],
-            'indicators' => $this->indicators?->map(static fn(AbstractIndicator $i) => [
+            'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
                     'data'        => $i->raw($i->data()),
                     'progressive' => $i->raw($i->progressiveData())
                 ])?->toArray() ?? []
@@ -94,7 +94,7 @@ class Symbol extends Model
         return $this->candles = new CandleCollection($order === 'DESC' ? $candles->reverse()->values() : $candles);
     }
 
-    public function addIndicator(AbstractIndicator $indicator): void
+    public function addIndicator(Indicator $indicator): void
     {
         if ($indicator->symbol() !== $this)
         {
@@ -122,7 +122,7 @@ class Symbol extends Model
         $this->exchange()->updater()->update($this, $maxRunTime);
     }
 
-    public function indicator(string $name): AbstractIndicator
+    public function indicator(string $name): Indicator
     {
         return $this->indicators[$name] ??
             throw new \LogicException(

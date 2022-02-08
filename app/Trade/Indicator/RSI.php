@@ -4,7 +4,7 @@ namespace App\Trade\Indicator;
 
 use App\Trade\CandleCollection;
 
-class RSI extends AbstractIndicator
+class RSI extends Indicator
 {
     protected array $config = ['timePeriod' => 14];
 

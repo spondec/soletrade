@@ -6,7 +6,7 @@ use App\Trade\CandleCollection;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\ArrayShape;
 
-class Fib extends AbstractIndicator
+class Fib extends Indicator
 {
     protected array $config = [
         'period' => 144,

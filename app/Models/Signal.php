@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Trade\Indicator\AbstractIndicator;
+use App\Trade\Indicator\Indicator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -29,7 +29,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Signal extends Model
 {
-    public readonly AbstractIndicator $indicator;
+    public readonly Indicator $indicator;
 
     const BUY = 'BUY';
     const SELL = 'SELL';

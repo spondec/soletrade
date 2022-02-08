@@ -4,7 +4,7 @@ namespace App\Trade\Indicator;
 
 use App\Trade\CandleCollection;
 
-class EMA extends AbstractIndicator
+class EMA extends Indicator
 {
     protected array $config = ['timePeriod' => 8];
 

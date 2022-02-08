@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\Pure;
 
-abstract class AbstractIndicator implements Binder
+abstract class Indicator implements Binder
 {
     protected array $config = [];
 

@@ -17,7 +17,7 @@ use App\Trade\Evaluation\TradeLoop;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
-use App\Trade\Indicator\AbstractIndicator;
+use App\Trade\Indicator\Indicator;
 use App\Trade\Log;
 use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
 use Illuminate\Support\Collection;
@@ -47,11 +47,11 @@ abstract class AbstractStrategy
      */
     private Collection $signals;
     /**
-     * @var AbstractIndicator[]
+     * @var Indicator[]
      */
     private Collection $indicators;
     /**
-     * @var AbstractIndicator[]
+     * @var Indicator[]
      */
     private Collection $helperIndicators;
 
@@ -235,7 +235,7 @@ abstract class AbstractStrategy
 
         foreach ($this->indicatorConfig as $class => $setup)
         {
-            /** @var AbstractIndicator $indicator */
+            /** @var Indicator $indicator */
             $indicator = new $class(symbol: $this->symbol,
                 candles: $this->candles,
                 config: is_array($setup) ? $setup['config'] ?? [] : []);
@@ -264,7 +264,7 @@ abstract class AbstractStrategy
 
             unset($config['interval'], $config['symbol']);
 
-            /** @var AbstractIndicator $helperIndicator */
+            /** @var Indicator $helperIndicator */
             $helperIndicator = new $class(symbol: $helperSymbol, candles: $helperCandles, config: $config);
             if ($helperIndicator->symbol() === $symbol)
             {
@@ -288,13 +288,13 @@ abstract class AbstractStrategy
         $creator = new TradeCreator($this->tradeConfig);
         $hasSignal = !empty($this->tradeConfig->signals);
 
-        /** @var AbstractIndicator[]|Collection $indicators */
+        /** @var Indicator[]|Collection $indicators */
         $indicators = $this->indicators
-            ->filter(static fn(AbstractIndicator $indicator): bool => in_array($indicator::class, $creator->signalClasses))
-            ->keyBy(static fn(AbstractIndicator $indicator): string => $indicator::class);
+            ->filter(static fn(Indicator $indicator): bool => in_array($indicator::class, $creator->signalClasses))
+            ->keyBy(static fn(Indicator $indicator): string => $indicator::class);
 
         /** @var \Generator[] $generators */
-        $generators = $indicators->map(static fn(AbstractIndicator $indicator): \Generator => $indicator->scan(
+        $generators = $indicators->map(static fn(Indicator $indicator): \Generator => $indicator->scan(
             $this->indicatorConfig[$indicator::class]['signal']));
 
         $this->assertProgressiveness($indicators);
@@ -345,7 +345,7 @@ abstract class AbstractStrategy
     protected function assertProgressiveness(array $indicators): void
     {
         $isProgressive = null;
-        /** @var AbstractIndicator $i */
+        /** @var Indicator $i */
         foreach ($indicators as $i)
         {
             if ($isProgressive === null)
@@ -386,7 +386,7 @@ abstract class AbstractStrategy
         return $this->trades;
     }
 
-    public function helperIndicator(string $class): AbstractIndicator
+    public function helperIndicator(string $class): Indicator
     {
         return $this->helperIndicators[$class];
     }
@@ -403,7 +403,7 @@ abstract class AbstractStrategy
         return $tradeSetup;
     }
 
-    protected function indicator(Signal $signal): AbstractIndicator
+    protected function indicator(Signal $signal): Indicator
     {
         return $this->indicators[$signal->indicator_id]
             ?? throw new \InvalidArgumentException('Signal indicator was not found.');
