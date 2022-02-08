@@ -20,6 +20,13 @@ class SummaryTest extends TestCase
         return $strategy;
     }
 
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        \Mockery::close();
+    }
+
     public function test_evaluation_count()
     {
         $evaluation = $this->getTenPercentPositiveRoiBuyEvaluation();

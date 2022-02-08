@@ -12,6 +12,13 @@ use PHPUnit\Framework\TestCase;
 
 class TradeStatusTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        \Mockery::close();
+    }
+
     public function test_run_trade_actions(): void
     {
         $setup = $this->getSetup(true, 100, 1, 2, 0.5);
