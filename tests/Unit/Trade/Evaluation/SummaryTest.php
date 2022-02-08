@@ -14,6 +14,7 @@ class SummaryTest extends TestCase
         $strategy = \Mockery::mock(AbstractStrategy::class);
         $strategy->expects('config')
             ->with('feeRatio')
+            ->zeroOrMoreTimes()
             ->andReturn(0.001);
 
         return $strategy;
