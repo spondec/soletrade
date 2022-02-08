@@ -6,7 +6,7 @@ namespace App\Repositories;
 
 use App\Models\Symbol;
 use App\Trade\CandleMap;
-use App\Trade\Exchange\AbstractExchange;
+use App\Trade\Exchange\Exchange;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -226,11 +226,11 @@ class SymbolRepository extends Repository
                  ->get();
     }
 
-    public function findSymbols(AbstractExchange|int $exchange, string|array $symbolName, string $interval): \Illuminate\Database\Eloquent\Builder
+    public function findSymbols(Exchange|int $exchange, string|array $symbolName, string $interval): \Illuminate\Database\Eloquent\Builder
     {
         $query = Symbol::query()
-                       ->where('exchange_id', is_int($exchange) ? $exchange : $exchange::instance()->id())
-                       ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval);
+            ->where('exchange_id', is_int($exchange) ? $exchange : $exchange::instance()->id())
+            ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval);
 
         if (is_array($symbolName))
         {
@@ -267,16 +267,16 @@ class SymbolRepository extends Repository
                  ->first();
     }
 
-    public function fetchSymbolFromExchange(AbstractExchange $exchange, string $symbolName, string $interval)
+    public function fetchSymbolFromExchange(Exchange $exchange, string $symbolName, string $interval)
     {
         $filter = static fn(Symbol $symbol): bool => $symbol->symbol === $symbolName && $symbol->interval === $interval;
         return $exchange::instance()
-                        ->updater()
-                        ->updateByInterval(interval: $interval, filter: $filter)
-                        ?->first();
+            ->updater()
+            ->updateByInterval(interval: $interval, filter: $filter)
+            ?->first();
     }
 
-    public function fetchSymbol(AbstractExchange $exchange, string $symbolName, string $interval): ?Symbol
+    public function fetchSymbol(Exchange $exchange, string $symbolName, string $interval): ?Symbol
     {
         /** @var Symbol $symbol */
         /** @noinspection PhpIncompatibleReturnTypeInspection */

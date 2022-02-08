@@ -4,7 +4,7 @@ namespace App\Trade;
 
 use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
-use App\Trade\Exchange\AbstractExchange;
+use App\Trade\Exchange\Exchange;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +20,7 @@ class CandleUpdater
      */
     protected array $symbols;
 
-    public function __construct(protected AbstractExchange $exchange)
+    public function __construct(protected Exchange $exchange)
     {
         $this->symbolRepo = App::make(SymbolRepository::class);
         $this->symbols = $this->exchange->symbols();

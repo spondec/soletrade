@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use App\Trade\Exchange\AbstractExchange;
+use App\Models\Exchange as ExchangeModel;
+use App\Trade\Exchange\Exchange;
 
 /**
  * @property int exchange_id
  */
 trait HasExchange
 {
-    public function exchange(): AbstractExchange
+    public function exchange(): Exchange
     {
         static $instances = [];
 
@@ -18,8 +19,8 @@ trait HasExchange
             return $instances[$id];
         }
 
-        /** @var Exchange $exchange */
-        $exchange = Exchange::query()->findOrFail($id);
+        /** @var ExchangeModel $exchange */
+        $exchange = ExchangeModel::query()->findOrFail($id);
 
         $account = ucfirst(mb_strtolower($exchange->account));
         $name = ucfirst(mb_strtolower($exchange->name));

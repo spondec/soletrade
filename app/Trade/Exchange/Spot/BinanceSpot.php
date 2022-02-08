@@ -2,7 +2,7 @@
 
 namespace App\Trade\Exchange\Spot;
 
-class BinanceSpot extends AbstractSpotExchange
+class BinanceSpot extends SpotExchange
 {
     use \App\Trade\Exchange\Spot\Binance\BinanceSpot;
 

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\ConfigRepository;
-use App\Trade\Exchange\AbstractExchange;
+use App\Trade\Exchange\Exchange;
 
 class ExchangeController extends Controller
 {
@@ -18,7 +18,7 @@ class ExchangeController extends Controller
     }
 
     /**
-     * @param string|AbstractExchange $exchange
+     * @param string|Exchange $exchange
      */
     public function symbols(string $exchange): array
     {
@@ -36,7 +36,7 @@ class ExchangeController extends Controller
 
         foreach ($this->configRepo->getExchanges() as $exchange)
         {
-            /** @var AbstractExchange $exchange */
+            /** @var Exchange $exchange */
             $exchange = $exchange::instance();
             $exchangeName = $exchange::name();
 

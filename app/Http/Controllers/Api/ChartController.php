@@ -10,7 +10,7 @@ use App\Repositories\SymbolRepository;
 use App\Trade\HasName;
 use App\Trade\Log;
 use App\Trade\StrategyTester;
-use App\Trade\Exchange\AbstractExchange;
+use App\Trade\Exchange\Exchange;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -82,13 +82,13 @@ class ChartController extends Controller
         return $mapped;
     }
 
-    public function candles(string|AbstractExchange $exchange,
-                            string                  $symbolName,
-                            string                  $interval,
-                            array                   $indicators,
-                            string                  $strategy = null,
-                            ?array                  $range = null,
-                            ?int                    $limit = null): array
+    public function candles(string|Exchange $exchange,
+                            string          $symbolName,
+                            string          $interval,
+                            array           $indicators,
+                            string          $strategy = null,
+                            ?array          $range = null,
+                            ?int            $limit = null): array
     {
 
         $start = $range ? Carbon::parse($range['start'])->getTimestampMs() : null;
@@ -146,13 +146,13 @@ class ChartController extends Controller
     }
 
     /**
-     * @param AbstractExchange|string $exchange
-     * @param string                  $symbolName
-     * @param string                  $interval
+     * @param Exchange|string $exchange
+     * @param string          $symbolName
+     * @param string          $interval
      *
      * @return Symbol|null
      */
-    protected function getSymbol(AbstractExchange|string $exchange, string $symbolName, string $interval): ?Symbol
+    protected function getSymbol(Exchange|string $exchange, string $symbolName, string $interval): ?Symbol
     {
         return $this->symbolRepo->fetchSymbol(exchange: $exchange::instance(), symbolName: $symbolName, interval: $interval);
     }

@@ -9,9 +9,9 @@ class AccountBalance
     /** @var Asset[] */
     protected array $assets;
 
-    public function __construct(protected AbstractExchange $exchange,
-                                array                      $assets,
-                                protected string           $relativeAsset = 'USDT')
+    public function __construct(protected Exchange $exchange,
+                                array              $assets,
+                                protected string   $relativeAsset = 'USDT')
     {
         foreach ($assets as $asset)
         {

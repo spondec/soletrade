@@ -2,7 +2,7 @@
 
 namespace App\Trade\Exchange;
 
-use App\Models\Exchange;
+use App\Models\Exchange as ExchangeModel;
 use App\Models\Order;
 use App\Trade\CandleMap;
 use App\Trade\HasName;
@@ -12,15 +12,15 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
-abstract class AbstractExchange
+abstract class Exchange
 {
     use HasName;
 
-    protected static ?AbstractExchange $instance = null;
+    protected static ?Exchange $instance = null;
     protected ?string $apiKey;
     protected ?string $secretKey;
     protected mixed $api;
-    protected Exchange $exchange;
+    protected ExchangeModel $exchange;
 
     protected array $actions;
     protected string $account;
@@ -72,7 +72,7 @@ abstract class AbstractExchange
         ]);
 
         /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
-        $this->exchange = Exchange::query()
+        $this->exchange = ExchangeModel::query()
             ->where('class', static::class)
             ->limit(1)
             ->firstOrFail();
