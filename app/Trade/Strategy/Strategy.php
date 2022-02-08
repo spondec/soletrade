@@ -19,7 +19,7 @@ use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Indicator\Indicator;
 use App\Trade\Log;
-use App\Trade\Strategy\TradeAction\AbstractTradeActionHandler;
+use App\Trade\Strategy\TradeAction\TradeActionHandler;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
@@ -174,7 +174,7 @@ abstract class Strategy
 
     public function newAction(TradeSetup $trade, string $actionClass, array $config): void
     {
-        if (!is_subclass_of($actionClass, AbstractTradeActionHandler::class))
+        if (!is_subclass_of($actionClass, TradeActionHandler::class))
         {
             throw new \InvalidArgumentException('Invalid trade action class: ' . $actionClass);
         }

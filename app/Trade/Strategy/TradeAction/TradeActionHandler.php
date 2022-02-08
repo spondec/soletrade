@@ -8,7 +8,7 @@ use App\Trade\Evaluation\Price;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 
-abstract class AbstractTradeActionHandler
+abstract class TradeActionHandler
 {
     use HasConfig;
     use HasName;
