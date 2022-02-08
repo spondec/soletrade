@@ -16,5 +16,4 @@ class TradeAction extends Model
         'config' => 'array'
     ];
     protected $guarded = ['id'];
-
 }
