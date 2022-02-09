@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Illuminate\Database\Schema\Blueprint;
 use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
@@ -23,6 +24,15 @@ class AppServiceProvider extends ServiceProvider
         ini_set('trader.real_precision', 10);
         $this->app->singleton(Tester::class);
         $this->app->singleton(SymbolRepository::class);
+
+        $this->app->bind('db.schema', static function ($app) {
+            $builder = $app['db']->connection()->getSchemaBuilder();
+            $builder->blueprintResolver(static function ($table, $callback) {
+                return new Blueprint($table, $callback);
+            });
+
+            return $builder;
+        });
     }
 
     /**
