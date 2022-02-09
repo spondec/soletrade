@@ -83,9 +83,9 @@ class TradeSetup extends Model implements Bindable
     public function toArray()
     {
         $result = parent::toArray();
-        $result['price'] = round((float)$result['price'], 2);
-        $result['close_price'] = $result['close_price'] ? round((float)$result['close_price'], 2) : null;
-        $result['stop_price'] = $result['stop_price'] ? round((float)$result['stop_price'], 2) : null;
+        $result['price'] = \round((float)$result['price'], 2);
+        $result['close_price'] = $result['close_price'] ? \round((float)$result['close_price'], 2) : null;
+        $result['stop_price'] = $result['stop_price'] ? \round((float)$result['stop_price'], 2) : null;
 
         return $result;
     }

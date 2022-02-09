@@ -58,7 +58,7 @@ class AccountBalance
             {
                 $symbol = $this->exchange->symbol($baseAsset, $relativeAsset);
 
-                if (!in_array($symbol, $symbols))
+                if (!\in_array($symbol, $symbols))
                 {
                     continue;
                 }
@@ -77,14 +77,14 @@ class AccountBalance
             $worth[$baseAsset] = ($price ?? 1) * ($onlyAvailable ? $asset->available() : $asset->total());
         }
 
-        arsort($worth);
+        \arsort($worth);
 
         return $worth;
     }
 
     public function primaryAsset(): Asset
     {
-        return $this->assets[array_key_first($this->calculateRelativeWorth(onlyAvailable: true))];
+        return $this->assets[\array_key_first($this->calculateRelativeWorth(onlyAvailable: true))];
     }
 
     /**

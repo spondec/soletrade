@@ -31,7 +31,7 @@ class CandleUpdater
     /** @return Symbol[] */
     public function updateByInterval(string $interval, int $maxRunTime = 0, ?\Closure $filter = null): ?Collection
     {
-        $startTime = time();
+        $startTime = \time();
 
         $symbols = $this->indexSymbols($interval);
 
@@ -44,7 +44,7 @@ class CandleUpdater
 
         foreach ($symbols as $key => $symbol)
         {
-            $remaining = $maxRunTime - (time() - $startTime);
+            $remaining = $maxRunTime - (\time() - $startTime);
 
             if (($maxRunTime > 0 && $remaining <= 0) ||
                 !$this->update($symbol, $maxRunTime > 0 ? $remaining : 0))
@@ -64,7 +64,7 @@ class CandleUpdater
     public function update(Symbol $symbol, int $maxRunTime = 0): bool
     {
         Log::execTimeStart($task = "Updating $symbol->symbol-$symbol->interval candles");
-        $startTime = time();
+        $startTime = \time();
         $id = $symbol->id;
 
         try
@@ -76,14 +76,14 @@ class CandleUpdater
                 $currentLastCandle = $currentCandles->shift();
                 $start = $currentCandles->first()->t ?? 0;
 
-                $symbol->last_update = time() * 1000;
+                $symbol->last_update = \time() * 1000;
                 $latestCandles = $this->exchange->candles($symbol->symbol,
                     $symbol->interval,
                     $start,
                     $this->limit);
                 $inserts = $this->symbolRepo->mapCandles($latestCandles, $id, $this->map);
 
-                $break = count($latestCandles) <= 1;
+                $break = \count($latestCandles) <= 1;
 
                 if (isset($latestCandles[0]) && $currentLastCandle)
                 {
@@ -103,7 +103,7 @@ class CandleUpdater
 
                 $symbol->save();
 
-                if ($maxRunTime > 0 && time() - $startTime >= $maxRunTime)
+                if ($maxRunTime > 0 && \time() - $startTime >= $maxRunTime)
                 {
                     return false;
                 }

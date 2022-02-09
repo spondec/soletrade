@@ -21,7 +21,7 @@ class ChangeLog
             'reason'    => $reason ?: null,
         ];
 
-        $last = end($this->log);
+        $last = \end($this->log);
 
         if ($last !== $log)
         {

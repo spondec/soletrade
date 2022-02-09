@@ -21,7 +21,7 @@ class Fib extends Indicator
      */
     public static function isUpward(array $prices): bool
     {
-        $firstLevel = array_key_first($prices);
+        $firstLevel = \array_key_first($prices);
         $firstLevelPrice = $prices[$firstLevel];
 
         foreach ($prices as $level => $price)
@@ -40,33 +40,33 @@ class Fib extends Indicator
      */
     public static function targetLevels(array $prices, int $level, bool $isBuy): array
     {
-        $levels = array_keys($prices);
+        $levels = \array_keys($prices);
         $isUpward = self::isUpward($prices);
 
         if ($isUpward)
         {
             if ($isBuy)
             {
-                $target = array_reverse(array_filter($levels, static fn(float $l) => $l < $level));
+                $target = \array_reverse(\array_filter($levels, static fn(float $l) => $l < $level));
             }
             else
             {
-                $target = array_filter($levels, static fn(float $l) => $l > $level);
+                $target = \array_filter($levels, static fn(float $l) => $l > $level);
             }
         }
         else
         {
             if ($isBuy)
             {
-                $target = array_filter($levels, static fn(float $l) => $l > $level);
+                $target = \array_filter($levels, static fn(float $l) => $l > $level);
             }
             else
             {
-                $target = array_reverse(array_filter($levels, static fn(float $l) => $l < $level));
+                $target = \array_reverse(\array_filter($levels, static fn(float $l) => $l < $level));
             }
         }
 
-        return array_values($target);
+        return \array_values($target);
     }
 
     #[ArrayShape(['level' => "int|string", 'price' => "float", 'distance' => "float|int"])]
@@ -75,7 +75,7 @@ class Fib extends Indicator
         $minDistance = null;
         foreach ($levels as $level => $levelPrice)
         {
-            $distance = abs($price - $levelPrice);
+            $distance = \abs($price - $levelPrice);
             if (!$minDistance || $distance < $minDistance)
             {
                 $minDistance = $distance;
@@ -118,7 +118,7 @@ class Fib extends Indicator
 
     public function getBindable(): array
     {
-        return array_filter($this->config['levels'], static fn(int $level): bool => !in_array($level, [0, 1000]));
+        return \array_filter($this->config['levels'], static fn(int $level): bool => !\in_array($level, [0, 1000]));
     }
 
     protected function getBindPrice(mixed $bind): float
@@ -133,8 +133,8 @@ class Fib extends Indicator
         $levels[] = 0;
         $levels[] = 1000;
 
-        $levels = array_unique($levels);
-        sort($levels);
+        $levels = \array_unique($levels);
+        \sort($levels);
     }
 
     protected function calculate(CandleCollection $candles): array
@@ -154,8 +154,8 @@ class Fib extends Indicator
 
             if ($bars === $period)
             {
-                $highest = max($highs);
-                $lowest = min($lows);
+                $highest = \max($highs);
+                $lowest = \min($lows);
 
                 $new = [];
 
@@ -168,8 +168,8 @@ class Fib extends Indicator
 
                 $fib[] = $new;
 
-                array_shift($highs);
-                array_shift($lows);
+                \array_shift($highs);
+                \array_shift($lows);
             }
             else
             {

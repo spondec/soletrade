@@ -31,7 +31,7 @@ class Calc
             return 0;
         }
 
-        return abs($highRoi / $lowRoi);
+        return \abs($highRoi / $lowRoi);
     }
 
     public static function roi(bool $isBuy, int|float $entryPrice, int|float $exitPrice): float
@@ -53,6 +53,6 @@ class Calc
 
     public static function avg(array $numbers): float
     {
-        return array_sum($numbers) / count($numbers);
+        return \array_sum($numbers) / \count($numbers);
     }
 }

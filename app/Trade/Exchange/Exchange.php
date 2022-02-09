@@ -105,7 +105,7 @@ abstract class Exchange
         return [
             'name'    => static::name(),
             'account' => $this->account,
-            'actions' => implode(', ', $this->actions),
+            'actions' => \implode(', ', $this->actions),
         ];
     }
 
@@ -168,10 +168,10 @@ abstract class Exchange
 
     protected final function assertAction(Order $order): void
     {
-        if (!in_array($order->side, $this->actions))
+        if (!\in_array($order->side, $this->actions))
         {
             throw new \UnexpectedValueException(static::name() . " doesn't allow to take action: $order->side.\n
-            Available actions: " . implode(', ', $this->actions));
+            Available actions: " . \implode(', ', $this->actions));
         }
     }
 

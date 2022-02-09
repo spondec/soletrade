@@ -14,7 +14,7 @@ class OrderBook
      */
     public function __construct(protected string $symbol, protected array $bids, protected array $asks)
     {
-        $this->initTime = microtime(true);
+        $this->initTime = \microtime(true);
 
         if (!$this->bids || !$this->asks)
         {
@@ -34,12 +34,12 @@ class OrderBook
 
     public function isExpired()
     {
-        return microtime(true) - $this->initTime >= self::TIMEOUT;
+        return \microtime(true) - $this->initTime >= self::TIMEOUT;
     }
 
     public function bestBid(): float
     {
-        return max($this->bids);
+        return \max($this->bids);
     }
 
     public function spread(): float
@@ -49,12 +49,12 @@ class OrderBook
 
     public function bestAsk(): float
     {
-        return min($this->asks);
+        return \min($this->asks);
     }
 
     protected final function avg(array $values): float
     {
-        return array_sum($values) / count($values);
+        return \array_sum($values) / \count($values);
     }
 
     public function averageBid(): float

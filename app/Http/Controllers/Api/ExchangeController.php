@@ -14,7 +14,7 @@ class ExchangeController extends Controller
 
     public function index(): array
     {
-        return array_map(fn($v) => $v::instance()->info(), $this->configRepo->getExchanges());
+        return \array_map(fn($v) => $v::instance()->info(), $this->configRepo->getExchanges());
     }
 
     /**
@@ -22,7 +22,7 @@ class ExchangeController extends Controller
      */
     public function symbols(string $exchange): array
     {
-        if (in_array($exchange, $this->configRepo->getExchanges()))
+        if (\in_array($exchange, $this->configRepo->getExchanges()))
         {
             return $exchange::instance()->symbols();
         }
@@ -50,8 +50,8 @@ class ExchangeController extends Controller
                 ];
             }
         }
-        $names = array_column($balances, 'name');
-        array_multisort($names, SORT_ASC, $balances);
+        $names = \array_column($balances, 'name');
+        \array_multisort($names, SORT_ASC, $balances);
         return $balances;
     }
 }

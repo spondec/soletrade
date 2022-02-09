@@ -37,7 +37,7 @@ trait CanBind
     {
         if ($bindable = $this->getBindable())
         {
-            if (!in_array($bind, $bindable))
+            if (!\in_array($bind, $bindable))
             {
                 throw new \InvalidArgumentException("$bind was not defined as a bindable.");
             }
@@ -83,7 +83,7 @@ trait CanBind
 
     public function isBindable(mixed $bind): bool
     {
-        return in_array($bind, $this->getBindable());
+        return \in_array($bind, $this->getBindable());
     }
 
     public function saveBindings(Bindable&Model $model): void

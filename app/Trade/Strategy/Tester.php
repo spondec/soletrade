@@ -46,7 +46,7 @@ class Tester
 
     protected function setupStrategy(string $class, array $config): Strategy
     {
-        if (!is_subclass_of($class, Strategy::class))
+        if (!\is_subclass_of($class, Strategy::class))
         {
             throw new \InvalidArgumentException('Invalid strategy class: ' . $class);
         }

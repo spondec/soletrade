@@ -20,8 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (!App::runningInConsole()) set_time_limit(30);
-        ini_set('trader.real_precision', 10);
+        if (!App::runningInConsole()) \set_time_limit(30);
+        \ini_set('trader.real_precision', 10);
         $this->app->singleton(Tester::class);
         $this->app->singleton(SymbolRepository::class);
 

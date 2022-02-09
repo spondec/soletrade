@@ -37,7 +37,7 @@ class ClosureHash
                 $content .= $file->current();
                 $file->next();
             }
-            self::$hashes[$closure] = md5(json_encode(array(
+            self::$hashes[$closure] = \md5(\json_encode(array(
                 $content,
                 $ref->getStaticVariables()
             )));

@@ -51,9 +51,9 @@ class Order extends Model
 
     public function setAttribute($key, $value)
     {
-        if (in_array($key, ['side', 'type', 'status', 'exchange', 'account']))
+        if (\in_array($key, ['side', 'type', 'status', 'exchange', 'account']))
         {
-            $value = mb_strtoupper($value);
+            $value = \mb_strtoupper($value);
         }
 
         parent::setAttribute($key, $value);
@@ -63,7 +63,7 @@ class Order extends Model
     {
         $responses = $this->responses ?? [];
 
-        $lastKey = array_key_last($responses);
+        $lastKey = \array_key_last($responses);
 
         if ($lastKey === null || ($key !== $lastKey && $data !== $responses[$lastKey]))
         {

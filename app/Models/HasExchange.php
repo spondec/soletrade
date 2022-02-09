@@ -22,12 +22,12 @@ trait HasExchange
         /** @var ExchangeModel $exchange */
         $exchange = ExchangeModel::query()->findOrFail($id);
 
-        $account = ucfirst(mb_strtolower($exchange->account));
-        $name = ucfirst(mb_strtolower($exchange->name));
+        $account = \ucfirst(\mb_strtolower($exchange->account));
+        $name = \ucfirst(\mb_strtolower($exchange->name));
 
         $class = '\App\Trade\Exchange\\' . "$account\\$name";
 
-        if (!class_exists($class))
+        if (!\class_exists($class))
         {
             throw new \LogicException("Exchange instance '$name' couldn't be found at '$class'");
         }

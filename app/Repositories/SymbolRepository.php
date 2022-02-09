@@ -23,7 +23,7 @@ class SymbolRepository extends Repository
     {
         foreach ($indicators as $class => $config)
         {
-            if (!is_array($config))
+            if (!\is_array($config))
             {
                 $class = $config;
                 $config = [];
@@ -163,7 +163,7 @@ class SymbolRepository extends Repository
     public function fetchNextCandle(Symbol|int $symbol, int $timestamp): ?\stdClass
     {
         return DB::table('candles')
-            ->where('symbol_id', is_int($symbol) ? $symbol : $symbol->id)
+            ->where('symbol_id', \is_int($symbol) ? $symbol : $symbol->id)
             ->where('t', '>', $timestamp)
             ->orderBy('t', 'ASC')
             ->first();
@@ -229,10 +229,10 @@ class SymbolRepository extends Repository
     public function findSymbols(Exchange|int $exchange, string|array $symbolName, string $interval): \Illuminate\Database\Eloquent\Builder
     {
         $query = Symbol::query()
-            ->where('exchange_id', is_int($exchange) ? $exchange : $exchange::instance()->id())
+            ->where('exchange_id', \is_int($exchange) ? $exchange : $exchange::instance()->id())
             ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval);
 
-        if (is_array($symbolName))
+        if (\is_array($symbolName))
         {
             $query->whereIn('symbol', $symbolName);
         }

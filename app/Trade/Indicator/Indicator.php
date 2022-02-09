@@ -71,7 +71,7 @@ abstract class Indicator implements Binder
         if ($count = $candles->count())
         {
             $data = $this->calculate($this->candles);
-            $this->gap = $count - count($data);
+            $this->gap = $count - \count($data);
 
             if ($this->gap < 0)
             {
@@ -121,9 +121,9 @@ abstract class Indicator implements Binder
             return [];
         }
 
-        $timestamps = array_slice($this->candles->timestamps(), ($length = count($data)) * -1, $length);
+        $timestamps = \array_slice($this->candles->timestamps(), ($length = \count($data)) * -1, $length);
 
-        return array_combine($timestamps, $data);
+        return \array_combine($timestamps, $data);
     }
 
     public function isProgressive(): bool
@@ -503,7 +503,7 @@ abstract class Indicator implements Binder
     protected function recalculateProgressively(int $startIndex, \stdClass $candle): mixed
     {
         $data = $this->recalculate($this->getCalculableMinPrevCandles($startIndex, $candle));
-        return $this->progressiveData[$candle->t] = end($data);
+        return $this->progressiveData[$candle->t] = \end($data);
     }
 
     protected function recalculate(CandleCollection $candles): array

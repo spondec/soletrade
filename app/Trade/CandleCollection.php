@@ -12,23 +12,23 @@ class CandleCollection extends Collection
 
     #[Pure] public function closes(): array
     {
-        return array_column($this->all(), 'c');
+        return \array_column($this->all(), 'c');
     }
 
     #[Pure] public function highs(): array
 
     {
-        return array_column($this->all(), 'h');
+        return \array_column($this->all(), 'h');
     }
 
     #[Pure] public function lows(): array
     {
-        return array_column($this->all(), 'l');
+        return \array_column($this->all(), 'l');
     }
 
     #[Pure] public function timestamps(): array
     {
-        return array_column($this->all(), 't');
+        return \array_column($this->all(), 't');
     }
 
     public function previousCandles(int $amount, int $startIndex): static
@@ -43,7 +43,7 @@ class CandleCollection extends Collection
         {
             $candles[] = $this->items[$startIndex - $i];
         }
-        return new static(array_reverse($candles, false));
+        return new static(\array_reverse($candles, false));
     }
 
     public function findPrevNextCandle(int        $timestamp,

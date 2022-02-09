@@ -20,11 +20,11 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
         {
             foreach ($errors as $key => $error)
             {
-                $errors[$key] = implode(' ,', $error);
+                $errors[$key] = \implode(' ,', $error);
             }
 
             throw new \UnexpectedValueException("Validation errors:\n" .
-                implode("\n", $errors));
+                \implode("\n", $errors));
         }
     }
 
@@ -64,7 +64,7 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
             if ($errors = $result->errors()->messages())
             {
                 throw new \UnexpectedValueException(
-                    'Validation error: ' . implode("\n", $errors[$key]));
+                    'Validation error: ' . \implode("\n", $errors[$key]));
             }
         }
 

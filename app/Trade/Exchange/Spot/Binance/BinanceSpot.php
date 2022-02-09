@@ -39,7 +39,7 @@ trait BinanceSpot
     protected function processOrderResponses(array $responses): Collection
     {
         $orders = $this->fetchOrdersWithExchangeIds(
-            array_column($responses, 'id'));
+            \array_column($responses, 'id'));
 
         foreach ($responses as $response)
         {
@@ -77,7 +77,7 @@ trait BinanceSpot
 
     public function symbol(string $baseAsset, string $quoteAsset): string
     {
-        return mb_strtoupper("$baseAsset/$quoteAsset");
+        return \mb_strtoupper("$baseAsset/$quoteAsset");
     }
 
     public function orderBook(string $symbol): OrderBook
@@ -85,8 +85,8 @@ trait BinanceSpot
         $orderBook = $this->api->fetch_order_book($symbol);
 
         return new OrderBook($symbol,
-            array_column($orderBook['bids'], 0),
-            array_column($orderBook['asks'], 0));
+            \array_column($orderBook['bids'], 0),
+            \array_column($orderBook['asks'], 0));
     }
 
     public function symbols(string $quoteAsset = null): array
@@ -99,9 +99,9 @@ trait BinanceSpot
         }
 
         if ($quoteAsset)
-            $markets = array_filter($markets, fn($v) => $v['info']['quoteAsset'] === $quoteAsset);
+            $markets = \array_filter($markets, fn($v) => $v['info']['quoteAsset'] === $quoteAsset);
 
-        return array_column($markets, 'symbol');
+        return \array_column($markets, 'symbol');
     }
 
     public function candles(string $symbol, string $interval, int $start = null, int $limit = null): array

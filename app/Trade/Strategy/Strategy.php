@@ -103,7 +103,7 @@ abstract class Strategy
                 'signature' => $this->signature->hash
             ],
              'trade_setup'     => $config,
-             'indicator_setup' => array_map(
+             'indicator_setup' => \array_map(
                  fn(string $class): array => $this->indicatorConfig[$class]->toArray(),
                  $this->getSignalClasses($config))
             ]);
@@ -117,7 +117,7 @@ abstract class Strategy
         $indicators = [];
         foreach ($config['signals'] as $key => $indicator)
         {
-            $indicators[] = is_array($indicator) ? $key : $indicator;
+            $indicators[] = \is_array($indicator) ? $key : $indicator;
         }
 
         return $indicators;
@@ -174,7 +174,7 @@ abstract class Strategy
 
     public function newAction(TradeSetup $trade, string $actionClass, array $config): void
     {
-        if (!is_subclass_of($actionClass, Handler::class))
+        if (!\is_subclass_of($actionClass, Handler::class))
         {
             throw new \InvalidArgumentException('Invalid trade action class: ' . $actionClass);
         }
@@ -238,7 +238,7 @@ abstract class Strategy
             /** @var Indicator $indicator */
             $indicator = new $class(symbol: $this->symbol,
                 candles: $this->candles,
-                config: is_array($setup) ? $setup['config'] ?? [] : []);
+                config: \is_array($setup) ? $setup['config'] ?? [] : []);
 
             $this->indicators[$indicator->id()] = $indicator;
             $this->symbol->addIndicator(indicator: $indicator);
@@ -290,7 +290,7 @@ abstract class Strategy
 
         /** @var Indicator[]|Collection $indicators */
         $indicators = $this->indicators
-            ->filter(static fn(Indicator $indicator): bool => in_array($indicator::class, $creator->signalClasses))
+            ->filter(static fn(Indicator $indicator): bool => \in_array($indicator::class, $creator->signalClasses))
             ->keyBy(static fn(Indicator $indicator): string => $indicator::class);
 
         /** @var \Generator[] $generators */
@@ -317,17 +317,18 @@ abstract class Strategy
                         $result = $generators[$class]->current();
                         $signal = $result['signal'];
 
-                        $this->runUnderCandle($key, $indicator->candle(), function () use ($candles, $creator, $signal) {
-                            if ($trade = $creator->findTrade($candles, $signal))
-                            {
-                                $creator->setActions($this->actions($trade));
-                                $savedTrade = $creator->save();
-
-                                foreach ($this->indicators as $i)
+                        $this->runUnderCandle($key, $indicator->candle(),
+                            function () use ($candles, $creator, $signal) {
+                                if ($trade = $creator->findTrade($candles, $signal))
                                 {
-                                    $i->replaceBindable($trade, $savedTrade);
-                                    $i->saveBindings($savedTrade);
-                                }
+                                    $creator->setActions($this->actions($trade));
+                                    $savedTrade = $creator->save();
+
+                                    foreach ($this->indicators as $i)
+                                    {
+                                        $i->replaceBindable($trade, $savedTrade);
+                                        $i->saveBindings($savedTrade);
+                                    }
 
                                 $this->trades[$trade->timestamp] = $trade = $savedTrade;
                             }

@@ -16,7 +16,7 @@ trait HasSignature
 
     public function register(array $data): Signature
     {
-        $json = json_encode($hashed = $this->hashCallbacksInArray($data));
+        $json = \json_encode($hashed = $this->hashCallbacksInArray($data));
         $hash = $this->hash($json);
 
         if ($signature = $this->signatureCache[$hash] ?? null)
@@ -42,7 +42,7 @@ trait HasSignature
     {
         foreach ($array as &$item)
         {
-            if (is_array($item))
+            if (\is_array($item))
             {
                 $item = $this->hashCallbacksInArray($item);
             }
@@ -57,12 +57,12 @@ trait HasSignature
 
     protected function hash(string $string): string
     {
-        return md5($string);
+        return \md5($string);
     }
 
     public function contents(): string
     {
-        return file_get_contents((new \ReflectionClass(static::class))->getFileName());
+        return \file_get_contents((new \ReflectionClass(static::class))->getFileName());
     }
 
     public function id(): int

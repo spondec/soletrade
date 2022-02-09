@@ -68,7 +68,7 @@ class Signal extends Model
     {
         $result = parent::toArray();
 
-        $result['price'] = round($result['price'], 2);
+        $result['price'] = \round($result['price'], 2);
 
         return $result;
     }

@@ -14,7 +14,7 @@ class ExecTimeMiddleware
     {
         if (!static::$sessionId)
         {
-            static::$sessionId = random_int(1000000000, 9000000000);
+            static::$sessionId = \random_int(1000000000, 9000000000);
         }
     }
 
@@ -39,11 +39,11 @@ class ExecTimeMiddleware
 
     public function terminate()
     {
-        if (defined('LARAVEL_START'))
+        if (\defined('LARAVEL_START'))
         {
-            Log::info(sprintf("%sExecution time: %s seconds.",
+            Log::info(\sprintf("%sExecution time: %s seconds.",
                 static::getSessionPrefix(),
-                round(microtime(true) - LARAVEL_START, 2)));
+                \round(\microtime(true) - LARAVEL_START, 2)));
         }
     }
 }

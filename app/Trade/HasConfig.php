@@ -14,7 +14,7 @@ trait HasConfig
     {
         foreach ($array as $key => $value)
         {
-            $keys = explode('.', $key);
+            $keys = \explode('.', $key);
 
             if (isset($keys[1])) //has multiple dimensions
             {
@@ -46,12 +46,12 @@ trait HasConfig
     {
         foreach ($replacement as $key => &$value)
         {
-            if (!array_key_exists($key, $original))
+            if (!\array_key_exists($key, $original))
             {
                 throw new \UnexpectedValueException("Config key does not match: $key");
             }
 
-            if (is_array($value) && !array_is_list($value))
+            if (\is_array($value) && !\array_is_list($value))
             {
                 $this->assertKeyMatch($original[$key], $value);
             }
@@ -60,12 +60,12 @@ trait HasConfig
 
     public function config(string $key, bool $assertNotNull = false): mixed
     {
-        $keys = explode('.', $key);
+        $keys = \explode('.', $key);
         $value = &$this->config;
 
         foreach ($keys as $k)
         {
-            if (array_key_exists($k, $value))
+            if (\array_key_exists($k, $value))
             {
                 $value = &$value[$k];
             }
@@ -95,7 +95,7 @@ trait HasConfig
     {
         $this->resolveKeys($this->config);
 
-        if (method_exists($this, 'getDefaultConfig'))
+        if (\method_exists($this, 'getDefaultConfig'))
         {
             //parent class' config defaults
             $defaultConfig = $this->getDefaultConfig();

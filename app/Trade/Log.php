@@ -18,12 +18,12 @@ final class Log
     {
         if ($message instanceof \Exception)
         {
-            $exception = get_class($message);
+            $exception = \get_class($message);
             $message = $message->getMessage();
         }
 
         static::$log[] = [
-            'time'      => microtime(true),
+            'time'      => \microtime(true),
             'exception' => $exception ?? null,
             'message'   => $message ?: 'Empty message received.'
         ];
@@ -36,26 +36,26 @@ final class Log
 
     public static function execTimeStart(string $taskName): void
     {
-        if (in_array($taskName, static::$tasks))
+        if (\in_array($taskName, static::$tasks))
         {
             throw new \LogicException("Task $taskName is already started.");
         }
 
-        static::$tasks[(string)microtime(true)] = $taskName;
-        static::logInfo(sprintf('Started: %s', $taskName));
+        static::$tasks[(string)\microtime(true)] = $taskName;
+        static::logInfo(\sprintf('Started: %s', $taskName));
     }
 
     public static function execTimeFinish(string $taskName)
     {
-        if (!$time = array_search($taskName, static::$tasks))
+        if (!$time = \array_search($taskName, static::$tasks))
         {
             throw new \LogicException("$taskName is not started, therefore can not be finished.");
         }
 
-        $execTime = microtime(true) - (float)$time;
+        $execTime = \microtime(true) - (float)$time;
 
-        static::logInfo(sprintf('Finished in %s seconds: %s',
-            round($execTime, 2), static::$tasks[$time]));
+        static::logInfo(\sprintf('Finished in %s seconds: %s',
+            \round($execTime, 2), static::$tasks[$time]));
 
         unset(static::$tasks[$time]);
     }

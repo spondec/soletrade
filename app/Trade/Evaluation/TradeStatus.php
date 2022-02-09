@@ -209,12 +209,12 @@ class TradeStatus
             }
 
             $this->riskRewardHistory[$candle->t] = [
-                'ratio'  => round(Calc::riskReward($this->isBuy,
-                                                   $this->entryPrice->get(),
-                                                   $this->isBuy ? $this->highestPrice : $this->lowestPrice,
-                                                   $this->isBuy ? $this->lowestPrice : $this->highestPrice,
-                                                   $highRoi,
-                                                   $lowRoi), 2),
+                'ratio' => \round(Calc::riskReward($this->isBuy,
+                    $this->entryPrice->get(),
+                    $this->isBuy ? $this->highestPrice : $this->lowestPrice,
+                    $this->isBuy ? $this->lowestPrice : $this->highestPrice,
+                    $highRoi,
+                    $lowRoi), 2),
                 'reward' => $highRoi,
                 'risk'   => $lowRoi
             ];

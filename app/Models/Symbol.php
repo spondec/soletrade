@@ -36,7 +36,7 @@ class Symbol extends Model
 
     public function toArray()
     {
-        return array_merge(parent::toArray(), [
+        return \array_merge(parent::toArray(), [
             'start'      => $this->start,
             'end'        => $this->end,
             'limit'      => $this->limit,
@@ -111,7 +111,7 @@ class Symbol extends Model
 
     public function updateCandlesIfOlderThan(int $seconds, int $maxRunTime = 0)
     {
-        if ($seconds > 0 && $this->last_update + $seconds * 1000 <= time() * 1000)
+        if ($seconds > 0 && $this->last_update + $seconds * 1000 <= \time() * 1000)
         {
             $this->updateCandles($maxRunTime);
         }
@@ -133,6 +133,6 @@ class Symbol extends Model
 
     protected function indicatorExists(string $name): bool
     {
-        return class_exists(static::INDICATOR_DIR . "\\" . $name);
+        return \class_exists(static::INDICATOR_DIR . "\\" . $name);
     }
 }
