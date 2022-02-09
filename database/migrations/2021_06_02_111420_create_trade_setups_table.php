@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use App\Illuminate\Support\Facades\Schema;
 
-class CreateTradeSetupsTable extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -41,4 +40,4 @@ class CreateTradeSetupsTable extends Migration
     {
         Schema::dropIfExists('trade_setups');
     }
-}
+};

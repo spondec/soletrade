@@ -3,8 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-class SkipForeignCheck extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -24,4 +23,4 @@ class SkipForeignCheck extends Migration
     {
         DB::unprepared('SET FOREIGN_KEY_CHECKS=0;');
     }
-}
+};

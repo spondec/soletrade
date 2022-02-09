@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use App\Illuminate\Support\Facades\Schema;
 
-class CreateCandlesTable extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -35,4 +34,4 @@ class CreateCandlesTable extends Migration
     {
         Schema::dropIfExists('candles');
     }
-}
+};

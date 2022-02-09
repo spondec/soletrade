@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use App\Illuminate\Database\Schema\Blueprint;
 use App\Illuminate\Support\Facades\Schema;
 
-class CreateTradeActionsTable extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -33,4 +32,4 @@ class CreateTradeActionsTable extends Migration
     {
         Schema::dropIfExists('trade_actions');
     }
-}
+};
