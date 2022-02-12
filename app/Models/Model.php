@@ -55,22 +55,6 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
         static::saving(static fn(self $model) => $model->validate());
     }
 
-    public function setAttribute($key, $value)
-    {
-        if ($rules = static::VALIDATION_RULES[$key] ?? null)
-        {
-            $result = Validator::make([$key => $value], [$key => $rules]);
-
-            if ($errors = $result->errors()->messages())
-            {
-                throw new \UnexpectedValueException(
-                    'Validation error: ' . \implode("\n", $errors[$key]));
-            }
-        }
-
-        parent::setAttribute($key, $value);
-    }
-
     public function uniqueAttributesToArray(): array
     {
         $attributes = [];
