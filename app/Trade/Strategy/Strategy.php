@@ -11,7 +11,6 @@ use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Action\Handler;
 use App\Trade\CandleCollection;
-use App\Trade\Candles;
 use App\Trade\Config\IndicatorConfig;
 use App\Trade\Config\TradeConfig;
 use App\Trade\Evaluation\TradeLoop;
@@ -20,6 +19,7 @@ use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Indicator\Indicator;
 use App\Trade\Log;
+use App\Trade\Strategy\Finder\TradeFinder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
@@ -43,10 +43,6 @@ abstract class Strategy
      */
     private Collection $trades;
     /**
-     * @var Collection[]
-     */
-    private Collection $signals;
-    /**
      * @var Indicator[]
      */
     private Collection $indicators;
@@ -58,6 +54,7 @@ abstract class Strategy
     public function __construct(array $config = [])
     {
         $this->mergeConfig($config);
+        $this->signature = $this->register(['contents' => $this->contents()]);
 
         $this->symbolRepo = App::make(SymbolRepository::class);
 
@@ -65,7 +62,6 @@ abstract class Strategy
         $this->actions = new \WeakMap();
         $this->indicatorConfig = $this->newIndicatorConfig();
         $this->tradeConfig = $this->newTradeConfig();
-        $this->signature = $this->register(['contents' => $this->contents()]);
     }
 
     /**
@@ -76,7 +72,8 @@ abstract class Strategy
         foreach ($config = $this->indicatorConfig() as $class => &$c)
         {
             $c['class'] = $class;
-            $c = IndicatorConfig::fromArray($c);
+            $c['config'] = $c['config'] ?? [];
+            $config[$class] = IndicatorConfig::fromArray($c);
         }
 
         return $config;
@@ -87,8 +84,6 @@ abstract class Strategy
     private function newTradeConfig(): TradeConfig
     {
         $c = $this->tradeConfig();
-
-        $c['symbol'] = $this->symbol;
         $c['signature'] = $this->getTradeConfigSignature($c);
 
         return TradeConfig::fromArray($c);
@@ -187,11 +182,6 @@ abstract class Strategy
         $this->actions[$trade][$actionClass] = $config;
     }
 
-    public function signals(): Collection
-    {
-        return $this->signals;
-    }
-
     public function run(Symbol $symbol): void
     {
         $this->symbol = $symbol;
@@ -202,14 +192,19 @@ abstract class Strategy
 
         Log::execTimeStart('populateCandles');
         $this->populateCandles();
-        Log::execTimeStart('populateCandles');
+        Log::execTimeFinish('populateCandles');
 
         Log::execTimeStart('initIndicators');
         $this->initIndicators();
         Log::execTimeFinish('initIndicators');
 
         Log::execTimeStart('findTrades');
-        $this->findTrades();
+        $finder = new TradeFinder($this,
+            $this->candles,
+            $this->tradeConfig,
+            collect($this->indicatorConfig),
+            $this->indicators);
+        $this->trades = $finder->findTrades();
         Log::execTimeFinish('findTrades');
     }
 
@@ -281,95 +276,9 @@ abstract class Strategy
         return [];
     }
 
-    protected function findTrades(): void
+    public function symbol(): Symbol
     {
-        $candleIterator = $this->candles->getIterator();
-        $candles = new Candles($candleIterator, $this->candles);
-        $creator = new TradeCreator($this->tradeConfig);
-        $hasSignal = !empty($this->tradeConfig->signals);
-
-        /** @var Indicator[]|Collection $indicators */
-        $indicators = $this->indicators
-            ->filter(static fn(Indicator $indicator): bool => \in_array($indicator::class, $creator->signalClasses))
-            ->keyBy(static fn(Indicator $indicator): string => $indicator::class);
-
-        /** @var \Generator[] $generators */
-        $generators = $indicators->map(static fn(Indicator $indicator): \Generator => $indicator->scan(
-            $this->indicatorConfig[$indicator::class]['signal']));
-
-        $this->assertProgressiveness($indicators);
-
-        while ($candleIterator->valid())
-        {
-            /** @var \stdClass $candle */
-            $candle = $candleIterator->current();
-            $key = $candleIterator->key();
-            $candleIterator->next();
-            $next = $candleIterator->current();
-            $priceDate = $this->symbolRepo->getPriceDate($candle->t, $next?->t, $this->symbol);
-
-            if ($hasSignal)
-            {
-                do
-                {
-                    foreach ($indicators as $class => $indicator)
-                    {
-                        $result = $generators[$class]->current();
-                        $signal = $result['signal'];
-
-                        $this->runUnderCandle($key, $indicator->candle(),
-                            function () use ($candles, $creator, $signal) {
-                                if ($trade = $creator->findTrade($candles, $signal))
-                                {
-                                    $creator->setActions($this->actions($trade));
-                                    $savedTrade = $creator->save();
-
-                                    foreach ($this->indicators as $i)
-                                    {
-                                        $i->replaceBindable($trade, $savedTrade);
-                                        $i->saveBindings($savedTrade);
-                                    }
-
-                                $this->trades[$trade->timestamp] = $trade = $savedTrade;
-                            }
-                        });
-                    }
-                } while ($result['price_date'] <= $priceDate);
-            }
-            else
-            {
-                //TODO:: handle no signal case
-            }
-        }
-    }
-
-    protected function assertProgressiveness(array $indicators): void
-    {
-        $isProgressive = null;
-        /** @var Indicator $i */
-        foreach ($indicators as $i)
-        {
-            if ($isProgressive === null)
-            {
-                $isProgressive = $i->isProgressive();
-            }
-            else if ($i->isProgressive() !== $isProgressive)
-            {
-                throw new \LogicException('All indicators must be either progressive or non-progressive');
-            }
-        }
-    }
-
-    protected function runUnderCandle(int $key, \stdClass $candle, \Closure $closure): void
-    {
-        $this->candles->overrideCandle($key, $candle);
-        try
-        {
-            $closure();
-        } finally
-        {
-            $this->candles->forgetOverride($key);
-        }
+        return $this->symbol;
     }
 
     public function actions(TradeSetup $setup): ?Collection

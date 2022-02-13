@@ -3,6 +3,7 @@
 namespace App\Trade\Strategy;
 
 use App\Models\Signal;
+use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Candles;
 use App\Trade\Config\TradeConfig;
@@ -17,7 +18,7 @@ class TradeCreator
     public readonly int $requiredSignalCount;
 
     protected ?Collection $actions = null;
-    protected ?TradeSetup $trade;
+    protected ?TradeSetup $trade = null;
     protected ?string $requiredNextSignal = null;
     protected array $signals = [];
 
@@ -67,12 +68,18 @@ class TradeCreator
         $this->actions = $actions;
     }
 
+    public function setSymbol(Symbol $symbol)
+    {
+        $this->trade->symbol()->associate($symbol);
+    }
+
     public function save(): TradeSetup
     {
         if (!$this->trade)
         {
             throw new \LogicException('Trade has not been set.');
         }
+
 
         DB::transaction(function () use (&$tradeSetup) {
 
@@ -109,7 +116,7 @@ class TradeCreator
         $this->trade = $this->actions = null;
     }
 
-    public function findTrade(Candles $candles, ?Signal $signal = null): ?TradeSetup
+    public function findTradeWithSignal(Candles $candles, ?Signal $signal = null): ?TradeSetup
     {
         if (!$signal && !$this->requiredSignalCount)
         {
@@ -117,7 +124,7 @@ class TradeCreator
             return null;
         }
 
-        if ($this->isRequiredNextSignal($signal) && $this->verifySignal($signal))
+        if ($signal && $this->isRequiredNextSignal($signal) && $this->verifySignal($signal))
         {
             $this->handleNewRequiredSignal($signal);
 
@@ -127,7 +134,7 @@ class TradeCreator
                 {
                     if ($this->trade->isDirty())
                     {
-                        throw new \UnexpectedValueException('Unreturned trades must not be modified.');
+                        throw new \UnexpectedValueException('Incomplete trades must not be modified.');
                     }
                 }
                 else
@@ -150,7 +157,7 @@ class TradeCreator
     protected function verifySignal(Signal $signal): bool
     {
         // multiple signals must be on the same side
-        // all signals must be chronological
+        // signals must be in chronological order
         $lastSignal = $this->getLastSignal();
         if ($lastSignal && ($signal->timestamp < $lastSignal->timestamp || $lastSignal->side !== $signal->side))
         {
@@ -167,14 +174,14 @@ class TradeCreator
         return true;
     }
 
-    public function getLastSignal(): ?Signal
+    public function getLastSignal(): bool|Signal
     {
         return \end($this->signals);
     }
 
     protected function handleNewRequiredSignal(Signal $signal): void
     {
-        $this->signals[$signal->indicator::class][] = $signal;
+        $this->signals[] = $signal;
         $this->requiredNextSignal = $this->signalOrderMap[$signal->indicator::class] ?? null;
     }
 
@@ -187,7 +194,6 @@ class TradeCreator
     {
         $tradeSetup = new TradeSetup();
 
-        $tradeSetup->symbol()->associate($this->config->symbol);
         $tradeSetup->signature()->associate($this->config->signature);
 
         /** @var Signal $lastSignal */
@@ -206,6 +212,6 @@ class TradeCreator
 
     protected function runCallback(Candles $candles): ?TradeSetup
     {
-        return ($this->config->callback)(trade: $this->trade, candles: $candles, signals: $this->signals);
+        return ($this->config->callback)(trade: $this->trade, candles: $candles, signals: collect($this->signals));
     }
 }
