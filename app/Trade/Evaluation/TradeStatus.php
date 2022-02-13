@@ -70,11 +70,11 @@ class TradeStatus
     protected function newPosition(int $entryTime): Position
     {
         return new Position($this->entry->isBuy(),
-                            $this->entry->size,
-                            $entryTime,
-                            $this->entryPrice,
-                            $this->getClosePrice(),
-                            $this->getStopPrice());
+            $this->entry->size,
+            $entryTime,
+            $this->entryPrice,
+            $this->getClosePrice(),
+            $this->getStopPrice());
     }
 
     #[Pure] public function getClosePrice(): ?Price
@@ -98,6 +98,12 @@ class TradeStatus
     protected function newActionHandler(Position $position, TradeAction $tradeAction): Handler
     {
         return new $tradeAction->class($position, $tradeAction);
+    }
+
+    public function setExitPrice(float $price, int $priceDate): void
+    {
+        $this->position->addExitPrice($exitPrice = new Price($price, $priceDate));
+        $exitPrice->newLog($priceDate, 'Exit price has been set.');
     }
 
     public function updateHighestLowestPrice(\stdClass $highest, \stdClass $lowest): void
@@ -129,8 +135,8 @@ class TradeStatus
         $this->assertPosition();
         $stopPrice = $this->getStopPrice();
         if ($stopPrice && $this->isStopped = (Calc::inRange($stopPrice->get(),
-                                                            $candle->h,
-                                                            $candle->l) || $this->position?->isStopped()))
+                    $candle->h,
+                    $candle->l) || $this->position?->isStopped()))
         {
             $this->isExited = true;
         }
@@ -151,8 +157,8 @@ class TradeStatus
         $this->assertPosition();
         $closePrice = $this->getClosePrice();
         if ($closePrice && $this->isClosed = (Calc::inRange($closePrice->get(),
-                                                            $candle->h,
-                                                            $candle->l) || $this->position?->isClosed()))
+                    $candle->h,
+                    $candle->l) || $this->position?->isClosed()))
         {
             $this->isExited = true;
         }
