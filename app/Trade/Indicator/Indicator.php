@@ -372,7 +372,7 @@ abstract class Indicator implements Binder
                 $newSignal = $signalCallback(signal: $signal, indicator: $this, value: $value);
             }
 
-            $priceDate = $priceDate ?? $this->symbolRepo->getPriceDate($openTime, $nextOpenTime, $this->symbol);
+            $priceDate = $this->symbolRepo->getPriceDate($openTime, $nextOpenTime, $this->symbol);
 
             if ($newSignal)
             {
@@ -380,7 +380,7 @@ abstract class Indicator implements Binder
                 $newSignal->price_date = $priceDate;
                 $newSignal->is_confirmed = $nextOpenTime || ($lastCandle && $lastCandle->t > $openTime);//the candle is closed
 
-                $this->saveSignal($newSignal);
+                $newSignal = $this->saveSignal($newSignal);
                 $signal = $this->setupSignal($signalSignature);
             }
             else
@@ -410,7 +410,7 @@ abstract class Indicator implements Binder
 
     protected function verifySignalCallback(\Closure $callback): void
     {
-        $type = class_basename(Signal::class);
+        $type = Signal::class;
         $reflection = new \ReflectionFunction($callback);
 
         if (!($returnType = $reflection->getReturnType()) ||
@@ -526,9 +526,11 @@ abstract class Indicator implements Binder
     /**
      * @param Signal $signal
      */
-    protected function saveSignal(Signal $signal): void
+    protected function saveSignal(Signal $signal): Signal
     {
-        $this->signals[] = $signal->updateUniqueOrCreate();
+        $this->signals[] = $signal = $signal->updateUniqueOrCreate();
+        $signal->setIndicator($this);
+        return $signal;
     }
 
     protected function unconfirmSignals(array $unconfirmed, Signature $signalSignature): void
