@@ -6,7 +6,7 @@ class IndicatorConfig extends Config
 {
     public function __construct(public readonly string $class,
                                 public readonly array $config,
-                                public readonly \Closure $callback)
+                                public readonly \Closure $signal)
     {
     }
 }
