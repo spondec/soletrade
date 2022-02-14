@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\Repositories;
 
-use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
+use Database\Factories\CandleFactory;
+use Database\Factories\SymbolFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -14,25 +15,24 @@ class SymbolRepositoryTest extends TestCase
 
     public function test_fetch_next_candle()
     {
-        $repo = $this->getRepo();
-        $symbol = $this->getSymbol();
+        $repo = $this->symbolRepo();
+        $symbol = $this->symbolFactory()
+            ->count(1)
+            ->create()
+            ->first();
 
-        DB::table('candles')->insert([
-            ['symbol_id' => $symbol->id,
-             'o'         => 1,
-             'c'         => 2,
-             'h'         => 3,
-             'l'         => 4,
-             'v'         => 5,
-             't'         => time() * 1000],
-            ['symbol_id' => $symbol->id,
-             'o'         => 1,
-             'c'         => 2.1,
-             'h'         => 3,
-             'l'         => 4,
-             'v'         => 5,
-             't'         => (time() + 1) * 1000]
-        ]);
+        $factory = $this->candleFactory();
+
+        $candles = $factory->count(10)
+            ->for($symbol)
+            ->make();
+
+        $i = 0;
+        foreach ($candles as $candle)
+        {
+            $candles[0]->t = time() + $i++;
+            $candle->save();
+        }
 
         $candles = DB::table('candles')
             ->where('symbol_id', $symbol->id)
@@ -48,23 +48,56 @@ class SymbolRepositoryTest extends TestCase
         $this->assertEquals($candles->last(), $nextCandle);
     }
 
-    protected function getRepo(): SymbolRepository
+    protected function symbolRepo(): SymbolRepository
     {
         return new SymbolRepository();
     }
 
-    protected function getSymbol(): Symbol
+    protected function symbolFactory(): SymbolFactory
     {
-        Symbol::factory()->make([
-            'symbol'   => $symbol = 'BTC/USDT',
-            'interval' => $interval = '1h'])
-            ->save();
+        return new SymbolFactory();
+    }
 
-        /** @var Symbol $symbol */
-        $symbol = Symbol::query()
-            ->where('symbol', $symbol)
-            ->where('interval', $interval)
-            ->firstOrFail();
-        return $symbol;
+    protected function candleFactory(): CandleFactory
+    {
+        return new CandleFactory();
+    }
+
+    public function test_assert_lowest_highest_candle()
+    {
+        $repo = $this->symbolRepo();
+        $symbol = $this->symbolFactory()
+            ->count(1)
+            ->create()
+            ->first();
+
+        $candleFactory = $this->candleFactory();
+        $candles = $candleFactory->for($symbol)->count(30)->make();
+
+        $time = time();
+        $l = 1;
+        $h = 100;
+        $t = 0;
+        foreach ($candles as $candle)
+        {
+            $candle->l = $l++;
+            $candle->h = $h--;
+            $candle->t = $time + $t++;
+            $candle->save();
+        }
+
+        $middle = $candles->slice(10, 10);
+        $sorted = $middle->sortByDesc('t');
+
+        $newest = $sorted->first();
+        $oldest = $sorted->last();
+
+        $lowest = $sorted->pluck('l')->sort()->first();
+        $highest = $sorted->pluck('h')->sortDesc()->first();
+
+        $pivots = $repo->assertLowestHighestCandle($symbol->id, $oldest->t, $newest->t);
+
+        $this->assertEquals($highest, $pivots['highest']->h);
+        $this->assertEquals($lowest, $pivots['lowest']->l);
     }
 }

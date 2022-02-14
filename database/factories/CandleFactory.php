@@ -13,7 +13,7 @@ class CandleFactory extends Factory
      *
      * @return array
      */
-    public function definition()
+    public function definition(): array
     {
         return [
             't' => $this->faker->dateTimeBetween('-1 year', 'now')->getTimestamp() * 1000,
