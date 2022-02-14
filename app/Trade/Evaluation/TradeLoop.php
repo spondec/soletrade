@@ -20,8 +20,7 @@ final class TradeLoop
 
     protected array $config = [
         'closeOnExit'   => true,
-        'timeout'       => 1440,
-        'logRiskReward' => true
+        'timeout' => 1440
     ];
 
     protected SymbolRepository $repo;
@@ -38,7 +37,6 @@ final class TradeLoop
     protected TradeStatus $status;
 
     protected ?int $timeout;
-    protected bool $logRiskReward;
 
     public function __construct(protected TradeSetup $entry, protected Symbol $evaluationSymbol, array $config)
     {
@@ -51,7 +49,6 @@ final class TradeLoop
         $this->startDate = $this->firstCandle->t;
 
         $this->timeout = $this->config('timeout');
-        $this->logRiskReward = $this->config('logRiskReward');
     }
 
     protected function assertTradeSymbolMatchesEvaluationSymbol(): void
@@ -184,11 +181,6 @@ final class TradeLoop
             }
             else
             {
-                if ($this->logRiskReward)
-                {
-                    $this->status->logRiskReward($candle);
-                }
-
                 if (!$this->status->isExited())
                 {
                     $this->entry->loadBindingPrice($stop, 'stop_price', $candle->t, $evaluationSymbol);

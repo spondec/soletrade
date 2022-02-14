@@ -181,52 +181,6 @@ class TradeStatus
         return false;
     }
 
-    public function logRiskReward(\stdClass $candle): void
-    {
-        if (!$this->lowestPrice)
-        {
-            $this->lowestPrice = $candle->l;
-            $newLow = true;
-        }
-        else
-        {
-            $newLow = $candle->l < $this->lowestPrice;
-        }
-
-        if (!$this->highestPrice)
-        {
-            $this->highestPrice = $candle->h;
-            $newHigh = true;
-        }
-        else
-        {
-            $newHigh = $candle->h > $this->highestPrice;
-        }
-
-        if ($newLow || $newHigh)
-        {
-            if ($newLow)
-            {
-                $this->lowestPrice = $candle->l;
-            }
-            if ($newHigh)
-            {
-                $this->highestPrice = $candle->h;
-            }
-
-            $this->riskRewardHistory[$candle->t] = [
-                'ratio' => \round(Calc::riskReward($this->isBuy,
-                    $this->entryPrice->get(),
-                    $this->isBuy ? $this->highestPrice : $this->lowestPrice,
-                    $this->isBuy ? $this->lowestPrice : $this->highestPrice,
-                    $highRoi,
-                    $lowRoi), 2),
-                'reward' => $highRoi,
-                'risk'   => $lowRoi
-            ];
-        }
-    }
-
     public function updateLowestHighestEntryPrice(\stdClass $candle): void
     {
         if ($this->lowestEntryPrice === null || $candle->l < $this->lowestEntryPrice)

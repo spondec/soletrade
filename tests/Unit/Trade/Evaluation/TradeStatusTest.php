@@ -100,61 +100,6 @@ class TradeStatusTest extends TestCase
         $this->assertNotTrue($status->checkIsExited());
     }
 
-    public function test_sell_log_risk_reward_history(): void
-    {
-        $setup = $this->getSetup(false, 100, 1, 0.5, 1.25);
-        $status = new TradeStatus($setup);
-        $candle = [
-            'h' => 1.25,
-            'l' => 0.5,
-            't' => time()
-        ];
-        $status->logRiskReward((object)$candle);
-
-        $candle['l'] = 0.25;
-        $candle['h'] = 1.5;
-        ++$candle['t'];
-        $status->logRiskReward((object)$candle);
-
-        $record = $status->riskRewardHistory()->shift();
-        $this->assertEquals(2, $record['ratio']);
-        $this->assertEquals(-25, $record['risk']);
-        $this->assertEquals(50, $record['reward']);
-
-        $record = $status->riskRewardHistory()->shift();
-        $this->assertEquals(75 / 50, $record['ratio']);
-        $this->assertEquals(-50, $record['risk']);
-        $this->assertEquals(75, $record['reward']);
-    }
-
-    public function test_buy_log_risk_reward_history(): void
-    {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
-        $status = new TradeStatus($setup);
-        $candle = [
-            'h' => 2,
-            'l' => 0.5,
-            'o' => 1.2,
-            'c' => 1.5,
-            't' => time()
-        ];
-        $status->logRiskReward((object)$candle);
-
-        $candle['h'] = 3;
-        ++$candle['t'];
-        $status->logRiskReward((object)$candle);
-
-        $record = $status->riskRewardHistory()->shift();
-        $this->assertEquals(2, $record['ratio']);
-        $this->assertEquals(-50, $record['risk']);
-        $this->assertEquals(100, $record['reward']);
-
-        $record = $status->riskRewardHistory()->shift();
-        $this->assertEquals(4, $record['ratio']);
-        $this->assertEquals(-50, $record['risk']);
-        $this->assertEquals(200, $record['reward']);
-    }
-
     protected function getSetup(bool $isBuy, float $size, float $price, float $closePrice, float $stopPrice): TradeSetup
     {
         $setup = Mockery::mock('alias:' . TradeSetup::class);
