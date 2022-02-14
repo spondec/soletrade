@@ -18,7 +18,6 @@ class TradeStatus
     protected ?Price $stopPrice;
     /** @var Handler[] */
     protected Collection $actionHandlers;
-    protected Collection $riskRewardHistory;
     protected ?float $lowestEntryPrice = null;
     protected ?float $highestEntryPrice = null;
     protected ?float $lowestPrice = null;
@@ -36,7 +35,6 @@ class TradeStatus
 
         $this->initPrices();
 
-        $this->riskRewardHistory = new Collection();
         $this->actionHandlers = new Collection();
     }
 
@@ -191,11 +189,6 @@ class TradeStatus
         {
             $this->highestEntryPrice = $candle->h;
         }
-    }
-
-    public function riskRewardHistory(): Collection
-    {
-        return $this->riskRewardHistory;
     }
 
     #[Pure] public function getEntryPrice(): Price

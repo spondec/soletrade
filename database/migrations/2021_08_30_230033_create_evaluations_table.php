@@ -37,7 +37,6 @@ return new class extends Migration {
             $table->boolean('is_closed')->nullable();
             $table->bigInteger('entry_timestamp')->nullable();
             $table->bigInteger('exit_timestamp')->nullable();
-            $table->json('risk_reward_history')->nullable();
             $table->json('log')->nullable();
             $table->unique(['type', 'entry_id', 'exit_id']);
             $table->timestamps();

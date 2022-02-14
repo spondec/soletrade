@@ -77,7 +77,6 @@ class Evaluator
             $evaluation->highest_entry_price = $status->getHighestEntryPrice();
             $evaluation->lowest_entry_price = $status->getLowestEntryPrice();
             $evaluation->is_ambiguous = $status->isAmbiguous();
-            $evaluation->risk_reward_history = $status->riskRewardHistory();
             $evaluation->used_size = $position->getMaxUsedSize();
 
             if (!$evaluation->is_ambiguous)
@@ -110,7 +109,6 @@ class Evaluator
             $evaluation->highest_entry_price = null;
             $evaluation->lowest_entry_price = null;
             $evaluation->is_ambiguous = null;
-            $evaluation->risk_reward_history = null;
             $evaluation->is_entry_price_valid = false;
             $evaluation->is_stopped = null;
             $evaluation->is_closed = null;
