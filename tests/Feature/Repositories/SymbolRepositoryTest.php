@@ -66,38 +66,28 @@ class SymbolRepositoryTest extends TestCase
     public function test_assert_lowest_highest_candle()
     {
         $repo = $this->symbolRepo();
+
         $symbol = $this->symbolFactory()
             ->count(1)
             ->create()
             ->first();
 
-        $candleFactory = $this->candleFactory();
-        $candles = $candleFactory->for($symbol)->count(30)->make();
+        $candles = $this->candleFactory()
+            ->for($symbol)
+            ->count(30)
+            ->create();
 
-        $time = time();
-        $l = 1;
-        $h = 100;
-        $t = 0;
-        foreach ($candles as $candle)
-        {
-            $candle->l = $l++;
-            $candle->h = $h--;
-            $candle->t = $time + $t++;
-            $candle->save();
-        }
+        $middle = $candles->sortBy('t')->slice(10, 10);
 
-        $middle = $candles->slice(10, 10);
-        $sorted = $middle->sortByDesc('t');
+        $oldest = $middle->first();
+        $newest = $middle->last();
 
-        $newest = $sorted->first();
-        $oldest = $sorted->last();
-
-        $lowest = $sorted->pluck('l')->sort()->first();
-        $highest = $sorted->pluck('h')->sortDesc()->first();
+        $lowest = $middle->sortBy('l')->first();
+        $highest = $middle->sortByDesc('h')->first();
 
         $pivots = $repo->assertLowestHighestCandle($symbol->id, $oldest->t, $newest->t);
 
-        $this->assertEquals($highest, $pivots['highest']->h);
-        $this->assertEquals($lowest, $pivots['lowest']->l);
+        $this->assertEquals($highest->h, $pivots['highest']->h);
+        $this->assertEquals($lowest->l, $pivots['lowest']->l);
     }
 }

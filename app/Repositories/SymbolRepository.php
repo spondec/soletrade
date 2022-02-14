@@ -63,12 +63,12 @@ class SymbolRepository extends Repository
 
         /** @noinspection PhpStrictTypeCheckingInspection */
         $query = DB::table(DB::raw('`candles` FORCE INDEX(candles_symbol_id_t_unique)'))
-                   ->where('symbol_id', $symbolId)
-                   ->where('t', '>=', $startDate)
-                   ->where('t', '<=', $endDate);
+            ->where('symbol_id', $symbolId)
+            ->where('t', '>=', $startDate)
+            ->where('t', '<=', $endDate);
 
-        $highest = $query->orderBy('l', 'ASC')->first();
-        $lowest = $query->reorder('h', 'DESC')->first();
+        $lowest = $query->orderBy('l', 'ASC')->first();
+        $highest = $query->reorder('h', 'DESC')->first();
 
         if (empty($highest) || empty($lowest))
         {
@@ -90,9 +90,9 @@ class SymbolRepository extends Repository
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         $candles = DB::table('candles')
-                     ->where('symbol_id', $symbolId)
-                     ->where('t', $includeStart ? '>=' : '>', $startDate)
-                     ->orderBy('t', 'ASC');
+            ->where('symbol_id', $symbolId)
+            ->where('t', $includeStart ? '>=' : '>', $startDate)
+            ->orderBy('t', 'ASC');
 
         if ($limit)
         {
@@ -123,11 +123,11 @@ class SymbolRepository extends Repository
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         $candles = DB::table('candles')
-                     ->where('symbol_id', $symbolId)
-                     ->where('t', $includeStart ? '>=' : '>', $startDate)
-                     ->where('t', '<=', $endDate)
-                     ->orderBy('t', 'ASC')
-                     ->get();
+            ->where('symbol_id', $symbolId)
+            ->where('t', $includeStart ? '>=' : '>', $startDate)
+            ->where('t', '<=', $endDate)
+            ->orderBy('t', 'ASC')
+            ->get();
 
         if (!$candles->first())
         {
@@ -213,17 +213,17 @@ class SymbolRepository extends Repository
     public function updateCandle(int $id, array $values): int
     {
         return DB::table('candles')
-                 ->where('id', $id)
-                 ->update($values);
+            ->where('id', $id)
+            ->update($values);
     }
 
     public function fetchLatestCandles(Symbol $symbol, string $direction = 'DESC', int $limit = 10): Collection
     {
         return DB::table('candles')
-                 ->where('symbol_id', $symbol->id)
-                 ->orderBy('t', $direction)
-                 ->limit($limit)
-                 ->get();
+            ->where('symbol_id', $symbol->id)
+            ->orderBy('t', $direction)
+            ->limit($limit)
+            ->get();
     }
 
     public function findSymbols(Exchange|int $exchange, string|array $symbolName, string $interval): \Illuminate\Database\Eloquent\Builder
@@ -255,16 +255,16 @@ class SymbolRepository extends Repository
     public function fetchIntervals(): Collection
     {
         return DB::table('symbols')
-                 ->selectRaw(DB::raw('DISTINCT(BINARY `interval`) as `interval`'))
-                 ->get()->pluck('interval');
+            ->selectRaw(DB::raw('DISTINCT(BINARY `interval`) as `interval`'))
+            ->get()->pluck('interval');
     }
 
     public function fetchLastCandle(Symbol $symbol): \stdClass
     {
         return DB::table('candles')
-                 ->where('symbol_id', $symbol->id)
-                 ->orderBy('t', 'DESC')
-                 ->first();
+            ->where('symbol_id', $symbol->id)
+            ->orderBy('t', 'DESC')
+            ->first();
     }
 
     public function fetchSymbolFromExchange(Exchange $exchange, string $symbolName, string $interval)
