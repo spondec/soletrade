@@ -13,20 +13,19 @@ use JetBrains\PhpStorm\Pure;
 
 class TradeStatus
 {
+    /** @var Handler[] */
+    protected Collection $actionHandlers;
+
     protected Price $entryPrice;
     protected ?Price $closePrice;
     protected ?Price $stopPrice;
-    /** @var Handler[] */
-    protected Collection $actionHandlers;
-    protected ?float $lowestEntryPrice = null;
-    protected ?float $highestEntryPrice = null;
-    protected ?float $lowestPrice = null;
-    protected ?float $highestPrice = null;
+
     protected bool $isBuy;
     protected bool $isEntered = false;
     protected bool $isExited = false;
     protected bool $isClosed = false;
     protected bool $isStopped = false;
+
     protected ?Position $position = null;
 
     public function __construct(protected TradeSetup $entry)
@@ -104,18 +103,6 @@ class TradeStatus
         $exitPrice->newLog($priceDate, 'Exit price has been set.');
     }
 
-    public function updateHighestLowestPrice(\stdClass $highest, \stdClass $lowest): void
-    {
-        if ($this->highestPrice === null || $highest->h > $this->highestPrice)
-        {
-            $this->highestPrice = (float)$highest->h;
-        }
-        if ($this->lowestPrice === null || $lowest->l < $this->lowestPrice)
-        {
-            $this->lowestPrice = (float)$lowest->l;
-        }
-    }
-
     public function runTradeActions(\stdClass $candle, int $priceDate): void
     {
         foreach ($this->actionHandlers as $key => $handler)
@@ -179,41 +166,9 @@ class TradeStatus
         return false;
     }
 
-    public function updateLowestHighestEntryPrice(\stdClass $candle): void
-    {
-        if ($this->lowestEntryPrice === null || $candle->l < $this->lowestEntryPrice)
-        {
-            $this->lowestEntryPrice = $candle->l;
-        }
-        if ($this->highestEntryPrice === null || $candle->h > $this->highestEntryPrice)
-        {
-            $this->highestEntryPrice = $candle->h;
-        }
-    }
-
     #[Pure] public function getEntryPrice(): Price
     {
         return $this->entryPrice;
-    }
-
-    public function getLowestPrice(): ?float
-    {
-        return $this->lowestPrice;
-    }
-
-    public function getHighestPrice(): ?float
-    {
-        return $this->highestPrice;
-    }
-
-    public function getLowestEntryPrice(): float
-    {
-        return $this->lowestEntryPrice;
-    }
-
-    public function getHighestEntryPrice(): float|int
-    {
-        return $this->highestEntryPrice;
     }
 
     public function getPosition(): ?Position

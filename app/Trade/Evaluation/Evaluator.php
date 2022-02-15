@@ -57,41 +57,34 @@ class Evaluator
             ->newLoop($evaluation->entry)
             ->runToExit($evaluation->exit);
 
-        $this->fillEvaluation($evaluation, $status);
+        $this->fill($evaluation, $status);
     }
 
-    protected function fillEvaluation(Evaluation $evaluation, TradeStatus $status): void
+    protected function fill(Evaluation $e, TradeStatus $status): void
     {
-        $evaluation->highest_price = $status->getHighestPrice();
-        $evaluation->lowest_price = $status->getLowestPrice();
-        $evaluation->entry_price = $status->getEntryPrice()->get();
-        $evaluation->stop_price = $status->getStopPrice()?->get();
-        $evaluation->close_price = $status->getClosePrice()?->get();
+        $e->entry_price = $status->getEntryPrice()->get();
+        $e->stop_price = $status->getStopPrice()?->get();
+        $e->close_price = $status->getClosePrice()?->get();
+        $e->evaluation_interval = $this->strategy->config('evaluation.interval');
 
         $log = [];
 
         if ($position = $status->getPosition())
         {
-            $evaluation->is_entry_price_valid = true;
-            $evaluation->entry_timestamp = $position->entryTime();
-            $evaluation->highest_entry_price = $status->getHighestEntryPrice();
-            $evaluation->lowest_entry_price = $status->getLowestEntryPrice();
-            $evaluation->is_ambiguous = $status->isAmbiguous();
-            $evaluation->used_size = $position->getMaxUsedSize();
+            $e->is_entry_price_valid = true;
+            $e->entry_timestamp = $position->entryTime();
+            $e->is_ambiguous = $status->isAmbiguous();
+            $e->used_size = $position->getMaxUsedSize();
 
-            if (!$evaluation->is_ambiguous)
+            if (!$e->is_ambiguous)
             {
                 if (!$position->isOpen())
                 {
-                    $evaluation->is_stopped = $position->isStopped();
-                    $evaluation->is_closed = $position->isClosed();
-                    $evaluation->relative_roi = $position->relativeExitRoi();
-
-                    $evaluation->exit_timestamp = $position->exitTime();
-                    $evaluation->exit_price = $position->getExitPrice();
+                    $this->fillClosedPositionFields($position, $e);
+                    $this->fillPivots($e);
                 }
 
-                $this->calcHighLowRoi($evaluation);
+                $this->fillHighLowRoi($e);
             }
 
             $log['position'] = [
@@ -105,22 +98,22 @@ class Evaluator
         }
         else
         {
-            $evaluation->entry_timestamp = null;
-            $evaluation->highest_entry_price = null;
-            $evaluation->lowest_entry_price = null;
-            $evaluation->is_ambiguous = null;
-            $evaluation->is_entry_price_valid = false;
-            $evaluation->is_stopped = null;
-            $evaluation->is_closed = null;
-            $evaluation->relative_roi = null;
-            $evaluation->exit_timestamp = null;
-            $evaluation->exit_price = null;
+            $e->entry_timestamp = null;
+            $e->highest_entry_price = null;
+            $e->lowest_entry_price = null;
+            $e->is_ambiguous = null;
+            $e->is_entry_price_valid = false;
+            $e->is_stopped = null;
+            $e->is_closed = null;
+            $e->relative_roi = null;
+            $e->exit_timestamp = null;
+            $e->exit_price = null;
         }
 
-        $evaluation->log = $log;
+        $e->log = $log;
     }
 
-    protected function calcHighLowRoi(Evaluation $evaluation): void
+    protected function fillHighLowRoi(Evaluation $evaluation): void
     {
         if (!$evaluation->is_entry_price_valid || $evaluation->is_ambiguous)
         {
@@ -136,5 +129,35 @@ class Evaluator
         $evaluation->lowest_roi = Calc::roi($buy, $entryPrice, (float)(!$buy
             ? $evaluation->highest_price
             : $evaluation->lowest_price));
+    }
+
+    protected function fillPivots(Evaluation $e): void
+    {
+        $entryPivots = $this
+            ->symbolRepo
+            ->assertLowestHighestCandle($e->entry->symbol_id,
+                $e->entry->price_date,
+                $e->entry_timestamp);
+
+        $e->highest_entry_price = $entryPivots['highest']->h;
+        $e->lowest_entry_price = $entryPivots['lowest']->l;
+
+        $pivots = $this
+            ->symbolRepo
+            ->assertLowestHighestCandle($e->entry->symbol_id,
+                $e->entry_timestamp,
+                $e->exit_timestamp);
+
+        $e->highest_price = $pivots['highest']->h;
+        $e->lowest_price = $pivots['lowest']->l;
+    }
+
+    protected function fillClosedPositionFields(Position $position, Evaluation $e): void
+    {
+        $e->is_stopped = $position->isStopped();
+        $e->is_closed = $position->isClosed();
+        $e->relative_roi = $position->relativeExitRoi();
+        $e->exit_timestamp = $position->exitTime();
+        $e->exit_price = $position->getExitPrice();
     }
 }

@@ -176,7 +176,6 @@ final class TradeLoop
             if (!$this->status->isEntered())
             {
                 $this->entry->loadBindingPrice($entry, 'price', $candle->t, $evaluationSymbol);
-                $this->status->updateLowestHighestEntryPrice($candle);
                 $this->tryPositionEntry($candle, $nextCandle);
             }
             else
@@ -204,14 +203,6 @@ final class TradeLoop
             ? $candles[$key - 1]?->t
             ?? $this->getPrevCandle($candle)->t
             : $candle->t;
-
-        if (!empty($position))
-        {
-            $pivots = $this->repo->assertLowestHighestCandle($this->evaluationSymbol->id,
-                $position->entryTime(),
-                $this->lastRunDate);
-            $this->status->updateHighestLowestPrice($pivots['highest'], $pivots['lowest']);
-        }
     }
 
     protected function getPrevCandle(\stdClass $candle): \stdClass

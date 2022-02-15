@@ -12,7 +12,6 @@ use PHPUnit\Framework\TestCase;
 
 class TradeStatusTest extends TestCase
 {
-
     public function test_run_trade_actions(): void
     {
         $setup = $this->getSetup(true, 100, 1, 2, 0.5);
@@ -43,48 +42,6 @@ class TradeStatusTest extends TestCase
 
         $status->runTradeActions((object)$candle, $candle['t']);
         $this->assertEquals(1, $status->getStopPrice()->get());
-    }
-
-    public function test_update_lowest_highest_entry_price(): void
-    {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
-        $status = new TradeStatus($setup);
-
-        $candle = [
-            'h' => 999,
-            'l' => 111
-        ];
-
-        $status->updateLowestHighestEntryPrice((object)$candle);
-        $this->assertEquals(999, $status->getHighestEntryPrice());
-        $this->assertEquals(111, $status->getLowestEntryPrice());
-
-        $candle['h'] = 1001;
-        $candle['l'] = 10;
-
-        $status->updateLowestHighestEntryPrice((object)$candle);
-        $this->assertEquals(1001, $status->getHighestEntryPrice());
-        $this->assertEquals(10, $status->getLowestEntryPrice());
-    }
-
-    public function test_update_lowest_highest_price(): void
-    {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
-        $status = new TradeStatus($setup);
-
-        $highest = ['h' => 999];
-        $lowest = ['l' => 111];
-
-        $status->updateHighestLowestPrice((object)$highest, (object)$lowest);
-        $this->assertEquals(999, $status->getHighestPrice());
-        $this->assertEquals(111, $status->getLowestPrice());
-
-        $highest['h'] = 1001;
-        $lowest['l'] = 10;
-
-        $status->updateHighestLowestPrice((object)$highest, (object)$lowest);
-        $this->assertEquals(1001, $status->getHighestPrice());
-        $this->assertEquals(10, $status->getLowestPrice());
     }
 
     public function test_defaults(): void
