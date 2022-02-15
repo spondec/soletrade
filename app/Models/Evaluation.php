@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property TradeSetup     entry
  * @property TradeSetup     exit
  * @property int            exit_id
+ * @property string         evaluation_interval
  * @property float          relative_roi
  * @property float          highest_roi
  * @property float          lowest_roi

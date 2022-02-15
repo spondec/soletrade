@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->string('type');
             $table->foreignId('entry_id')->constrained('trade_setups');
             $table->foreignId('exit_id')->nullable()->constrained('trade_setups');
+            $table->string('evaluation_interval', 3);
             $table->float('relative_roi')->nullable();
             $table->float('highest_roi')->nullable();
             $table->float('lowest_roi')->nullable();
