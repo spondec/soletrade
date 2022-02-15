@@ -21,6 +21,8 @@ return new class extends Migration {
             $table->decimal('h');
             $table->decimal('l');
             $table->decimal('v');
+            $table->index(['symbol_id', 'l']);
+            $table->index(['symbol_id', 'h']);
             $table->unique(['symbol_id', 't']);
         });
     }
