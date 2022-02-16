@@ -7,10 +7,12 @@
 // Bootstrap
 @import '~bootstrap/scss/bootstrap';
 
-@import "~tailwindcss";
+@import "~tailwindcss/tailwind.css";
+
+@import 'v-calendar/dist/style.css';
 
 .card-table-header {
-  @extend .bg-gray-600;
+  @extend .bg-gray-600 !optional;
   @extend .card-header;
   @extend .text-white;
 }
@@ -18,7 +20,7 @@
 .card-table {
   @extend .card;
   @extend .border-0;
-  @extend .rounded-lg;
+  @extend .rounded-lg !optional;
 }
 
 .card-table-body {
