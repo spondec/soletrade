@@ -2,6 +2,9 @@
 
 namespace App\Trade;
 
+/**
+ * @property array config
+ */
 trait HasConfig
 {
     protected function mergeConfig(array &$config): void
