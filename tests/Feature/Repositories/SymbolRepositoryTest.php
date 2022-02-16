@@ -5,13 +5,13 @@ namespace Tests\Feature\Repositories;
 use App\Repositories\SymbolRepository;
 use Database\Factories\CandleFactory;
 use Database\Factories\SymbolFactory;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class SymbolRepositoryTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_fetch_next_candle()
     {
