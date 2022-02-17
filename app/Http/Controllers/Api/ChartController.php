@@ -119,10 +119,10 @@ class ChartController extends Controller
                 'endDate'   => $end
             ]);
 
-            $tester->runStrategy($symbol);
+            $trades = $tester->runStrategy($symbol);
 
             Log::execTimeStart('Evaluating and summarizing trades');
-            $summary = $tester->summary();
+            $summary = $tester->summary($trades);
             $summary['evaluations'] = $summary['evaluations']->map(
                 static fn(Evaluation $evaluation): Evaluation => $evaluation->fresh([
 //                        'entry.bindings',

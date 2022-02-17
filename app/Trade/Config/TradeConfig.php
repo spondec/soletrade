@@ -14,4 +14,18 @@ class TradeConfig extends Config
     {
         $this->withSignals = !empty($signals);
     }
+
+    /**
+     * @return string[]
+     */
+    public function getSignalClasses(): array
+    {
+        $indicators = [];
+        foreach ($this->signals as $key => $indicator)
+        {
+            $indicators[] = \is_array($indicator) ? $key : $indicator;
+        }
+
+        return $indicators;
+    }
 }

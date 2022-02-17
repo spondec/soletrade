@@ -24,27 +24,13 @@ class TradeCreator
 
     public function __construct(public TradeConfig $config)
     {
-        $this->signalClasses = $this->getSignalClasses();
+        $this->signalClasses = $config->getSignalClasses();
         $this->requiredSignalCount = \count($this->signalClasses);
         if ($this->requiredSignalCount)
         {
             $this->signalOrderMap = $this->getSignalOrderMap();
             $this->firstSignalClass = $this->requiredNextSignal = \array_key_first($this->signalOrderMap);
         }
-    }
-
-    /**
-     * @return string[]
-     */
-    protected function getSignalClasses(): array
-    {
-        $classes = [];
-        foreach ($this->config->signals as $key => $class)
-        {
-            $classes[] = \is_array($class) ? $key : $class;
-        }
-
-        return $classes;
     }
 
     protected function getSignalOrderMap(): array

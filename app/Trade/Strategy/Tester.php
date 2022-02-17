@@ -6,6 +6,7 @@ use App\Models\Summary;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
+use App\Trade\Collection\TradeCollection;
 use App\Trade\Evaluation\Evaluator;
 use App\Trade\Evaluation\Summarizer;
 use App\Trade\HasConfig;
@@ -56,35 +57,38 @@ class Tester
         return new $class(config: $config);
     }
 
-    public function runStrategy(Symbol $symbol): Strategy
+    public function runStrategy(Symbol $symbol): TradeCollection
     {
-        Log::execTimeStart('AbstractStrategy::run()');
-        $this->strategy->run($symbol);
-        Log::execTimeFinish('AbstractStrategy::run()');
+        Log::execTimeStart('runStrategy');
+        $trades = $this->strategy->run($symbol);
+        Log::execTimeFinish('runStrategy');
 
-        return $this->strategy;
+        return $trades;
     }
 
-    #[ArrayShape(['evaluations' => "\Illuminate\Support\Collection|\App\Models\Evaluation[]", 'summary' => Summary::class])]
-    public function summary(): array
+    #[ArrayShape([
+        'evaluations' => "\Illuminate\Support\Collection|\App\Models\Evaluation[]",
+        'summary'     => Summary::class
+    ])]
+    public function summary(TradeCollection $trades): array
     {
         return [
-            'evaluations' => $evaluations = $this->evaluate(),
+            'evaluations' => $evaluations = $this->evaluate($trades),
             'summary'     => $this->summarizer->summarize($evaluations)
         ];
     }
 
-    protected function evaluate(): Collection
+    protected function evaluate(TradeCollection $trades): Collection
     {
         $evaluations = [];
         $evaluation = null;
 
-        if ($first = $this->strategy->getFirstTrade())
+        if ($first = $trades->getFirstTrade())
         {
             /** @var TradeSetup[] $pending */
             $pending = [];
 
-            while ($next = $this->strategy->getNextTrade($first))
+            while ($next = $trades->getNextTrade($first))
             {
                 $pending[] = $first;
 

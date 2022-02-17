@@ -10,7 +10,8 @@ use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Action\Handler;
-use App\Trade\CandleCollection;
+use App\Trade\Collection\CandleCollection;
+use App\Trade\Collection\TradeCollection;
 use App\Trade\Config\IndicatorConfig;
 use App\Trade\Config\TradeConfig;
 use App\Trade\Evaluation\TradeLoop;
@@ -99,72 +100,9 @@ abstract class Strategy
             ],
              'trade_setup'     => $config,
              'indicator_setup' => \array_map(
-                 fn(string $class): array => $this->indicatorConfig[$class]->toArray(),
-                 $this->getSignalClasses($config))
+                 static fn(IndicatorConfig $i): array => $i->toArray(),
+                 $this->indicatorConfig)
             ]);
-    }
-
-    /**
-     * @return string[]
-     */
-    protected function getSignalClasses(array $config): array
-    {
-        $indicators = [];
-        foreach ($config['signals'] as $key => $indicator)
-        {
-            $indicators[] = \is_array($indicator) ? $key : $indicator;
-        }
-
-        return $indicators;
-    }
-
-    public function getFirstTrade(): ?TradeSetup
-    {
-        return $this->trades->first();
-    }
-
-    public function getNextTrade(TradeSetup $tradeSetup): ?TradeSetup
-    {
-        if ($this->config('oppositeOnly'))
-        {
-            return $this->findNextOppositeTrade($tradeSetup);
-        }
-        return $this->findNextTrade($tradeSetup);
-    }
-
-    protected function findNextOppositeTrade(TradeSetup $tradeSetup): ?TradeSetup
-    {
-        $isBuy = $tradeSetup->isBuy();
-
-        while ($next = $this->findNextTrade($next ?? $tradeSetup))
-        {
-            if ($next->isBuy() !== $isBuy)
-            {
-                return $next;
-            }
-        }
-
-        return null;
-    }
-
-    protected function findNextTrade(TradeSetup $trade): ?TradeSetup
-    {
-        $timestamp = $trade->timestamp;
-
-        $iterator = $this->trades->getIterator();
-
-        while ($iterator->valid())
-        {
-            if ($iterator->key() == $timestamp)
-            {
-                $iterator->next();
-                return $iterator->current();
-            }
-
-            $iterator->next();
-        }
-
-        return null;
     }
 
     public function newAction(TradeSetup $trade, string $actionClass, array $config): void
@@ -182,7 +120,7 @@ abstract class Strategy
         $this->actions[$trade][$actionClass] = $config;
     }
 
-    public function run(Symbol $symbol): void
+    public function run(Symbol $symbol): TradeCollection
     {
         $this->symbol = $symbol;
         $this->symbol->updateCandles();
@@ -204,8 +142,10 @@ abstract class Strategy
             $this->tradeConfig,
             collect($this->indicatorConfig),
             $this->indicators);
-        $this->trades = $finder->findTrades();
+        $trades = $finder->findTrades();
         Log::execTimeFinish('findTrades');
+
+        return $trades;
     }
 
     protected function getEvaluationSymbol(): Symbol
@@ -322,12 +262,14 @@ abstract class Strategy
     final protected function getDefaultConfig(): array
     {
         return [
-            'maxCandles'   => 1000,
-            'startDate'    => null,
-            'endDate'      => null,
-            //when true, multiple trades to the same direction will be disregarded
-            'oppositeOnly' => false,
-            'evaluation'   => [
+            'maxCandles' => 1000,
+            'startDate'  => null,
+            'endDate'    => null,
+            'trades'     => [
+                //when true, multiple trades to the same direction will be disregarded
+                'oppositeOnly' => false,
+            ],
+            'evaluation' => [
                 'loop'     => [
                     //trade duration in minutes, 0 to disable
                     //exceeding trades will be stopped at close price
@@ -338,7 +280,7 @@ abstract class Strategy
                 'interval' => '1m'
             ],
             //trade commission cut, each trade costs two fees
-            'feeRatio'     => 0.001
+            'feeRatio'   => 0.001
         ];
     }
 }

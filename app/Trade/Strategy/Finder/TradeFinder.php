@@ -5,8 +5,9 @@ namespace App\Trade\Strategy\Finder;
 use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
-use App\Trade\CandleCollection;
 use App\Trade\Candles;
+use App\Trade\Collection\CandleCollection;
+use App\Trade\Collection\TradeCollection;
 use App\Trade\Config\IndicatorConfig;
 use App\Trade\Config\TradeConfig;
 use App\Trade\Indicator\Indicator;
@@ -101,7 +102,7 @@ class TradeFinder
     /**
      * @return Collection|TradeSetup[]
      */
-    public function findTrades(): Collection
+    public function findTrades(): TradeCollection
     {
         $trades = [];
         while ($this->candleIterator->valid())
@@ -110,7 +111,6 @@ class TradeFinder
             $candle = $this->candleIterator->current();
             $key = $this->candleIterator->key();
             $this->candleIterator->next();
-//            $next = $this->candleIterator->current();
 
             if ($this->tradeConfig->withSignals)
             {
@@ -148,7 +148,7 @@ class TradeFinder
             }
         }
 
-        return \collect($trades);
+        return new TradeCollection($trades, $this->strategy->config('trades'));
     }
 
     protected function getSignalGeneratorResult(\stdClass $candle, ?Indicator &$indicator = null): ?array
