@@ -2,7 +2,7 @@
 
 namespace App\Trade\Indicator;
 
-use App\Trade\CandleCollection;
+use App\Trade\Collection\CandleCollection;
 
 class EMA extends Indicator
 {

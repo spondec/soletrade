@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade;
+namespace App\Trade\Collection;
 
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;

@@ -2,7 +2,7 @@
 
 namespace App\Trade\Indicator;
 
-use App\Trade\CandleCollection;
+use App\Trade\Collection\CandleCollection;
 use App\Trade\Indicator\Helpers\CanCross;
 use Illuminate\Support\Collection;
 

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Trade\Indicator;
 
+use App\Models\Signal;
 use App\Models\Signature;
 use App\Models\Symbol;
-use App\Models\Signal;
 use App\Repositories\SymbolRepository;
 use App\Trade\Binding\Binder;
 use App\Trade\Binding\CanBind;
-use App\Trade\CandleCollection;
+use App\Trade\Collection\CandleCollection;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
@@ -528,6 +528,7 @@ abstract class Indicator implements Binder
      */
     protected function saveSignal(Signal $signal): Signal
     {
+        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
         $this->signals[] = $signal = $signal->updateUniqueOrCreate();
         $signal->setIndicator($this);
         return $signal;

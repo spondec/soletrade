@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Trade\CandleCollection;
+use App\Trade\Collection\CandleCollection;
 use App\Trade\Indicator\Indicator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Collection;

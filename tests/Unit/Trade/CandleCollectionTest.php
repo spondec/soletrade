@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Trade;
 
-use App\Trade\CandleCollection;
+use App\Trade\Collection\CandleCollection;
 use PHPUnit\Framework\TestCase;
 
 class CandleCollectionTest extends TestCase

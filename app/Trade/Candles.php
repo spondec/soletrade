@@ -2,6 +2,8 @@
 
 namespace App\Trade;
 
+use App\Trade\Collection\CandleCollection;
+
 /**
  * DO NOT USE \Iterator::current() IN THIS CLASS
  * CURRENT ITEM MIGHT BE OVERRIDDEN!!!
