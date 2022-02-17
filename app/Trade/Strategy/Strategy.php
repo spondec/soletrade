@@ -40,10 +40,6 @@ abstract class Strategy
     private array $indicatorConfig;
     private TradeConfig $tradeConfig;
     /**
-     * @var TradeSetup[]
-     */
-    private Collection $trades;
-    /**
      * @var Indicator[]
      */
     private Collection $indicators;
@@ -231,26 +227,9 @@ abstract class Strategy
         return new TradeLoop($entry, $this->evaluationSymbol, $this->config('evaluation.loop'));
     }
 
-    public function trades(): Collection
-    {
-        return $this->trades;
-    }
-
     public function helperIndicator(string $class): Indicator
     {
         return $this->helperIndicators[$class];
-    }
-
-    protected function applyTradeSetupConfig(TradeSetup $tradeSetup, Collection $signals, mixed $config): ?TradeSetup
-    {
-        $callback = $config['callback'] ?? null;
-
-        if ($callback instanceof \Closure)
-        {
-            $tradeSetup = $callback($tradeSetup, $signals);
-        }
-
-        return $tradeSetup;
     }
 
     protected function indicator(Signal $signal): Indicator
