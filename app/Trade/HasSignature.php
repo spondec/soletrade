@@ -55,9 +55,13 @@ trait HasSignature
         return $array;
     }
 
-    protected function hash(string $string): string
+    protected function hash(string|array $subject): string
     {
-        return \md5($string);
+        if (is_array($subject))
+        {
+            $subject = \json_encode($this->hashCallbacksInArray($subject));
+        }
+        return \md5($subject);
     }
 
     public function contents(): string
