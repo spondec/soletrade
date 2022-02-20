@@ -55,4 +55,19 @@ class Calc
     {
         return \array_sum($numbers) / \count($numbers);
     }
+
+    public static function asMs(int $seconds): int
+    {
+        if (\strlen((string)$seconds) === 10)
+        {
+            return $seconds * 1000;
+        }
+
+        if (\strlen((string)$seconds) === 13)
+        {
+            return $seconds;
+        }
+
+        throw new \LogicException('Argument $seconds must be 10 or 13 digits long.');
+    }
 }
