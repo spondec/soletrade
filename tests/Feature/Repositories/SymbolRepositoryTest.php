@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Repositories;
 
+use App\Models\Candle;
+use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
-use Database\Factories\CandleFactory;
-use Database\Factories\SymbolFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -16,12 +16,12 @@ class SymbolRepositoryTest extends TestCase
     public function test_fetch_next_candle()
     {
         $repo = $this->symbolRepo();
-        $symbol = $this->symbolFactory()
+        $symbol = Symbol::factory()
             ->count(1)
             ->create()
             ->first();
 
-        $factory = $this->candleFactory();
+        $factory = Candle::factory();
 
         $candles = $factory->count(10)
             ->for($symbol)
@@ -53,26 +53,16 @@ class SymbolRepositoryTest extends TestCase
         return new SymbolRepository();
     }
 
-    protected function symbolFactory(): SymbolFactory
-    {
-        return new SymbolFactory();
-    }
-
-    protected function candleFactory(): CandleFactory
-    {
-        return new CandleFactory();
-    }
-
     public function test_assert_lowest_highest_candle()
     {
         $repo = $this->symbolRepo();
 
-        $symbol = $this->symbolFactory()
+        $symbol = Symbol::factory()
             ->count(1)
             ->create()
             ->first();
 
-        $candles = $this->candleFactory()
+        $candles = Candle::factory()
             ->for($symbol)
             ->count(30)
             ->create();

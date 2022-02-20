@@ -7,8 +7,11 @@ namespace App\Models;
 use App\Trade\Binding\Bindable;
 use App\Trade\Binding\HasBinding;
 use App\Trade\Evaluation\Price;
+use Database\Factories\TradeSetupFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+
 
 /**
  * @property Signal[]|\Illuminate\Database\Eloquent\Collection      signals
@@ -17,7 +20,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property TradeAction[]|\Illuminate\Database\Eloquent\Collection actions
  *
  * @property int                                                    id
- * @property int                                                    position_id
  * @property int                                                    signature_id
  * @property int                                                    signal_count
  * @property int                                                    timestamp
@@ -29,13 +31,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float                                                  size
  * @property float                                                  close_price
  * @property float                                                  stop_price
- * @property array                                                  take_profits
  * @property mixed                                                  created_at
  * @property mixed                                                  updated_at
+ *
+ * @method static TradeSetupFactory factory()
  */
 class TradeSetup extends Model implements Bindable
 {
     use HasBinding;
+    use HasFactory;
 
     public const VALIDATION_RULES = [
         'price_date' => 'gte:timestamp',

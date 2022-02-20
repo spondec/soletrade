@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Trade\Collection\CandleCollection;
 use App\Trade\Indicator\Indicator;
+use Database\Factories\SymbolFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\DB;
  * @property int    last_update
  * @property mixed  created_at
  * @property mixed  updated_at
+ *
+ * @method static SymbolFactory factory()
  */
 class Symbol extends Model
 {
