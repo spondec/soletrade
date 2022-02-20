@@ -56,18 +56,18 @@ class Calc
         return \array_sum($numbers) / \count($numbers);
     }
 
-    public static function asMs(int $seconds): int
+    public static function asMs(int $timestamp): int
     {
-        if (\strlen((string)$seconds) === 10)
+        if (\strlen((string)$timestamp) === 10)
         {
-            return $seconds * 1000;
+            return $timestamp * 1000;
         }
 
-        if (\strlen((string)$seconds) === 13)
+        if (\strlen((string)$timestamp) === 13)
         {
-            return $seconds;
+            return $timestamp;
         }
 
-        throw new \LogicException('Argument $seconds must be 10 or 13 digits long.');
+        throw new \LogicException('Argument $timestamp must be 10 or 13 digits long.');
     }
 }
