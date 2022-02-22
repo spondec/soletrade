@@ -259,11 +259,6 @@ abstract class Indicator implements Binder
         return $this->data[$this->next] ?? null;
     }
 
-    public function id(): int
-    {
-        return $this->signature->id;
-    }
-
     public function closePrice(): float
     {
         return (float)$this->candle()->c;
@@ -418,7 +413,7 @@ abstract class Indicator implements Binder
             !$returnType->allowsNull() ||
             $returnType->getName() !== $type)
         {
-            throw new \InvalidArgumentException("Signal callback must have a return type of $type and nullable.");
+            throw new \InvalidArgumentException("Signal callback must have a return type of $type and be nullable.");
         }
     }
 
