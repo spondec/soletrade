@@ -8,7 +8,6 @@ use App\Models\TradeSetup;
 use App\Trade\Candles;
 use App\Trade\Config\TradeConfig;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class TradeCreator
 {
@@ -66,26 +65,21 @@ class TradeCreator
             throw new \LogicException('Trade has not been set.');
         }
 
+        /** @var TradeSetup $tradeSetup */
+        $tradeSetup = $this->trade->updateUniqueOrCreate();
+        $tradeSetup->actions()->delete();
 
-        DB::transaction(function () use (&$tradeSetup) {
-
-            /** @var TradeSetup $tradeSetup */
-            $tradeSetup = $this->trade->updateUniqueOrCreate();
-            $tradeSetup->actions()->delete();
-
-            if ($this->actions)
+        if ($this->actions)
+        {
+            foreach ($this->actions as $class => $config)
             {
-                foreach ($this->actions as $class => $config)
-                {
-                    $tradeSetup->actions()->create(['class'  => $class,
-                                                    'config' => $config]);
-                }
+                $tradeSetup->actions()->create(['class'  => $class,
+                                                'config' => $config]);
             }
+        }
 
-            $tradeSetup->signals()
-                ->sync(\array_map(static fn(Signal $signal): int => $signal->id, $this->signals));
-        });
-
+        $tradeSetup->signals()
+            ->sync(\array_map(static fn(Signal $signal): int => $signal->id, $this->signals));
         $this->finalize();
 
         return $tradeSetup;
