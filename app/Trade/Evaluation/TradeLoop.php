@@ -19,8 +19,8 @@ final class TradeLoop
     use HasConfig;
 
     protected array $config = [
-        'closeOnExit'   => true,
-        'timeout' => 1440
+        'closeOnExit' => true,
+        'timeout'     => 1440
     ];
 
     protected SymbolRepository $repo;
@@ -127,7 +127,7 @@ final class TradeLoop
         {
             $this->runLoop($candles);
 
-            if (!isset($candles[1])) //prevent infinite loop on the same candle
+            if (!isset($candles[1])) //prevent infinite loop on the same candle TODO:: WTF?
             {
                 break;
             }
@@ -178,24 +178,22 @@ final class TradeLoop
                 $this->entry->loadBindingPrice($entry, 'price', $candle->t, $evaluationSymbol);
                 $this->tryPositionEntry($candle, $nextCandle);
             }
-            else
+            else if (!$this->status->isExited())
             {
-                if (!$this->status->isExited())
-                {
-                    $this->entry->loadBindingPrice($stop, 'stop_price', $candle->t, $evaluationSymbol);
-                    $this->entry->loadBindingPrice($exit, 'close_price', $candle->t, $evaluationSymbol);
-                    $priceDate = $this->getPriceDate($candle, $nextCandle);
-                    if ($this->tryPositionExit($position ?? $position = $this->getPosition(), $candle, $priceDate))
-                    {
-                        break;
-                    }
+                $this->entry->loadBindingPrice($stop, 'stop_price', $candle->t, $evaluationSymbol);
+                $this->entry->loadBindingPrice($exit, 'close_price', $candle->t, $evaluationSymbol);
 
-                    if ($this->timeout && $this->hasPositionTimedOut($priceDate))
-                    {
-                        $this->exitPositionAtClosePrice($position, $candle, 'Trade timed out. Stopping.');
-                        break;
-                    }
+                $priceDate = $this->getPriceDate($candle, $nextCandle);
+                $position = $position ?? $this->getPosition();
+
+                if ($this->timeout && $this->hasPositionTimedOut($priceDate))
+                {
+                    $this->exitPositionAtClosePrice($position, $candle, 'Trade timed out. Stopping.');
+                    break;
                 }
+
+                $this->tryPositionExit($position, $candle, $priceDate);
+                $this->status->runTradeActions($candle, $priceDate);
             }
         }
 
@@ -243,7 +241,7 @@ final class TradeLoop
 
     protected function tryPositionExit(Position $position, \stdClass $candle, int $priceDate): bool
     {
-        if (!$this->status->checkIsExited())
+        if (!$this->status->isExited())
         {
             $stopped = $this->status->checkIsStopped($candle);
             $closed = $this->status->checkIsClosed($candle);
@@ -264,10 +262,6 @@ final class TradeLoop
 
                 return true;
             }
-
-            $this->status->runTradeActions($candle, $priceDate);
-
-            return !$position->isOpen(); //actions can close a position
         }
         return false;
     }
@@ -329,5 +323,4 @@ final class TradeLoop
     {
         return $this->status;
     }
-
 }

@@ -54,7 +54,6 @@ class TradeStatusTest extends TestCase
         $this->assertNotTrue($status->isStopped());
         $this->assertNotTrue($status->isClosed());
         $this->assertNotTrue($status->isAmbiguous());
-        $this->assertNotTrue($status->checkIsExited());
     }
 
     protected function getSetup(bool $isBuy, float $size, float $price, float $closePrice, float $stopPrice): TradeSetup
@@ -82,7 +81,6 @@ class TradeStatusTest extends TestCase
         $this->assertNotTrue($status->isStopped());
         $this->assertNotTrue($status->isClosed());
         $this->assertNotTrue($status->isAmbiguous());
-        $this->assertNotTrue($status->checkIsExited());
     }
 
     public function test_check_is_stopped(): void
@@ -114,7 +112,6 @@ class TradeStatusTest extends TestCase
         $this->assertTrue($status->checkIsStopped((object)$candle));
         $this->assertTrue($status->checkIsClosed((object)$candle));
         $this->assertTrue($status->isExited());
-        $this->assertTrue($status->checkIsExited());
         $this->assertTrue($status->isAmbiguous());
     }
 
@@ -128,15 +125,14 @@ class TradeStatusTest extends TestCase
             't' => time()
         ];
         $this->assertNotTrue($status->isExited());
-        $this->assertNotTrue($status->checkIsExited());
         $this->assertNotTrue($status->isAmbiguous());
+
         $status->enterPosition(time());
         $status->getPosition()->close(time());
-        $this->assertNotTrue($status->isExited());
-        $this->assertTrue($status->checkIsExited());
-        $this->assertTrue($status->checkIsClosed((object)$candle));
-        $this->assertNotTrue($status->checkIsStopped((object)$candle));
+
         $this->assertTrue($status->isExited());
+        $this->assertTrue($status->isClosed());
+        $this->assertNotTrue($status->isStopped());
     }
 
     public function test_stop_position_externally(): void
@@ -149,15 +145,12 @@ class TradeStatusTest extends TestCase
             't' => time()
         ];
         $this->assertNotTrue($status->isExited());
-        $this->assertNotTrue($status->checkIsExited());
         $this->assertNotTrue($status->isAmbiguous());
         $status->enterPosition(time());
         $status->getPosition()->stop(time());
-        $this->assertNotTrue($status->isExited());
-        $this->assertTrue($status->checkIsExited());
-        $this->assertNotTrue($status->checkIsClosed((object)$candle));
-        $this->assertTrue($status->checkIsStopped((object)$candle));
         $this->assertTrue($status->isExited());
+        $this->assertNotTrue($status->isClosed());
+        $this->assertTrue($status->isStopped());
     }
 
     public function test_check_is_closed_with_no_position(): void

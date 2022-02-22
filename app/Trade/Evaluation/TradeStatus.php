@@ -13,7 +13,7 @@ use JetBrains\PhpStorm\Pure;
 
 class TradeStatus
 {
-    /** @var Handler[] */
+    /** @var Collection<Handler> */
     protected Collection $actionHandlers;
 
     protected Price $entryPrice;
@@ -66,20 +66,37 @@ class TradeStatus
 
     protected function newPosition(int $entryTime): Position
     {
-        return new Position($this->entry->isBuy(),
+        $position = new Position($this->entry->isBuy(),
             $this->entry->size,
             $entryTime,
             $this->entryPrice,
             $this->getClosePrice(),
             $this->getStopPrice());
+
+        $this->registerPositionListeners($position);
+
+        return $position;
     }
 
-    #[Pure] public function getClosePrice(): ?Price
+    protected function registerPositionListeners(Position $position): void
+    {
+        $position->listen(eventName: 'close', onEvent: function () {
+            $this->isClosed = true;
+            $this->isExited = true;
+        });
+
+        $position->listen(eventName: 'stop', onEvent: function () {
+            $this->isStopped = true;
+            $this->isExited = true;
+        });
+    }
+
+    public function getClosePrice(): ?Price
     {
         return $this->closePrice ?: $this->closePrice = $this->position?->price('exit');
     }
 
-    #[Pure] public function getStopPrice(): ?Price
+    public function getStopPrice(): ?Price
     {
         return $this->stopPrice ?: $this->stopPrice = $this->position?->price('stop');
     }
@@ -149,21 +166,6 @@ class TradeStatus
         }
 
         return $this->isClosed;
-    }
-
-    public function checkIsExited(): bool
-    {
-        if ($this->isStopped || $this->isClosed)
-        {
-            return true;
-        }
-
-        if ($this->position)
-        {
-            return ($this->isClosed = $this->position->isClosed()) || ($this->isStopped = $this->position->isStopped());
-        }
-
-        return false;
     }
 
     #[Pure] public function getEntryPrice(): Price
