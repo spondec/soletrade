@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Database\Factories\SignatureFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,9 +12,13 @@ use Illuminate\Database\Eloquent\Model;
  * @property string         hash
  * @property \Carbon\Carbon created_at
  * @property \Carbon\Carbon updated_at
+ *
+ * @method static SignatureFactory factory()
  */
 class Signature extends Model
 {
+    use HasFactory;
+
     protected $guarded = ['id'];
 
     protected $casts = ['data' => 'array'];
