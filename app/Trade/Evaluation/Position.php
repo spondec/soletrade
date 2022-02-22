@@ -6,10 +6,15 @@ namespace App\Trade\Evaluation;
 
 use App\Trade\Calc;
 use App\Trade\ChangeLog;
+use App\Trade\HasEvents;
 use JetBrains\PhpStorm\Pure;
 
 class Position
 {
+    use HasEvents;
+
+    protected array $events = ['close', 'stop'];
+
     public const MAX_SIZE = 100;
 
     protected bool $isStopped = false;
@@ -87,10 +92,10 @@ class Position
         }
 
         $this->transactionLog->new([
-                                       'increase' => $increase,
-                                       'price'    => $price,
-                                       'size'     => $size,
-                                   ], $timestamp, $reason);
+            'increase' => $increase,
+            'price'    => $price,
+            'size'     => $size,
+        ], $timestamp, $reason);
 
         if (!$this->amount && $this->isOpen())
         {
@@ -199,10 +204,12 @@ class Position
         $this->exitTime = $exitTime;
 
         $this->newTransaction(false,
-                              $this->exitPrice,
-                              $this->getUsedSize(),
-                              $exitTime,
-                              'Position exit.');
+            $this->exitPrice,
+            $this->getUsedSize(),
+            $exitTime,
+            'Position exit.');
+
+        $this->fireEvent('close');
     }
 
     protected function lockIfUnlocked(Price $price): void
@@ -296,10 +303,12 @@ class Position
         $this->exitTime = $exitTime;
 
         $this->newTransaction(false,
-                              $this->exitPrice,
-                              $this->getUsedSize(),
-                              $exitTime,
-                              'Position stop.');
+            $this->exitPrice,
+            $this->getUsedSize(),
+            $exitTime,
+            'Position stop.');
+
+        $this->fireEvent('stop');
     }
 
     public function relativeExitRoi(): float
@@ -355,9 +364,9 @@ class Position
     protected function enter(): void
     {
         $this->newTransaction(true,
-                              $this->entry->get(),
-                              $this->size,
-                              $this->entryTime,
-                              'Position entry');
+            $this->entry->get(),
+            $this->size,
+            $this->entryTime,
+            'Position entry');
     }
 }
