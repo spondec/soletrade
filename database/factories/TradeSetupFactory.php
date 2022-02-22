@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\TradeSetup;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,8 +22,8 @@ class TradeSetupFactory extends Factory
     {
         return [
             'signal_count' => 0,
-            'timestamp'    => $this->faker->dateTimeBetween('-1 year', 'now')->getTimestamp() * 1000,
-            'price_date'   => $this->faker->dateTimeBetween('-1 year', 'now')->getTimestamp() * 1000,
+            'timestamp'    => $timestamp = $this->faker->dateTimeBetween('-1 year', 'now')->getTimestamp() * 1000,
+            'price_date'   => $this->faker->dateTimeBetween(Carbon::createFromTimestampMs($timestamp))->getTimestamp() * 1000,
             'name'         => $this->faker->name,
             'side'         => $this->faker->randomElement(['BUY', 'SELL']),
             'price'        => $this->faker->randomFloat(2, 0, 100),
