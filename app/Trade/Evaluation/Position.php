@@ -168,7 +168,7 @@ class Position
         $this->multiplier = $multiplier;
     }
 
-    public function exitTime(): int
+    public function exitTime(): ?int
     {
         return $this->exitTime;
     }
