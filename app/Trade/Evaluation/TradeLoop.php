@@ -127,7 +127,7 @@ final class TradeLoop
         {
             $this->runLoop($candles);
 
-            if (!isset($candles[1])) //prevent infinite loop on the same candle TODO:: WTF?
+            if (!isset($candles[1])) //prevent infinite loop on the last candle
             {
                 break;
             }
@@ -293,7 +293,7 @@ final class TradeLoop
         $position->stop($priceDate);
     }
 
-    public function getLastCandle(): \stdClass
+    protected function getLastCandle(): \stdClass
     {
         $candle = $this->repo->fetchCandle($this->evaluationSymbol, $this->lastRunDate);
 
