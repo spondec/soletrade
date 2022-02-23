@@ -10,6 +10,10 @@ use Illuminate\Support\Collection;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class TradeStatusTest extends TestCase
 {
     public function test_run_trade_actions(): void
