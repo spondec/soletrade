@@ -7,6 +7,10 @@ use App\Trade\Evaluation\Summarizer;
 use App\Trade\Strategy\Strategy;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class SummaryTest extends TestCase
 {
     protected function getStrategy(): Strategy
