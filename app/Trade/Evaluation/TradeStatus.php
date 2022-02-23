@@ -58,36 +58,26 @@ class TradeStatus
             throw new \LogicException('Already in a position');
         }
 
-        $this->position = $this->newPosition($entryTime);
-        $this->initActionHandlers();
-
-        $this->isEntered = true;
-    }
-
-    protected function newPosition(int $entryTime): Position
-    {
-        $position = new Position($this->entry->isBuy(),
+        $this->position = new Position($this->entry->isBuy(),
             $this->entry->size,
             $entryTime,
             $this->entryPrice,
             $this->getClosePrice(),
             $this->getStopPrice());
 
-        $this->registerPositionListeners($position);
+        $this->registerPositionListeners();
+        $this->initActionHandlers();
 
-        return $position;
+        $this->isEntered = true;
     }
 
-    protected function registerPositionListeners(Position $position): void
+    protected function registerPositionListeners(): void
     {
-        $position->listen(eventName: 'close', onEvent: function () {
-            $this->isClosed = true;
-            $this->isExited = true;
+        $this->position->listen(eventName: 'close', onEvent: function () {
+            $this->isExited = $this->isClosed = true;
         });
-
-        $position->listen(eventName: 'stop', onEvent: function () {
-            $this->isStopped = true;
-            $this->isExited = true;
+        $this->position->listen(eventName: 'stop', onEvent: function () {
+            $this->isExited = $this->isStopped = true;
         });
     }
 
