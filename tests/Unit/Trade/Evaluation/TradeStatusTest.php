@@ -119,11 +119,7 @@ class TradeStatusTest extends TestCase
     {
         $setup = $this->getSetup(true, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
-        $candle = [
-            'h' => 1.9,
-            'l' => 0.7,
-            't' => time()
-        ];
+
         $this->assertNotTrue($status->isExited());
         $this->assertNotTrue($status->isAmbiguous());
 
@@ -139,11 +135,7 @@ class TradeStatusTest extends TestCase
     {
         $setup = $this->getSetup(true, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
-        $candle = [
-            'h' => 1.9,
-            'l' => 0.7,
-            't' => time()
-        ];
+
         $this->assertNotTrue($status->isExited());
         $this->assertNotTrue($status->isAmbiguous());
         $status->enterPosition(time());
