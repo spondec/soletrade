@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Exchange;
+namespace App\Trade\Exchange\Account;
 
 class Asset
 {
