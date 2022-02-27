@@ -29,7 +29,7 @@ class ConfigRepository extends Repository
         return \array_map(static function (string $exchange) {
             return DB::table('symbols')
                 ->distinct()
-                ->where('exchange_id', $exchange::instance()->id())
+                ->where('exchange_id', $exchange::instance()->model()->id)
                 ->get('symbol')
                 ->pluck('symbol')
                 ->toArray();
@@ -39,6 +39,6 @@ class ConfigRepository extends Repository
 
     public function getExchanges(): array
     {
-        return \array_map(fn(array $details) => $details['class'], $this->config['exchanges']) ?? [];
+        return \array_map(static fn(array $details) => $details['class'], $this->config['exchanges']) ?? [];
     }
 }

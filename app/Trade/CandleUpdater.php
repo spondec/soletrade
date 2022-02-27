@@ -23,19 +23,31 @@ class CandleUpdater
     public function __construct(protected Exchange $exchange)
     {
         $this->symbolRepo = App::make(SymbolRepository::class);
-        $this->symbols = $this->exchange->symbols();
-        $this->map = $this->exchange->candleMap();
-        $this->limit = $this->exchange->getMaxCandlesPerRequest();
+
+        $fetch = $this->exchange->fetch();
+
+        $this->symbols = $fetch->symbols();
+        $this->map = $fetch->candleMap();
+        $this->limit = $fetch->getMaxCandlesPerRequest();
     }
 
-    /** @return Symbol[] */
-    public function updateByInterval(string $interval, int $maxRunTime = 0, ?\Closure $filter = null): ?Collection
+    /**
+     * @param string        $interval
+     * @param int           $maxRunTime
+     * @param \Closure|null $filter
+     *
+     * @return Collection<Symbol>|null
+     */
+    public function byInterval(string $interval, int $maxRunTime = 0, ?\Closure $filter = null): ?Collection
     {
         $startTime = \time();
 
         $symbols = $this->indexSymbols($interval);
 
-        if ($filter) $symbols = $symbols->filter($filter)->values();
+        if ($filter)
+        {
+            $symbols = $symbols->filter($filter)->values();
+        }
 
         if (!$symbols->first())
         {
@@ -47,7 +59,7 @@ class CandleUpdater
             $remaining = $maxRunTime - (\time() - $startTime);
 
             if (($maxRunTime > 0 && $remaining <= 0) ||
-                !$this->update($symbol, $maxRunTime > 0 ? $remaining : 0))
+                !$this->bySymbol($symbol, $maxRunTime > 0 ? $remaining : 0))
             {
                 if (($length = $key - 1) < 1) //nothing to return if the length is non-positive
                 {
@@ -61,7 +73,7 @@ class CandleUpdater
         return $symbols;
     }
 
-    public function update(Symbol $symbol, int $maxRunTime = 0): bool
+    public function bySymbol(Symbol $symbol, int $maxRunTime = 0): bool
     {
         Log::execTimeStart($task = "Updating $symbol->symbol-$symbol->interval candles");
         $startTime = \time();
@@ -77,7 +89,7 @@ class CandleUpdater
                 $start = $currentCandles->first()->t ?? 0;
 
                 $symbol->last_update = \time() * 1000;
-                $latestCandles = $this->exchange->candles($symbol->symbol,
+                $latestCandles = $this->exchange->fetch()->candles($symbol->symbol,
                     $symbol->interval,
                     $start,
                     $this->limit);
@@ -89,7 +101,7 @@ class CandleUpdater
                 {
                     if ($latestCandles[0][$this->map->t] != $currentLastCandle->t)
                     {
-                        throw new \LogicException("Candle corruption detected! Symbol ID: {$id}");
+                        throw new \LogicException("Candle corruption detected! Symbol ID: $id");
                     }
 
                     $this->symbolRepo->updateCandle($currentLastCandle->id, $inserts[0]);
@@ -131,13 +143,11 @@ class CandleUpdater
     public function indexSymbols(string $interval): Collection
     {
         $this->symbolRepo->insertIgnoreSymbols($this->symbols,
-            $id = $this->exchange->id(),
+            $id = $this->exchange->model()->id,
             $interval);
 
-        $symbols = $this->symbolRepo->fetchSymbols($this->symbols,
+        return $this->symbolRepo->fetchSymbols($this->symbols,
             $interval,
             $id);
-
-        return $symbols;
     }
 }

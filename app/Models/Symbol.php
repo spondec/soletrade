@@ -122,7 +122,7 @@ class Symbol extends Model
 
     public function updateCandles(int $maxRunTime = 0): void
     {
-        $this->exchange()->updater()->update($this, $maxRunTime);
+        $this->exchange()->update()->bySymbol($this, $maxRunTime);
     }
 
     public function indicator(string $name): Indicator

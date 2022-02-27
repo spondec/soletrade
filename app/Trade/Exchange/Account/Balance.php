@@ -2,13 +2,20 @@
 
 namespace App\Trade\Exchange\Account;
 
+use App\Trade\Exchange\Exchange;
 use App\Trade\Log;
+use JetBrains\PhpStorm\Pure;
 
-class AccountBalance
+class Balance
 {
     /** @var Asset[] */
     protected array $assets;
 
+    /**
+     * @param Exchange     $exchange
+     * @param array<Asset> $assets
+     * @param string       $relativeAsset
+     */
     public function __construct(protected Exchange $exchange,
                                 array              $assets,
                                 protected string   $relativeAsset = 'USDT')
@@ -29,11 +36,11 @@ class AccountBalance
         }
     }
 
-    public function calculateRoe(AccountBalance $prevBalance): array
+    #[Pure] public function calculateRoi(Balance $prevBalance): array
     {
         $roe = [];
 
-        foreach ($prevBalance->getAssets() as $asset)
+        foreach ($prevBalance->assets() as $asset)
         {
             $total = $asset->total();
             $roe[$name = $asset->name()] = $total / ($this->assets[$name]->total() - $total) * 100;
@@ -42,21 +49,23 @@ class AccountBalance
         return $roe;
     }
 
-    public function calculateRelativeWorth(string $relativeAsset = null, bool $onlyAvailable = false): array
+    public function calculateRelativeNetWorth(string $relativeAsset = null, bool $onlyAvailable = false): array
     {
         $relativeAsset ??= $this->relativeAsset;
 
         if (empty($relativeAsset))
+        {
             throw new \UnexpectedValueException('Relative asset can not be empty.');
+        }
 
-        $symbols = $this->exchange->symbols($relativeAsset);
+        $symbols = $this->exchange->fetch()->symbols($relativeAsset);
         $worth = [];
 
         foreach ($this->assets as $asset)
         {
             if (($baseAsset = $asset->name()) != $relativeAsset)
             {
-                $symbol = $this->exchange->symbol($baseAsset, $relativeAsset);
+                $symbol = $this->exchange->fetch()->symbol($baseAsset, $relativeAsset);
 
                 if (!\in_array($symbol, $symbols))
                 {
@@ -65,7 +74,7 @@ class AccountBalance
 
                 try
                 {
-                    $price = $this->exchange->orderBook($symbol)->bestAsk();
+                    $price = $this->exchange->fetch()->orderBook($symbol)->bestAsk();
 
                 } catch (\UnexpectedValueException $e)
                 {
@@ -84,13 +93,13 @@ class AccountBalance
 
     public function primaryAsset(): Asset
     {
-        return $this->assets[\array_key_first($this->calculateRelativeWorth(onlyAvailable: true))];
+        return $this->assets[\array_key_first($this->calculateRelativeNetWorth(onlyAvailable: true))];
     }
 
     /**
      * @return Asset[]
      */
-    public function getAssets(): array
+    public function assets(): array
     {
         return $this->assets;
     }

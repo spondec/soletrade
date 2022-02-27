@@ -24,7 +24,7 @@ class ExchangeController extends Controller
     {
         if (\in_array($exchange, $this->configRepo->getExchanges()))
         {
-            return $exchange::instance()->symbols();
+            return $exchange::instance()->fetch()->symbols();
         }
 
         throw new \HttpException("Exchange $exchange doesn't exist.");
@@ -40,7 +40,7 @@ class ExchangeController extends Controller
             $exchange = $exchange::instance();
             $exchangeName = $exchange::name();
 
-            foreach ($exchange->accountBalance()->getAssets() as $assetName => $asset)
+            foreach ($exchange->fetch()->balance()->assets() as $assetName => $asset)
             {
                 $balances[] = [
                     'name'      => $assetName,

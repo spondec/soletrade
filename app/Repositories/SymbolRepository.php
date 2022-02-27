@@ -228,7 +228,7 @@ class SymbolRepository extends Repository
     public function findSymbols(Exchange|int $exchange, string|array $symbolName, string $interval): \Illuminate\Database\Eloquent\Builder
     {
         $query = Symbol::query()
-            ->where('exchange_id', \is_int($exchange) ? $exchange : $exchange::instance()->id())
+            ->where('exchange_id', \is_int($exchange) ? $exchange : $exchange::instance()->model()->id)
             ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval);
 
         if (\is_array($symbolName))
@@ -270,8 +270,8 @@ class SymbolRepository extends Repository
     {
         $filter = static fn(Symbol $symbol): bool => $symbol->symbol === $symbolName && $symbol->interval === $interval;
         return $exchange::instance()
-            ->updater()
-            ->updateByInterval(interval: $interval, filter: $filter)
+            ->update()
+            ->byInterval(interval: $interval, filter: $filter)
             ?->first();
     }
 

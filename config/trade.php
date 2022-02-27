@@ -2,8 +2,8 @@
 
 return [
     'exchanges' => [
-        'BinanceSpot' => [
-            'class'     => \App\Trade\Exchange\Spot\BinanceSpot::class,
+        \App\Trade\Exchange\Binance\Spot\Binance::name() => [
+            'class'     => \App\Trade\Exchange\Binance\Spot\Binance::class,
             'apiKey'    => env('EXCHANGE_BINANCE_SPOT_API_KEY'),
             'secretKey' => env('EXCHANGE_BINANCE_SPOT_SECRET_KEY')
         ],

@@ -99,18 +99,15 @@ class ChartController extends Controller
         if (!$symbol)
         {
             $filter = static fn(Symbol $symbol): bool => $symbol->symbol == $symbolName && $symbol->interval == $interval;
-            $symbol = $exchange::instance()->updater()->updateByInterval(interval: $interval, filter: $filter)?->first();
+            $symbol = $exchange::instance()->update()->byInterval(interval: $interval, filter: $filter)?->first();
         }
 
         abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
 
         if ($symbol->last_update <= $end)
         {
-            $symbol->exchange()->updater()->update($symbol);
+            $symbol->exchange()->update()->bySymbol($symbol);
         }
-
-        $candles = $symbol->candles($range ? null : $limit, $start, $end);
-        $this->symbolRepo->initIndicators($symbol, $candles, $indicators);
 
         if ($strategy)
         {
@@ -122,26 +119,27 @@ class ChartController extends Controller
             $trades = $tester->runStrategy($symbol);
 
             Log::execTimeStart('Evaluating and summarizing trades');
+
             $summary = $tester->summary($trades);
             $summary['evaluations'] = $summary['evaluations']->map(
-                static fn(Evaluation $evaluation): Evaluation => $evaluation->fresh([
-//                        'entry.bindings',
-//                        'exit.bindings',
-//                        'entry.signals.bindings',
-//                        'exit.signals.bindings'
-                ]));
+                static fn(Evaluation $evaluation): Evaluation => $evaluation->fresh());
 
             Log::execTimeFinish('Evaluating and summarizing trades');
 
             Log::execTimeStart('Preparing symbol');
+
             $symbol = $symbol->toArray();
             $symbol['strategy'] = ['trades' => $summary];
+
             Log::execTimeFinish('Preparing symbol');
 
             return $symbol;
         }
 
         $symbol->updateCandlesIfOlderThan(60);
+        $candles = $symbol->candles($range ? null : $limit, $start, $end);
+        $this->symbolRepo->initIndicators($symbol, $candles, $indicators);
+
         return $symbol->toArray();
     }
 

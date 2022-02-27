@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Repositories\ConfigRepository;
+use App\Trade\Exchange\Exchange;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\App;
 
 class SymbolSeeder extends Seeder
 {
@@ -14,11 +16,14 @@ class SymbolSeeder extends Seeder
      */
     public function run()
     {
-        $exchanges = Config::get('trade.exchanges');
-        foreach ($exchanges as $exchange)
+        /** @var ConfigRepository $repo */
+        $repo = App::make(ConfigRepository::class);
+
+        /** @var Exchange|string $exchange */
+        foreach (array_column($repo->getExchanges(), 'class') as $exchange)
         {
-            $exchange['class']::instance()
-                ->updater()
+            $exchange::instance()
+                ->update()
                 ->bulkIndexSymbols([
                     '1m',
                     '5m',

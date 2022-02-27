@@ -12,26 +12,27 @@ trait HasExchange
 {
     public function exchange(): Exchange
     {
-        static $instances = [];
+        static $cache = [];
 
-        if (isset($instances[$id = $this->exchange_id]))
+        if (isset($cache[$id = $this->exchange_id]))
         {
-            return $instances[$id];
+            return $cache[$id];
         }
 
         /** @var ExchangeModel $exchange */
         $exchange = ExchangeModel::query()->findOrFail($id);
-
-        $account = \ucfirst(\mb_strtolower($exchange->account));
-        $name = \ucfirst(\mb_strtolower($exchange->name));
-
-        $class = '\App\Trade\Exchange\\' . "$account\\$name";
+        $class = $exchange->class;
 
         if (!\class_exists($class))
         {
-            throw new \LogicException("Exchange instance '$name' couldn't be found at '$class'");
+            throw new \LogicException("Class '$class' does not exist.");
         }
 
-        return $instances[$id] = $class::instance();
+        if (!is_subclass_of($class, Exchange::class))
+        {
+            throw new \LogicException("Class '$class' is not a subclass of '" . Exchange::class . "'");
+        }
+
+        return $cache[$id] = $class::instance();
     }
 }
