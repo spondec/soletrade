@@ -16,7 +16,6 @@ return new class extends Migration {
             $table->id();
             $table->string('class')->unique();
             $table->string('name');
-            $table->string('account');
             $table->timestamps();
         });
     }

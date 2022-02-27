@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property int    id
  * @property string class
  * @property string name
- * @property string account
  */
 class Exchange extends Model
 {
