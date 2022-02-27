@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Illuminate\Database\Schema\Blueprint;
 use App\Models\Signal;
 use App\Models\TradeSetup;
+use App\Repositories\ConfigRepository;
 use App\Repositories\SymbolRepository;
 use App\Trade\Strategy\Tester;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -20,10 +21,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (!App::runningInConsole()) \set_time_limit(30);
+        if (!App::runningInConsole())
+        {
+            \set_time_limit(30);
+        }
         \ini_set('trader.real_precision', 10);
+
         $this->app->singleton(Tester::class);
         $this->app->singleton(SymbolRepository::class);
+        $this->app->singleton(ConfigRepository::class);
 
         $this->app->bind('db.schema', static function ($app) {
             $builder = $app['db']->connection()->getSchemaBuilder();

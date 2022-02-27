@@ -20,7 +20,7 @@ class SymbolSeeder extends Seeder
         $repo = App::make(ConfigRepository::class);
 
         /** @var Exchange|string $exchange */
-        foreach (array_column($repo->getExchanges(), 'class') as $exchange)
+        foreach ($repo->exchanges as $exchange)
         {
             $exchange::instance()
                 ->update()

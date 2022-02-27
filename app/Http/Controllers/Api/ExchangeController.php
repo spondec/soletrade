@@ -14,7 +14,7 @@ class ExchangeController extends Controller
 
     public function index(): array
     {
-        return \array_map(fn($v) => $v::instance()->info(), $this->configRepo->getExchanges());
+        return \array_map(static fn($v) => $v::instance()->info(), $this->configRepo->exchanges);
     }
 
     /**
@@ -22,7 +22,7 @@ class ExchangeController extends Controller
      */
     public function symbols(string $exchange): array
     {
-        if (\in_array($exchange, $this->configRepo->getExchanges()))
+        if (\in_array($exchange, $this->configRepo->exchanges))
         {
             return $exchange::instance()->fetch()->symbols();
         }
@@ -34,7 +34,7 @@ class ExchangeController extends Controller
     {
         $balances = [];
 
-        foreach ($this->configRepo->getExchanges() as $exchange)
+        foreach ($this->configRepo->exchanges as $exchange)
         {
             /** @var Exchange $exchange */
             $exchange = $exchange::instance();

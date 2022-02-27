@@ -2,42 +2,67 @@
 
 namespace App\Repositories;
 
+use App\Models\Exchange;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use JetBrains\PhpStorm\ArrayShape;
 
 class ConfigRepository extends Repository
 {
-    protected array $config;
+    public readonly array $config;
+
+    /**
+     * @var string[]
+     */
+    public readonly array $indicators;
+    /**
+     * @var string[]
+     */
+    public readonly array $strategies;
+    /**
+     * @var array<string,array>
+     */
+    public readonly array $symbols;
+    /**
+     * @var string[]
+     */
+    public readonly array $exchanges;
 
     public function __construct()
     {
         $this->config = Config::get('trade');
+
+        $this->indicators = $this->config['indicators'];
+        $this->strategies = $this->config['strategies'];
+
+        $this->exchanges = $this->getExchanges();
+        $this->symbols = $this->getSymbols();
     }
 
-    public function getIndicators(): array
+    #[ArrayShape(['class'     => "string",
+                  'apiKey'    => "string",
+                  'secretKey' => "string"])]
+    public function exchangeConfig(string $exchangeName): array
     {
-        return $this->config['indicators'];
+        return $this->config['exchanges'][$exchangeName];
     }
 
-    public function getStrategies(): array
+    protected function getSymbols(): array
     {
-        return $this->config['strategies'];
-    }
-
-    public function getSymbols(): array
-    {
-        return \array_map(static function (string $exchange) {
-            return DB::table('symbols')
+        return Exchange::query()
+            ->where('class', $this->exchanges)
+            ->get()
+            ->keyBy('name')
+            ->map(static fn(Exchange $exchange) => DB::table('symbols')
                 ->distinct()
-                ->where('exchange_id', $exchange::instance()->model()->id)
+                ->where('exchange_id', $exchange->id)
                 ->get('symbol')
                 ->pluck('symbol')
-                ->toArray();
-        }, \array_combine(\array_map(static fn($e) => $e::name(),
-            $exchanges = $this->getExchanges()), $exchanges));
+                ->all())
+            ->all();
     }
 
-    public function getExchanges(): array
+    protected function getExchanges(): array
     {
         return \array_map(static fn(array $details) => $details['class'], $this->config['exchanges']) ?? [];
     }

@@ -3,10 +3,10 @@
 namespace App\Trade\Exchange;
 
 use App\Models\Exchange as ExchangeModel;
+use App\Repositories\ConfigRepository;
 use App\Trade\HasName;
 use App\Trade\CandleUpdater;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
 use JetBrains\PhpStorm\ArrayShape;
 
 abstract class Exchange
@@ -24,7 +24,9 @@ abstract class Exchange
 
     private function __construct()
     {
-        $config = Config::get('trade.exchanges.' . static::name());
+        /** @var ConfigRepository $repo */
+        $repo = App::make(ConfigRepository::class);
+        $config = $repo->exchangeConfig(static::name());
 
         if (!$config)
         {

@@ -27,27 +27,28 @@ class ChartController extends Controller
     public function index(Request $request): array
     {
         $symbol = $request->get('symbol');
-        $exchange = $this->getKeyByValue('exchange', $this->mapClassByName($this->configRepo->getExchanges(), true));
+        $exchange = $this->getKeyByValue('exchange',
+            $this->mapClassByName($this->configRepo->exchanges, true));
         $interval = $request->get('interval');
 
         if ($exchange && $symbol && $interval)
         {
-            $indicators = $this->mapClassByName($this->configRepo->getIndicators(), true);
+            $indicators = $this->mapClassByName($this->configRepo->indicators, true);
             return $this->candles(
                 exchange: $exchange,
                 symbolName: $symbol,
                 interval: $interval,
                 indicators: \array_map(static fn($v) => \array_search($v, $indicators), $request->get('indicators', [])),
-                strategy: $this->getKeyByValue('strategy', $this->mapClassByName($this->configRepo->getStrategies(), true)),
+                strategy: $this->getKeyByValue('strategy', $this->mapClassByName($this->configRepo->strategies, true)),
                 range: \json_decode($request->get('range'), true, 512, JSON_THROW_ON_ERROR),
                 limit: $request->get('limit'));
         }
 
         return [
-            'strategies' => $this->mapClassByName($this->configRepo->getStrategies()),
-            'exchanges'  => $this->mapClassByName($this->configRepo->getExchanges()),
-            'symbols'    => $this->configRepo->getSymbols(),
-            'indicators' => $this->mapClassByName($this->configRepo->getIndicators()),
+            'strategies' => $this->mapClassByName($this->configRepo->strategies),
+            'exchanges'  => $this->mapClassByName($this->configRepo->exchanges),
+            'symbols'    => $this->configRepo->symbols,
+            'indicators' => $this->mapClassByName($this->configRepo->indicators),
             'intervals'  => $this->symbolRepo->fetchIntervals()
         ];
     }
