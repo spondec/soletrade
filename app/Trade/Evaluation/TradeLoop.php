@@ -14,16 +14,16 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\Pure;
 
-final class TradeLoop
-{
-    use HasConfig;
+ class TradeLoop
+ {
+     use HasConfig;
 
-    protected array $config = [
-        'closeOnExit' => true,
-        'timeout'     => 1440
-    ];
+     protected array $config = [
+         'closeOnExit' => true,
+         'timeout'     => 1440
+     ];
 
-    protected SymbolRepository $repo;
+     protected SymbolRepository $repo;
 
     protected int $startDate;
     protected ?int $timeoutDate = null;
