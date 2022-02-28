@@ -51,9 +51,9 @@ class TradeSetup extends Model implements Bindable
     protected array $unique = ['symbol_id', 'signature_id', 'name', 'timestamp', 'side'];
 
     protected $attributes = [
-        'size'        => 100,
-        'close_price' => null,
-        'stop_price'  => null,
+        'size'         => 100,
+        'target_price' => null,
+        'stop_price'   => null,
     ];
 
     public function actions(): HasMany
@@ -92,7 +92,7 @@ class TradeSetup extends Model implements Bindable
     {
         $result = parent::toArray();
         $result['price'] = \round((float)$result['price'], 2);
-        $result['close_price'] = $result['close_price'] ? \round((float)$result['close_price'], 2) : null;
+        $result['target_price'] = $result['target_price'] ? \round((float)$result['target_price'], 2) : null;
         $result['stop_price'] = $result['stop_price'] ? \round((float)$result['stop_price'], 2) : null;
 
         return $result;
@@ -103,9 +103,19 @@ class TradeSetup extends Model implements Bindable
         return $this->side === Signal::BUY;
     }
 
+    protected function assertPrice(): float
+    {
+        if (!$price = $this->price)
+        {
+            throw new \UnexpectedValueException('Price is not set');
+        }
+
+        return $price;
+    }
+
     public function setStopPrice(float $percent): void
     {
-        $price = $this->price;
+        $price = $this->assertPrice();
 
         if ($this->side === Signal::BUY)
         {
@@ -117,17 +127,17 @@ class TradeSetup extends Model implements Bindable
         }
     }
 
-    public function setClosePrice(float $percent): void
+    public function setTargetPrice(float $percent): void
     {
-        $price = $this->price;
+        $price = $this->assertPrice();
 
         if ($this->side === Signal::BUY)
         {
-            $this->close_price = $price + $price * $percent / 100;
+            $this->target_price = $price + $price * $percent / 100;
         }
         else
         {
-            $this->close_price = $price - $price * $percent / 100;
+            $this->target_price = $price - $price * $percent / 100;
         }
     }
 }
