@@ -9,7 +9,32 @@ class HasEventsTest extends TestCase
 {
     public function test_listen()
     {
-        $hasEvents = new class {
+        $hasEvents = $this->getHasEventsObject();
+
+        $hasEvents->listen('test', function () {
+            $this->assertTrue(true);
+        });
+
+        $hasEvents->fire();
+    }
+
+    public function test_bypass_event_once()
+    {
+
+        $hasEvents = $this->getHasEventsObject();
+
+        $hasEvents->listen('test', function () {
+            $this->assertTrue(true);
+        });
+
+        $this->expectNotToPerformAssertions();
+        $hasEvents->bypass();
+        $hasEvents->fire();
+    }
+
+    protected function getHasEventsObject(): object
+    {
+        return new class {
             use HasEvents;
 
             protected array $events = ['test'];
@@ -18,12 +43,11 @@ class HasEventsTest extends TestCase
             {
                 $this->fireEvent('test');
             }
+
+            public function bypass()
+            {
+                $this->bypassEventOnce('test');
+            }
         };
-
-        $hasEvents->listen('test', function () {
-            $this->assertTrue(true);
-        });
-
-        $hasEvents->fire();
     }
 }

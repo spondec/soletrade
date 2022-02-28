@@ -7,8 +7,13 @@ namespace App\Trade;
  */
 trait HasEvents
 {
-    /** @var array<array<\Closure>> */
+    /** @var array<string,array<\Closure>> */
     protected array $listeners = [];
+
+    /**
+     * @var array<string,string>
+     */
+    protected array $bypassed = [];
 
     public function listen(string $eventName, \Closure $onEvent = null)
     {
@@ -22,9 +27,20 @@ trait HasEvents
             throw new \InvalidArgumentException("Event '$eventName' doesn't exist.");
         }
 
+        if (isset($this->bypassed[$eventName]))
+        {
+            unset($this->bypassed[$eventName]);
+            return;
+        }
+
         foreach ($this->listeners[$eventName] ?? [] as $onEvent)
         {
             $onEvent($this);
         }
+    }
+
+    protected function bypassEventOnce(string $eventName)
+    {
+        $this->bypassed[$eventName] = true;
     }
 }
