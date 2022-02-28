@@ -103,7 +103,7 @@ class TradeStatusTest extends TestCase
         $this->assertNotTrue($status->isAmbiguous());
     }
 
-    public function test_check_is_ambiguous(): void
+    public function test_is_ambiguous(): void
     {
         $setup = $this->getSetup(true, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
