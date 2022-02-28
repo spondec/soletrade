@@ -33,14 +33,19 @@ trait HasEvents
             return;
         }
 
-        foreach ($this->listeners[$eventName] ?? [] as $onEvent)
-        {
-            $onEvent($this);
-        }
+        $this->runListeners($eventName);
     }
 
     protected function bypassEventOnce(string $eventName)
     {
         $this->bypassed[$eventName] = true;
+    }
+
+    private function runListeners(string $eventName): void
+    {
+        foreach ($this->listeners[$eventName] ?? [] as $onEvent)
+        {
+            $onEvent($this);
+        }
     }
 }
