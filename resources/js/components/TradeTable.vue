@@ -13,7 +13,7 @@
       <th>Exit Date</th>
       <th>Entry Price</th>
       <th>Exit Price</th>
-      <th>Close Price</th>
+      <th>Target Price</th>
       <th>Stop Price</th>
       <th>ROI %</th>
       <th>Highest ROI %</th>
@@ -70,7 +70,7 @@
       <td>{{ round(trade.exit_price) }}</td>
       <td>
         <p v-bind:class="{'text-warning': trade.is_closed }">
-          {{ round(trade.close_price) || 'N/A' }}</p>
+          {{ round(trade.target_price) || 'N/A' }}</p>
       </td>
       <td>
         <p v-bind:class="{'text-warning': trade.is_stopped }">

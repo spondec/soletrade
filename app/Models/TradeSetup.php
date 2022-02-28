@@ -20,16 +20,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property TradeAction[]|\Illuminate\Database\Eloquent\Collection actions
  *
  * @property int                                                    id
+ * @property int                                                    symbol_id
  * @property int                                                    signature_id
  * @property int                                                    signal_count
  * @property int                                                    timestamp
  * @property int                                                    price_date
- * @property int                                                    symbol_id
  * @property string                                                 name
  * @property string                                                 side
  * @property float                                                  price
  * @property float                                                  size
- * @property float                                                  close_price
+ * @property float                                                  target_price
  * @property float                                                  stop_price
  * @property mixed                                                  created_at
  * @property mixed                                                  updated_at

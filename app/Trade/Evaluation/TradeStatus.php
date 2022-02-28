@@ -17,7 +17,7 @@ class TradeStatus
     protected Collection $actionHandlers;
 
     protected Price $entryPrice;
-    protected ?Price $closePrice;
+    protected ?Price $targetPrice;
     protected ?Price $stopPrice;
 
     protected bool $isBuy;
@@ -42,7 +42,7 @@ class TradeStatus
         $priceDate = $this->entry->price_date;
 
         $this->entryPrice = $this->newPrice((float)$this->entry->price, $priceDate);
-        $this->closePrice = $this->entry->close_price ? $this->newPrice($this->entry->close_price, $priceDate) : null;
+        $this->targetPrice = $this->entry->target_price ? $this->newPrice($this->entry->target_price, $priceDate) : null;
         $this->stopPrice = $this->entry->stop_price ? $this->newPrice($this->entry->stop_price, $priceDate) : null;
     }
 
@@ -62,7 +62,7 @@ class TradeStatus
             $this->entry->size,
             $entryTime,
             $this->entryPrice,
-            $this->getClosePrice(),
+            $this->getTargetPrice(),
             $this->getStopPrice());
 
         $this->registerPositionListeners();
@@ -81,9 +81,9 @@ class TradeStatus
         });
     }
 
-    public function getClosePrice(): ?Price
+    public function getTargetPrice(): ?Price
     {
-        return $this->closePrice ?: $this->closePrice = $this->position?->price('exit');
+        return $this->targetPrice ?: $this->targetPrice = $this->position?->price('exit');
     }
 
     public function getStopPrice(): ?Price
@@ -147,8 +147,8 @@ class TradeStatus
     public function checkIsClosed(\stdClass $candle): bool
     {
         $this->assertPosition();
-        $closePrice = $this->getClosePrice();
-        if ($closePrice && $this->isClosed = (Calc::inRange($closePrice->get(),
+        $target = $this->getTargetPrice();
+        if ($target && $this->isClosed = (Calc::inRange($target->get(),
                     $candle->h,
                     $candle->l) || $this->position?->isClosed()))
         {

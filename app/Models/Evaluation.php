@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property float          used_size
  * @property float          entry_price
  * @property float          exit_price
- * @property float          close_price //rename to cancel_price
+ * @property float          target_price
  * @property float          stop_price
  * @property float          highest_price
  * @property float          lowest_price

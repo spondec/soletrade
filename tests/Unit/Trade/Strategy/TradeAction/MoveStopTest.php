@@ -10,14 +10,14 @@ use PHPUnit\Framework\TestCase;
 
 class MoveStopTest extends TestCase
 {
-    public function test_buy_with_target_roi_50_and_close_price_above_new_stop_price_should_leave_position_open_and_move_stop_to_entry(): void
+    public function test_buy_with_target_roi_50_and_target_price_above_new_stop_price_should_leave_position_open_and_move_stop_to_entry(): void
     {
         $position = new Position(true,
-                                 100,
-                                 time(),
-                                 new Price($entry = 1, time()),
-                                 new Price(2, time()),
-                                 new Price(0.5, time()));
+            100,
+            time(),
+            new Price($entry = 1, time()),
+            new Price(2, time()),
+            new Price(0.5, time()));
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
@@ -40,14 +40,14 @@ class MoveStopTest extends TestCase
         $this->assertEquals(1, $position->price('stop')->get());
     }
 
-    public function test_sell_with_target_roi_50_and_close_price_below_new_stop_price_should_leave_position_open_and_move_stop_to_entry(): void
+    public function test_sell_with_target_roi_50_and_target_price_below_new_stop_price_should_leave_position_open_and_move_stop_to_entry(): void
     {
         $position = new Position(false,
-                                 100,
-                                 time(),
-                                 new Price($entry = 2, time()),
-                                 new Price(1, time()),
-                                 new Price(3, time()));
+            100,
+            time(),
+            new Price($entry = 2, time()),
+            new Price(1, time()),
+            new Price(3, time()));
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
@@ -70,14 +70,14 @@ class MoveStopTest extends TestCase
         $this->assertEquals(2, $position->price('stop')->get());
     }
 
-    public function test_buy_with_target_roi_50_and_close_price_below_new_stop_price_should_close_position_at_close_price(): void
+    public function test_buy_with_target_roi_50_and_target_price_below_new_stop_price_should_close_position_at_target_price(): void
     {
         $position = new Position(true,
-                                 100,
-                                 time(),
-                                 new Price($entry = 1, time()),
-                                 new Price(2, time()),
-                                 new Price(0.5, time()));
+            100,
+            time(),
+            new Price($entry = 1, time()),
+            new Price(2, time()),
+            new Price(0.5, time()));
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
@@ -100,14 +100,14 @@ class MoveStopTest extends TestCase
         $this->assertEquals(0.9, $position->price('stop')->get());
     }
 
-    public function test_sell_with_target_roi_50_and_close_price_above_new_stop_price_should_close_position_at_close_price(): void
+    public function test_sell_with_target_roi_50_and_target_price_above_new_stop_price_should_close_position_at_target_price(): void
     {
         $position = new Position(false,
-                                 100,
-                                 time(),
-                                 new Price($entry = 2, time()),
-                                 new Price(1, time()),
-                                 new Price(3, time()));
+            100,
+            time(),
+            new Price($entry = 2, time()),
+            new Price(1, time()),
+            new Price(3, time()));
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],

@@ -64,7 +64,7 @@ class Evaluator
     {
         $e->entry_price = $status->getEntryPrice()->get();
         $e->stop_price = $status->getStopPrice()?->get();
-        $e->close_price = $status->getClosePrice()?->get();
+        $e->target_price = $status->getTargetPrice()?->get();
         $e->evaluation_interval = $this->strategy->config('evaluation.interval');
 
         $log = [];
@@ -90,7 +90,7 @@ class Evaluator
             $log['position'] = [
                 'price_history' => [
                     'entry' => $status->getEntryPrice()->log()->get(),
-                    'exit'  => $status->getClosePrice()?->log()?->get() ?? [],
+                    'exit'  => $status->getTargetPrice()?->log()?->get() ?? [],
                     'stop'  => $status->getStopPrice()?->log()?->get() ?? []
                 ],
                 'transactions'  => $position->transactionLog()->get()

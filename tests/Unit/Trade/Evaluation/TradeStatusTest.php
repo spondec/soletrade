@@ -60,7 +60,7 @@ class TradeStatusTest extends TestCase
         $this->assertNotTrue($status->isAmbiguous());
     }
 
-    protected function getSetup(bool $isBuy, float $size, float $price, float $closePrice, float $stopPrice): TradeSetup
+    protected function getSetup(bool $isBuy, float $size, float $price, float $targetPrice, float $stopPrice): TradeSetup
     {
         $setup = Mockery::mock('alias:' . TradeSetup::class);
 
@@ -68,7 +68,7 @@ class TradeStatusTest extends TestCase
         $setup->actions = new Collection();
         $setup->size = $size;
         $setup->price = $price;
-        $setup->close_price = $closePrice;
+        $setup->target_price = $targetPrice;
         $setup->stop_price = $stopPrice;
         $setup->price_date = time();
         return $setup;

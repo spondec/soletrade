@@ -26,7 +26,7 @@ return new class extends Migration {
             $table->decimal('entry_price')->nullable();
             $table->decimal('avg_entry_price')->nullable();
             $table->decimal('exit_price')->nullable();
-            $table->decimal('close_price')->nullable();
+            $table->decimal('target_price')->nullable();
             $table->decimal('stop_price')->nullable();
             $table->decimal('highest_price');
             $table->decimal('lowest_price');

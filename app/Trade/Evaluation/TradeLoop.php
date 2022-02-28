@@ -159,7 +159,7 @@ use JetBrains\PhpStorm\Pure;
         $iterator = $candles->getIterator();
 
         $entry = $this->status->getEntryPrice();
-        $exit = $this->status->getClosePrice();
+        $exit = $this->status->getTargetPrice();
         $stop = $this->status->getStopPrice();
 
         while ($iterator->valid())
@@ -181,7 +181,7 @@ use JetBrains\PhpStorm\Pure;
             else if (!$this->status->isExited())
             {
                 $this->entry->loadBindingPrice($stop, 'stop_price', $candle->t, $evaluationSymbol);
-                $this->entry->loadBindingPrice($exit, 'close_price', $candle->t, $evaluationSymbol);
+                $this->entry->loadBindingPrice($exit, 'target_price', $candle->t, $evaluationSymbol);
 
                 $priceDate = $this->getPriceDate($candle, $nextCandle);
                 $position = $position ?? $this->getPosition();

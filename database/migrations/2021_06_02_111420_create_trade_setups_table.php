@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->enum('side', ['BUY', 'SELL']);
             $table->decimal('price');
             $table->float('size');
-            $table->decimal('close_price')->nullable();
+            $table->decimal('target_price')->nullable();
             $table->decimal('stop_price')->nullable();
             $table->integer('signal_count');
             $table->bigInteger('timestamp');
