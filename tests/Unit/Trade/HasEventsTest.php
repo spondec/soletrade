@@ -20,7 +20,6 @@ class HasEventsTest extends TestCase
 
     public function test_bypass_event_once()
     {
-
         $hasEvents = $this->getHasEventsObject();
 
         $hasEvents->listen('test', function () {
