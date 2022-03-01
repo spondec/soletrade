@@ -14,16 +14,16 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\Pure;
 
- class TradeLoop
- {
-     use HasConfig;
+class TradeLoop
+{
+    use HasConfig;
 
-     protected array $config = [
-         'closeOnExit' => true,
-         'timeout'     => 1440
-     ];
+    protected array $config = [
+        'closeOnExit' => true,
+        'timeout'     => 1440
+    ];
 
-     protected SymbolRepository $repo;
+    protected SymbolRepository $repo;
 
     protected int $startDate;
     protected ?int $timeoutDate = null;
@@ -176,7 +176,8 @@ use JetBrains\PhpStorm\Pure;
             if (!$this->status->isEntered())
             {
                 $this->entry->loadBindingPrice($entry, 'price', $candle->t, $evaluationSymbol);
-                $this->tryPositionEntry($candle, $nextCandle);
+                $priceDate = $this->getPriceDate($candle, $nextCandle);
+                $this->tryPositionEntry($candle, $priceDate);
             }
             else if (!$this->status->isExited())
             {
@@ -216,11 +217,11 @@ use JetBrains\PhpStorm\Pure;
         return !(bool)$this->repo->fetchNextCandle($candle->symbol_id, $candle->t);
     }
 
-    protected function tryPositionEntry(\stdClass $candle, ?\stdClass $nextCandle): void
+    protected function tryPositionEntry(\stdClass $candle, int $priceDate): void
     {
         if (Calc::inRange($this->status->getEntryPrice()->get(), $candle->h, $candle->l))
         {
-            $this->status->enterPosition($this->getPriceDate($candle, $nextCandle));
+            $this->status->enterPosition($priceDate);
 
             if (!$this->timeoutDate && $this->timeout && $position = $this->getPosition())
             {
