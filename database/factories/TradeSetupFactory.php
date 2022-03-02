@@ -55,7 +55,7 @@ class TradeSetupFactory extends Factory
     public function targetPrice(?float $price = null)
     {
         return $this->state(fn(array $attributes) => [
-            'close_price' => $price ?? $this->faker->randomFloat(2, 0, 100),
+            'target_price' => $price ?? $this->faker->randomFloat(2, 0, 100),
         ]);
     }
 }
