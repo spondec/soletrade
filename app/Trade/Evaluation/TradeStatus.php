@@ -8,11 +8,16 @@ use App\Models\TradeAction;
 use App\Models\TradeSetup;
 use App\Trade\Action\Handler;
 use App\Trade\Calc;
+use App\Trade\HasInstanceEvents;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 
 class TradeStatus
 {
+    use HasInstanceEvents;
+
+    protected array $events = ['positionEntry'];
+
     /** @var Collection<Handler> */
     protected Collection $actionHandlers;
 
@@ -69,6 +74,7 @@ class TradeStatus
         $this->initActionHandlers();
 
         $this->isEntered = true;
+        $this->fireEvent('positionEntry');
     }
 
     protected function registerPositionListeners(): void

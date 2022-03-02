@@ -42,7 +42,7 @@ class TradeLoop
     {
         $this->mergeConfig($config);
         $this->assertTradeSymbolMatchesEvaluationSymbol();
-        $this->status = new TradeStatus($entry);
+        $this->initTradeStatus();
         $this->repo = App::make(SymbolRepository::class);
 
         $this->firstCandle = $this->getFirstCandle($this->entry);
@@ -222,11 +222,6 @@ class TradeLoop
         if (Calc::inRange($this->status->getEntryPrice()->get(), $candle->h, $candle->l))
         {
             $this->status->enterPosition($priceDate);
-
-            if (!$this->timeoutDate && $this->timeout && $position = $this->getPosition())
-            {
-                $this->timeoutDate = $position->entryTime() + $this->timeout * 60 * 1000;
-            }
         }
     }
 
@@ -323,5 +318,24 @@ class TradeLoop
     public function status(): TradeStatus
     {
         return $this->status;
+    }
+
+    protected function onPositionEntry(): void
+    {
+        if (!$this->timeoutDate && $this->timeout && $position = $this->getPosition())
+        {
+            $this->timeoutDate = $position->entryTime() + $this->timeout * 60 * 1000;
+        }
+    }
+
+    protected function initTradeStatusListeners(): void
+    {
+        $this->status->listen('positionEntry', $this->onPositionEntry(...));
+    }
+
+    protected function initTradeStatus(): void
+    {
+        $this->status = new TradeStatus($this->entry);
+        $this->initTradeStatusListeners();
     }
 }
