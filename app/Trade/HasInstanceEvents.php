@@ -5,7 +5,7 @@ namespace App\Trade;
 /**
  * @property string[] events
  */
-trait HasEvents
+trait HasInstanceEvents
 {
     /** @var array<string,array<\Closure>> */
     protected array $listeners = [];
@@ -36,16 +36,16 @@ trait HasEvents
         $this->runListeners($eventName);
     }
 
-    protected function bypassEventOnce(string $eventName)
-    {
-        $this->bypassed[$eventName] = true;
-    }
-
     private function runListeners(string $eventName): void
     {
         foreach ($this->listeners[$eventName] ?? [] as $onEvent)
         {
             $onEvent($this);
         }
+    }
+
+    protected function bypassEventOnce(string $eventName)
+    {
+        $this->bypassed[$eventName] = true;
     }
 }

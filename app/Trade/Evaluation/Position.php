@@ -6,12 +6,12 @@ namespace App\Trade\Evaluation;
 
 use App\Trade\Calc;
 use App\Trade\ChangeLog;
-use App\Trade\HasEvents;
+use App\Trade\HasInstanceEvents;
 use JetBrains\PhpStorm\Pure;
 
 class Position
 {
-    use HasEvents;
+    use HasInstanceEvents;
 
     protected array $events = ['close', 'stop'];
 
@@ -46,12 +46,11 @@ class Position
     {
         $this->remainingSize = static::MAX_SIZE;
         $this->assertSize($this->size);
-        $this->transactionLog = new ChangeLog(
-            [
-                'increase' => true,
-                'price'    => $this->entry->get(),
-                'size'     => $this->size
-            ], $this->entryTime, 'Position entry');
+        $this->transactionLog = new ChangeLog([
+            'increase' => true,
+            'price'    => $this->entry->get(),
+            'size'     => $this->size
+        ], $this->entryTime, 'Position entry');
 
         $this->enter();
     }
