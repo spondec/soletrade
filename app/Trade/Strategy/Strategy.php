@@ -14,7 +14,6 @@ use App\Trade\Collection\CandleCollection;
 use App\Trade\Collection\TradeCollection;
 use App\Trade\Config\IndicatorConfig;
 use App\Trade\Config\TradeConfig;
-use App\Trade\Evaluation\TradeLoop;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
@@ -33,7 +32,7 @@ abstract class Strategy
     protected array $config = [];
     protected \WeakMap $actions;
     protected SymbolRepository $symbolRepo;
-    protected Symbol $evaluationSymbol;
+    public readonly Symbol $evaluationSymbol;
     protected CandleCollection $candles;
     protected Symbol $symbol;
     /** @var IndicatorConfig[] */
@@ -222,11 +221,6 @@ abstract class Strategy
         return $this->actions[$setup] ?? null;
     }
 
-    public function newLoop(TradeSetup $entry): TradeLoop
-    {
-        return new TradeLoop($entry, $this->evaluationSymbol, $this->config('evaluation.loop'));
-    }
-
     public function helperIndicator(string $class): Indicator
     {
         return $this->helperIndicators[$class];
@@ -244,6 +238,7 @@ abstract class Strategy
             'maxCandles' => 1000,
             'startDate'  => null,
             'endDate'    => null,
+
             'trades'     => [
                 //when true, multiple trades to the same direction will be disregarded
                 'oppositeOnly' => false,
@@ -253,7 +248,7 @@ abstract class Strategy
                     //trade duration in minutes, 0 to disable
                     //exceeding trades will be stopped at close price
                     'timeout'     => 0,
-                    //when true, close trade immediately at exit setup
+                    //when true, close trade immediately at reverse(exit) setup
                     'closeOnExit' => true,
                 ],
                 'interval' => '1m'

@@ -51,9 +51,16 @@ class Evaluator
         }
     }
 
+    protected function newLoop(TradeSetup $entry): TradeLoop
+    {
+        return new TradeLoop($entry,
+            $this->strategy->evaluationSymbol,
+            $this->strategy->config('evaluation.loop'));
+    }
+
     protected function realizeToExit(Evaluation $evaluation): void
     {
-        $status = $this->strategy
+        $status = $this
             ->newLoop($evaluation->entry)
             ->runToExit($evaluation->exit);
 
