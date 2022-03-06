@@ -76,7 +76,7 @@ class Balance
                 {
                     $price = $this->exchange->fetch()->orderBook($symbol)->bestAsk();
 
-                } catch (\UnexpectedValueException $e)
+                } catch (\App\Exceptions\EmptyOrderBookException $e)
                 {
                     Log::log($e);
                     continue;

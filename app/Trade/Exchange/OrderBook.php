@@ -18,13 +18,13 @@ class OrderBook
 
         if (!$this->bids || !$this->asks)
         {
-            throw new \UnexpectedValueException("Order book data is empty for $symbol.");
+            throw new \App\Exceptions\EmptyOrderBookException("Order book data is empty for $symbol.");
         }
 
-        $this->assertSpreadPositive();
+        $this->assertPositiveSpread();
     }
 
-    protected function assertSpreadPositive(): void
+    protected function assertPositiveSpread(): void
     {
         if ($this->spread() < 0)
         {
