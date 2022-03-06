@@ -8,19 +8,19 @@ namespace App\Trade;
 trait HasInstanceEvents
 {
     /** @var array<string,array<\Closure>> */
-    protected array $listeners = [];
+    private array $listeners = [];
 
     /**
      * @var array<string,string>
      */
-    protected array $bypassed = [];
+    private array $bypassed = [];
 
-    public function listen(string $eventName, \Closure $onEvent = null)
+    public function listen(string $eventName, \Closure $onEvent = null): void
     {
         $this->listeners[$eventName][] = $onEvent;
     }
 
-    protected function fireEvent(string $eventName): void
+    protected function fireEvent(string $eventName, ...$params): void
     {
         if (!\in_array($eventName, $this->events))
         {
@@ -33,18 +33,13 @@ trait HasInstanceEvents
             return;
         }
 
-        $this->runListeners($eventName);
-    }
-
-    private function runListeners(string $eventName): void
-    {
         foreach ($this->listeners[$eventName] ?? [] as $onEvent)
         {
-            $onEvent($this);
+            $onEvent($this, $params);
         }
     }
 
-    protected function bypassEventOnce(string $eventName)
+    protected function bypassEventOnce(string $eventName): void
     {
         $this->bypassed[$eventName] = true;
     }
