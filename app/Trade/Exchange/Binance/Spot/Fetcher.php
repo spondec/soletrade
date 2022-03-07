@@ -4,7 +4,6 @@ namespace App\Trade\Exchange\Binance\Spot;
 
 use App\Trade\CandleMap;
 use App\Trade\Exchange\Account\Balance;
-use App\Trade\Exchange\Account\Asset;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Exchange\OrderBook;
 use ccxt\binance;
@@ -37,10 +36,10 @@ class Fetcher extends \App\Trade\Exchange\Fetcher
 
         foreach ($result['total'] as $asset => $total)
         {
-            $assets[] = new Asset($asset, $total, $result['free'][$asset]);
+            $assets[] = $this->newAsset($asset, $total, $result['free'][$asset]);
         }
 
-        return new Balance($this->exchange, $assets);
+        return $this->newBalance($assets);
     }
 
     protected function buildSymbol(string $baseAsset, string $quoteAsset): string

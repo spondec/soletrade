@@ -3,6 +3,7 @@
 namespace App\Trade\Exchange;
 
 use App\Trade\CandleMap;
+use App\Trade\Exchange\Account\Asset;
 use App\Trade\Exchange\Account\Balance;
 
 abstract class Fetcher
@@ -14,6 +15,27 @@ abstract class Fetcher
     {
     }
 
+    protected function newAsset(string $name, float $total, float $available): Asset
+    {
+        return new Asset($name, $total, $available);
+    }
+
+    /**
+     * @param Asset[] $assets
+     *
+     * @return Balance
+     */
+    protected function newBalance(array $assets): Balance
+    {
+        return new Balance($this->exchange, $assets);
+    }
+
+    /**
+     * @param string $symbol
+     *
+     * @return OrderBook
+     * @throws \App\Exceptions\EmptyOrderBookException
+     */
     public function orderBook(string $symbol): OrderBook
     {
         return $this->fetchOrderBook($symbol);
@@ -71,6 +93,21 @@ abstract class Fetcher
         return $this->balance()->calculateRoi($this->prevBalance);
     }
 
+    /** @noinspection PhpUndefinedFieldInspection */
+    protected function registerBalanceListeners(Balance $balance): void
+    {
+        foreach ($balance->assets as $asset)
+        {
+            $balance->listen('update',
+                \Closure::bind(function (Balance $current, Balance $updated) {
+                    $asset = $updated->assets[$this->name];
+
+                    $this->total = $asset->total();
+                    $this->available = $asset->available();
+                }, $asset, $asset));
+        }
+    }
+
     /**
      * Fetch the latest account balance from the exchange.
      *
@@ -79,6 +116,8 @@ abstract class Fetcher
     public function balance(): Balance
     {
         $balance = $this->fetchAccountBalance();
+
+        $this->registerBalanceListeners($balance);
 
         if (!$this->prevBalance)
         {

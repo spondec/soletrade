@@ -35,7 +35,7 @@ trait HasInstanceEvents
 
         foreach ($this->listeners[$eventName] ?? [] as $onEvent)
         {
-            $onEvent($this, $params);
+            $onEvent($this, ...$params);
         }
     }
 

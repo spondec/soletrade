@@ -3,24 +3,28 @@
 namespace App\Trade\Exchange\Account;
 
 use App\Trade\Exchange\Exchange;
+use App\Trade\HasInstanceEvents;
 use App\Trade\Log;
 use JetBrains\PhpStorm\Pure;
 
-class Balance
+class Balance implements \ArrayAccess
 {
+    use HasInstanceEvents;
+
     /** @var Asset[] */
-    protected array $assets;
+    public readonly array $assets;
+    protected array $events = ['update'];
 
     /**
-     * @param Exchange     $exchange
-     * @param array<Asset> $assets
-     * @param string       $relativeAsset
+     * @param Exchange $exchange
+     * @param Asset[]  $assets
+     * @param string   $relativeAsset
      */
     public function __construct(protected Exchange $exchange,
                                 array              $assets,
                                 protected string   $relativeAsset = 'USDT')
     {
-        foreach ($assets as $asset)
+        foreach ($assets as $k => $asset)
         {
             if (!$asset instanceof Asset)
             {
@@ -32,21 +36,45 @@ class Balance
                 continue;
             }
 
-            $this->assets[$asset->name()] = $asset;
+            unset($assets[$k]);
+            $assets[$asset->name] = $asset;
         }
+
+        $this->assets = $assets;
+    }
+
+    public function update(): static
+    {
+        $update = $this->exchange->fetch()->balance();
+
+        $this->relativeAsset = $update->relativeAsset;
+
+        //asset update should be handled in this event
+        $this->fireEvent('update', $update);
+        return $this;
+    }
+
+    public function relativeAsset(): string
+    {
+        return $this->relativeAsset;
     }
 
     #[Pure] public function calculateRoi(Balance $prevBalance): array
     {
         $roe = [];
 
-        foreach ($prevBalance->assets() as $asset)
+        foreach ($prevBalance->assets as $asset)
         {
             $total = $asset->total();
-            $roe[$name = $asset->name()] = $total / ($this->assets[$name]->total() - $total) * 100;
+            $roe[$name = $asset->name] = $total / ($this->assets[$name]->total() - $total) * 100;
         }
 
         return $roe;
+    }
+
+    public function primaryAsset(): Asset
+    {
+        return $this->assets[\array_key_first($this->calculateRelativeNetWorth(onlyAvailable: true))];
     }
 
     public function calculateRelativeNetWorth(string $relativeAsset = null, bool $onlyAvailable = false): array
@@ -63,7 +91,7 @@ class Balance
 
         foreach ($this->assets as $asset)
         {
-            if (($baseAsset = $asset->name()) != $relativeAsset)
+            if (($baseAsset = $asset->name) != $relativeAsset)
             {
                 $symbol = $this->exchange->fetch()->symbol($baseAsset, $relativeAsset);
 
@@ -91,16 +119,28 @@ class Balance
         return $worth;
     }
 
-    public function primaryAsset(): Asset
+    public function offsetExists(mixed $offset): bool
     {
-        return $this->assets[\array_key_first($this->calculateRelativeNetWorth(onlyAvailable: true))];
+        return isset($this->assets[$offset]);
     }
 
-    /**
-     * @return Asset[]
-     */
-    public function assets(): array
+    public function offsetGet(mixed $offset): mixed
     {
-        return $this->assets;
+        return $this->assets[$offset];
+    }
+
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        $this->throwImmutableException();
+    }
+
+    protected function throwImmutableException(): never
+    {
+        throw new \LogicException('Balance is immutable.');
+    }
+
+    public function offsetUnset(mixed $offset): void
+    {
+        $this->throwImmutableException();
     }
 }

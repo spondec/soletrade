@@ -4,21 +4,24 @@ namespace App\Trade\Exchange\Account;
 
 class Asset
 {
-    public function __construct(protected string $asset,
-                                protected float  $amount,
-                                protected float  $available)
+    /**
+     * The properties will be updated when the associated balance is updated.
+     *
+     * @param string $name
+     * @param float  $total
+     * @param float  $available
+     *
+     * @see \App\Trade\Exchange\Fetcher::registerBalanceListeners()
+     */
+    public function __construct(public        readonly string $name,
+                                private float $total,
+                                private float $available)
     {
-
-    }
-
-    public function name(): string
-    {
-        return $this->asset;
     }
 
     public function total(): float
     {
-        return $this->amount;
+        return $this->total;
     }
 
     public function available(): float
