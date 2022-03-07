@@ -82,7 +82,8 @@ abstract class Exchange
         return $this->update;
     }
 
-    #[ArrayShape(['name' => "string", 'account' => "string", 'actions' => "string"])]
+    #[ArrayShape(['name'    => "string",
+                  'actions' => "string"])]
     public function info(): array
     {
         return [
