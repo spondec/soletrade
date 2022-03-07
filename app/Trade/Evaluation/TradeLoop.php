@@ -38,7 +38,18 @@ class TradeLoop
 
     protected ?int $timeout;
 
-    public function __construct(protected TradeSetup $entry, protected Symbol $evaluationSymbol, array $config)
+    protected readonly TradeSetup $exit;
+
+    /**
+     * Exit run sets the exit price of the trade and tries to exit once.
+     *
+     * @var bool
+     */
+    protected readonly bool $isExitRunCompleted;
+
+    public function __construct(protected        readonly TradeSetup $entry,
+                                protected Symbol $evaluationSymbol,
+                                array            $config)
     {
         $this->mergeConfig($config);
         $this->assertTradeSymbolMatchesEvaluationSymbol();
@@ -70,35 +81,35 @@ class TradeLoop
                 ->first(); //not closed
     }
 
-    public function getLastRunDate(): int
-    {
-        return $this->lastRunDate;
-    }
-
-    public function runToExit(TradeSetup $exit): TradeStatus
+    public function setExitTrade(TradeSetup $exit): void
     {
         $this->assertExitDateGreaterThanEntryDate($this->entry->price_date, $exit->price_date);
+        $this->exit = $exit;
+    }
 
-        $lastCandle = $this->repo->assertNextCandle($this->evaluationSymbol, $exit->price_date);
-        $candles = $this->getCandlesBetween($lastCandle->t);
-
-        $this->runLoop($candles);
-
-        $position = $this->getPosition();
-
-        if ($position && $position->isOpen())
+    public function run(): TradeStatus
+    {
+        $candles = null;
+        if (isset($this->exit) && !isset($this->isExitRunCompleted))
         {
-            $candle = $this->getLastCandle();
-            $priceDate = $this->getPriceDate($candle, null);
-
-            if ($this->config('closeOnExit') && !$position->price('exit'))
+            $this->isExitRunCompleted = true;
+            $lastCandle = $this->repo->fetchNextCandle($this->evaluationSymbol, $this->exit->price_date);
+            if ($lastCandle)
             {
-                $this->status->setExitPrice((float)$exit->price, $priceDate);
-                $this->tryPositionExit($position, $candle, $priceDate);
+                $candles = $this->getCandlesBetween($lastCandle->t);
             }
-
-            $this->continue($this->timeoutDate);
         }
+
+        if ($candles)
+        {
+            $this->runLoop($candles);
+        }
+        else
+        {
+            $this->runToEnd();
+        }
+
+        $this->performPostRunChecks();
 
         return $this->status;
     }
@@ -107,9 +118,14 @@ class TradeLoop
     {
         if ($this->lastRunDate)
         {
-            return $this->repo->assertCandlesBetween($this->evaluationSymbol, $this->lastRunDate, $endDate);
+            return $this->repo->assertCandlesBetween($this->evaluationSymbol,
+                $this->lastRunDate,
+                $endDate);
         }
-        return $this->repo->assertCandlesBetween($this->evaluationSymbol, $this->firstCandle->t, $endDate, includeStart: true);
+        return $this->repo->assertCandlesBetween($this->evaluationSymbol,
+            $this->firstCandle->t,
+            $endDate,
+            includeStart: true);
     }
 
     protected function getCandlesLimit(int $limit): Collection
@@ -121,7 +137,7 @@ class TradeLoop
         return $this->repo->assertCandlesLimit($this->evaluationSymbol, $this->firstCandle->t, limit: $limit, includeStart: true);
     }
 
-    public function run(int $chunk = 10000): void
+    protected function runToEnd(int $chunk = 10000): void
     {
         while (($candles = $this->getCandlesLimit($chunk))->first())
         {
@@ -212,7 +228,7 @@ class TradeLoop
             ->first();
     }
 
-    protected function isLastCandle(\stdClass $candle): bool
+    protected function isLastCandle(\stdClass $candle): bool //TODO:: needs caching
     {
         return !(bool)$this->repo->fetchNextCandle($candle->symbol_id, $candle->t);
     }
@@ -267,7 +283,7 @@ class TradeLoop
         return $this->timeoutDate <= $priceDate;
     }
 
-    public function exitPositionAtClosePrice(Position $position, \stdClass $candle, string $reason): void
+    protected function exitPositionAtClosePrice(Position $position, \stdClass $candle, string $reason): void
     {
         if ($this->status->isAmbiguous())
         {
@@ -301,11 +317,11 @@ class TradeLoop
         return $candle;
     }
 
-    public function continue(?int $endDate): void
+    protected function continue(?int $endDate): void
     {
         if (!$endDate)
         {
-            $this->run();
+            $this->runToEnd();
             return;
         }
 
@@ -328,7 +344,7 @@ class TradeLoop
         }
     }
 
-    protected function initTradeStatusListeners(): void
+    protected function registerTradeStatusListeners(): void
     {
         $this->status->listen('positionEntry', $this->onPositionEntry(...));
     }
@@ -336,6 +352,25 @@ class TradeLoop
     protected function initTradeStatus(): void
     {
         $this->status = new TradeStatus($this->entry);
-        $this->initTradeStatusListeners();
+        $this->registerTradeStatusListeners();
+    }
+
+    protected function performPostRunChecks(): void
+    {
+        $position = $this->getPosition();
+
+        if ($position && $position->isOpen())
+        {
+            $candle = $this->getLastCandle();
+            $priceDate = $this->getPriceDate($candle, null);
+
+            if ($this->config('closeOnExit') && !$position->price('exit'))
+            {
+                $this->status->setExitPrice((float)$this->exit->price, $priceDate);
+                $this->tryPositionExit($position, $candle, $priceDate);
+            }
+
+            $this->continue($this->timeoutDate);
+        }
     }
 }

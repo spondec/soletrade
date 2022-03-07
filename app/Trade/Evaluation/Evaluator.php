@@ -60,9 +60,10 @@ class Evaluator
 
     protected function realizeToExit(Evaluation $evaluation): void
     {
-        $status = $this
-            ->newLoop($evaluation->entry)
-            ->runToExit($evaluation->exit);
+        $loop = $this->newLoop($evaluation->entry);
+        $loop->setExitTrade($evaluation->exit);
+
+        $status = $loop->run();
 
         $this->fill($evaluation, $status);
     }

@@ -65,7 +65,8 @@ class TradeLoopTest extends TestCase
         ]);
 
         $loop = new TradeLoop($entry, $entry->symbol, ['closeOnExit' => true]);
-        $loop->runToExit($exit);
+        $loop->setExitTrade($exit);
+        $loop->run();
 
         $status = $loop->status();
         $position = $status->getPosition();
