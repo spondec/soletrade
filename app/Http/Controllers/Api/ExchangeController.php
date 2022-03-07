@@ -40,7 +40,7 @@ class ExchangeController extends Controller
             $exchange = $exchange::instance();
             $exchangeName = $exchange::name();
 
-            foreach ($exchange->fetch()->balance()->assets() as $assetName => $asset)
+            foreach ($exchange->fetch()->balance()->assets as $assetName => $asset)
             {
                 $balances[] = [
                     'name'      => $assetName,
