@@ -74,6 +74,11 @@ class TradeFinder
                 $this->indicatorConfig[$indicator::class]->signal));
     }
 
+    /**
+     * @param \Generator[] $generators
+     *
+     * @return void
+     */
     private function initGenerators(\Traversable $generators): void
     {
         foreach ($generators as $generator)
@@ -100,7 +105,7 @@ class TradeFinder
     }
 
     /**
-     * @return Collection|TradeSetup[]
+     * @return TradeCollection<TradeSetup>
      */
     public function findTrades(): TradeCollection
     {
