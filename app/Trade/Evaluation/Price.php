@@ -80,7 +80,7 @@ class Price
 
     public function newLog(int $timestamp, string $reason, bool $force = false): void
     {
-        $this->log->new($this->price, $timestamp, $force ? "FORCED: {$reason}" : $reason);
+        $this->log->new($this->price, $timestamp, $force ? "[FORCED] {$reason}" : $reason);
     }
 
     protected function assertUnlocked(): void
