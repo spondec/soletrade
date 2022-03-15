@@ -7,6 +7,7 @@ namespace App\Trade\Evaluation;
 use App\Trade\Calc;
 use App\Trade\ChangeLog;
 use App\Trade\HasInstanceEvents;
+use App\Trade\Side;
 use JetBrains\PhpStorm\Pure;
 
 class Position
@@ -30,14 +31,14 @@ class Position
     protected float $amount = 0;
 
     protected float $pnl = 0;
-    protected float $roi;
-    protected float $relativeRoi;
+    protected readonly float $roi;
+    protected readonly float $relativeRoi;
 
     protected float $maxUsedSize = 0;
 
     protected float $exitPrice;
 
-    public function __construct(protected bool   $isBuy,
+    public function __construct(public           readonly Side $side,
                                 protected float  $size,
                                 protected int    $entryTime,
                                 protected Price  $entry,
@@ -81,7 +82,7 @@ class Position
 
             $reduce = $this->amount / $this->getUsedSize() * $size;
             $pnl = $reduce * $price - $reduce * $this->getBreakEvenPrice();
-            if (!$this->isBuy)
+            if (!$this->isBuy())
             {
                 $pnl *= -1;
             }
@@ -125,7 +126,7 @@ class Position
 
         $differ = ($breakEvenPrice * $breakEvenRoi / 100);
 
-        if ($this->isBuy)
+        if ($this->isBuy())
         {
             return $breakEvenPrice + $differ;
         }
@@ -229,7 +230,7 @@ class Position
     {
         $this->assertCanRecalculateRoi();
 
-        if ($this->isBuy)
+        if ($this->isBuy())
         {
             return $this->calcLongRoi($lastPrice, $this->getUsedSize(), $this->maxUsedSize);
         }
@@ -278,7 +279,7 @@ class Position
 
         $usedSize = $this->getUsedSize();
 
-        if ($this->isBuy)
+        if ($this->isBuy())
         {
             return $this->calcLongRoi($lastPrice, $usedSize, self::MAX_SIZE);
         }
@@ -317,7 +318,7 @@ class Position
 
     #[Pure] public function roiEntry(float $lastPrice): float
     {
-        return Calc::roi($this->isBuy, $this->entry->get(), $lastPrice);
+        return Calc::roi($this->isBuy(), $this->entry->get(), $lastPrice);
     }
 
     public function exitRoi(): float
@@ -352,7 +353,7 @@ class Position
 
     public function isBuy(): bool
     {
-        return $this->isBuy;
+        return $this->side->isBuy();
     }
 
     public function getMaxUsedSize(): float|int
