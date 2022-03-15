@@ -45,8 +45,10 @@ class HasInstanceEventsTest extends TestCase
             $this->assertTrue(true);
         });
 
-        $this->expectNotToPerformAssertions();
         $hasEvents->bypass();
         $hasEvents->fire();
+        $hasEvents->fire();
+
+        $this->assertEquals(1, $this->getCount());
     }
 }

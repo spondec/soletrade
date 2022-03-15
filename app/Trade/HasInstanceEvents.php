@@ -17,15 +17,13 @@ trait HasInstanceEvents
 
     public function listen(string $eventName, \Closure $onEvent = null): void
     {
+        $this->assertEventExists($eventName);
         $this->listeners[$eventName][] = $onEvent;
     }
 
     protected function fireEvent(string $eventName, ...$params): void
     {
-        if (!\in_array($eventName, $this->events))
-        {
-            throw new \InvalidArgumentException("Event '$eventName' doesn't exist.");
-        }
+        $this->assertEventExists($eventName);
 
         if (isset($this->bypassed[$eventName]))
         {
@@ -39,8 +37,17 @@ trait HasInstanceEvents
         }
     }
 
-    protected function bypassEventOnce(string $eventName): void
+    public function bypassEventOnce(string $eventName): void
     {
+        $this->assertEventExists($eventName);
         $this->bypassed[$eventName] = true;
+    }
+
+    protected function assertEventExists(string $eventName): void
+    {
+        if (!\in_array($eventName, $this->events))
+        {
+            throw new \InvalidArgumentException("Event '$eventName' doesn't exist.");
+        }
     }
 }
