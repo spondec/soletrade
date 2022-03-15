@@ -2,10 +2,12 @@
 
 namespace App\Trade\Exchange;
 
+use App\Models\Fill;
 use App\Models\Order;
+use App\Trade\Side;
 use Illuminate\Database\Eloquent\Collection;
 
-abstract class Orderer
+abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 {
     public readonly array $actions;
 
@@ -19,20 +21,39 @@ abstract class Orderer
      */
     abstract protected function availableOrderActions(): array;
 
-    final public function sync(Order $order): Order
+    /**
+     * @param Order $order
+     *
+     * @return Fill[]
+     */
+    final public function sync(Order $order): array
     {
         $response = $this->executeOrderUpdate($order);
-        $this->handleOrderUpdateResponse($order, $response);
+        $fills = $this->handleOrderUpdateResponse($order, $response);
+
+        foreach ($fills as $fill)
+        {
+            if (!$fill->exists)
+            {
+                $fill->save();
+            }
+        }
 
         $order->logResponse('update', $response);
         $order->save();
 
-        return $order;
+        return $fills;
     }
 
     abstract protected function executeOrderUpdate(Order $order): array;
 
-    abstract protected function handleOrderUpdateResponse(Order $order, array $response): void;
+    /**
+     * @param Order $order
+     * @param array $response
+     *
+     * @return Fill[]
+     */
+    abstract protected function handleOrderUpdateResponse(Order $order, array $response): array;
 
     final public function cancel(Order $order): Order
     {
@@ -49,7 +70,7 @@ abstract class Orderer
 
     abstract protected function handleOrderCancelResponse(Order $order, array $response): void;
 
-    public function market(string $side, string $symbol, float $quantity): Order
+    public function market(Side $side, string $symbol, float $quantity): Order
     {
         $order = $this->setupOrder($side, $symbol);
 
@@ -59,13 +80,13 @@ abstract class Orderer
         return $this->newOrder($order);
     }
 
-    protected function setupOrder(string $side = null, string $symbol = null): Order
+    protected function setupOrder(Side $side = null, string $symbol = null): Order
     {
         $order = new Order();
 
         if ($side)
         {
-            $order->side = $side;
+            $order->side = $side->value;
             $this->assertAction($order); //TODO:: overriding validation when no side has been set
         }
 
@@ -103,7 +124,7 @@ abstract class Orderer
 
     abstract protected function handleNewOrderResponse(Order $order, array $response): void;
 
-    public function stopMarket(string $side, string $symbol, float $quantity, float $stopPrice): Order
+    public function stopMarket(Side $side, string $symbol, float $quantity, float $stopPrice): Order
     {
         $order = $this->setupOrder($side, $symbol);
 
@@ -114,7 +135,7 @@ abstract class Orderer
         return $this->newOrder($order);
     }
 
-    public function limit(string $side, string $symbol, float $price, float $quantity): Order
+    public function limit(Side $side, string $symbol, float $price, float $quantity): Order
     {
         $order = $this->setupOrder($side, $symbol);
 
@@ -125,7 +146,7 @@ abstract class Orderer
         return $this->newOrder($order);
     }
 
-    public function stopLimit(string $side, string $symbol, float $stopPrice, float $price, float $quantity): Order
+    public function stopLimit(Side $side, string $symbol, float $stopPrice, float $price, float $quantity): Order
     {
         $order = $this->setupOrder($side, $symbol);
 
@@ -162,5 +183,11 @@ abstract class Orderer
             ->keyBy('exchange_order_id');
     }
 
-    abstract protected function updateOrderDetails(Order $order, array $response): void;
+    /**
+     * @param Order $order
+     * @param array $response
+     *
+     * @return Fill[]
+     */
+    abstract protected function updateOrderDetails(Order $order, array $response): array;
 }
