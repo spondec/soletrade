@@ -5,7 +5,7 @@ namespace App\Trade\Exchange\Account;
 class Asset
 {
     /**
-     * The properties will be updated when the associated balance is updated.
+     * The properties will be updated as the associated balance is updated.
      *
      * @param string $name
      * @param float  $total
