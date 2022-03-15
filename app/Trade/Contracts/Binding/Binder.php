@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Binding;
+namespace App\Trade\Contracts\Binding;
 
 use App\Models\Binding;
 use App\Models\Model;
