@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Trade\Binding\Bindable;
 use App\Trade\Binding\HasBinding;
+use App\Trade\Contracts\Binding\Bindable;
 use App\Trade\Evaluation\Price;
+use App\Trade\Side;
 use Database\Factories\TradeSetupFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
 
 /**
  * @property Signal[]|\Illuminate\Database\Eloquent\Collection      signals
@@ -100,7 +100,12 @@ class TradeSetup extends Model implements Bindable
 
     public function isBuy()
     {
-        return $this->side === Signal::BUY;
+        return $this->side()->isBuy();
+    }
+
+    public function side(): Side
+    {
+        return Side::from($this->side);
     }
 
     protected function assertPrice(): float
@@ -117,7 +122,7 @@ class TradeSetup extends Model implements Bindable
     {
         $price = $this->assertPrice();
 
-        if ($this->side === Signal::BUY)
+        if ($this->isBuy())
         {
             $this->stop_price = $price - $price * $percent / 100;
         }
@@ -131,7 +136,7 @@ class TradeSetup extends Model implements Bindable
     {
         $price = $this->assertPrice();
 
-        if ($this->side === Signal::BUY)
+        if ($this->isBuy())
         {
             $this->target_price = $price + $price * $percent / 100;
         }
@@ -139,5 +144,10 @@ class TradeSetup extends Model implements Bindable
         {
             $this->target_price = $price - $price * $percent / 100;
         }
+    }
+
+    public function setSide(Side $side)
+    {
+        $this->side = $side->value;
     }
 }

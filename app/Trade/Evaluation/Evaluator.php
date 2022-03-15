@@ -129,12 +129,12 @@ class Evaluator
         }
 
         $entryPrice = (float)$evaluation->entry_price;
-        $buy = $evaluation->entry->side === Signal::BUY;
+        $isBuy = $evaluation->entry->isBuy();
 
-        $evaluation->highest_roi = Calc::roi($buy, $entryPrice, (float)($buy
+        $evaluation->highest_roi = Calc::roi($isBuy, $entryPrice, (float)($isBuy
             ? $evaluation->highest_price
             : $evaluation->lowest_price));
-        $evaluation->lowest_roi = Calc::roi($buy, $entryPrice, (float)(!$buy
+        $evaluation->lowest_roi = Calc::roi($isBuy, $entryPrice, (float)(!$isBuy
             ? $evaluation->highest_price
             : $evaluation->lowest_price));
     }
