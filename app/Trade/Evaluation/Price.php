@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Trade\Evaluation;
 
 use App\Trade\Action\Handler;
-use App\Trade\Binding\Bindable;
 use App\Trade\ChangeLog;
+use App\Trade\Contracts\Binding\Bindable;
+use App\Trade\HasInstanceEvents;
 use JetBrains\PhpStorm\Pure;
 
 class Price
 {
+    use HasInstanceEvents;
+
+    protected array $events = ['changed'];
     protected bool $isLocked = false;
 
     protected ?object $lockedBy;
@@ -22,9 +26,8 @@ class Price
     ];
     protected ChangeLog $log;
 
-    public function __construct(protected float     $price,
-                                int                 $timestamp,
-                                protected ?\Closure $onChange = null)
+    public function __construct(protected float $price,
+                                int             $timestamp)
     {
         $this->log = new ChangeLog($this->price, $timestamp);
     }
@@ -69,10 +72,10 @@ class Price
             return;
         }
 
-        if ($this->onChange)
-        {
-            ($this->onChange)(price: $this, from: $this->price, to: $price);
-        }
+        $this->fireEvent('changed', [
+            'from' => $this->price,
+            'to'   => $price
+        ]);
 
         $this->price = $price;
         $this->newLog($timestamp, $reason, $force);
