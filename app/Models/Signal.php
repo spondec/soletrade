@@ -40,9 +40,6 @@ class Signal extends Model
         $this->indicator = $indicator;
     }
 
-    const BUY = 'BUY';
-    const SELL = 'SELL';
-
     protected $table = 'signals';
 
     protected $guarded = ['id'];
