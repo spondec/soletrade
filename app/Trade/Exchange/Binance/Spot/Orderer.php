@@ -2,6 +2,7 @@
 
 namespace App\Trade\Exchange\Binance\Spot;
 
+use App\Models\Fill;
 use App\Models\Order;
 use App\Trade\Exchange\Exchange;
 use ccxt\binance;
@@ -37,7 +38,13 @@ class Orderer extends \App\Trade\Exchange\Orderer
         return $orders;
     }
 
-    protected function updateOrderDetails(Order $order, array $response): void
+    /**
+     * @param Order $order
+     * @param array $response
+     *
+     * @return Fill[]
+     */
+    protected function updateOrderDetails(Order $order, array $response): array
     {
         $order->type = $response['info']['type'];
         $order->symbol = $response['symbol'];
@@ -49,25 +56,31 @@ class Orderer extends \App\Trade\Exchange\Orderer
         $order->quantity = $response['amount'];
         $order->filled = $response['filled'];
 
-        $this->processOrderFills($order, $response);
+        return $this->processOrderFills($order, $response);
     }
 
-    protected function processOrderFills(Order $order, array $response): void
+    /**
+     * @param Order $order
+     * @param array $response
+     *
+     * @return Fill[]
+     */
+    protected function processOrderFills(Order $order, array $response): array
     {
-        if (isset($response['fills']))
+        $fills = [];
+        foreach ($response['fills'] ?? [] as $fill)
         {
-            $commission = 0;
+            $fills[] = $new = new Fill();
 
-            foreach ($response['fills'] as $fill)
-            {
-                $commission += $fill['commission'];
-            }
-
-            if ($commission)
-            {
-                $order->commission_asset = $fill[0]['commission_asset'];
-            }
+            $new->price = $fill['price'];
+            $new->size = $fill['qty'];
+            $new->commission = $fill['commission'];
+            $new->commission_asset = $fill['commissionAsset'];
+            $new->order_id = $order->id;
+            $new->trade_id = $fill['tradeId'];
         }
+
+        return $fills;
     }
 
     public function openOrders(?string $symbol = null): Collection
@@ -121,8 +134,14 @@ class Orderer extends \App\Trade\Exchange\Orderer
         return $this->api->fetch_order($order->exchange_order_id, $order->symbol);
     }
 
-    protected function handleOrderUpdateResponse(Order $order, array $response): void
+    /**
+     * @param Order $order
+     * @param array $response
+     *
+     * @return Fill[]
+     */
+    protected function handleOrderUpdateResponse(Order $order, array $response): array
     {
-        $this->updateOrderDetails($order, $response);
+        return $this->updateOrderDetails($order, $response);
     }
 }
