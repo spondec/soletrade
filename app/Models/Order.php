@@ -37,6 +37,7 @@ class Order extends Model
         'is_open'     => 'boolean',
         'quantity'    => 'required|numeric|gt:0',
         'filled'      => 'numeric',
+        'order_id'    => 'exists:fills',
         'price'       => 'numeric|gt:0',
         'stop_price'  => 'nullable|numeric',
         'type'        => 'required|in:LIMIT,MARKET,STOP_LOSS,STOP_LOSS_LIMIT,TAKE_PROFIT,TAKE_PROFIT_LIMIT,LIMIT_MAKER',
