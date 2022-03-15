@@ -67,7 +67,7 @@ class Price
             $this->assertUnlocked();
         }
 
-        if ($price === $this->price)
+        if ($price == $this->price)
         {
             return;
         }
