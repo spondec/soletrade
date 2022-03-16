@@ -6,13 +6,14 @@ use App\Models\TradeAction;
 use App\Trade\Action\MoveStop;
 use App\Trade\Evaluation\Position;
 use App\Trade\Evaluation\Price;
+use App\Trade\Side;
 use PHPUnit\Framework\TestCase;
 
 class MoveStopTest extends TestCase
 {
     public function test_buy_with_target_roi_50_and_target_price_above_new_stop_price_should_leave_position_open_and_move_stop_to_entry(): void
     {
-        $position = new Position(true,
+        $position = new Position(Side::BUY,
             100,
             time(),
             new Price($entry = 1, time()),
@@ -42,7 +43,7 @@ class MoveStopTest extends TestCase
 
     public function test_sell_with_target_roi_50_and_target_price_below_new_stop_price_should_leave_position_open_and_move_stop_to_entry(): void
     {
-        $position = new Position(false,
+        $position = new Position(Side::SELL,
             100,
             time(),
             new Price($entry = 2, time()),
@@ -72,7 +73,7 @@ class MoveStopTest extends TestCase
 
     public function test_buy_with_target_roi_50_and_target_price_below_new_stop_price_should_close_position_at_target_price(): void
     {
-        $position = new Position(true,
+        $position = new Position(Side::BUY,
             100,
             time(),
             new Price($entry = 1, time()),
@@ -102,7 +103,7 @@ class MoveStopTest extends TestCase
 
     public function test_sell_with_target_roi_50_and_target_price_above_new_stop_price_should_close_position_at_target_price(): void
     {
-        $position = new Position(false,
+        $position = new Position(Side::SELL,
             100,
             time(),
             new Price($entry = 2, time()),

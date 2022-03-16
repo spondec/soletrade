@@ -6,6 +6,7 @@ use App\Models\TradeAction;
 use App\Models\TradeSetup;
 use App\Trade\Action\MoveStop;
 use App\Trade\Evaluation\TradeStatus;
+use App\Trade\Side;
 use Illuminate\Support\Collection;
 use Mockery;
 use PHPUnit\Framework\TestCase;
@@ -18,7 +19,7 @@ class TradeStatusTest extends TestCase
 {
     public function test_run_trade_actions(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
 
         $action = Mockery::mock('alias:' . TradeAction::class);
         $action->config = [
@@ -50,7 +51,7 @@ class TradeStatusTest extends TestCase
 
     public function test_defaults(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
 
         $this->assertNotTrue($status->isEntered());
@@ -60,11 +61,12 @@ class TradeStatusTest extends TestCase
         $this->assertNotTrue($status->isAmbiguous());
     }
 
-    protected function getSetup(bool $isBuy, float $size, float $price, float $targetPrice, float $stopPrice): TradeSetup
+    protected function getSetup(Side $side, float $size, float $price, float $targetPrice, float $stopPrice): TradeSetup
     {
         $setup = Mockery::mock('alias:' . TradeSetup::class);
 
-        $setup->shouldReceive('isBuy')->andReturn($isBuy);
+        $setup->shouldReceive('side')->andReturn($side);
+        $setup->shouldReceive('isBuy')->andReturn($side->isBuy());
         $setup->actions = new Collection();
         $setup->size = $size;
         $setup->price = $price;
@@ -76,7 +78,7 @@ class TradeStatusTest extends TestCase
 
     public function test_enter_position(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
 
         $status->enterPosition(time());
@@ -89,7 +91,7 @@ class TradeStatusTest extends TestCase
 
     public function test_check_is_stopped(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
         $candle = [
             'h' => 1.9,
@@ -105,7 +107,7 @@ class TradeStatusTest extends TestCase
 
     public function test_is_ambiguous(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
         $candle = [
             'h' => 2,
@@ -121,7 +123,7 @@ class TradeStatusTest extends TestCase
 
     public function test_close_position_externally(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
 
         $this->assertNotTrue($status->isExited());
@@ -137,7 +139,7 @@ class TradeStatusTest extends TestCase
 
     public function test_stop_position_externally(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
 
         $this->assertNotTrue($status->isExited());
@@ -151,7 +153,7 @@ class TradeStatusTest extends TestCase
 
     public function test_check_is_closed_with_no_position(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
 
         $candle = [
@@ -165,7 +167,7 @@ class TradeStatusTest extends TestCase
 
     public function test_check_is_stopped_with_no_position(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
 
         $candle = [
@@ -180,7 +182,7 @@ class TradeStatusTest extends TestCase
 
     public function test_check_is_closed(): void
     {
-        $setup = $this->getSetup(true, 100, 1, 2, 0.5);
+        $setup = $this->getSetup(Side::BUY, 100, 1, 2, 0.5);
         $status = new TradeStatus($setup);
 
         $candle = [
