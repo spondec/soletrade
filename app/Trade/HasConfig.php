@@ -7,8 +7,13 @@ namespace App\Trade;
  */
 trait HasConfig
 {
+    private readonly bool $hasDefaultConfig;
+
     protected function mergeConfig(array &$config): void
     {
+        $this->hasDefaultConfig = method_exists(static::class, 'getDefaultConfig');
+        $this->assertPreRequisites();
+
         $this->buildDefaultConfig();
         $this->buildUserConfig($config);
     }
@@ -98,7 +103,7 @@ trait HasConfig
     {
         $this->resolveKeys($this->config);
 
-        if (\method_exists($this, 'getDefaultConfig'))
+        if ($this->hasDefaultConfig)
         {
             //parent class' config defaults
             $defaultConfig = $this->getDefaultConfig();
@@ -108,6 +113,22 @@ trait HasConfig
             //new config definitions can be made by the instance class
             //so do not try to match keys here
             $this->config = array_merge_recursive_distinct($defaultConfig, $childConfig);
+        }
+    }
+
+    protected function assertPreRequisites(): void
+    {
+        if ($parent = get_parent_class(static::class))
+        {
+            if (get_parent_class($parent))
+            {
+                throw new \LogicException('Only one level of parent config is allowed.');
+            }
+
+            if (!$this->hasDefaultConfig)
+            {
+                throw new \LogicException('Parent class must implement getDefaultConfig() method.');
+            }
         }
     }
 }
