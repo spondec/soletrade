@@ -51,22 +51,22 @@ class TradeStatus
         $this->stopPrice = $this->entry->stop_price ? $this->newPrice($this->entry->stop_price, $priceDate) : null;
     }
 
-    protected function newPrice(float $price, int $timestamp, ?\Closure $onChange = null): Price
+    protected function newPrice(float $price, int $timestamp): Price
     {
-        return new Price($price, $timestamp, $onChange);
+        return new Price($price, $timestamp);
     }
 
-    public function enterPosition(int $entryTime): void
+    public function enterPosition(int $entryTime, float $size = 100, float $price = null): void
     {
         if ($this->position)
         {
             throw new \LogicException('Already in a position');
         }
 
-        $this->position = new Position($this->entry->isBuy(),
-            $this->entry->size,
+        $this->position = new Position($this->entry->side(),
+            $size,
             $entryTime,
-            $this->entryPrice,
+            $price ?? $this->entryPrice,
             $this->getTargetPrice(),
             $this->getStopPrice());
 
