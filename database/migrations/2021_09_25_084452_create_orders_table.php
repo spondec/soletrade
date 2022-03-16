@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->foreignId('trade_setup_id')->nullable()->constrained();
             $table->foreignId('exchange_id')->constrained();
             $table->boolean('is_open')->default(true);
+            $table->boolean('reduce_only');
             $table->enum('status', [
                 'CLOSED',
                 'OPEN',

@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
  * @property int    exchange_id
  * @property int    trade_setup_id
  * @property bool   is_open
+ * @property bool   reduce_only
  * @property string exchange
  * @property string account
  * @property string symbol
@@ -35,6 +36,7 @@ class Order extends Model
         'exchange_id' => 'required|integer|exists:exchanges,id',
         'symbol'      => 'required|string|max:50',
         'is_open'     => 'boolean',
+        'reduce_only' => 'boolean',
         'quantity'    => 'required|numeric|gt:0',
         'filled'      => 'numeric',
         'order_id'    => 'exists:fills',

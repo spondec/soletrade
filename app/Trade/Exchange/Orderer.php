@@ -70,9 +70,9 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 
     abstract protected function handleOrderCancelResponse(Order $order, array $response): void;
 
-    public function market(Side $side, string $symbol, float $quantity): Order
+    public function market(Side $side, string $symbol, float $quantity, bool $reduceOnly): Order
     {
-        $order = $this->setupOrder($side, $symbol);
+        $order = $this->setupOrder($side, $symbol, $reduceOnly);
 
         $order->quantity = $quantity;
         $order->type = 'MARKET';
@@ -80,7 +80,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         return $this->newOrder($order);
     }
 
-    protected function setupOrder(Side $side = null, string $symbol = null): Order
+    protected function setupOrder(Side $side = null, string $symbol = null, bool $reduceOnly = null): Order
     {
         $order = new Order();
 
@@ -93,6 +93,11 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         if ($symbol)
         {
             $order->symbol = $symbol;
+        }
+
+        if ($reduceOnly !== null)
+        {
+            $order->reduce_only = $reduceOnly;
         }
 
         $order->exchange_id = $this->exchange->model()->id;
@@ -124,9 +129,9 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 
     abstract protected function handleNewOrderResponse(Order $order, array $response): void;
 
-    public function stopMarket(Side $side, string $symbol, float $quantity, float $stopPrice): Order
+    public function stopMarket(Side $side, string $symbol, float $quantity, float $stopPrice, bool $reduceOnly): Order
     {
-        $order = $this->setupOrder($side, $symbol);
+        $order = $this->setupOrder($side, $symbol, $reduceOnly);
 
         $order->quantity = $quantity;
         $order->stop_price = $stopPrice;
@@ -135,9 +140,9 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         return $this->newOrder($order);
     }
 
-    public function limit(Side $side, string $symbol, float $price, float $quantity): Order
+    public function limit(Side $side, string $symbol, float $price, float $quantity, bool $reduceOnly): Order
     {
-        $order = $this->setupOrder($side, $symbol);
+        $order = $this->setupOrder($side, $symbol, $reduceOnly);
 
         $order->price = $price;
         $order->quantity = $quantity;
@@ -146,9 +151,9 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         return $this->newOrder($order);
     }
 
-    public function stopLimit(Side $side, string $symbol, float $stopPrice, float $price, float $quantity): Order
+    public function stopLimit(Side $side, string $symbol, float $stopPrice, float $price, float $quantity, bool $reduceOnly): Order
     {
-        $order = $this->setupOrder($side, $symbol);
+        $order = $this->setupOrder($side, $symbol, $reduceOnly);
 
         $order->price = $price;
         $order->quantity = $quantity;
