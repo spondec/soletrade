@@ -134,7 +134,7 @@ class Balance implements \ArrayAccess
         $this->throwImmutableException();
     }
 
-    protected function throwImmutableException(): never
+    protected function throwImmutableException(): void
     {
         throw new \LogicException('Balance is immutable.');
     }
