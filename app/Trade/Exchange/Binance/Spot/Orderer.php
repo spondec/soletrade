@@ -6,36 +6,12 @@ use App\Models\Fill;
 use App\Models\Order;
 use App\Trade\Exchange\Exchange;
 use ccxt\binance;
-use ccxt\NetworkError;
-use ccxt\OrderNotFound;
-use Illuminate\Database\Eloquent\Collection;
 
 class Orderer extends \App\Trade\Exchange\Orderer
 {
     public function __construct(Exchange $exchange, protected binance $api)
     {
         parent::__construct($exchange);
-    }
-
-    public function orders(string $symbol): Collection
-    {
-        return $this->processOrderResponses($this->api->fetch_orders($symbol));
-    }
-
-    protected function processOrderResponses(array $responses): Collection
-    {
-        $orders = $this->fetchOrdersWithExchangeIds(
-            \array_column($responses, 'id'));
-
-        foreach ($responses as $response)
-        {
-            $order = $orders[$response['id']] ?? $this->setupOrder();
-
-            $this->updateOrderDetails($order, $response);
-            $order->save();
-        }
-
-        return $orders;
     }
 
     /**
@@ -83,24 +59,11 @@ class Orderer extends \App\Trade\Exchange\Orderer
         return $fills;
     }
 
-    public function openOrders(?string $symbol = null): Collection
-    {
-        return $this->processOrderResponses($this->api->fetch_open_orders($symbol));
-    }
-
     protected function availableOrderActions(): array
     {
         return ['BUY', 'SELL'];
     }
 
-    /**
-     * @throws NetworkError when
-     * the order might or might not have been canceled successfully and whether you need to retry or not
-     * consecutive calls may hit an already canceled order as well
-     * @throws OrderNotFound when
-     * canceling an already-closed order
-     * canceling an already-canceled order
-     */
     protected function executeOrderCancel(Order $order): array
     {
         return $this->api->cancel_order($order->exchange_order_id, $order->symbol);

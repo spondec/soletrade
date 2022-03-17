@@ -5,7 +5,6 @@ namespace App\Trade\Exchange;
 use App\Models\Fill;
 use App\Models\Order;
 use App\Trade\Side;
-use Illuminate\Database\Eloquent\Collection;
 
 abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 {
@@ -161,31 +160,6 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         $order->type = 'STOP_LOSS_LIMIT';
 
         return $this->newOrder($order);
-    }
-
-    /**
-     * @param string $symbol
-     *
-     * @return Collection<Order>
-     */
-    abstract public function openOrders(string $symbol): Collection;
-
-    /**
-     * @param Order[] $responses
-     */
-    abstract protected function processOrderResponses(array $responses): Collection;
-
-    /**
-     * @param array $exchangeOrderIds
-     *
-     * @return Collection<Order>
-     */
-    protected function fetchOrdersWithExchangeIds(array $exchangeOrderIds): Collection
-    {
-        return Order::query()
-            ->whereIn('exchange_order_id', $exchangeOrderIds)
-            ->get()
-            ->keyBy('exchange_order_id');
     }
 
     /**
