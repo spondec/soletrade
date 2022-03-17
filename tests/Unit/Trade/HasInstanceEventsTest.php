@@ -11,7 +11,7 @@ class HasInstanceEventsTest extends TestCase
     {
         $hasEvents = $this->getHasEventsObject();
 
-        $hasEvents->listen('test', function () {
+        $hasEvents->listen('event1', function () {
             $this->assertTrue(true);
         });
 
@@ -23,19 +23,19 @@ class HasInstanceEventsTest extends TestCase
         return new class {
             use HasInstanceEvents;
 
-            protected array $events = ['test'];
+            protected array $events = ['event1', 'event2'];
             protected array $eventTriggers = [
-                'event' => 'test',
+                'event3' => ['event1', 'event2'],
             ];
 
             public function fire()
             {
-                $this->fireEvent('test');
+                $this->fireEvent('event1');
             }
 
             public function bypass()
             {
-                $this->bypassEventOnce('test');
+                $this->bypassEventOnce('event1');
             }
         };
     }
@@ -44,7 +44,7 @@ class HasInstanceEventsTest extends TestCase
     {
         $hasEvents = $this->getHasEventsObject();
 
-        $hasEvents->listen('test', function () {
+        $hasEvents->listen('event1', function () {
             $this->assertTrue(true);
         });
 
@@ -59,11 +59,11 @@ class HasInstanceEventsTest extends TestCase
     {
         $hasEvents = $this->getHasEventsObject();
 
-        $hasEvents->listen('test', function () {
+        $hasEvents->listen('event2', function () {
             $this->assertTrue(true);
         });
 
-        $hasEvents->listen('event', function () {
+        $hasEvents->listen('event3', function () {
             $this->assertTrue(true);
         });
 
