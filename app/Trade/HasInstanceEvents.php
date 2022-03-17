@@ -35,6 +35,8 @@ trait HasInstanceEvents
         {
             $onEvent($this, ...$params);
         }
+
+        $this->handleTriggers($eventName, $params);
     }
 
     public function bypassEventOnce(string $eventName): void
@@ -43,11 +45,28 @@ trait HasInstanceEvents
         $this->bypassed[$eventName] = true;
     }
 
-    protected function assertEventExists(string $eventName): void
+    private function assertEventExists(string $eventName): void
     {
-        if (!\in_array($eventName, $this->events))
+        if (!\in_array($eventName, $this->events) && !isset($this->eventTriggers[$eventName]))
         {
             throw new \InvalidArgumentException("Event '$eventName' doesn't exist.");
+        }
+    }
+
+    private function handleTriggers(string $triggerEventName, array $params): void
+    {
+        if (!isset($this->eventTriggers))
+        {
+            return;
+        }
+
+        foreach ($this->eventTriggers as $event => $triggers)
+        {
+            $triggers = \is_string($triggers) ? [$triggers] : $triggers;
+            if (\in_array($triggerEventName, $triggers))
+            {
+                $this->fireEvent($event, ...$params);
+            }
         }
     }
 }

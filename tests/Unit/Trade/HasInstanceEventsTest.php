@@ -24,6 +24,9 @@ class HasInstanceEventsTest extends TestCase
             use HasInstanceEvents;
 
             protected array $events = ['test'];
+            protected array $eventTriggers = [
+                'event' => 'test',
+            ];
 
             public function fire()
             {
@@ -50,5 +53,22 @@ class HasInstanceEventsTest extends TestCase
         $hasEvents->fire();
 
         $this->assertEquals(1, $this->getCount());
+    }
+
+    public function test_triggers()
+    {
+        $hasEvents = $this->getHasEventsObject();
+
+        $hasEvents->listen('test', function () {
+            $this->assertTrue(true);
+        });
+
+        $hasEvents->listen('event', function () {
+            $this->assertTrue(true);
+        });
+
+        $hasEvents->fire();
+
+        $this->assertEquals(2, $this->getCount());
     }
 }
