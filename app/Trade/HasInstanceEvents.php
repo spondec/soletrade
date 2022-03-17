@@ -4,6 +4,7 @@ namespace App\Trade;
 
 /**
  * @property string[] events
+ * @property string[] eventTriggers
  */
 trait HasInstanceEvents
 {
