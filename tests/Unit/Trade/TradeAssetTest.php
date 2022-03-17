@@ -55,4 +55,30 @@ class TradeAssetTest extends TestCase
         $this->expectExceptionMessage('Argument $value must be greater than 0');
         $tradeAsset->getProportionalSize(0);
     }
+
+    public function test_set_available()
+    {
+        $asset = \Mockery::mock(Asset::class);
+        $asset
+            ->shouldReceive('available')
+            ->andReturn(1000);
+
+        $tradeAsset = $this->getTradeAsset($asset, 1000);
+
+        $this->assertEquals(1000, $tradeAsset->available());
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Available amount exceeds allocated amount');
+        $tradeAsset->addAvailable(0.000000001);
+
+        $tradeAsset->cutAvailable(100);
+        $this->assertEquals(900, $tradeAsset->available());
+
+        $tradeAsset->addAvailable(100);
+        $this->assertEquals(1000, $tradeAsset->available());
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Available amount can not be negative');
+        $tradeAsset->cutAvailable(1000.000000001);
+    }
 }
