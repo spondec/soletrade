@@ -11,7 +11,7 @@ final class Enum
     /**
      * @param string|\UnitEnum $class
      *
-     * @return string[]
+     * @return string[]|int[]
      */
     public static function cases(string|\UnitEnum $class): array
     {
