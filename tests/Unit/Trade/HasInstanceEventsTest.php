@@ -15,7 +15,7 @@ class HasInstanceEventsTest extends TestCase
             $this->assertTrue(true);
         });
 
-        $hasEvents->fire();
+        $hasEvents->fire('event1');
     }
 
     protected function getHasEventsObject(): object
@@ -28,9 +28,9 @@ class HasInstanceEventsTest extends TestCase
                 'event3' => ['event1', 'event2'],
             ];
 
-            public function fire()
+            public function fire(string $eventName)
             {
-                $this->fireEvent('event1');
+                $this->fireEvent($eventName);
             }
 
             public function bypass()
@@ -49,8 +49,8 @@ class HasInstanceEventsTest extends TestCase
         });
 
         $hasEvents->bypass();
-        $hasEvents->fire();
-        $hasEvents->fire();
+        $hasEvents->fire('event1');
+        $hasEvents->fire('event1');
 
         $this->assertEquals(1, $this->getCount());
     }
@@ -59,16 +59,28 @@ class HasInstanceEventsTest extends TestCase
     {
         $hasEvents = $this->getHasEventsObject();
 
-        $hasEvents->listen('event2', function () {
-            $this->assertTrue(true);
+        $triggerEventCounter = 0;
+        $triggeredEventCounter = 0;
+
+        $triggerEvents = ['event1', 'event2'];
+
+        foreach ($triggerEvents as $triggerEvent)
+        {
+            $hasEvents->listen($triggerEvent, function () use (&$triggerEventCounter) {
+                $triggerEventCounter++;
+            });
+        }
+
+        $hasEvents->listen('event3', function () use (&$triggeredEventCounter) {
+            $triggeredEventCounter++;
         });
 
-        $hasEvents->listen('event3', function () {
-            $this->assertTrue(true);
-        });
+        foreach ($triggerEvents as $triggerEvent)
+        {
+            $hasEvents->fire($triggerEvent);
+        }
 
-        $hasEvents->fire();
-
-        $this->assertEquals(2, $this->getCount());
+        $this->assertEquals(2, $triggeredEventCounter);
+        $this->assertEquals(2, $triggeredEventCounter);
     }
 }
