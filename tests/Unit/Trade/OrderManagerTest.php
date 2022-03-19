@@ -18,6 +18,12 @@ use PHPUnit\Framework\TestCase;
  */
 class OrderManagerTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        m::close();
+    }
+
     public function test_sync(): void
     {
         /** @var Exchange|MockInterface $exchange */
@@ -45,7 +51,9 @@ class OrderManagerTest extends TestCase
         $exchange = m::mock(Exchange::class);
         $orderer = m::mock(Orderer::class);
 
-        $exchange->shouldReceive('order')
+        $exchange
+            ->shouldReceive('order')
+            ->once()
             ->andReturn($orderer);
 
         return new OrderManager($exchange, $symbol);
