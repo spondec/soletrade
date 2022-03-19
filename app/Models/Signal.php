@@ -29,9 +29,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Signal extends Model
 {
-    public const VALIDATION_RULES = [
-        'price_date' => 'gte:timestamp',
-    ];
+    public static function validationRules(): array
+    {
+        return [
+            'price_date' => 'gte:timestamp',
+        ];
+    }
 
     public readonly Indicator $indicator;
 

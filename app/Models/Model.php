@@ -6,13 +6,11 @@ use Illuminate\Support\Facades\Validator;
 
 abstract class Model extends \Illuminate\Database\Eloquent\Model
 {
-    const VALIDATION_RULES = [];
-
     protected array $unique = [];
 
     public final function validate(?array &$errors = null)
     {
-        $errors = Validator::make($this->toArray(), static::VALIDATION_RULES)
+        $errors = Validator::make($this->toArray(), static::validationRules())
             ->errors()
             ->messages();
 
@@ -64,5 +62,10 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
         }
 
         return $attributes;
+    }
+
+    public static function validationRules(): array
+    {
+        return [];
     }
 }

@@ -41,9 +41,12 @@ class TradeSetup extends Model implements Bindable
     use HasBinding;
     use HasFactory;
 
-    public const VALIDATION_RULES = [
-        'price_date' => 'gte:timestamp',
-    ];
+    public static function validationRules(): array
+    {
+        return [
+            'price_date' => 'gte:timestamp',
+        ];
+    }
 
     protected $guarded = ['id'];
     protected $table = 'trade_setups';

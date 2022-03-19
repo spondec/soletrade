@@ -18,25 +18,10 @@ return new class extends Migration {
             $table->foreignId('exchange_id')->constrained();
             $table->boolean('is_open')->default(true);
             $table->boolean('reduce_only');
-            $table->enum('status', [
-                'CLOSED',
-                'OPEN',
-                'EXPIRED',
-                'NEW',
-                'PENDING_CANCEL',
-                'REJECTED',
-                'CANCELED',
-                'PARTIALLY_FILLED']);
+            $table->enum('status', \App\Trade\Enum::cases(\App\Models\OrderStatus::class));
             $table->string('symbol', 50);
-            $table->enum('side', ['BUY', 'SELL', 'LONG', 'SHORT']);
-            $table->enum('type', [
-                'LIMIT',
-                'MARKET',
-                'STOP_LOSS',
-                'STOP_LOSS_LIMIT',
-                'TAKE_PROFIT',
-                'TAKE_PROFIT_LIMIT',
-                'LIMIT_MAKER']);
+            $table->enum('side', \App\Trade\Enum::cases(\App\Trade\Side::class));
+            $table->enum('type', \App\Trade\Enum::cases(\App\Models\OrderType::class));
             $table->decimal('quantity');
             $table->decimal('filled')->default(0);
             $table->decimal('price')->nullable();

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Trade\Side;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rules\Enum;
 
 /**
  * @property int    id
@@ -32,24 +34,29 @@ class Order extends Model
 {
     use HasFactory;
 
-    const VALIDATION_RULES = [
-        'exchange_id' => 'required|integer|exists:exchanges,id',
-        'symbol'      => 'required|string|max:50',
-        'is_open'     => 'boolean',
-        'reduce_only' => 'boolean',
-        'quantity'    => 'required|numeric|gt:0',
-        'filled'      => 'numeric',
-        'order_id'    => 'exists:fills',
-        'price'       => 'numeric|gt:0',
-        'stop_price'  => 'nullable|numeric',
-        'type'        => 'required|in:LIMIT,MARKET,STOP_LOSS,STOP_LOSS_LIMIT,TAKE_PROFIT,TAKE_PROFIT_LIMIT,LIMIT_MAKER',
-        'side'        => 'required|in:BUY,SELL,LONG,SHORT',
-        'status'      => 'required|in:CLOSED,OPEN,EXPIRED,NEW,PENDING_CANCEL,REJECTED,CANCELED,PARTIALLY_FILLED'
-    ];
+    public static function validationRules(): array
+    {
+        return [
+            'exchange_id' => 'required|integer|exists:exchanges,id',
+            'symbol'      => 'required|string|max:50',
+            'is_open'     => 'boolean',
+            'reduce_only' => 'boolean',
+            'quantity'    => 'required|numeric|gt:0',
+            'filled'      => 'numeric',
+            'order_id'    => 'exists:fills',
+            'price'       => 'numeric|gt:0',
+            'stop_price'  => 'nullable|numeric',
+            'type'        => [new Enum(OrderType::class)],
+            'side'        => [new Enum(Side::class)],
+            'status'      => [new Enum(OrderStatus::class)]
+        ];
+    }
+
     /**
      * @var \Closure[]
      */
     static protected array $fillListeners = [];
+
     protected $table = 'orders';
     protected $casts = [
         'responses' => 'array'
@@ -57,7 +64,7 @@ class Order extends Model
 
     public static function newFill(Fill $fill)
     {
-        foreach (self::$fillListeners[$fill->order_id] ?? [] as $callback)
+        foreach (static::$fillListeners[$fill->order_id] ?? [] as $callback)
         {
             $callback($fill);
         }
@@ -88,6 +95,6 @@ class Order extends Model
 
     public function onFill(\Closure $callback): void
     {
-        self::$fillListeners[$this->id][] = $callback;
+        static::$fillListeners[$this->id][] = $callback;
     }
 }
