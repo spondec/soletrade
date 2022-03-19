@@ -59,7 +59,7 @@ class OrderManagerTest extends TestCase
         return new OrderManager($exchange, $symbol);
     }
 
-    protected function getOrderMock(): m\LegacyMockInterface|MockInterface|Order
+    protected function getOrderMock(): MockInterface|Order
     {
         return m::mock(Order::class);
     }
