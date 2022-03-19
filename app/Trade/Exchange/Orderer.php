@@ -8,17 +8,10 @@ use App\Trade\Side;
 
 abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 {
-    public readonly array $actions;
-
     public function __construct(protected Exchange $exchange)
     {
-        $this->actions = $this->availableOrderActions();
-    }
 
-    /**
-     * @return string[]
-     */
-    abstract protected function availableOrderActions(): array;
+    }
 
     /**
      * @param Order $order
@@ -28,15 +21,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     final public function sync(Order $order): array
     {
         $response = $this->executeOrderUpdate($order);
-        $fills = $this->handleOrderUpdateResponse($order, $response);
-
-        foreach ($fills as $fill)
-        {
-            if (!$fill->exists)
-            {
-                $fill->save();
-            }
-        }
+        $fills = $this->handleOrderResponse($order, $response);
 
         $order->logResponse('update', $response);
         $order->save();
@@ -44,20 +29,46 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         return $fills;
     }
 
-    abstract protected function executeOrderUpdate(Order $order): array;
-
     /**
      * @param Order $order
      * @param array $response
      *
      * @return Fill[]
+     * @throws \LogicException|\UnexpectedValueException
      */
-    abstract protected function handleOrderUpdateResponse(Order $order, array $response): array;
+    private function handleOrderResponse(Order $order, array $response): array
+    {
+        $this->processOrderDetails($order, $response);
+
+        $fills = $this->processOrderFills($order, $response);
+
+        if ($order->filled && !$fills)
+        {
+            throw new \LogicException('Failed to process order fills.');
+        }
+
+        if (!$order->save()) //TODO:: insert or update?
+        {
+            throw new \UnexpectedValueException('Failed to update order.');
+        }
+
+        foreach ($fills as $fill)
+        {
+            if (!$fill->save()) //TODO:: insert or update?
+            {
+                throw new \UnexpectedValueException('Failed to update fill.');
+            }
+        }
+
+        return $fills;
+    }
+
+    abstract protected function executeOrderUpdate(Order $order): array;
 
     final public function cancel(Order $order): Order
     {
         $response = $this->executeOrderCancel($order);
-        $this->handleOrderCancelResponse($order, $response);
+        $this->handleOrderResponse($order, $response);
 
         $order->logResponse('cancel', $response);
         $order->save();
@@ -66,8 +77,6 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     }
 
     abstract protected function executeOrderCancel(Order $order): array;
-
-    abstract protected function handleOrderCancelResponse(Order $order, array $response): void;
 
     public function market(Side $side, string $symbol, float $quantity, bool $reduceOnly): Order
     {
@@ -86,7 +95,6 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         if ($side)
         {
             $order->side = $side->value;
-            $this->assertAction($order); //TODO:: overriding validation when no side has been set
         }
 
         if ($symbol)
@@ -104,19 +112,10 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         return $order;
     }
 
-    final protected function assertAction(Order $order): void
-    {
-        if (!\in_array($order->side, $this->actions))
-        {
-            throw new \UnexpectedValueException($this->exchange::name() . " doesn't allow to take action: $order->side.\n
-            Available actions: " . \implode(', ', $this->actions));
-        }
-    }
-
     protected function newOrder(Order $order): Order
     {
         $response = $this->executeNewOrder($order);
-        $this->handleNewOrderResponse($order, $response);
+        $this->handleOrderResponse($order, $response);
 
         $order->logResponse('new', $response);
         $order->save();
@@ -125,8 +124,6 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     }
 
     abstract protected function executeNewOrder(Order $order): array;
-
-    abstract protected function handleNewOrderResponse(Order $order, array $response): void;
 
     public function stopMarket(Side $side, string $symbol, float $quantity, float $stopPrice, bool $reduceOnly): Order
     {
@@ -162,11 +159,13 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         return $this->newOrder($order);
     }
 
+    abstract protected function processOrderDetails(Order $order, array $response): void;
+
     /**
      * @param Order $order
      * @param array $response
      *
      * @return Fill[]
      */
-    abstract protected function updateOrderDetails(Order $order, array $response): array;
+    abstract protected function processOrderFills(Order $order, array $response): array;
 }

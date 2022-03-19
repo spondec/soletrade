@@ -14,13 +14,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
         parent::__construct($exchange);
     }
 
-    /**
-     * @param Order $order
-     * @param array $response
-     *
-     * @return Fill[]
-     */
-    protected function updateOrderDetails(Order $order, array $response): array
+    protected function processOrderDetails(Order $order, array $response): void
     {
         $order->type = $response['info']['type'];
         $order->symbol = $response['symbol'];
@@ -31,8 +25,30 @@ class Orderer extends \App\Trade\Exchange\Orderer
         $order->price = $response['price'];
         $order->quantity = $response['amount'];
         $order->filled = $response['filled'];
+    }
 
-        return $this->processOrderFills($order, $response);
+
+    protected function executeOrderCancel(Order $order): array
+    {
+        return $this->api->cancel_order($order->exchange_order_id, $order->symbol);
+    }
+
+    protected function executeNewOrder(Order $order): array
+    {
+        if ($order->type === 'LIMIT')
+        {
+            $order->type = 'LIMIT_MAKER';
+        }
+        return $this->api->create_order($order->symbol,
+            $order->type,
+            $order->side,
+            $order->quantity,
+            $order->price, ['stopPrice' => $order->stop_price]);
+    }
+
+    protected function executeOrderUpdate(Order $order): array
+    {
+        return $this->api->fetch_order($order->exchange_order_id, $order->symbol);
     }
 
     /**
@@ -57,54 +73,5 @@ class Orderer extends \App\Trade\Exchange\Orderer
         }
 
         return $fills;
-    }
-
-    protected function availableOrderActions(): array
-    {
-        return ['BUY', 'SELL'];
-    }
-
-    protected function executeOrderCancel(Order $order): array
-    {
-        return $this->api->cancel_order($order->exchange_order_id, $order->symbol);
-    }
-
-    protected function handleOrderCancelResponse(Order $order, array $response): void
-    {
-        $this->updateOrderDetails($order, $response);
-    }
-
-    protected function executeNewOrder(Order $order): array
-    {
-        if ($order->type === 'LIMIT')
-        {
-            $order->type = 'LIMIT_MAKER';
-        }
-        return $this->api->create_order($order->symbol,
-            $order->type,
-            $order->side,
-            $order->quantity,
-            $order->price, ['stopPrice' => $order->stop_price]);
-    }
-
-    protected function handleNewOrderResponse(Order $order, array $response): void
-    {
-        $this->updateOrderDetails($order, $response);
-    }
-
-    protected function executeOrderUpdate(Order $order): array
-    {
-        return $this->api->fetch_order($order->exchange_order_id, $order->symbol);
-    }
-
-    /**
-     * @param Order $order
-     * @param array $response
-     *
-     * @return Fill[]
-     */
-    protected function handleOrderUpdateResponse(Order $order, array $response): array
-    {
-        return $this->updateOrderDetails($order, $response);
     }
 }

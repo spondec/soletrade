@@ -82,13 +82,10 @@ abstract class Exchange
         return $this->update;
     }
 
-    #[ArrayShape(['name'    => "string",
-                  'actions' => "string"])]
     public function info(): array
     {
         return [
-            'name'    => static::name(),
-            'actions' => \implode(', ', $this->order->actions)
+            'name' => static::name()
         ];
     }
 
