@@ -65,10 +65,9 @@ class Orderer extends \App\Trade\Exchange\Orderer
             $fills[] = $new = new Fill();
 
             $new->price = $fill['price'];
-            $new->size = $fill['qty'];
+            $new->quantity = $fill['qty'];
             $new->commission = $fill['commission'];
             $new->commission_asset = $fill['commissionAsset'];
-            $new->order_id = $order->id;
             $new->trade_id = $fill['tradeId'];
         }
 

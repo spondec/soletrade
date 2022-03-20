@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->foreignId('order_id')->constrained();
             $table->foreignId('trade_id');
             $table->bigInteger('timestamp');
-            $table->decimal('size');
+            $table->decimal('quantity');
             $table->decimal('price');
             $table->decimal('commission');
             $table->string('commission_asset');

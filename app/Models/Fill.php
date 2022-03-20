@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int    order_id
  * @property int    trade_id
  * @property int    timestamp
- * @property float  size
+ * @property float  quantity
  * @property float  price
  * @property string commission_asset
  * @property float  commission

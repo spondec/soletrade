@@ -18,7 +18,7 @@ class FillFactory extends Factory
     {
         return [
             'timestamp'        => $this->faker->dateTimeBetween('-1 year', 'now')->getTimestamp() * 1000,
-            'size'             => $size = $this->faker->randomFloat(2, 0, 100),
+            'quantity'         => $size = $this->faker->randomFloat(2, 0, 100),
             'price'            => $price = $this->faker->randomFloat(2, 0, 100),
             'commission_asset' => $this->faker->randomElement(['BTC', 'USD', 'ETH', 'LTC', 'FTT', 'BNB']),
             'commission'       => $price * $size * 0.001,

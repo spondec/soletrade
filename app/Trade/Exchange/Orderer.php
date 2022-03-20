@@ -4,7 +4,9 @@ namespace App\Trade\Exchange;
 
 use App\Models\Fill;
 use App\Models\Order;
+use App\Trade\Enum;
 use App\Trade\Side;
+use Illuminate\Support\Collection;
 
 abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 {
@@ -18,7 +20,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
      *
      * @return Fill[]
      */
-    final public function sync(Order $order): array
+    public function sync(Order $order): array
     {
         $response = $this->executeOrderUpdate($order);
         $fills = $this->handleOrderResponse($order, $response);
@@ -40,32 +42,32 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     {
         $this->processOrderDetails($order, $response);
 
-        $fills = $this->processOrderFills($order, $response);
+        $fills = new Collection($this->processOrderFills($order, $response));
 
-        if ($order->filled && !$fills)
+        if (($filled = $order->filled) && !$fills->count())
         {
             throw new \LogicException('Failed to process order fills.');
         }
 
-        if (!$order->save()) //TODO:: insert or update?
+        if ($filled != $fills->pluck('quantity')->sum())
         {
-            throw new \UnexpectedValueException('Failed to update order.');
+            throw new \UnexpectedValueException('Filled amount does not match.');
         }
 
-        foreach ($fills as $fill)
+        if (!$order->save())
         {
-            if (!$fill->save()) //TODO:: insert or update?
-            {
-                throw new \UnexpectedValueException('Failed to update fill.');
-            }
+            throw new \UnexpectedValueException('Failed to save order.');
         }
 
-        return $fills;
+        return $fills->map(static function (Fill $fill) use ($order) {
+            $fill->order()->associate($order);
+            return $fill->firstUniqueOrCreate();
+        })->all();
     }
 
     abstract protected function executeOrderUpdate(Order $order): array;
 
-    final public function cancel(Order $order): Order
+    public function cancel(Order $order): Order
     {
         $response = $this->executeOrderCancel($order);
         $this->handleOrderResponse($order, $response);
@@ -94,7 +96,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 
         if ($side)
         {
-            $order->side = $side->value;
+            $order->side = Enum::case($side);
         }
 
         if ($symbol)
