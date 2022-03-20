@@ -28,4 +28,9 @@ class Fill extends Model
             Order::newFill($fill);
         });
     }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
 }
