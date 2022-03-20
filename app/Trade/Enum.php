@@ -8,6 +8,11 @@ final class Enum
     {
     }
 
+    public static function case(\UnitEnum $enum): string|int
+    {
+        return $enum->value ?? $enum->name;
+    }
+
     /**
      * @param string|\UnitEnum $class
      *
@@ -15,6 +20,6 @@ final class Enum
      */
     public static function cases(string|\UnitEnum $class): array
     {
-        return \array_map(static fn(\UnitEnum $enum): string => $enum->value ?? $enum->name, $class::cases());
+        return \array_map(static fn(\UnitEnum $enum): string => static::case($enum), $class::cases());
     }
 }
