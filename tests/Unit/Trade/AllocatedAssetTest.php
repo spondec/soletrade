@@ -2,12 +2,12 @@
 
 namespace Trade;
 
+use App\Trade\AllocatedAsset;
 use App\Trade\Exchange\Account\Asset;
 use App\Trade\Exchange\Account\Balance;
-use App\Trade\TradeAsset;
 use PHPUnit\Framework\TestCase;
 
-class TradeAssetTest extends TestCase
+class AllocatedAssetTest extends TestCase
 {
     public function test_get_real_size()
     {
@@ -29,11 +29,15 @@ class TradeAssetTest extends TestCase
         $tradeAsset->getRealSize(0);
     }
 
-    protected function getTradeAsset(Asset $asset, $allocation): TradeAsset
+    protected function getTradeAsset(Asset $asset, $allocation): AllocatedAsset
     {
         $balance = \Mockery::mock(Balance::class);
+        $balance
+            ->shouldReceive('update')
+            ->once()
+            ->andReturn($balance);
 
-        return new TradeAsset($balance, $asset, $allocation);
+        return new AllocatedAsset($balance, $asset, $allocation);
     }
 
     public function test_get_proportional_size()
@@ -54,31 +58,5 @@ class TradeAssetTest extends TestCase
 
         $this->expectExceptionMessage('Argument $value must be greater than 0');
         $tradeAsset->getProportionalSize(0);
-    }
-
-    public function test_set_available()
-    {
-        $asset = \Mockery::mock(Asset::class);
-        $asset
-            ->shouldReceive('available')
-            ->andReturn(1000);
-
-        $tradeAsset = $this->getTradeAsset($asset, 1000);
-
-        $this->assertEquals(1000, $tradeAsset->available());
-
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Available amount exceeds allocated amount');
-        $tradeAsset->addAvailable(0.000000001);
-
-        $tradeAsset->cutAvailable(100);
-        $this->assertEquals(900, $tradeAsset->available());
-
-        $tradeAsset->addAvailable(100);
-        $this->assertEquals(1000, $tradeAsset->available());
-
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Available amount can not be negative');
-        $tradeAsset->cutAvailable(1000.000000001);
     }
 }
