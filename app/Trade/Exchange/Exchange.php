@@ -7,7 +7,6 @@ use App\Repositories\ConfigRepository;
 use App\Trade\HasName;
 use App\Trade\CandleUpdater;
 use Illuminate\Support\Facades\App;
-use JetBrains\PhpStorm\ArrayShape;
 
 abstract class Exchange
 {
