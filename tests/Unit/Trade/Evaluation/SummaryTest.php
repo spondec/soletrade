@@ -13,6 +13,12 @@ use PHPUnit\Framework\TestCase;
  */
 class SummaryTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        \Mockery::close();
+    }
+
     protected function getStrategy(): Strategy
     {
         $strategy = \Mockery::mock(Strategy::class);
