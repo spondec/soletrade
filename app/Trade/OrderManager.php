@@ -18,7 +18,7 @@ class OrderManager
     public ?Order $stop = null;
 
     /**
-     * @var array<Order>
+     * @var Order[]
      */
     protected array $orders = [];
 
