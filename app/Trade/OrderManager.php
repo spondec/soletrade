@@ -23,7 +23,8 @@ class OrderManager
     protected array $orders = [];
 
     public function __construct(protected Exchange $exchange,
-                                protected Symbol   $symbol)
+                                protected Symbol   $symbol,
+                                public             readonly TradeAsset $tradeAsset)
     {
     }
 

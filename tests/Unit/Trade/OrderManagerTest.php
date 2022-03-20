@@ -8,6 +8,7 @@ use App\Trade\Exchange\Exchange;
 use App\Trade\Exchange\Orderer;
 use App\Trade\OrderManager;
 use App\Trade\Side;
+use App\Trade\TradeAsset;
 use Mockery as m;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
@@ -56,7 +57,7 @@ class OrderManagerTest extends TestCase
             ->once()
             ->andReturn($orderer);
 
-        return new OrderManager($exchange, $symbol);
+        return new OrderManager($exchange, $symbol, m::mock(TradeAsset::class));
     }
 
     protected function getOrderMock(): MockInterface|Order
