@@ -7,9 +7,9 @@ enum Side: string
     case BUY = 'BUY';
     case SELL = 'SELL';
 
-    public static function getExitSide(Side $side): Side
+    public function opposite(): Side
     {
-        return match ($side)
+        return match ($this)
         {
             self::BUY => self::SELL,
             self::SELL => self::BUY
