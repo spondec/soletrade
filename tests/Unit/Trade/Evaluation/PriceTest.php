@@ -21,20 +21,11 @@ class PriceTest extends TestCase
             $price->lock();
             $price->set(100, time(), 'Change', false);
         }, $price, Price::class)();
-
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Attempted to set a locked price');
-
-        $price->unlock();
     }
 
     public function test_lock_unlock()
     {
         $price = new Price(123, time());
-
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('is not allowed as a price modifier');
-        $price->lock();
 
         $test = $this;
         \Closure::bind(function () use ($price, $test) {
@@ -44,6 +35,10 @@ class PriceTest extends TestCase
             $price->unlock();
             $test->assertFalse($price->isLocked());
         }, $price, Price::class)();
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('is not allowed as a price modifier');
+        $price->lock();
     }
 
     public function test_new_change_log()
