@@ -39,4 +39,14 @@ class ChangeLog
     {
         return $this->log;
     }
+
+    public function last(): array
+    {
+        return \end($this->log);
+    }
+
+    public function first(): array
+    {
+        return \reset($this->log);
+    }
 }
