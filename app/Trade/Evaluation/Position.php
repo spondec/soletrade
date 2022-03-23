@@ -103,7 +103,7 @@ class Position
     {
         if ($size > $this->remainingSize)
         {
-            throw new \InvalidArgumentException('The requested size is bigger than the remaining size.');
+            throw new \LogicException('The requested size is bigger than the remaining size.');
         }
     }
 
@@ -370,7 +370,7 @@ class Position
     {
         if ($size > $this->getUsedSize())
         {
-            throw new \InvalidArgumentException('Reduce size can not be greater than used size.');
+            throw new \LogicException('Reduce size can not be greater than used size.');
         }
     }
 }
