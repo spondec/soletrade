@@ -8,7 +8,6 @@ use App\Trade\Calc;
 use App\Trade\ChangeLog;
 use App\Trade\HasInstanceEvents;
 use App\Trade\Side;
-use JetBrains\PhpStorm\Pure;
 
 class Position
 {
@@ -68,17 +67,14 @@ class Position
     {
         if ($increase)
         {
-            $this->assertRemainingSize($size);
+            $this->assertNotGreaterThanRemaining($size);
             $this->maxUsedSize += $size;
             $this->remainingSize -= $size;
             $this->amount += $size / $price;
         }
         else
         {
-            if ($size > $this->getUsedSize())
-            {
-                throw new \InvalidArgumentException('Reduce size can not be greater than used size.');
-            }
+            $this->assertNotGreaterThanUsedSize($size);
 
             $reduce = $this->amount / $this->getUsedSize() * $size;
             $pnl = $reduce * $price - $reduce * $this->getBreakEvenPrice();
@@ -103,7 +99,7 @@ class Position
         }
     }
 
-    protected function assertRemainingSize(float $size): void
+    protected function assertNotGreaterThanRemaining(float $size): void
     {
         if ($size > $this->remainingSize)
         {
@@ -116,7 +112,7 @@ class Position
         return static::MAX_SIZE - $this->remainingSize;
     }
 
-    #[Pure] public function getBreakEvenPrice(): float
+    public function getBreakEvenPrice(): float
     {
         $usedSize = $this->getUsedSize();
         $totalSize = $usedSize + $this->pnl;
@@ -216,7 +212,7 @@ class Position
     {
         if (!$price->isLocked())
         {
-            $price->lock($this);
+            $price->lock();
         }
     }
 
@@ -316,7 +312,7 @@ class Position
         return $this->relativeRoi;
     }
 
-    #[Pure] public function roiEntry(float $lastPrice): float
+    public function roiEntry(float $lastPrice): float
     {
         return Calc::roi($this->isBuy(), $this->entry->get(), $lastPrice);
     }
@@ -368,5 +364,13 @@ class Position
             $this->size,
             $this->entryTime,
             'Position entry');
+    }
+
+    protected function assertNotGreaterThanUsedSize(float $size): void
+    {
+        if ($size > $this->getUsedSize())
+        {
+            throw new \InvalidArgumentException('Reduce size can not be greater than used size.');
+        }
     }
 }
