@@ -58,14 +58,14 @@ class Calc
 
     public static function asMs(int $timestamp): int
     {
-        if (\strlen((string)$timestamp) === 10)
-        {
-            return $timestamp * 1000;
-        }
-
         if (\strlen((string)$timestamp) === 13)
         {
             return $timestamp;
+        }
+
+        if (\strlen((string)$timestamp) === 10)
+        {
+            return $timestamp * 1000;
         }
 
         throw new \LogicException('Argument $timestamp must be 10 or 13 digits long.');

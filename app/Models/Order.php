@@ -8,31 +8,36 @@ use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rules\Enum;
 
 /**
- * @property int    id
- * @property int    exchange_id
- * @property int    trade_setup_id
- * @property bool   is_open
- * @property bool   reduce_only
- * @property string exchange
- * @property string account
- * @property string symbol
- * @property string side
- * @property string type
- * @property string status
- * @property float  quantity
- * @property float  filled
- * @property float  price
- * @property float  stop_price
- * @property array  responses
- * @property float  commission
- * @property string commission_asset
- * @property string exchange_order_id
- * @property Carbon created_at
- * @property Carbon updated_at
+ * @property int         id
+ * @property int         exchange_id
+ * @property int         trade_setup_id
+ * @property bool        is_open
+ * @property bool        reduce_only
+ * @property string      exchange
+ * @property string      account
+ * @property string      symbol
+ * @property Side        side
+ * @property OrderType   type
+ * @property OrderStatus status
+ * @property float       quantity
+ * @property float       filled
+ * @property float       price
+ * @property float       stop_price
+ * @property array       responses
+ * @property float       commission
+ * @property string      commission_asset
+ * @property string      exchange_order_id
+ * @property Carbon      created_at
+ * @property Carbon      updated_at
  */
 class Order extends Model
 {
     use HasFactory;
+
+    public function isAllFilled(): bool
+    {
+        return $this->filled == $this->quantity;
+    }
 
     public static function validationRules(): array
     {

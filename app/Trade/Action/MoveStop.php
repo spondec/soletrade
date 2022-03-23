@@ -36,7 +36,7 @@ class MoveStop extends Handler
 
     protected function applyLocks(): void
     {
-        $this->lockIfUnlocked($this->stop, $this);
+        $this->lockIfUnlocked($this->stop);
     }
 
     protected function stopIfShould(\stdClass $candle, int $priceDate): void

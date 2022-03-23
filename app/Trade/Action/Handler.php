@@ -74,11 +74,11 @@ abstract class Handler
         ];
     }
 
-    protected function lockIfUnlocked(Price $price, object $locker): void
+    protected function lockIfUnlocked(Price $price): void
     {
         if (!$price->isLocked())
         {
-            $price->lock($locker);
+            $price->lock();
         }
     }
 

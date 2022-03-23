@@ -94,12 +94,12 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     {
         $order = new Order();
 
-        if ($side)
+        if ($side !== null)
         {
             $order->side = Enum::case($side);
         }
 
-        if ($symbol)
+        if ($symbol !== null)
         {
             $order->symbol = $symbol;
         }
