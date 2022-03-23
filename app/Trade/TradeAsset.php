@@ -26,4 +26,9 @@ class TradeAsset
     {
         return $this->allocation->getRealSize($proportionalSize);
     }
+
+    public function quantity(float $price, float $proportionalSize): float
+    {
+        return $this->getRealSize($proportionalSize) / $price;
+    }
 }
