@@ -24,9 +24,34 @@ class AllocatedAssetTest extends TestCase
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Argument $proportionalSize exceeds the maximum position size');
         $tradeAsset->getRealSize(101);
+    }
 
-        $this->expectExceptionMessage('Argument $value must be greater than 0');
+    public function test_get_real_size_takes_0_throws_exception()
+    {
+        $asset = \Mockery::mock(Asset::class);
+        $asset
+            ->shouldReceive('available')
+            ->andReturn(1000);
+
+        $tradeAsset = $this->getTradeAsset($asset, 1000);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Argument $value must be greater than zero');
         $tradeAsset->getRealSize(0);
+    }
+
+    public function test_get_proportional_size_takes_0_throws_exception()
+    {
+        $asset = \Mockery::mock(Asset::class);
+        $asset
+            ->shouldReceive('available')
+            ->andReturn(1000);
+
+        $tradeAsset = $this->getTradeAsset($asset, 1000);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Argument $value must be greater than zero');
+        $tradeAsset->getProportionalSize(0);
     }
 
     protected function getTradeAsset(Asset $asset, $allocation): AllocatedAsset
@@ -55,8 +80,5 @@ class AllocatedAssetTest extends TestCase
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Argument $size exceeds the allocated asset amount');
         $tradeAsset->getProportionalSize(1001);
-
-        $this->expectExceptionMessage('Argument $value must be greater than 0');
-        $tradeAsset->getProportionalSize(0);
     }
 }
