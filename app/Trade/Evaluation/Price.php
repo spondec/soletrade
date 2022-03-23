@@ -17,9 +17,10 @@ class Price
     protected array $events = ['changed'];
     protected bool $isLocked = false;
 
-    protected ?object $lockedBy;
+    protected ?string $lockedBy;
 
     protected static array $modifiers = [
+        Price::class,
         Handler::class,
         Position::class,
         Bindable::class
@@ -37,21 +38,26 @@ class Price
         return $this->isLocked;
     }
 
-    public function unlock(object $unlockedBy): void
+    protected function getCaller(): string
     {
-        if ($this->lockedBy !== $unlockedBy)
+        return debug_backtrace()[2]['class'];
+    }
+
+    public function unlock(): void
+    {
+        if ($this->lockedBy !== $this->getCaller())
         {
-            throw new \InvalidArgumentException('Unlocker must be the same as locker.');
+            throw new \LogicException('Unlocking class must be the same as locking class.');
         }
         $this->isLocked = false;
         $this->lockedBy = null;
     }
 
-    public function lock(object $lockedBy): void
+    public function lock(): void
     {
         $this->assertUnlocked();
-        $this->assertModifier($lockedBy);
-        $this->lockedBy = $lockedBy;
+        $this->assertModifier($locker = $this->getCaller());
+        $this->lockedBy = $locker;
         $this->isLocked = true;
     }
 
@@ -83,7 +89,7 @@ class Price
 
     public function newLog(int $timestamp, string $reason, bool $force = false): void
     {
-        $this->log->new($this->price, $timestamp, $force ? "[FORCED] {$reason}" : $reason);
+        $this->log->new($this->price, $timestamp, $force ? "[FORCED] $reason" : $reason);
     }
 
     protected function assertUnlocked(): void
@@ -99,16 +105,16 @@ class Price
         return $this->log;
     }
 
-    protected function assertModifier(object $modifier): void
+    protected function assertModifier(string $modifier): void
     {
         foreach (static::$modifiers as $class)
         {
-            if ($modifier instanceof $class)
+            if ($modifier === $class || is_subclass_of($modifier, $class))
             {
                 return;
             }
         }
 
-        throw new \InvalidArgumentException($modifier::class . ' is not allowed as a price modifier.');
+        throw new \InvalidArgumentException($modifier . ' is not allowed as a price modifier.');
     }
 }
