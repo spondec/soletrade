@@ -11,13 +11,13 @@ enum Side: string
     {
         return match ($this)
         {
-            self::BUY => self::SELL,
-            self::SELL => self::BUY
+            static::BUY => static::SELL,
+            static::SELL => static::BUY
         };
     }
 
     public function isBuy(): bool
     {
-        return $this == self::BUY;
+        return $this == static::BUY;
     }
 }
