@@ -83,4 +83,13 @@ class HasInstanceEventsTest extends TestCase
         $this->assertEquals(2, $triggeredEventCounter);
         $this->assertEquals(2, $triggeredEventCounter);
     }
+
+    public function test_duplicate_listeners_throws_exception()
+    {
+        $hasEvents = $this->getHasEventsObject();
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Listener already registered');
+        $hasEvents->listen('event1', fn() => true);
+        $hasEvents->listen('event1', fn() => true);
+    }
 }

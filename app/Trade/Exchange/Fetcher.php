@@ -99,11 +99,11 @@ abstract class Fetcher
         foreach ($balance->assets as $asset)
         {
             $balance->listen('update',
-                \Closure::bind(function (Balance $current, Balance $updated) {
-                    $asset = $updated->assets[$this->name];
+                \Closure::bind(function (Balance $current, Balance $updated) use ($asset) {
+                    $updatedAsset = $updated->assets[$this->name];
 
-                    $this->total = $asset->total();
-                    $this->available = $asset->available();
+                    $asset->total = $updatedAsset->total();
+                    $asset->available = $updatedAsset->available();
                 }, $asset, $asset));
         }
     }

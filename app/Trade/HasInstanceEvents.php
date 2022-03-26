@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade;
+
+use App\Trade\Helper\ClosureHash;
 
 /**
  * @property string[] events
@@ -16,9 +20,18 @@ trait HasInstanceEvents
      */
     private array $bypassed = [];
 
-    public function listen(string $eventName, \Closure $onEvent = null): void
+    private array $listenerHash = [];
+
+    public function listen(string $eventName, \Closure $onEvent): void
     {
         $this->assertEventExists($eventName);
+
+        if (in_array($hash = ClosureHash::from($onEvent), $this->listenerHash[$eventName] ?? []))
+        {
+            throw new \LogicException("Listener already registered.");
+        }
+
+        $this->listenerHash[$eventName][] = $hash;
         $this->listeners[$eventName][] = $onEvent;
     }
 
