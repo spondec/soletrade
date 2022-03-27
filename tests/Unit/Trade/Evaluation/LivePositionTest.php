@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
  */
 class LivePositionTest extends TestCase
 {
-    public function test_quantity()
+    public function test_quantity(): void
     {
         /** @var MockInterface|OrderManager $manager */
         $pos = $this->getPosition($manager);
@@ -60,7 +60,7 @@ class LivePositionTest extends TestCase
         );
     }
 
-    public function test_send_increase_order_above_remaining_size_throws_exception()
+    public function test_send_increase_order_above_remaining_size_throws_exception(): void
     {
         /** @var MockInterface|OrderManager $manager */
         $pos = $this->getPosition($manager, size: 50);
@@ -70,7 +70,7 @@ class LivePositionTest extends TestCase
         $pos->increaseSize(51, 123, time(), 'Increase');
     }
 
-    public function test_send_decrease_order_above_used_size_throws_exception()
+    public function test_send_decrease_order_above_used_size_throws_exception(): void
     {
         /** @var MockInterface|OrderManager $manager */
         $pos = $this->getPosition($manager, size: 50);
@@ -80,7 +80,7 @@ class LivePositionTest extends TestCase
         $pos->decreaseSize(51, 123, time(), 'Decrease');
     }
 
-    public function test_decrease_size()
+    public function test_decrease_size(): void
     {
         /** @var MockInterface|OrderManager $manager */
         $pos = $this->getPosition($manager, size: 50);
@@ -183,7 +183,7 @@ class LivePositionTest extends TestCase
             ->andReturns($order);
     }
 
-    public function test_send_increase_order()
+    public function test_send_increase_order(): void
     {
         /** @var MockInterface|OrderManager $manager */
         $pos = $this->getPosition($manager, size: 50);
@@ -216,7 +216,7 @@ class LivePositionTest extends TestCase
         $this->assertEquals($size, $last['size']);
     }
 
-    public function test_send_stop_order()
+    public function test_send_stop_order(): void
     {
         /** @var MockInterface|OrderManager $manager */
         $pos = $this->getPosition($manager, size: 50);
@@ -256,7 +256,7 @@ class LivePositionTest extends TestCase
         $this->assertEquals($size, $last['size']);
     }
 
-    public function test_send_exit_order()
+    public function test_send_exit_order(): void
     {
         /** @var MockInterface|OrderManager $manager */
         $pos = $this->getPosition($manager, size: 50);
