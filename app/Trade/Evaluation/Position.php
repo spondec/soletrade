@@ -143,7 +143,7 @@ class Position
     {
         if ($this->stop)
         {
-            throw new \LogicException('Stop price is already defined.');
+            throw new \LogicException('Stop price is already set.');
         }
 
         $this->stop = $price;
@@ -153,7 +153,7 @@ class Position
     {
         if ($this->exit)
         {
-            throw new \LogicException('Exit price is already defined.');
+            throw new \LogicException('Exit price is already set.');
         }
 
         $this->exit = $price;
@@ -184,7 +184,7 @@ class Position
         return $this->isClosed;
     }
 
-    public function close(int $exitTime): void
+    public function close(int $exitTime): void //TODO:: rename to exit
     {
         if ($this->isClosed)
         {
@@ -199,11 +199,7 @@ class Position
         $this->isClosed = true;
         $this->exitTime = $exitTime;
 
-        $this->newTransaction(false,
-            $this->exitPrice,
-            $this->getUsedSize(),
-            $exitTime,
-            'Position exit.');
+        $this->insertExitTransaction($exitTime);
 
         $this->fireEvent('close');
     }
@@ -298,11 +294,7 @@ class Position
         $this->isStopped = true;
         $this->exitTime = $exitTime;
 
-        $this->newTransaction(false,
-            $this->exitPrice,
-            $this->getUsedSize(),
-            $exitTime,
-            'Position stop.');
+        $this->insertStopTransaction($exitTime);
 
         $this->fireEvent('stop');
     }
@@ -372,5 +364,28 @@ class Position
         {
             throw new \LogicException('Reduce size can not be greater than used size.');
         }
+    }
+
+    protected function insertStopTransaction(int $exitTime): void
+    {
+        $this->newTransaction(false,
+            $this->exitPrice,
+            $this->getUsedSize(),
+            $exitTime,
+            'Position stop.');
+    }
+
+    /**
+     * @param int $exitTime
+     *
+     * @return void
+     */
+    protected function insertExitTransaction(int $exitTime): void
+    {
+        $this->newTransaction(false,
+            $this->exitPrice,
+            $this->getUsedSize(),
+            $exitTime,
+            'Position exit.');
     }
 }
