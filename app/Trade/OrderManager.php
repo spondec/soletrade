@@ -6,9 +6,12 @@ namespace App\Trade;
 
 use App\Models\Fill;
 use App\Models\Order;
+use App\Models\OrderType;
 use App\Models\Symbol;
 use App\Trade\Contracts\Exchange\Orderer;
+use App\Trade\Evaluation\LivePosition;
 use App\Trade\Exchange\Exchange;
+use App\Trade\Order\Type\Handler;
 use JetBrains\PhpStorm\Pure;
 
 class OrderManager
@@ -91,5 +94,10 @@ class OrderManager
     {
         return $this->new($this->order()
             ->stopLimit($side, $this->symbol->symbol, $stopPrice, $price, $quantity, $reduceOnly));
+    }
+
+    public function handler(OrderType $orderType, LivePosition $position): Handler
+    {
+        return new (Handler::getClass($orderType))(position: $position, manager: $this);
     }
 }
