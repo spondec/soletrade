@@ -8,7 +8,7 @@ use App\Trade\Helper\ClosureHash;
 
 /**
  * @property string[] events
- * @property string[] eventTriggers
+ * @property string[] eventTriggers - Events triggered by another set of events.
  */
 trait HasInstanceEvents
 {
