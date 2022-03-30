@@ -21,43 +21,59 @@ use PHPUnit\Framework\TestCase;
  */
 class LivePositionTest extends TestCase
 {
-    public function test_quantity(): void
+    public function test_process_entry_order_fill(): void
     {
         /** @var MockInterface|OrderManager $manager */
-        $pos = $this->getPosition($manager);
-        /** @var MockInterface $asset */
-        $asset = $manager->tradeAsset;
+        $pos = $this->getPosition($manager, 50);
 
-        $price = 42;
-        $proportionalSize = 34;
+        $fill = $this->getFill(50 / 100, 100);
 
-        $asset
-            ->shouldReceive('quantity')
-            ->once()
-            ->withArgs([$price, $proportionalSize])
-            ->andReturn(99);
+        $pos->processEntryOrderFill($fill);
 
-        $this->assertEquals(99, $pos->quantity($price, $proportionalSize));
+        $this->assertEquals(1, $pos->getOwnedQuantity());
+
+        $this->assertTrue($pos->isOpen());
+        $this->assertEquals(100, $pos->getUsedSize());
+        $this->assertEquals(1, $pos->getAssetAmount());
+
+        $log = $pos->transactionLog();
+        $last = $log->last()['value'];
+
+        $this->assertCount(2, $log->get());
+        $this->assertEquals(50, $last['size']);
+        $this->assertEquals(100, $last['price']);
     }
 
     protected function getPosition(?OrderManager &$manager = null, float $size = 100): LivePosition
     {
         $manager = m::mock('alias:' . OrderManager::class);
-        $manager->tradeAsset = m::mock(TradeAsset::class)->makePartial();
+        $manager->tradeAsset = m::mock(TradeAsset::class);
 
         $manager->stop = null;
         $manager->entry = null;
         $manager->exit = null;
 
-        return new LivePosition(
+        $manager->tradeAsset
+            ->shouldReceive('proportional')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function (float $size) {
+                return $size;
+            });
+
+        $pos = new LivePosition(
             Side::BUY,
             $size,
             time(),
-            new Price(100, time()),
+            $entry = new Price(100, time()),
             new Price(102, time()),
             new Price(99, time()),
-            $manager
+            $manager,
+            $this->getFill($quantity = $size / $entry->get(), $entry->get())
         );
+
+        $this->assertEquals($quantity, $pos->getOwnedQuantity());
+
+        return $pos;
     }
 
     public function test_send_increase_order_above_remaining_size_throws_exception(): void
@@ -85,13 +101,10 @@ class LivePositionTest extends TestCase
         /** @var MockInterface|OrderManager $manager */
         $pos = $this->getPosition($manager, size: 50);
 
-        /** @var MockInterface $asset */
-        $asset = $manager->tradeAsset;
-
         $price = 100;
         $size = 25;
 
-        $quantity = $this->expectQuantity($asset, $price, $size);
+        $quantity = $size / $price;
 
         $order = $this->getOrder($pos->side->opposite(), $pos->decreaseOrderType, $price, $quantity, true, $fillCallbacks);
         $fill = $this->getFill($quantity, $price);
@@ -101,6 +114,8 @@ class LivePositionTest extends TestCase
         $pos->decreaseSize($size, $price, time(), 'Decrease');
         $this->assertCount(1, $fillCallbacks);
         $fillCallbacks[0]($fill);
+
+        $this->assertEquals(0.25, $pos->getOwnedQuantity());
 
         $log = $pos->transactionLog();
 
@@ -119,12 +134,6 @@ class LivePositionTest extends TestCase
             ->once()
             ->withArgs([$price, $size])
             ->andReturn($quantity = $size / $price);
-
-        $asset
-            ->shouldReceive('proportional')
-            ->once()
-            ->with($size)
-            ->andReturn($size);
 
         return $quantity;
     }
@@ -183,7 +192,7 @@ class LivePositionTest extends TestCase
             ->andReturns($order);
     }
 
-    public function test_send_increase_order(): void
+    public function test_increase_size(): void
     {
         /** @var MockInterface|OrderManager $manager */
         $pos = $this->getPosition($manager, size: 50);
@@ -204,7 +213,10 @@ class LivePositionTest extends TestCase
         $pos->increaseSize($size, $price, time(), 'Increase');
 
         $this->assertCount(1, $fillCallbacks);
+
         $fillCallbacks[0]($fill);
+
+        $this->assertEquals(0.75, $pos->getOwnedQuantity());
 
         $log = $pos->transactionLog();
 
@@ -219,17 +231,19 @@ class LivePositionTest extends TestCase
     public function test_send_stop_order(): void
     {
         /** @var MockInterface|OrderManager $manager */
-        $pos = $this->getPosition($manager, size: 50);
-
-        /** @var MockInterface $asset */
-        $asset = $manager->tradeAsset;
+        $pos = $this->getPosition($manager, size: $size = 50);
 
         $price = $pos->price('stop')->get();
-        $size = 50;
 
-        $quantity = $this->expectQuantity($asset, $price, $size);
+        $quantity = 0.5;
 
-        $order = $this->getOrder($pos->side->opposite(), $pos->stopOrderType, $price, $quantity, true, $fillCallbacks, 2);
+        $order = $this->getOrder($pos->side->opposite(),
+            $pos->stopOrderType,
+            $price,
+            $quantity,
+            true,
+            $fillCallbacks,
+            2);
 
         $order->shouldReceive('isAllFilled')->once()->andReturn(true);
         $order->shouldReceive('avgFillPrice')->once()->andReturn($price);
@@ -242,6 +256,8 @@ class LivePositionTest extends TestCase
 
         $fillCallbacks[0]($fill);
         $fillCallbacks[1]($fill);
+
+        $this->assertEquals(0, $pos->getOwnedQuantity());
 
         $this->assertTrue($pos->isStopped());
         $this->assertFalse($pos->isOpen());
@@ -259,17 +275,19 @@ class LivePositionTest extends TestCase
     public function test_send_exit_order(): void
     {
         /** @var MockInterface|OrderManager $manager */
-        $pos = $this->getPosition($manager, size: 50);
-
-        /** @var MockInterface $asset */
-        $asset = $manager->tradeAsset;
+        $pos = $this->getPosition($manager, size: $size = 50);
 
         $price = $pos->price('exit')->get();
-        $size = 50;
 
-        $quantity = $this->expectQuantity($asset, $price, $size);
+        $quantity = 0.5;
 
-        $order = $this->getOrder($pos->side->opposite(), $pos->exitOrderType, $price, $quantity, true, $fillCallbacks, 2);
+        $order = $this->getOrder($pos->side->opposite(),
+            $pos->exitOrderType,
+            $price,
+            $quantity,
+            true,
+            $fillCallbacks,
+            2);
 
         $order->shouldReceive('isAllFilled')->once()->andReturn(true);
         $order->shouldReceive('avgFillPrice')->once()->andReturn($price);
@@ -282,6 +300,8 @@ class LivePositionTest extends TestCase
 
         $fillCallbacks[0]($fill);
         $fillCallbacks[1]($fill);
+
+        $this->assertEquals(0, $pos->getOwnedQuantity());
 
         $this->assertFalse($pos->isStopped());
         $this->assertFalse($pos->isOpen());

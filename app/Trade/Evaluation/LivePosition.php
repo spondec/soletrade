@@ -18,16 +18,36 @@ class LivePosition extends Position
     public OrderType $increaseOrderType = OrderType::LIMIT;
     public OrderType $decreaseOrderType = OrderType::LIMIT;
 
+    protected float $ownedQuantity = 0;
+
     public function __construct(Side                   $side,
                                 float                  $size,
                                 int                    $entryTime,
                                 Price                  $entry,
                                 ?Price                 $exit,
                                 ?Price                 $stop,
-                                protected OrderManager $manager)
+                                protected OrderManager $manager,
+                                Fill                   $fill)
     {
-        parent::__construct($side, $size, $entryTime, $entry, $exit, $stop);
 
+        if ($entry->get() != $fill->price)
+        {
+            throw new \LogicException('Fill price does not match entry price.');
+        }
+
+        if ($size != $this->asset()->proportional($fill->quantity * $fill->price))
+        {
+            throw new \LogicException('Fill quantity does not match size.');
+        }
+
+        $this->ownedQuantity += $fill->quantity;
+
+        parent::__construct($side,
+            $size,
+            $entryTime,
+            $entry,
+            $exit,
+            $stop);
         $this->registerPriceChangeListeners();
     }
 
@@ -95,46 +115,45 @@ class LivePosition extends Position
     {
         $this->assertNotGreaterThanUsedSize($proportionalSize);
 
-        $order = $this->order($orderType, $proportionalSize, $price, true);
+        $quantity = $this->ownedQuantity / $this->getUsedSize() * $proportionalSize;
+
+        $order = $this->order($orderType, $quantity, $price, true);
 
         $order->onFill(function (Fill $fill) use ($reason) {
-            parent::decreaseSize($this->proportional($fill->quoteSize()),
+            parent::decreaseSize($this->proportional($fill->quantity * $this->getBreakEvenPrice()),
                 $fill->price,
                 $fill->timestamp,
                 $reason);
+
+            $this->ownedQuantity -= $fill->quantity;
         });
 
         return $order;
     }
 
+    public function getOwnedQuantity(): float
+    {
+        return $this->ownedQuantity;
+    }
+
     protected function order(OrderType $orderType,
-                             float     $proportionalSize,
+                             float     $quantity,
                              float     $price,
                              bool      $reduceOnly): Order
     {
-        $quantity = $this->quantity($price, $proportionalSize);
-
         return $this->manager
             ->handler($orderType, $this)
             ->order($orderType, $quantity, $price, $reduceOnly);
     }
 
-    public function quantity(Price|float $price, float $proportionalSize): float
+    public function proportional(float $realSize): float
     {
-        return $this->asset()->quantity(
-            $price instanceof Price ? $price->get() : $price,
-            $proportionalSize
-        );
+        return $this->asset()->proportional($realSize);
     }
 
     public function asset(): TradeAsset
     {
         return $this->manager->tradeAsset;
-    }
-
-    public function proportional(float $realSize): float
-    {
-        return $this->asset()->proportional($realSize);
     }
 
     protected function registerStopPriceListeners(): void
@@ -193,6 +212,16 @@ class LivePosition extends Position
         }
     }
 
+    public function processEntryOrderFill(Fill $fill): void
+    {
+        parent::increaseSize($this->proportional($fill->quantity * $this->getBreakEvenPrice()),
+            $fill->price,
+            $fill->timestamp,
+            'Entry order fill.');
+
+        $this->ownedQuantity += $fill->quantity;
+    }
+
     public function stop(int $exitTime): void
     {
         if ($this->stop)
@@ -226,13 +255,17 @@ class LivePosition extends Position
     {
         $this->assertNotGreaterThanRemaining($proportionalSize);
 
-        $order = $this->order($orderType, $proportionalSize, $price, false);
+        $quantity = $this->asset()->quantity($price, $proportionalSize);
+
+        $order = $this->order($orderType, $quantity, $price, false);
 
         $order->onFill(function (Fill $fill) use ($reason) {
-            parent::increaseSize($this->proportional($fill->quoteSize()),
+            parent::increaseSize($this->proportional($fill->quantity * $this->getBreakEvenPrice()),
                 $fill->price,
                 $fill->timestamp,
                 $reason);
+
+            $this->ownedQuantity += $fill->quantity;
         });
 
         return $order;
