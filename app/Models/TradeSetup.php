@@ -10,6 +10,7 @@ use App\Trade\Evaluation\Price;
 use App\Trade\Side;
 use Database\Factories\TradeSetupFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -81,12 +82,12 @@ class TradeSetup extends Model implements Bindable
         return $this->belongsToMany(Signal::class);
     }
 
-    public function symbol()
+    public function symbol(): BelongsTo
     {
         return $this->belongsTo(Symbol::class);
     }
 
-    public function signature()
+    public function signature(): BelongsTo
     {
         return $this->belongsTo(Signature::class);
     }
@@ -101,7 +102,7 @@ class TradeSetup extends Model implements Bindable
         return $result;
     }
 
-    public function isBuy()
+    public function isBuy(): bool
     {
         return $this->side()->isBuy();
     }
@@ -149,7 +150,7 @@ class TradeSetup extends Model implements Bindable
         }
     }
 
-    public function setSide(Side $side)
+    public function setSide(Side $side): void
     {
         $this->side = $side->value;
     }
