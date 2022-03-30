@@ -56,19 +56,24 @@ class TradeStatus
         return new Price($price, $timestamp);
     }
 
-    public function enterPosition(int $entryTime, float $size = 100, float $price = null): void
+    public function enterPosition(int    $entryTime,
+                                  float  $size = 100,
+                                  float  $price = null,
+                                  string $positionClass = Position::class,
+                                         ...$params): void
     {
         if ($this->position)
         {
-            throw new \LogicException('Already in a position');
+            throw new \LogicException('Already in a position.');
         }
 
-        $this->position = new Position($this->entry->side(),
+        $this->position = new $positionClass($this->entry->side(),
             $size,
             $entryTime,
             $price ?? $this->entryPrice,
             $this->getTargetPrice(),
-            $this->getStopPrice());
+            $this->getStopPrice(),
+            ...$params);
 
         $this->registerPositionListeners();
         $this->initActionHandlers();
