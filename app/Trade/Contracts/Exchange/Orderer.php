@@ -2,6 +2,8 @@
 
 namespace App\Trade\Contracts\Exchange;
 
+use App\Exceptions\OrderFailedException;
+use App\Exceptions\OrderNotCanceledException;
 use App\Models\Fill;
 use App\Models\Order;
 use App\Trade\Side;
@@ -15,25 +17,71 @@ interface Orderer
      */
     public function sync(Order $order): array;
 
+    /**
+     * @param Order $order
+     *
+     * @return Order
+     * @throws OrderNotCanceledException
+     */
     public function cancel(Order $order): Order;
 
+    /**
+     * @param Side   $side
+     * @param string $symbol
+     * @param float  $quantity
+     * @param bool   $reduceOnly
+     *
+     * @return Order
+     * @throws OrderFailedException
+     */
     public function market(Side   $side,
                            string $symbol,
                            float  $quantity,
                            bool   $reduceOnly): Order;
 
+    /**
+     * @param Side   $side
+     * @param string $symbol
+     * @param float  $quantity
+     * @param float  $stopPrice
+     * @param bool   $reduceOnly
+     *
+     * @return Order
+     * @throws OrderFailedException
+     */
     public function stopMarket(Side   $side,
                                string $symbol,
                                float  $quantity,
                                float  $stopPrice,
                                bool   $reduceOnly): Order;
 
+    /**
+     * @param Side   $side
+     * @param string $symbol
+     * @param float  $price
+     * @param float  $quantity
+     * @param bool   $reduceOnly
+     *
+     * @return Order
+     * @throws OrderFailedException
+     */
     public function limit(Side   $side,
                           string $symbol,
                           float  $price,
                           float  $quantity,
                           bool   $reduceOnly): Order;
 
+    /**
+     * @param Side   $side
+     * @param string $symbol
+     * @param float  $stopPrice
+     * @param float  $price
+     * @param float  $quantity
+     * @param bool   $reduceOnly
+     *
+     * @return Order
+     * @throws OrderFailedException
+     */
     public function stopLimit(Side   $side,
                               string $symbol,
                               float  $stopPrice,
