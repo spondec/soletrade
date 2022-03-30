@@ -25,6 +25,22 @@ class OrderManager
      */
     protected array $orders = [];
 
+    public function syncAll(): void
+    {
+        foreach ($this->orders as $order)
+        {
+            $this->sync($order);
+        }
+    }
+
+    public function cancelAll(): void
+    {
+        foreach ($this->orders as $order)
+        {
+            $this->cancel($order);
+        }
+    }
+
     public function __construct(protected Exchange $exchange,
                                 protected Symbol   $symbol,
                                 public             readonly TradeAsset $tradeAsset)
