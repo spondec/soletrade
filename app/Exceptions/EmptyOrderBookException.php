@@ -2,7 +2,7 @@
 
 namespace App\Exceptions;
 
-class EmptyOrderBookException extends \Exception
+class EmptyOrderBookException extends ExchangeError
 {
 
 }
