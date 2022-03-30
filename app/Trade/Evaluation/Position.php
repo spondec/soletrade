@@ -15,6 +15,8 @@ class Position
 
     protected array $events = ['close', 'stop'];
 
+    protected array $eventTriggers = ['exit' => ['close', 'stop']];
+
     public const MAX_SIZE = 100;
 
     protected bool $isStopped = false;
@@ -44,7 +46,7 @@ class Position
                                 protected ?Price $exit,
                                 protected ?Price $stop)
     {
-        $this->remainingSize = static::MAX_SIZE;
+        $this->remainingSize = Position::MAX_SIZE;
         $this->assertSize($this->size);
         $this->transactionLog = new ChangeLog([
             'increase' => true,
@@ -57,9 +59,9 @@ class Position
 
     protected function assertSize(float $size): void
     {
-        if ($size > static::MAX_SIZE)
+        if ($size > Position::MAX_SIZE)
         {
-            throw new \InvalidArgumentException('Maximum position size is limited to ' . static::MAX_SIZE);
+            throw new \InvalidArgumentException('Maximum position size is limited to ' . Position::MAX_SIZE);
         }
     }
 
@@ -109,7 +111,7 @@ class Position
 
     public function getUsedSize(): float
     {
-        return static::MAX_SIZE - $this->remainingSize;
+        return Position::MAX_SIZE - $this->remainingSize;
     }
 
     public function getBreakEvenPrice(): float
@@ -190,6 +192,8 @@ class Position
         {
             throw new \LogicException('Attempted to close an already closed position.');
         }
+
+        $exitTime = Calc::asMs($exitTime);
 
         $this->lockIfUnlocked($this->exit);
         $this->exitPrice = $this->exit->get();
@@ -285,6 +289,8 @@ class Position
         {
             throw new \LogicException('Attempted to stop an already stopped position.');
         }
+
+        $exitTime = Calc::asMs($exitTime);
 
         $this->lockIfUnlocked($this->stop);
         $this->exitPrice = $this->stop->get();
