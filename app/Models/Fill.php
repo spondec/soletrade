@@ -20,11 +20,6 @@ class Fill extends Model
 {
     use HasFactory;
 
-    public function quoteSize(): float
-    {
-        return $this->quantity * $this->price;
-    }
-
     protected $guarded = ['id'];
     protected array $unique = ['order_id', 'trade_id'];
 

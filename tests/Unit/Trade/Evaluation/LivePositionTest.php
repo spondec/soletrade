@@ -171,10 +171,6 @@ class LivePositionTest extends TestCase
         $fill->quantity = $quantity;
         $fill->price = $price;
 
-        $fill->shouldReceive('quoteSize')
-            ->zeroOrMoreTimes()
-            ->andReturn($quantity * $price);
-
         return $fill;
     }
 
