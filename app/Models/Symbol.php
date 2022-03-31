@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  * @property mixed  created_at
  * @property mixed  updated_at
  *
- * @method static SymbolFactory factory()
+ * @method static SymbolFactory factory($count = null, $state = [])
  */
 class Symbol extends Model
 {

@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Carbon\Carbon created_at
  * @property \Carbon\Carbon updated_at
  *
- * @method static SignatureFactory factory()
+ * @method static SignatureFactory factory($count = null, $state = [])
  */
 class Signature extends Model
 {

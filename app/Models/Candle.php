@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 // Shouldn't be used in production to avoid massive Eloquent overhead
 
 /**
- * @method static CandleFactory factory()
+ * @method static CandleFactory factory($count = null, $state = [])
  */
 class Candle extends Model
 {

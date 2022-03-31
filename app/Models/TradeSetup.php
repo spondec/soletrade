@@ -35,7 +35,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property mixed                                                  created_at
  * @property mixed                                                  updated_at
  *
- * @method static TradeSetupFactory factory()
+ * @method static TradeSetupFactory factory($count = null, $state = [])
  */
 class TradeSetup extends Model implements Bindable
 {
