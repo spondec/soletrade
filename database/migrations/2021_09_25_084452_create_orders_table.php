@@ -14,7 +14,6 @@ return new class extends Migration {
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('trade_setup_id')->nullable()->constrained();
             $table->foreignId('exchange_id')->constrained();
             $table->boolean('is_open')->default(true);
             $table->boolean('reduce_only');
@@ -27,7 +26,7 @@ return new class extends Migration {
             $table->decimal('price')->nullable();
             $table->decimal('stop_price')->nullable();
             $table->decimal('commission')->nullable();
-            $table->decimal('commission_asset')->nullable();
+            $table->string('commission_asset')->nullable();
             $table->string('exchange_order_id', 255)->nullable()->index();
             $table->json('responses')->nullable();
             $table->timestamps();
