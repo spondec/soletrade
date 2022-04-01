@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use Database\Factories\FillFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -15,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float  commission
  *
  * @property Order  order
+ * @method static FillFactory factory($count = null, $state = [])
  */
 class Fill extends Model
 {

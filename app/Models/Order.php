@@ -1,20 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Trade\Side;
+use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rules\Enum;
 
 /**
  * @property int         id
  * @property int         exchange_id
- * @property int         trade_setup_id
  * @property bool        is_open
  * @property bool        reduce_only
- * @property string      exchange
- * @property string      account
  * @property string      symbol
  * @property Side        side
  * @property OrderType   type
@@ -29,43 +32,40 @@ use Illuminate\Validation\Rules\Enum;
  * @property string      exchange_order_id
  * @property Carbon      created_at
  * @property Carbon      updated_at
+ *
+ * @method static OrderFactory factory($count = null, $state = [])
  */
 class Order extends Model
 {
     use HasFactory;
 
-    public function isAllFilled(): bool
-    {
-        return $this->filled == $this->quantity;
-    }
-
-    public static function validationRules(): array
-    {
-        return [
-            'exchange_id' => 'required|integer|exists:exchanges,id',
-            'symbol'      => 'required|string|max:50',
-            'is_open'     => 'boolean',
-            'reduce_only' => 'boolean',
-            'quantity'    => 'required|numeric|gt:0',
-            'filled'      => 'numeric',
-            'order_id'    => 'exists:fills',
-            'price'       => 'numeric|gt:0',
-            'stop_price'  => 'nullable|numeric',
-            'type'        => [new Enum(OrderType::class)],
-            'side'        => [new Enum(Side::class)],
-            'status'      => [new Enum(OrderStatus::class)]
-        ];
-    }
-
     /**
      * @var \Closure[]
      */
     static protected array $fillListeners = [];
-
     protected $table = 'orders';
     protected $casts = [
         'responses' => 'array'
     ];
+
+    public static function validationRules(): array
+    {
+        return [
+            'exchange_id'      => 'required|integer|exists:exchanges,id',
+            'symbol'           => 'required|string|max:50',
+            'is_open'          => 'boolean',
+            'reduce_only'      => 'boolean',
+            'quantity'         => 'required|numeric|gt:0',
+            'filled'           => 'numeric',
+            'price'            => 'numeric|gt:0',
+            'commission'       => 'nullable|numeric|gt:0',
+            'commission_asset' => 'nullable|string|max:50',
+            'stop_price'       => 'nullable|numeric',
+            'type'             => [new Enum(OrderType::class)],
+            'side'             => [new Enum(Side::class)],
+            'status'           => [new Enum(OrderStatus::class)]
+        ];
+    }
 
     public static function newFill(Fill $fill)
     {
@@ -73,6 +73,36 @@ class Order extends Model
         {
             $callback($fill);
         }
+    }
+
+    public function isAllFilled(): bool
+    {
+        return $this->rawFills()->sum('quantity') == $this->quantity;
+    }
+
+    public function rawFills(): Builder
+    {
+        if (!$this->exists)
+        {
+            throw new \LogicException('Order is not saved.');
+        }
+
+        return \DB::table('fills')
+            ->where('order_id', $this->id);
+    }
+
+    public function fills(): HasMany
+    {
+        return $this->hasMany(Fill::class);
+    }
+
+    public function avgFillPrice(): float
+    {
+        return (float)$this
+            ->rawFills()
+            ->selectRaw('SUM(quantity * price) / SUM(quantity) as avgPrice')
+            ->first()
+            ->avgPrice;
     }
 
     public function setAttribute($key, $value)
@@ -96,6 +126,11 @@ class Order extends Model
             $responses[$key][] = $data;
             $this->responses = $responses;
         }
+    }
+
+    public function exchange(): BelongsTo
+    {
+        return $this->belongsTo(Exchange::class);
     }
 
     public function onFill(\Closure $callback): void
