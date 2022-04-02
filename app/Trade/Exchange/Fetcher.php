@@ -49,7 +49,7 @@ abstract class Fetcher
     }
 
     /**
-     * Gets the list of available symbols.
+     * Fetches the list of available symbols from the exchange.
      *
      * Example:
      *
