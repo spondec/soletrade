@@ -33,8 +33,8 @@ abstract class Exchange
             throw new \InvalidArgumentException('Invalid config for ' . static::name());
         }
 
-        $this->apiKey = $config['apiKey'] ?? null;
-        $this->secretKey = $config['secretKey'] ?? null;
+        $this->apiKey = $this->config['apiKey'] ?? null;
+        $this->secretKey = $this->config['secretKey'] ?? null;
 
         $this->setup();
         $this->register();
