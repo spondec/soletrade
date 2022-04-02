@@ -52,7 +52,7 @@ class Position
             'increase' => true,
             'price'    => $this->entry->get(),
             'size'     => $this->size
-        ], $this->entryTime, 'Position entry');
+        ], $this->entryTime, 'Position entry.');
 
         $this->enter();
     }
