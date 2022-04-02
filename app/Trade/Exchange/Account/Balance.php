@@ -4,7 +4,6 @@ namespace App\Trade\Exchange\Account;
 
 use App\Trade\Exchange\Exchange;
 use App\Trade\HasInstanceEvents;
-use App\Trade\Log;
 use JetBrains\PhpStorm\Pure;
 
 class Balance implements \ArrayAccess
@@ -72,59 +71,12 @@ class Balance implements \ArrayAccess
         return $roe;
     }
 
-    public function primaryAsset(): Asset
-    {
-        return $this->assets[\array_key_first($this->calculateRelativeNetWorth(onlyAvailable: true))];
-    }
-
-    public function calculateRelativeNetWorth(string $relativeAsset = null, bool $onlyAvailable = false): array
-    {
-        $relativeAsset ??= $this->relativeAsset;
-
-        if (empty($relativeAsset))
-        {
-            throw new \UnexpectedValueException('Relative asset can not be empty.');
-        }
-
-        $symbols = $this->exchange->fetch()->symbols($relativeAsset);
-        $worth = [];
-
-        foreach ($this->assets as $asset)
-        {
-            if (($baseAsset = $asset->name) != $relativeAsset)
-            {
-                $symbol = $this->exchange->fetch()->symbol($baseAsset, $relativeAsset);
-
-                if (!\in_array($symbol, $symbols))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    $price = $this->exchange->fetch()->orderBook($symbol)->bestAsk();
-
-                } catch (\App\Exceptions\EmptyOrderBookException $e)
-                {
-                    Log::log($e);
-                    continue;
-                }
-            }
-
-            $worth[$baseAsset] = ($price ?? 1) * ($onlyAvailable ? $asset->available() : $asset->total());
-        }
-
-        \arsort($worth);
-
-        return $worth;
-    }
-
     public function offsetExists(mixed $offset): bool
     {
         return isset($this->assets[$offset]);
     }
 
-    public function offsetGet(mixed $offset): mixed
+    public function offsetGet(mixed $offset): Asset
     {
         return $this->assets[$offset];
     }
