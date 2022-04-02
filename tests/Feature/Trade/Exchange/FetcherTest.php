@@ -65,12 +65,7 @@ class FetcherTest extends TestCase
                 // TODO: Implement fetchSymbols() method.
             }
 
-            protected function buildSymbol(string $baseAsset, string $quoteAsset): ?string
-            {
-                // TODO: Implement buildSymbol() method.
-            }
-
-            protected function fetchMinTradeQuantity(string $symbol): float
+            protected function fetchMinimumQuantity(string $symbol): float
             {
                 // TODO: Implement fetchMinTradeQuantity() method.
             }

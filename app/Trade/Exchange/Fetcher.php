@@ -62,19 +62,12 @@ abstract class Fetcher
      */
     abstract protected function fetchSymbols(string $quoteAsset = null): array;
 
-    public function symbol(string $baseAsset, string $quoteAsset): ?string
+    public function minimumQuantity(string $symbol): float
     {
-        return $this->buildSymbol($baseAsset, $quoteAsset);
+        return $this->fetchMinimumQuantity($symbol);
     }
 
-    abstract protected function buildSymbol(string $baseAsset, string $quoteAsset): ?string;
-
-    public function minTradeQuantity(string $symbol): float
-    {
-        return $this->fetchMinTradeQuantity($symbol);
-    }
-
-    abstract protected function fetchMinTradeQuantity(string $symbol): float;
+    abstract protected function fetchMinimumQuantity(string $symbol): float;
 
     public function candles(string $symbol, string $interval, int $start = null, int $limit = null): array
     {
