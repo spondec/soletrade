@@ -334,6 +334,11 @@ class TradeLoop
     {
         $candle = $this->repo->fetchCandle($this->evaluationSymbol, $this->lastRunDate);
 
+        if (!$candle)
+        {
+            throw new \LogicException('No candle found for last run date.');
+        }
+
         $candle->h = (float)$candle->h;
         $candle->l = (float)$candle->l;
         $candle->c = (float)$candle->c;

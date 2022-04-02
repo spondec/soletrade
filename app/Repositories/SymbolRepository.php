@@ -151,7 +151,7 @@ class SymbolRepository extends Repository
         return DB::table('candles')->where('symbol_id', $symbol->id);
     }
 
-    public function fetchCandle(Symbol $symbol, int $timestamp, ?string $interval = null): \stdClass
+    public function fetchCandle(Symbol $symbol, int $timestamp, ?string $interval = null): ?\stdClass
     {
         return DB::table('candles')
             ->where('symbol_id', $interval ? $this->findSymbolIdForInterval($symbol, $interval) : $symbol->id)
