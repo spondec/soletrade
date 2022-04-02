@@ -7,11 +7,12 @@ return [
             'apiKey'    => env('EXCHANGE_BINANCE_SPOT_API_KEY'),
             'secretKey' => env('EXCHANGE_BINANCE_SPOT_SECRET_KEY')
         ],
-        //        'FTX'         => [
-        //            'class'     => \App\Trade\Exchange\Futures\FTX::class,
-        //            'apiKey'    => env('EXCHANGE_FTX_API_KEY'),
-        //            'secretKey' => env('EXCHANGE_FTX_SECRET_KEY'),
-        //        ]
+        'FTX'                                            => [
+            'class'      => \App\Trade\Exchange\FTX\FTX::class,
+            'apiKey'     => env('EXCHANGE_FTX_API_KEY'),
+            'secretKey'  => env('EXCHANGE_FTX_SECRET_KEY'),
+            'subaccount' => env('EXCHANGE_FTX_SUBACCOUNT'),
+        ]
     ],
 
     'indicators' => [
