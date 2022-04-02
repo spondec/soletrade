@@ -49,6 +49,15 @@ abstract class Fetcher
     }
 
     /**
+     * Gets the list of available symbols.
+     *
+     * Example:
+     *
+     * [
+     *    0 => 'BTC/USDT',
+     *    1 => 'ETH/USDT',
+     * ]
+     *
      * @return string[]
      */
     abstract protected function fetchSymbols(string $quoteAsset = null): array;
