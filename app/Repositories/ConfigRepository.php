@@ -50,7 +50,7 @@ class ConfigRepository extends Repository
     protected function getSymbols(): array
     {
         return Exchange::query()
-            ->where('class', $this->exchanges)
+            ->whereIn('class', $this->exchanges)
             ->get()
             ->keyBy('name')
             ->map(static fn(Exchange $exchange) => DB::table('symbols')
