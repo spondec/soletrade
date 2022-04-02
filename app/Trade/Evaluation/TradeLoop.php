@@ -49,6 +49,11 @@ class TradeLoop
         $this->startDate = $this->firstCandle->t;
 
         $this->timeout = $this->config('timeout');
+
+        if (!$this->repo->fetchCandle($this->evaluationSymbol, $this->entry->timestamp))
+        {
+            throw new \InvalidArgumentException('Evaluation interval candles are not complete.');
+        }
     }
 
     protected function assertTradeSymbolMatchesEvaluationSymbol(): void
