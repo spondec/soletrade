@@ -4,15 +4,16 @@ namespace App\Trade\Exchange;
 
 class OrderBook
 {
-    protected float $initTime;
-
-    const TIMEOUT = 0.1;
+    public readonly float $initTime;
+    public float $timeout;
 
     /**
      * @param float[] $bids
      * @param float[] $asks
      */
-    public function __construct(protected string $symbol, protected array $bids, protected array $asks)
+    public function __construct(protected string $symbol,
+                                protected array  $bids,
+                                protected array  $asks)
     {
         $this->initTime = \microtime(true);
 
@@ -34,7 +35,7 @@ class OrderBook
 
     public function isExpired()
     {
-        return \microtime(true) - $this->initTime >= self::TIMEOUT;
+        return \microtime(true) - $this->initTime >= $this->timeout;
     }
 
     public function bestBid(): float
