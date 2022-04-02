@@ -21,13 +21,14 @@ abstract class Exchange
     protected Orderer $order;
     private CandleUpdater $update;
 
+    protected array $config;
+
     private function __construct()
     {
         /** @var ConfigRepository $repo */
         $repo = App::make(ConfigRepository::class);
-        $config = $repo->exchangeConfig(static::name());
 
-        if (!$config)
+        if (!$this->config = $repo->exchangeConfig(static::name()))
         {
             throw new \InvalidArgumentException('Invalid config for ' . static::name());
         }
@@ -41,10 +42,7 @@ abstract class Exchange
         $this->update = App::make(CandleUpdater::class, ['exchange' => $this]);
     }
 
-    protected function setup(): void
-    {
-
-    }
+    abstract protected function setup(): void;
 
     private function register(): void
     {
