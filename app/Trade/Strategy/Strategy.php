@@ -147,7 +147,12 @@ abstract class Strategy
     {
         $exchange = $this->symbol->exchange();
         $symbolName = $this->symbol->symbol;
-        $evaluationInterval = $this->config('evaluation.interval', true);
+
+        if (!$evaluationInterval = $this->config('evaluation.interval'))
+        {
+            return $this->symbol;
+        }
+
         return $this->symbolRepo->fetchSymbol($exchange, $symbolName, $evaluationInterval)
             ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
     }
@@ -251,7 +256,7 @@ abstract class Strategy
                     //when true, close trade immediately at reverse(exit) setup
                     'closeOnExit' => true,
                 ],
-                'interval' => '1m'
+                'interval' => null
             ],
             //trade commission cut, each trade costs two fees
             'feeRatio'   => 0.001

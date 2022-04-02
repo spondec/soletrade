@@ -7,7 +7,6 @@ declare(strict_types=1);
 namespace App\Trade\Evaluation;
 
 use App\Models\Evaluation;
-use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
@@ -73,7 +72,7 @@ class Evaluator
         $e->entry_price = $status->getEntryPrice()->get();
         $e->stop_price = $status->getStopPrice()?->get();
         $e->target_price = $status->getTargetPrice()?->get();
-        $e->evaluation_interval = $this->strategy->config('evaluation.interval');
+        $e->evaluation_interval = $this->strategy->config('evaluation.interval') ?? $this->strategy->symbol()->interval;
 
         $log = [];
 
