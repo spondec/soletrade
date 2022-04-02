@@ -125,7 +125,7 @@ trait HasConfig
                 throw new \LogicException('Only one level of parent config is allowed.');
             }
 
-            if (!$this->hasDefaultConfig)
+            if (!$this->hasDefaultConfig && in_array(HasConfig::class, class_uses($parent)))
             {
                 throw new \LogicException('Parent class must implement getDefaultConfig() method.');
             }
