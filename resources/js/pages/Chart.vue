@@ -547,6 +547,13 @@ export default {
       }
     },
 
+    purgeCharts: function ()
+    {
+      this.purgeMainCharts();
+      this.purgeMagnifierCharts();
+      this.purgeBalanceHistoryChart();
+    },
+
     replaceCandlestickChart: async function ()
     {
       this.resetLimit();
@@ -556,9 +563,7 @@ export default {
         return;
       }
 
-      this.purgeMainCharts();
-      this.purgeMagnifierCharts();
-      this.purgeBalanceHistoryChart();
+      this.purgeCharts();
 
       await this.updateSymbol();
 
@@ -669,6 +674,11 @@ export default {
 
     onSelect: function ()
     {
+      if (!this.symbols[this.sel.exchange].includes(this.sel.symbol))
+      {
+        this.purgeCharts();
+        return;
+      }
       this.replaceCandlestickChart();
     },
 
