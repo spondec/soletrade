@@ -35,10 +35,6 @@ class Orderer extends \App\Trade\Exchange\Orderer
 
     protected function executeNewOrder(Order $order): array
     {
-        if ($order->type === 'LIMIT')
-        {
-            $order->type = 'LIMIT_MAKER';
-        }
         return $this->api->create_order($order->symbol,
             $order->type,
             $order->side,
