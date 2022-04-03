@@ -45,7 +45,14 @@ class Order extends Model
     static protected array $fillListeners = [];
     protected $table = 'orders';
     protected $casts = [
-        'responses' => 'array'
+        'responses' => 'array',
+        'type'      => OrderType::class,
+        'side'      => Side::class,
+        'status'    => OrderStatus::class,
+    ];
+
+    protected $attributes = [
+        'filled' => 0,
     ];
 
     public static function validationRules(): array
@@ -57,7 +64,7 @@ class Order extends Model
             'reduce_only'      => 'boolean',
             'quantity'         => 'required|numeric|gt:0',
             'filled'           => 'numeric',
-            'price'            => 'numeric|gt:0',
+            'price'            => 'nullable|numeric|gt:0',
             'commission'       => 'nullable|numeric|gt:0',
             'commission_asset' => 'nullable|string|max:50',
             'stop_price'       => 'nullable|numeric',
@@ -107,11 +114,6 @@ class Order extends Model
 
     public function setAttribute($key, $value)
     {
-        if (\in_array($key, ['side', 'type', 'status', 'exchange', 'account']))
-        {
-            $value = \mb_strtoupper($value);
-        }
-
         parent::setAttribute($key, $value);
     }
 
