@@ -48,12 +48,6 @@ class Position
     {
         $this->remainingSize = Position::MAX_SIZE;
         $this->assertSize($this->size);
-        $this->transactionLog = new ChangeLog([
-            'increase' => true,
-            'price'    => $this->entry->get(),
-            'size'     => $this->size
-        ], $this->entryTime, 'Position entry.');
-
         $this->enter();
     }
 
@@ -89,11 +83,21 @@ class Position
             $this->remainingSize += $size;
         }
 
-        $this->transactionLog->new([
-            'increase' => $increase,
-            'price'    => $price,
-            'size'     => $size,
-        ], $timestamp, $reason);
+        $data = [
+            'increase'    => $increase,
+            'price'       => $price,
+            'size'        => $size,
+            'system_time' => microtime(true), //for uniqueness
+        ];
+
+        if (isset($this->transactionLog))
+        {
+            $this->transactionLog->new($data, $timestamp, $reason);
+        }
+        else
+        {
+            $this->transactionLog = new ChangeLog($data, $timestamp, $reason);
+        }
 
         if (!$this->amount && $this->isOpen())
         {
@@ -361,7 +365,7 @@ class Position
             $this->entry->get(),
             $this->size,
             $this->entryTime,
-            'Position entry');
+            'Position entry.');
     }
 
     protected function assertNotGreaterThanUsedSize(float $size): void
