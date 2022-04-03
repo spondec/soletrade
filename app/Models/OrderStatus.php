@@ -8,7 +8,6 @@ enum OrderStatus: string
     case REJECTED = 'REJECTED';
     case EXPIRED = 'EXPIRED';
     case NEW = 'NEW';
-    case PARTIALLY_FILLED = 'PARTIALLY_FILLED';
+    case CLOSED = 'CLOSED';
     case CANCELED = 'CANCELED';
-    case PENDING_CANCEL = 'PENDING_CANCEL';
 }
