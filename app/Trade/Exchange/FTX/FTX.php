@@ -18,5 +18,6 @@ class FTX extends Exchange
         ]);
 
         $this->fetch = new Fetcher($this, $api);
+        $this->order = new Orderer($this, $api);
     }
 }
