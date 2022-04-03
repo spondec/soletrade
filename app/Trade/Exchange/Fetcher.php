@@ -102,7 +102,7 @@ abstract class Fetcher
         {
             $balance->listen('update',
                 \Closure::bind(function (Balance $current, Balance $updated) use ($asset) {
-                    $updatedAsset = $updated->assets[$this->name];
+                    $updatedAsset = $updated[$this->name];
 
                     $asset->total = $updatedAsset->total();
                     $asset->available = $updatedAsset->available();

@@ -25,9 +25,11 @@ class Balance implements \ArrayAccess
     {
         foreach ($assets as $k => $asset)
         {
+            unset($assets[$k]);
+
             if (!$asset instanceof Asset)
             {
-                throw new \InvalidArgumentException('Assets must be instances of Asset class.');
+                throw new \InvalidArgumentException('Invalid asset.');
             }
 
             if ($asset->available() == 0 && $asset->total() == 0)
@@ -35,7 +37,6 @@ class Balance implements \ArrayAccess
                 continue;
             }
 
-            unset($assets[$k]);
             $assets[$asset->name] = $asset;
         }
 
