@@ -24,9 +24,8 @@ class Orderer extends \App\Trade\Exchange\Orderer
         $order->exchange_order_id = $response['orderId'] ?? $response['id'];
         $order->price = $response['price'];
         $order->quantity = $response['amount'];
-        $order->filled = $response['filled'];
+        $order->filled = $response['filled'] ?? 0;
     }
-
 
     protected function executeOrderCancel(Order $order): array
     {
