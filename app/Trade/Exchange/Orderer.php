@@ -4,6 +4,7 @@ namespace App\Trade\Exchange;
 
 use App\Models\Fill;
 use App\Models\Order;
+use App\Models\OrderType;
 use App\Trade\Enum;
 use App\Trade\Side;
 use Illuminate\Support\Collection;
@@ -44,14 +45,17 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 
         $fills = new Collection($this->processOrderFills($order, $response));
 
-        if (($filled = $order->filled) && !$fills->count())
+        if ($filled = $order->filled)
         {
-            throw new \LogicException('Failed to process order fills.');
-        }
+            if (!$fills->count())
+            {
+                throw new \LogicException('Failed to process order fills.');
+            }
 
-        if ($filled != $fills->pluck('quantity')->sum())
-        {
-            throw new \UnexpectedValueException('Filled amount does not match.');
+            if ($filled != $fills->sum('quantity'))
+            {
+                throw new \UnexpectedValueException('Filled quantity does not match.');
+            }
         }
 
         if (!$order->save())
@@ -85,7 +89,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         $order = $this->setupOrder($side, $symbol, $reduceOnly);
 
         $order->quantity = $quantity;
-        $order->type = 'MARKET';
+        $order->type = OrderType::MARKET;
 
         return $this->newOrder($order);
     }
@@ -133,7 +137,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 
         $order->quantity = $quantity;
         $order->stop_price = $stopPrice;
-        $order->type = 'STOP_LOSS';
+        $order->type = OrderType::STOP_MARKET;
 
         return $this->newOrder($order);
     }
@@ -144,7 +148,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
 
         $order->price = $price;
         $order->quantity = $quantity;
-        $order->type = 'LIMIT';
+        $order->type = OrderType::LIMIT;
 
         return $this->newOrder($order);
     }
@@ -156,7 +160,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         $order->price = $price;
         $order->quantity = $quantity;
         $order->stop_price = $stopPrice;
-        $order->type = 'STOP_LOSS_LIMIT';
+        $order->type = OrderType::STOP_LIMIT;
 
         return $this->newOrder($order);
     }
