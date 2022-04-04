@@ -17,11 +17,9 @@ class Balance implements \ArrayAccess
     /**
      * @param Exchange $exchange
      * @param Asset[]  $assets
-     * @param string   $relativeAsset
      */
     public function __construct(protected Exchange $exchange,
-                                array              $assets,
-                                protected string   $relativeAsset = 'USDT')
+                                array              $assets)
     {
         foreach ($assets as $k => $asset)
         {
@@ -47,16 +45,9 @@ class Balance implements \ArrayAccess
     {
         $update = $this->exchange->fetch()->balance();
 
-        $this->relativeAsset = $update->relativeAsset;
-
         //asset update should be handled in this event
         $this->fireEvent('update', $update);
         return $this;
-    }
-
-    public function relativeAsset(): string
-    {
-        return $this->relativeAsset;
     }
 
     #[Pure] public function calculateRoi(Balance $prevBalance): array
