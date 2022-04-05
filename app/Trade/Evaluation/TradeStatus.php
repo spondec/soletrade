@@ -25,7 +25,6 @@ class TradeStatus
     protected ?Price $targetPrice;
     protected ?Price $stopPrice;
 
-    protected bool $isBuy;
     protected bool $isEntered = false;
     protected bool $isExited = false;
     protected bool $isClosed = false;
@@ -35,8 +34,6 @@ class TradeStatus
 
     public function __construct(protected TradeSetup $entry)
     {
-        $this->isBuy = $this->entry->isBuy();
-
         $this->initPrices();
 
         $this->actionHandlers = new Collection();
