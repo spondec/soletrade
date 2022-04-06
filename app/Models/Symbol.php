@@ -77,8 +77,8 @@ class Symbol extends Model
         }
 
         $query = DB::table('candles')
-                   ->where('symbol_id', $this->id)
-                   ->orderBy('t', $order = $start ? 'ASC' : 'DESC');
+            ->where('symbol_id', $this->id)
+            ->orderBy('t', $order = $start ? 'ASC' : 'DESC');
 
         if ($limit)
         {
@@ -137,5 +137,14 @@ class Symbol extends Model
     protected function indicatorExists(string $name): bool
     {
         return \class_exists(static::INDICATOR_DIR . "\\" . $name);
+    }
+
+    public function lastPrice(): float
+    {
+        return \DB::table('candles')
+            ->where('symbol_id', $this->id)
+            ->orderBy('t', 'DESC')
+            ->first()
+            ->c;
     }
 }
