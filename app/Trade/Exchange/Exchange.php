@@ -12,7 +12,10 @@ abstract class Exchange
 {
     use HasName;
 
-    protected static ?Exchange $instance = null;
+    /**
+     * @var array<class-string<Exchange>,Exchange>
+     */
+    protected static array $instances = [];
     protected ?string $apiKey;
     protected ?string $secretKey;
 
@@ -56,12 +59,12 @@ abstract class Exchange
 
     public static function instance(): static
     {
-        if (!static::$instance)
+        if (!$instance = static::$instances[static::class] ?? null)
         {
-            return static::$instance = new static();
+            return static::$instances[static::class] = new static();
         }
 
-        return static::$instance;
+        return $instance;
     }
 
     public function order(): Orderer
