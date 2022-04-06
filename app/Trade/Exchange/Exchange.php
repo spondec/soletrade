@@ -77,6 +77,21 @@ abstract class Exchange
         return $this->fetch;
     }
 
+    /**
+     * @param class-string<Exchange>\string $nameOrClass
+     *
+     * @return Exchange
+     */
+    public static function from(string $nameOrClass): Exchange
+    {
+        if (class_exists($nameOrClass))
+        {
+            return $nameOrClass::instance();
+        }
+
+        return \Config::get("trade.exchanges.$nameOrClass.class")::instance();
+    }
+
     public function update(): CandleUpdater
     {
         return $this->update;

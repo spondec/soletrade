@@ -32,7 +32,7 @@ abstract class Strategy
     protected array $config = [];
     protected \WeakMap $actions;
     protected SymbolRepository $symbolRepo;
-    public readonly Symbol $evaluationSymbol;
+    protected Symbol $evaluationSymbol;
     protected CandleCollection $candles;
     protected Symbol $symbol;
     /** @var IndicatorConfig[] */
@@ -46,6 +46,21 @@ abstract class Strategy
      * @var Indicator[]
      */
     private Collection $helperIndicators;
+
+    public function evaluationSymbol(): Symbol
+    {
+        return $this->evaluationSymbol;
+    }
+
+    public static function from(string $nameOrClass, array $config = []): Strategy
+    {
+        if (class_exists($nameOrClass))
+        {
+            return new ($nameOrClass)($config);
+        }
+
+        return new ("App\Trade\Strategy\\$nameOrClass")($config);
+    }
 
     public function __construct(array $config = [])
     {
@@ -121,7 +136,11 @@ abstract class Strategy
         $this->symbol->updateCandles();
 
         $this->evaluationSymbol = $this->getEvaluationSymbol();
-        $this->evaluationSymbol->updateCandlesIfOlderThan(60);
+
+        if ($this->evaluationSymbol->interval != $this->symbol->interval)
+        {
+            $this->evaluationSymbol->updateCandles();
+        }
 
         Log::execTimeStart('populateCandles');
         $this->populateCandles();
