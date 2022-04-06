@@ -43,6 +43,9 @@ class Order extends Model
      * @var \Closure[]
      */
     static protected array $fillListeners = [];
+
+    static protected array $fills = [];
+
     protected $table = 'orders';
     protected $casts = [
         'responses' => 'array',
@@ -76,10 +79,17 @@ class Order extends Model
 
     public static function newFill(Fill $fill)
     {
+        static::$fills[$fill->order_id][$fill->id] = $fill;
+
         foreach (static::$fillListeners[$fill->order_id] ?? [] as $callback)
         {
             $callback($fill);
         }
+    }
+
+    public static function hasListener(Fill $fill): bool
+    {
+        return !empty(static::$fillListeners[$fill->order_id]);
     }
 
     public function isAllFilled(): bool
@@ -138,5 +148,12 @@ class Order extends Model
     public function onFill(\Closure $callback): void
     {
         static::$fillListeners[$this->id][] = $callback;
+
+        foreach (static::$fills[$this->id] ?? [] as $fill)
+        {
+            //run the listener if it registered not before but after the fill, so they won't be missed
+            //happens with immediate order fills
+            $callback($fill);
+        }
     }
 }
