@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int                                                    price_date
  * @property string                                                 name
  * @property string                                                 side
+ * @property OrderType                                              entry_order_type
  * @property float                                                  price
  * @property float                                                  size
  * @property float                                                  target_price
@@ -58,6 +59,11 @@ class TradeSetup extends Model implements Bindable
         'size'         => 100,
         'target_price' => null,
         'stop_price'   => null,
+    ];
+
+    protected $casts = [
+        'price'            => 'float',
+        'entry_order_type' => OrderType::class,
     ];
 
     public function actions(): HasMany
@@ -116,7 +122,7 @@ class TradeSetup extends Model implements Bindable
     {
         if (!$price = $this->price)
         {
-            throw new \UnexpectedValueException('Price is not set');
+            throw new \UnexpectedValueException('Price is not set.');
         }
 
         return $price;

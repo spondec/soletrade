@@ -2,6 +2,7 @@
 
 namespace App\Trade\Strategy;
 
+use App\Models\OrderType;
 use App\Models\Signal;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
@@ -185,6 +186,7 @@ class TradeCreator
         $tradeSetup->side = $lastSignal->side;
         $tradeSetup->timestamp = $lastSignal->timestamp;
         $tradeSetup->price = $lastSignal->price;
+        $tradeSetup->entry_order_type = OrderType::MARKET;
         $tradeSetup->price_date = $lastSignal->price_date;
 
         return $tradeSetup;
