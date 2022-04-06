@@ -23,7 +23,8 @@ class Price
         Price::class,
         Handler::class,
         Position::class,
-        Bindable::class
+        Bindable::class,
+        TradeLoop::class
     ];
     protected ChangeLog $log;
 
