@@ -28,10 +28,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int                                                    price_date
  * @property string                                                 name
  * @property string                                                 side
+ * @property float                                                  price
  * @property float                                                  size
- * @property float|null                                             price
- * @property float|null                                             target_price
- * @property float|null                                             stop_price
+ * @property float                                                  target_price
+ * @property float                                                  stop_price
  * @property mixed                                                  created_at
  * @property mixed                                                  updated_at
  *
@@ -56,7 +56,6 @@ class TradeSetup extends Model implements Bindable
 
     protected $attributes = [
         'size'         => 100,
-        'price'        => null,
         'target_price' => null,
         'stop_price'   => null,
     ];

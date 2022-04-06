@@ -18,13 +18,14 @@ return new class extends Migration {
             $table->foreignId('signature_id')->constrained();
             $table->string('name');
             $table->enum('side', ['BUY', 'SELL']);
+            $table->decimal('price');
             $table->float('size');
-            $table->bigInteger('timestamp');
-            $table->bigInteger('price_date');
-            $table->decimal('price')->nullable();
             $table->decimal('target_price')->nullable();
             $table->decimal('stop_price')->nullable();
             $table->integer('signal_count');
+            $table->bigInteger('timestamp');
+            $table->bigInteger('price_date');
+
             $table->unique(['symbol_id', 'signature_id', 'name', 'side', 'timestamp']);
             $table->timestamps();
         });
