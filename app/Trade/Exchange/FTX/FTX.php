@@ -2,13 +2,16 @@
 
 namespace App\Trade\Exchange\FTX;
 
+use App\Trade\Contracts\Exchange\HasLeverage;
 use App\Trade\Exchange\Exchange;
 
-class FTX extends Exchange
+class FTX extends Exchange implements HasLeverage
 {
+    protected \ccxt\ftx $api;
+
     protected function setup(): void
     {
-        $api = new \ccxt\ftx([
+        $this->api = new \ccxt\ftx([
             'apiKey'  => $this->apiKey,
             'secret'  => $this->secretKey,
             'headers' => [
@@ -17,7 +20,12 @@ class FTX extends Exchange
             ]
         ]);
 
-        $this->fetch = new Fetcher($this, $api);
-        $this->order = new Orderer($this, $api);
+        $this->fetch = new Fetcher($this, $this->api);
+        $this->order = new Orderer($this, $this->api);
+    }
+
+    public function setLeverage(float $leverage = 1, ?string $symbol = null): void
+    {
+        $this->api->set_leverage($leverage, $symbol);
     }
 }
