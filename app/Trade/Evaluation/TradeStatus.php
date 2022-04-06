@@ -32,7 +32,7 @@ class TradeStatus
 
     protected ?Position $position = null;
 
-    public function __construct(protected TradeSetup $entry)
+    public function __construct(public readonly TradeSetup $entry)
     {
         $this->initPrices();
 
@@ -55,7 +55,7 @@ class TradeStatus
 
     public function enterPosition(int    $entryTime,
                                   float  $size = 100,
-                                  float  $price = null,
+                                  ?float $price = null,
                                   string $positionClass = Position::class,
                                          ...$params): void
     {
@@ -64,10 +64,15 @@ class TradeStatus
             throw new \LogicException('Already in a position.');
         }
 
+        if ($price && $price != $this->entryPrice->get())
+        {
+            $this->entryPrice->set($price, $entryTime, 'Price override.', true);
+        }
+
         $this->position = new $positionClass($this->entry->side(),
             $size,
             $entryTime,
-            $price ?? $this->entryPrice,
+            $this->entryPrice,
             $this->getTargetPrice(),
             $this->getStopPrice(),
             ...$params);
