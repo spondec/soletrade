@@ -21,6 +21,7 @@ class OrderTest extends TestCase
 
         $order->onFill(fn() => $this->assertTrue(true));
         $fill->save();
+        $this->assertEquals(1, $this->getCount());
     }
 
     protected function makeOrder(): Order
