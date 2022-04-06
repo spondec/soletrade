@@ -22,7 +22,7 @@ class AllocatedAssetTest extends TestCase
         $this->assertEquals(1000, $tradeAsset->getRealSize(100));
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Argument $proportionalSize exceeds the maximum position size');
+        $this->expectExceptionMessage('Proportional size exceeds the maximum proportional position size');
         $tradeAsset->getRealSize(101);
     }
 

@@ -10,9 +10,10 @@ final class AllocatedAsset
 {
     protected float $amount;
 
-    public function __construct(public readonly Balance $balance,
-                                public readonly Asset $asset,
-                                float  $amount)
+    public function __construct(public          readonly Balance $balance,
+                                public          readonly Asset $asset,
+                                float           $amount,
+                                protected float $leverage = 1)
     {
         $this->allocate($amount);
     }
@@ -26,7 +27,7 @@ final class AllocatedAsset
             throw new \LogicException('Allocated asset amount exceeds available amount.');
         }
 
-        $this->amount = $amount;
+        $this->amount = $amount * $this->leverage;
     }
 
     public function getRealSize(float $proportionalSize): float
@@ -49,7 +50,7 @@ final class AllocatedAsset
     {
         if ($proportionalSize > Position::MAX_SIZE)
         {
-            throw new \LogicException('Argument $proportionalSize exceeds the maximum position size.');
+            throw new \LogicException('Proportional size exceeds the maximum proportional position size.');
         }
     }
 
