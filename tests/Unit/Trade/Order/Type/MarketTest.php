@@ -13,7 +13,7 @@ use Mockery\MockInterface;
  */
 class MarketTest extends HandlerTestCase
 {
-    public function test_order_reduce_only_false()
+    public function test_order_reduce_only_false(): void
     {
         /** @var MockInterface $manager */
         $handler = $this->getHandler(Market::class, $pos, $manager);
@@ -27,10 +27,10 @@ class MarketTest extends HandlerTestCase
         $this->assertOrder($handler, $quantity, 100, false);
     }
 
-    public function test_order_reduce_only_true()
+    public function test_order_reduce_only_true(): void
     {
         /** @var MockInterface $manager */
-        $handler = $this->getHandler(Market::class, $pos, $manager);
+        $handler = $this->getHandler(Market::class, $side, $manager);
 
         $manager
             ->shouldReceive('market')

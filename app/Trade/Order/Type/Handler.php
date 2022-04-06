@@ -7,13 +7,12 @@ namespace App\Trade\Order\Type;
 use App\Models\Order;
 use App\Models\OrderType;
 use App\Trade\Enum;
-use App\Trade\Evaluation\LivePosition;
 use App\Trade\OrderManager;
 use App\Trade\Side;
 
 abstract class Handler
 {
-    public function __construct(protected LivePosition $position, protected OrderManager $manager)
+    public function __construct(protected Side $side, protected OrderManager $manager)
     {
     }
 
@@ -46,6 +45,6 @@ abstract class Handler
 
     protected function getSide(bool $reduceOnly): Side
     {
-        return $reduceOnly ? $this->position->side->opposite() : $this->position->side;
+        return $reduceOnly ? $this->side->opposite() : $this->side;
     }
 }

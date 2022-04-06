@@ -14,7 +14,7 @@ use Tests\Unit\Trade\Order\Type\HandlerTestCase;
  */
 class StopLimitTest extends HandlerTestCase
 {
-    public function test_order_reduce_only_false()
+    public function test_order_reduce_only_false(): void
     {
         /** @var MockInterface $manager */
         $handler = $this->getHandler(StopLimit::class, $pos, $manager);
@@ -28,10 +28,10 @@ class StopLimitTest extends HandlerTestCase
         $this->assertOrder($handler, 1, 100, false);
     }
 
-    public function test_order_reduce_only_true()
+    public function test_order_reduce_only_true(): void
     {
         /** @var MockInterface $manager */
-        $handler = $this->getHandler(StopLimit::class, $pos, $manager);
+        $handler = $this->getHandler(StopLimit::class, $side, $manager);
         $handler->spreadRatio = 0.001;
 
         $manager->shouldReceive('stopLimit')

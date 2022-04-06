@@ -3,8 +3,6 @@
 namespace Tests\Unit\Trade\Order\Type;
 
 use App\Models\Order;
-use App\Models\OrderType;
-use App\Trade\Evaluation\LivePosition;
 use App\Trade\Order\Type\Handler;
 use App\Trade\OrderManager;
 use App\Trade\Side;
@@ -13,9 +11,9 @@ use PHPUnit\Framework\TestCase;
 
 abstract class HandlerTestCase extends TestCase
 {
-    abstract public function test_order_reduce_only_false();
+    abstract public function test_order_reduce_only_false(): void;
 
-    abstract public function test_order_reduce_only_true();
+    abstract public function test_order_reduce_only_true(): void;
 
     protected function tearDown(): void
     {
@@ -30,13 +28,11 @@ abstract class HandlerTestCase extends TestCase
     }
 
     protected function getHandler(string                       $class,
-                                  LivePosition|m\MockInterface &$pos = null,
+                                  Side                         &$side = null,
                                   OrderManager|m\MockInterface &$manager = null): Handler
     {
-        $pos = m::mock('alias:' . LivePosition::class);
-        $pos->side = Side::SELL;
         $manager = m::mock(OrderManager::class);
 
-        return new $class(position: $pos, manager: $manager);
+        return new $class(side: $side = Side::SELL, manager: $manager);
     }
 }

@@ -14,7 +14,7 @@ use Tests\Unit\Trade\Order\Type\HandlerTestCase;
  */
 class LimitTest extends HandlerTestCase
 {
-    public function test_order_reduce_only_false()
+    public function test_order_reduce_only_false(): void
     {
         /** @var MockInterface $manager */
         $handler = $this->getHandler(Limit::class, $pos, $manager);
@@ -28,10 +28,10 @@ class LimitTest extends HandlerTestCase
         $this->assertOrder($handler, $quantity, $price, false);
     }
 
-    public function test_order_reduce_only_true()
+    public function test_order_reduce_only_true(): void
     {
         /** @var MockInterface $manager */
-        $handler = $this->getHandler(Limit::class, $pos, $manager);
+        $handler = $this->getHandler(Limit::class, $side, $manager);
 
         $manager
             ->shouldReceive('limit')

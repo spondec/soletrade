@@ -112,8 +112,8 @@ class OrderManager
             ->stopLimit($side, $this->symbol->symbol, $stopPrice, $price, $quantity, $reduceOnly));
     }
 
-    public function handler(OrderType $orderType, LivePosition $position): Handler
+    public function handler(OrderType $orderType, Side $side): Handler
     {
-        return new (Handler::getClass($orderType))(position: $position, manager: $this);
+        return new (Handler::getClass($orderType))(side: $side, manager: $this);
     }
 }
