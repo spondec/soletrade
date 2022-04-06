@@ -9,27 +9,10 @@ use Illuminate\Support\Facades\Log as Logger;
 
 final class Log
 {
-    protected static array $log;
-
     /** @var string[] */
     protected static array $tasks = [];
 
-    public static function log(string|\Exception $message): void
-    {
-        if ($message instanceof \Exception)
-        {
-            $exception = \get_class($message);
-            $message = $message->getMessage();
-        }
-
-        static::$log[] = [
-            'time'      => \microtime(true),
-            'exception' => $exception ?? null,
-            'message'   => $message ?: 'Empty message received.'
-        ];
-    }
-
-    protected static function logInfo(string $message)
+    public static function info(string $message)
     {
         Logger::info(ExecTimeMiddleware::getSessionPrefix() . $message);
     }
@@ -42,7 +25,7 @@ final class Log
         }
 
         static::$tasks[(string)\microtime(true)] = $taskName;
-        static::logInfo(\sprintf('Started: %s', $taskName));
+        static::info(\sprintf('Started: %s', $taskName));
     }
 
     public static function execTimeFinish(string $taskName)
@@ -54,7 +37,7 @@ final class Log
 
         $execTime = \microtime(true) - (float)$time;
 
-        static::logInfo(\sprintf('Finished in %s seconds: %s',
+        static::info(\sprintf('Finished in %s seconds: %s',
             \round($execTime, 2), static::$tasks[$time]));
 
         unset(static::$tasks[$time]);
