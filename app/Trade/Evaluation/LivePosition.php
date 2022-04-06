@@ -142,7 +142,7 @@ class LivePosition extends Position
                              bool      $reduceOnly): Order
     {
         return $this->manager
-            ->handler($orderType, $this)
+            ->handler($orderType, $this->side)
             ->order($orderType, $quantity, $price, $reduceOnly);
     }
 
