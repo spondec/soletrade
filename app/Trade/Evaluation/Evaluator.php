@@ -78,6 +78,11 @@ class Evaluator
 
         if ($position = $status->getPosition())
         {
+            if ($position->isOpen())
+            {
+                throw new \LogicException('Can not evaluate an open position.');
+            }
+
             $e->is_entry_price_valid = true;
             $e->entry_timestamp = $position->entryTime();
             $e->is_ambiguous = $status->isAmbiguous();
@@ -85,12 +90,8 @@ class Evaluator
 
             if (!$e->is_ambiguous)
             {
-                if (!$position->isOpen())
-                {
-                    $this->fillClosedPositionFields($position, $e);
-                    $this->fillPivots($e);
-                }
-
+                $this->fillClosedPositionFields($position, $e);
+                $this->fillPivots($e);
                 $this->fillHighLowRoi($e);
             }
 
