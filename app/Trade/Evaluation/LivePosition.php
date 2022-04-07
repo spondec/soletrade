@@ -85,7 +85,6 @@ class LivePosition extends Position
         }
 
         $price = $this->exit->get();
-        $this->exit->lock();
 
         $order = $this->sendDecreaseOrder($orderType ?? $this->exitOrderType, $this->getUsedSize(), $price, 'Exit order fill.');
 
@@ -100,7 +99,7 @@ class LivePosition extends Position
             }
         });
 
-        return $order;
+        return $this->manager->exit = $order;
     }
 
     protected function assertExitOrderNotSent(): void
@@ -183,7 +182,6 @@ class LivePosition extends Position
         }
 
         $price = $this->stop->get();
-        $this->stop->lock();
 
         $order = $this->sendDecreaseOrder($orderType ?? $this->stopOrderType,
             $this->getUsedSize(),
@@ -201,7 +199,7 @@ class LivePosition extends Position
             }
         });
 
-        return $order;
+        return $this->manager->stop = $order;
     }
 
     protected function assertStopOrderNotSent(): void
