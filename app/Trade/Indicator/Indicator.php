@@ -264,6 +264,11 @@ abstract class Indicator implements Binder
         return (float)$this->candle()->c;
     }
 
+    public function hasData(): bool
+    {
+        return $this->data->isNotEmpty();
+    }
+
     /**
      * Use offset to access previous/next candles.
      */

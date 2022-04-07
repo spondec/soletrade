@@ -160,7 +160,11 @@ class TradeFinder
     {
         foreach ($this->signalGenerators as $class => $generator)
         {
-            $indicator = $this->getSignalIndicator($class);
+            $indicator = $this->signalIndicators[$class];
+            if (!$indicator->hasData())
+            {
+                continue;
+            }
             $indicatorCandle = $indicator->candle();
 
             if ($indicatorCandle->t < $candle->t)
@@ -181,11 +185,6 @@ class TradeFinder
             }
         }
         return null;
-    }
-
-    protected function getSignalIndicator(string $class): Indicator
-    {
-        return $this->signalIndicators[$class];
     }
 
     protected function runUnderCandle(int $key, \stdClass $candle, \Closure $closure): void
