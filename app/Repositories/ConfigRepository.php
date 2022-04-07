@@ -28,10 +28,13 @@ class ConfigRepository extends Repository
      */
     public readonly array $exchanges;
 
+    public readonly array $options;
+
     public function __construct()
     {
         $this->config = Config::get('trade');
 
+        $this->options = $this->config['options'];
         $this->indicators = $this->config['indicators'];
         $this->strategies = $this->config['strategies'];
 

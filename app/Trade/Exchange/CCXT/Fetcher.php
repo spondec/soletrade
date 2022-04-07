@@ -8,6 +8,7 @@ use App\Trade\CandleMap;
 use App\Trade\Exchange\Account\Balance;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Exchange\OrderBook;
+use App\Trade\Process\RecoverableRequest;
 
 abstract class Fetcher extends \App\Trade\Exchange\Fetcher
 {
@@ -23,9 +24,17 @@ abstract class Fetcher extends \App\Trade\Exchange\Fetcher
         return new CandleMap(0, 1, 4, 2, 3, 5);
     }
 
+    protected function recoverable(\Closure $request,
+                                   ?int     $retryInSeconds = null,
+                                   ?int     $retryLimit = null,
+                                   array    $handle = []): RecoverableRequest
+    {
+        return RecoverableRequest::new($request, $retryInSeconds, $retryLimit, $handle);
+    }
+
     protected function fetchOrderBook(string $symbol): OrderBook
     {
-        $orderBook = $this->api->fetch_order_book($symbol);
+        $orderBook = $this->recoverable(fn() => $this->api->fetch_order_book($symbol))->run();
 
         return new OrderBook($symbol,
             \array_column($orderBook['bids'], 0),
@@ -34,7 +43,7 @@ abstract class Fetcher extends \App\Trade\Exchange\Fetcher
 
     protected function fetchSymbols(string $quoteAsset = null): array
     {
-        $markets = $this->api->fetch_markets();
+        $markets = $this->recoverable(fn() => $this->api->fetch_markets())->run();
 
         if ($quoteAsset)
         {
@@ -66,7 +75,7 @@ abstract class Fetcher extends \App\Trade\Exchange\Fetcher
      */
     protected function cacheLimits(): array
     {
-        $markets = $this->api->fetch_markets();
+        $markets = $this->recoverable(fn() => $this->api->fetch_markets())->run();
 
         foreach ($markets as $market)
         {
@@ -77,12 +86,12 @@ abstract class Fetcher extends \App\Trade\Exchange\Fetcher
 
     protected function fetchCandles(string $symbol, string $interval, int $start = null, int $limit = null): array
     {
-        return $this->api->fetch_ohlcv($symbol, $interval, $start, $limit);
+        return $this->recoverable(fn() => $this->api->fetch_ohlcv($symbol, $interval, $start, $limit))->run();
     }
 
     protected function fetchAccountBalance(): Balance
     {
-        $result = $this->api->fetch_balance();
+        $result = $this->recoverable(fn() => $this->api->fetch_balance())->run();
         $assets = [];
 
         foreach ($result['total'] as $asset => $total)

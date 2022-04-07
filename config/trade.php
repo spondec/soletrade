@@ -26,5 +26,15 @@ return [
 
     'strategies' => [
         \App\Trade\Strategy\RSICross::class
-    ]
+    ],
+
+    'options' => [
+        'recoverableRequest' => [
+            'retryInSeconds' => 5,
+            'retryLimit'     => 5,
+            'handle'         => [
+                \ccxt\NetworkError::class
+            ]
+        ]
+    ],
 ];
