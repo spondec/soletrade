@@ -28,6 +28,12 @@ return [
         \App\Trade\Strategy\RSICross::class
     ],
 
+    'telegram' => [
+        'token'    => env('TELEGRAM_BOT_TOKEN'),
+        'name'     => env('TELEGRAM_BOT_NAME'),
+        'password' => env('TELEGRAM_BOT_PASSWORD'), // optional, if set, bot will be authenticated
+    ],
+
     'options' => [
         'recoverableRequest' => [
             'retryInSeconds' => 5,
