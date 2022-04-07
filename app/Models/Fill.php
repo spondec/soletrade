@@ -27,6 +27,11 @@ class Fill extends Model
     protected $guarded = ['id'];
     protected array $unique = ['order_id', 'trade_id'];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+    }
+
     protected static function booted()
     {
         parent::booted();
