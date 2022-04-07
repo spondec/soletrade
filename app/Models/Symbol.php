@@ -24,18 +24,12 @@ class Symbol extends Model
 {
     use HasExchange, HasFactory;
 
-    const INDICATOR_DIR = "\App\Trade\Indicator";
+    public const INDICATOR_DIR = "\App\Trade\Indicator";
 
     protected $table = 'symbols';
 
-    protected ?CandleCollection $candles = null;
-
     /** @var Indicator[] */
     protected ?Collection $indicators = null;
-
-    protected ?int $limit = null;
-    protected ?int $end = null;
-    protected ?int $start = null;
 
     public function toArray()
     {
@@ -43,7 +37,7 @@ class Symbol extends Model
             'start'      => $this->start,
             'end'        => $this->end,
             'limit'      => $this->limit,
-            'candles'    => $this->candles?->toArray() ?? [],
+            'candles'    => $this->exists ? $this->candles()?->toArray() ?? [] : [],
             'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
                     'data'        => $i->raw($i->data()),
                     'progressive' => $i->raw($i->progressiveData())
@@ -61,19 +55,6 @@ class Symbol extends Model
         if ($end && $start && $limit)
         {
             throw new \UnexpectedValueException('Argument $limit can not be passed along with $start and $end.');
-        }
-
-        try
-        {
-            if ($this->candles && $end == $this->end && $start == $this->start && $limit == $this->limit)
-            {
-                return $this->candles;
-            }
-        } finally
-        {
-            $this->start = $start;
-            $this->end = $end;
-            $this->limit = $limit;
         }
 
         $query = DB::table('candles')
@@ -94,7 +75,7 @@ class Symbol extends Model
         }
 
         $candles = $query->get();
-        return $this->candles = new CandleCollection($order === 'DESC' ? $candles->reverse()->values() : $candles);
+        return new CandleCollection($order === 'DESC' ? $candles->reverse()->values() : $candles);
     }
 
     public function addIndicator(Indicator $indicator): void
@@ -112,7 +93,7 @@ class Symbol extends Model
         $this->indicators[$indicator->name()] = $indicator;
     }
 
-    public function updateCandlesIfOlderThan(int $seconds, int $maxRunTime = 0)
+    public function updateCandlesIfOlderThan(int $seconds, int $maxRunTime = 0): void
     {
         if ($seconds > 0 && $this->last_update + $seconds * 1000 <= \time() * 1000)
         {
@@ -130,8 +111,8 @@ class Symbol extends Model
         return $this->indicators[$name] ??
             throw new \LogicException(
                 $this->indicatorExists($name) ?
-                    "{$name} hasn't been set for this instance." :
-                    "{$name} doesn't exist as an indicator.");
+                    "$name hasn't been set for this instance." :
+                    "$name doesn't exist as an indicator.");
     }
 
     protected function indicatorExists(string $name): bool
