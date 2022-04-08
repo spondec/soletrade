@@ -34,7 +34,7 @@ class ExecTimeMiddleware
 
     public static function getSessionPrefix(): string
     {
-        return "[SESSION-" . static::$sessionId . "] ";
+        return static::$sessionId ? "[SESSION-" . static::$sessionId . "] " : '';
     }
 
     public function terminate()
