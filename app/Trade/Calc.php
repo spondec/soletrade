@@ -70,4 +70,23 @@ class Calc
 
         throw new \LogicException('Argument $timestamp must be 10 or 13 digits long.');
     }
+
+    public static function elapsedTime(int $startTime): string
+    {
+        $start = (int)(Calc::asMs($startTime) / 1000);
+        $time = time();
+        if ($start > $time)
+        {
+            throw new \LogicException('Argument $startTime must be older than current date.');
+        }
+
+        $elapsed = $time - $start;
+
+        $seconds = $elapsed % 60;
+        $minutes = (int)($elapsed / 60) % 60;
+        $hours = (int)($elapsed / 60 / 60) % 60 % 24;
+        $days = (int)($elapsed / 60 / 60 / 24);
+
+        return "$days:$hours:$minutes:$seconds";
+    }
 }
