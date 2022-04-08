@@ -8,6 +8,7 @@ use App\Models\OrderStatus;
 use App\Models\OrderType;
 use App\Trade\Enum;
 use App\Trade\Exchange\Exchange;
+use App\Trade\Process\RecoverableRequest;
 
 class Orderer extends \App\Trade\Exchange\Orderer
 {
@@ -16,19 +17,21 @@ class Orderer extends \App\Trade\Exchange\Orderer
         parent::__construct($exchange);
     }
 
-    /**
-     */
     protected function executeOrderCancel(Order $order): array
     {
         $parsedType = $this->parseOrderType($order->type);
 
         if ($order->type === OrderType::STOP_LIMIT)
         {
-            $response = $this->api->cancel_order($order->exchange_order_id, params: ['type' => $parsedType]);
+            $response = RecoverableRequest::new(
+                fn() => $this->api->cancel_order($order->exchange_order_id, params: ['type' => $parsedType])
+            )->run();
         }
         else
         {
-            $response = $this->api->cancel_order($order->exchange_order_id);
+            $response = RecoverableRequest::new(
+                fn() => $this->api->cancel_order($order->exchange_order_id)
+            )->run();
         }
 
         if ($response === 'Order cancelled' || $response === 'Order queued for cancellation')
@@ -60,7 +63,9 @@ class Orderer extends \App\Trade\Exchange\Orderer
         $parsedType = $this->parseOrderType($order->type);
         if ($order->type === OrderType::STOP_LIMIT)
         {
-            $conditionalOrders = $this->api->fetch_orders($order->symbol, params: ['type' => $parsedType]);
+            $conditionalOrders = RecoverableRequest::new(
+                fn() => $this->api->fetch_orders($order->symbol, params: ['type' => $parsedType])
+            )->run();
 
             $response = array_filter($conditionalOrders, static function ($conditionalOrder) use ($order) {
                 return $conditionalOrder['id'] == $order->exchange_order_id;
@@ -78,7 +83,9 @@ class Orderer extends \App\Trade\Exchange\Orderer
 
             return reset($response);
         }
-        return $this->api->fetch_order($order->exchange_order_id, params: ['type' => $parsedType]);
+        return RecoverableRequest::new(
+            fn() => $this->api->fetch_order($order->exchange_order_id, params: ['type' => $parsedType])
+        )->run();
     }
 
     /**
@@ -87,14 +94,18 @@ class Orderer extends \App\Trade\Exchange\Orderer
      */
     protected function executeNewOrder(Order $order): array
     {
-        return $this->api->create_order($order->symbol,
-            $this->parseOrderType($order->type),
-            strtolower(Enum::case($order->side)),
-            $order->quantity,
-            $order->price, [
-                'stopPrice'  => $order->stop_price,
-                'reduceOnly' => $order->reduce_only
-            ]);
+        return RecoverableRequest::new(
+            fn() => $this->api->create_order($order->symbol,
+                $this->parseOrderType($order->type),
+                strtolower(Enum::case($order->side)),
+                $order->quantity,
+                $order->price,
+                [
+                    'stopPrice'  => $order->stop_price,
+                    'reduceOnly' => $order->reduce_only
+                ]
+            )
+        )->run();
     }
 
     protected function parseOrderStatus(OrderStatus $status): string
@@ -161,7 +172,10 @@ class Orderer extends \App\Trade\Exchange\Orderer
     {
         $fills = [];
 
-        $trades = $this->api->fetch_order_trades($order->exchange_order_id);
+        $trades = RecoverableRequest::new(
+            fn() => $this->api->fetch_order_trades($order->exchange_order_id)
+        )->run();
+
         foreach ($trades as $fill)
         {
             $fills[] = $new = new Fill();
