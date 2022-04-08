@@ -58,6 +58,11 @@ class Order extends Model
         'filled' => 0,
     ];
 
+    public function isOpen(): bool
+    {
+        return in_array($this->status, [OrderStatus::OPEN, OrderStatus::NEW]);
+    }
+
     public static function validationRules(): array
     {
         return [
