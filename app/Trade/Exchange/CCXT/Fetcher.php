@@ -24,17 +24,9 @@ abstract class Fetcher extends \App\Trade\Exchange\Fetcher
         return new CandleMap(0, 1, 4, 2, 3, 5);
     }
 
-    protected function recoverable(\Closure $request,
-                                   ?int     $retryInSeconds = null,
-                                   ?int     $retryLimit = null,
-                                   array    $handle = []): RecoverableRequest
-    {
-        return RecoverableRequest::new($request, $retryInSeconds, $retryLimit, $handle);
-    }
-
     protected function fetchOrderBook(string $symbol): OrderBook
     {
-        $orderBook = $this->recoverable(fn() => $this->api->fetch_order_book($symbol))->run();
+        $orderBook = RecoverableRequest::new(fn() => $this->api->fetch_order_book($symbol))->run();
 
         return new OrderBook($symbol,
             \array_column($orderBook['bids'], 0),
@@ -43,7 +35,7 @@ abstract class Fetcher extends \App\Trade\Exchange\Fetcher
 
     protected function fetchSymbols(string $quoteAsset = null): array
     {
-        $markets = $this->recoverable(fn() => $this->api->fetch_markets())->run();
+        $markets = RecoverableRequest::new(fn() => $this->api->fetch_markets())->run();
 
         if ($quoteAsset)
         {
@@ -75,7 +67,7 @@ abstract class Fetcher extends \App\Trade\Exchange\Fetcher
      */
     protected function cacheLimits(): array
     {
-        $markets = $this->recoverable(fn() => $this->api->fetch_markets())->run();
+        $markets = RecoverableRequest::new(fn() => $this->api->fetch_markets())->run();
 
         foreach ($markets as $market)
         {
@@ -86,12 +78,12 @@ abstract class Fetcher extends \App\Trade\Exchange\Fetcher
 
     protected function fetchCandles(string $symbol, string $interval, int $start = null, int $limit = null): array
     {
-        return $this->recoverable(fn() => $this->api->fetch_ohlcv($symbol, $interval, $start, $limit))->run();
+        return RecoverableRequest::new(fn() => $this->api->fetch_ohlcv($symbol, $interval, $start, $limit))->run();
     }
 
     protected function fetchAccountBalance(): Balance
     {
-        $result = $this->recoverable(fn() => $this->api->fetch_balance())->run();
+        $result = RecoverableRequest::new(fn() => $this->api->fetch_balance())->run();
         $assets = [];
 
         foreach ($result['total'] as $asset => $total)
