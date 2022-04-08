@@ -2,6 +2,7 @@
 
 namespace App\Trade\Telegram;
 
+use App\Trade\Log;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Entities\Update;
 use Longman\TelegramBot\Request;
@@ -43,6 +44,8 @@ class Bot
             $this->authenticatedChatIds[] = $chatId;
             return true;
         }
+
+        Log::info('Authentication failed for Chat ID: ' . $chatId);
 
         return false;
     }
