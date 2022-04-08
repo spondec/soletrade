@@ -22,7 +22,6 @@ class OrderFactory extends Factory
     {
         return [
             'exchange_id'       => 1,
-            'is_open'           => true,
             'reduce_only'       => false,
             'status'            => $this->faker->randomElement(Enum::cases(OrderStatus::class)),
             'symbol'            => $this->faker->randomElement(['BTC/USDT', 'ETH/USDT']),

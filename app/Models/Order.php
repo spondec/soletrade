@@ -16,7 +16,6 @@ use Illuminate\Validation\Rules\Enum;
 /**
  * @property int         id
  * @property int         exchange_id
- * @property bool        is_open
  * @property bool        reduce_only
  * @property string      symbol
  * @property Side        side
@@ -68,7 +67,6 @@ class Order extends Model
         return [
             'exchange_id'      => 'required|integer|exists:exchanges,id',
             'symbol'           => 'required|string|max:50',
-            'is_open'          => 'boolean',
             'reduce_only'      => 'boolean',
             'quantity'         => 'required|numeric|gt:0',
             'filled'           => 'numeric',
