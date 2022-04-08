@@ -325,10 +325,7 @@ class TradeLoop
             $candle = $this->getLastCandle();
             $priceDate = $this->getPriceDate($candle, null);
 
-            if ($this->config('closeOnExit') &&
-                !$position->price('exit') &&
-                isset($this->exit) &&
-                $this->exit?->price)
+            if ($this->config('closeOnExit') && isset($this->exit))
             {
                 $this->status->setExitPrice((float)$this->exit->price, $priceDate);
                 $this->tryPositionExit($position, $candle, $priceDate);
