@@ -9,8 +9,23 @@ use Illuminate\Support\Facades\Log as Logger;
 
 final class Log
 {
+    /**
+     * @var \Throwable[]
+     */
+    protected static $errors = [];
+
     /** @var string[] */
     protected static array $tasks = [];
+
+    public static function error(\Throwable $e)
+    {
+        static::$errors[] = $e;
+    }
+
+    public static function getErrors(): array
+    {
+        return static::$errors;
+    }
 
     public static function info(string $message)
     {
