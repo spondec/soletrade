@@ -19,6 +19,7 @@ final class Log
 
     public static function error(\Throwable $e)
     {
+        \Log::error($e);
         static::$errors[] = $e;
     }
 

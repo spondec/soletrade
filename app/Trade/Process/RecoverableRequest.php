@@ -27,7 +27,6 @@ class RecoverableRequest extends Recoverable
 
     protected function handle(\Throwable $e): void
     {
-        \Log::error($e);
         Log::error($e);
     }
 }
