@@ -21,7 +21,6 @@
     "ratchet/pawl": "^0.4.1"
   },
   "require-dev": {
-    "barryvdh/laravel-debugbar": "^3.6",
     "brianium/paratest": "^6.4",
     "fakerphp/faker": "^1.19",
     "laravel/sail": "^1.13",
@@ -42,6 +41,9 @@
     }
   },
   "autoload": {
+    "files": [
+      "app/helpers.php"
+    ],
     "psr-4": {
       "App\\": "app/",
       "Database\\Factories\\": "database/factories/",
