@@ -33,7 +33,13 @@ class Recoverable
             {
                 sleep($this->retryInSeconds);
                 $this->handle($e);
-                return $this->try($retryInSeconds, $retryLimit - 1);
+
+                $retryLimit--;
+                if ($retryLimit < 0)
+                {
+                    throw $e;
+                }
+                return $this->try($retryInSeconds, $retryLimit);
             }
 
             throw $e;

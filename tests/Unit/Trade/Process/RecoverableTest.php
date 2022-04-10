@@ -73,4 +73,24 @@ class RecoverableTest extends TestCase
 
         $recoverable->run();
     }
+
+    public function test_negative_retry_limit()
+    {
+        try
+        {
+            $count = 0;
+            (new Recoverable(function () use (&$count) {
+
+                $count++;
+
+                throw new \Exception('To be caught');
+
+            }, 1, 2, [\Exception::class]))->run();
+        } catch (\Exception $e)
+        {
+            $this->assertInstanceOf(\Exception::class, $e);
+            $this->assertEquals('To be caught', $e->getMessage());
+            $this->assertEquals(3, $count);
+        }
+    }
 }
