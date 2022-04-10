@@ -8,12 +8,7 @@ namespace App\Trade\Helper;
  */
 class ClosureHash
 {
-    /**
-     * List of hashes
-     *
-     * @var \SplObjectStorage
-     */
-    protected static ?\SplObjectStorage $hashes = null;
+    protected static ?\WeakMap $hashes = null;
 
     /**
      * Returns a hash for closure
@@ -24,24 +19,28 @@ class ClosureHash
      */
     public static function from(\Closure $closure): string
     {
-        if (!self::$hashes) {
-            self::$hashes = new \SplObjectStorage();
+        if (!static::$hashes)
+        {
+            static::$hashes = new \WeakMap();
         }
 
-        if (!isset(self::$hashes[$closure])) {
-            $ref  = new \ReflectionFunction($closure);
+        if (!isset(static::$hashes[$closure]))
+        {
+            $ref = new \ReflectionFunction($closure);
             $file = new \SplFileObject($ref->getFileName());
-            $file->seek($ref->getStartLine()-1);
+            $file->seek($ref->getStartLine() - 1);
             $content = '';
-            while ($file->key() < $ref->getEndLine()) {
+            while ($file->key() < $ref->getEndLine())
+            {
                 $content .= $file->current();
                 $file->next();
             }
-            self::$hashes[$closure] = \md5(\json_encode(array(
+
+            static::$hashes[$closure] = \md5(\json_encode(array(
                 $content,
                 $ref->getStaticVariables()
             )));
         }
-        return self::$hashes[$closure];
+        return static::$hashes[$closure];
     }
 }
