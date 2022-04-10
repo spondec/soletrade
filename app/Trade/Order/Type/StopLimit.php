@@ -10,7 +10,7 @@ use App\Trade\Side;
 
 class StopLimit extends Handler
 {
-    public float $spreadRatio = 0.001;
+    public float $ratio = 0.001;
 
     public function getOrderType(): OrderType
     {
@@ -22,7 +22,7 @@ class StopLimit extends Handler
         $side = $this->getSide($reduceOnly);
 
         return $this->manager->stopLimit($side,
-            $this->getStopPrice($side, $price, $this->spreadRatio),
+            $this->getStopPrice($side, $price, $this->ratio),
             $price,
             $quantity,
             $reduceOnly);

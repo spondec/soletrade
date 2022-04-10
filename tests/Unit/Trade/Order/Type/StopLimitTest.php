@@ -18,11 +18,11 @@ class StopLimitTest extends HandlerTestCase
     {
         /** @var MockInterface $manager */
         $handler = $this->getHandler(StopLimit::class, $pos, $manager);
-        $handler->spreadRatio = 0.001;
+        $handler->ratio = 0.001;
 
         $manager->shouldReceive('stopLimit')
             ->once()
-            ->withArgs([Side::SELL, 100 + 100 * $handler->spreadRatio, 100, 1, false])
+            ->withArgs([Side::SELL, 100 + 100 * $handler->ratio, 100, 1, false])
             ->andReturns(new Order());
 
         $this->assertOrder($handler, 1, 100, false);
@@ -32,11 +32,11 @@ class StopLimitTest extends HandlerTestCase
     {
         /** @var MockInterface $manager */
         $handler = $this->getHandler(StopLimit::class, $side, $manager);
-        $handler->spreadRatio = 0.001;
+        $handler->ratio = 0.001;
 
         $manager->shouldReceive('stopLimit')
             ->once()
-            ->withArgs([Side::BUY, 100 - 100 * $handler->spreadRatio, 100, 1, true])
+            ->withArgs([Side::BUY, 100 - 100 * $handler->ratio, 100, 1, true])
             ->andReturns(new Order());
 
         $this->assertOrder($handler, 1, 100, true);
