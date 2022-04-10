@@ -142,24 +142,15 @@ abstract class Strategy
             $this->evaluationSymbol->updateCandles();
         }
 
-        Log::execTimeStart('populateCandles');
         $this->populateCandles();
-        Log::execTimeFinish('populateCandles');
-
-        Log::execTimeStart('initIndicators');
         $this->initIndicators();
-        Log::execTimeFinish('initIndicators');
 
-        Log::execTimeStart('findTrades');
         $finder = new TradeFinder($this,
             $this->candles,
             $this->tradeConfig,
             collect($this->indicatorConfig),
             $this->indicators);
-        $trades = $finder->findTrades();
-        Log::execTimeFinish('findTrades');
-
-        return $trades;
+        return $finder->findTrades();
     }
 
     protected function getEvaluationSymbol(): Symbol
