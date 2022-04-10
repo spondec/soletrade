@@ -24,12 +24,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     public function sync(Order $order): array
     {
         $response = $this->executeOrderUpdate($order);
-        $fills = $this->handleOrderResponse($order, $response);
-
-        $order->logResponse('update', $response);
-        $order->save();
-
-        return $fills;
+        return $this->handleOrderResponse($order, $response, 'sync');
     }
 
     /**
@@ -39,7 +34,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
      * @return Fill[]
      * @throws \LogicException|\UnexpectedValueException
      */
-    private function handleOrderResponse(Order $order, array $response): array
+    private function handleOrderResponse(Order $order, array $response, string $responseType): array
     {
         $this->processOrderDetails($order, $response);
 
@@ -58,6 +53,8 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
             }
         }
 
+        $order->logResponse($responseType, $response);
+
         if (!$order->save())
         {
             throw new \UnexpectedValueException('Failed to save order.');
@@ -74,10 +71,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     public function cancel(Order $order): Order
     {
         $response = $this->executeOrderCancel($order);
-        $this->handleOrderResponse($order, $response);
-
-        $order->logResponse('cancel', $response);
-        $order->save();
+        $this->handleOrderResponse($order, $response, 'cancel');
 
         return $order;
     }
@@ -121,10 +115,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     protected function newOrder(Order $order): Order
     {
         $response = $this->executeNewOrder($order);
-        $this->handleOrderResponse($order, $response);
-
-        $order->logResponse('new', $response);
-        $order->save();
+        $this->handleOrderResponse($order, $response, 'new');
 
         return $order;
     }
