@@ -7,13 +7,24 @@ namespace App\Trade\Order\Type;
 use App\Models\Order;
 use App\Models\OrderType;
 use App\Trade\Enum;
+use App\Trade\HasConfig;
 use App\Trade\OrderManager;
 use App\Trade\Side;
 
 abstract class Handler
 {
-    public function __construct(protected Side $side, protected OrderManager $manager)
+    use HasConfig;
+
+    protected array $config = [];
+
+    protected function getDefaultConfig(): array
     {
+        return [];
+    }
+
+    public function __construct(protected Side $side, protected OrderManager $manager, array $config = [])
+    {
+        $this->mergeConfig($config);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace Trade;
 
 use App\Models\Order;
 use App\Models\Symbol;
+use App\Models\TradeSetup;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Exchange\Orderer;
 use App\Trade\OrderManager;
@@ -57,7 +58,7 @@ class OrderManagerTest extends TestCase
             ->once()
             ->andReturn($orderer);
 
-        return new OrderManager($exchange, $symbol, m::mock(TradeAsset::class));
+        return new OrderManager($exchange, $symbol, m::mock(TradeAsset::class), m::mock(TradeSetup::class));
     }
 
     protected function getOrderMock(): MockInterface|Order
@@ -101,11 +102,27 @@ class OrderManagerTest extends TestCase
         $manager = $this->getManager($exchange, $symbol, $orderer);
         $order = $this->getOrderMock();
 
+        $exchange->shouldReceive('order')
+            ->zeroOrMoreTimes()
+            ->andReturn($orderer);
+
+        $order
+            ->shouldReceive('isOpen')
+            ->once()
+            ->andReturn(true);
+
+        $orderer
+            ->shouldReceive('sync')
+            ->once()
+            ->with($order)
+            ->andReturn([]);
+
         $orderer
             ->shouldReceive('cancel')
             ->once()
             ->with($order)
             ->andReturn($order);
+
 
         $this->assertEquals($order, $manager->cancel($order));
     }

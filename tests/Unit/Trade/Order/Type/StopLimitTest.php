@@ -17,12 +17,11 @@ class StopLimitTest extends HandlerTestCase
     public function test_order_reduce_only_false(): void
     {
         /** @var MockInterface $manager */
-        $handler = $this->getHandler(StopLimit::class, $pos, $manager);
-        $handler->ratio = 0.001;
+        $handler = $this->getHandler(StopLimit::class, $pos, $manager, ['stop_price_ratio' => 0.001]);
 
         $manager->shouldReceive('stopLimit')
             ->once()
-            ->withArgs([Side::SELL, 100 + 100 * $handler->ratio, 100, 1, false])
+            ->withArgs([Side::SELL, 100 + 100 * 0.001, 100, 1, false])
             ->andReturns(new Order());
 
         $this->assertOrder($handler, 1, 100, false);
@@ -31,12 +30,11 @@ class StopLimitTest extends HandlerTestCase
     public function test_order_reduce_only_true(): void
     {
         /** @var MockInterface $manager */
-        $handler = $this->getHandler(StopLimit::class, $side, $manager);
-        $handler->ratio = 0.001;
+        $handler = $this->getHandler(StopLimit::class, $side, $manager, ['stop_price_ratio' => 0.001]);
 
         $manager->shouldReceive('stopLimit')
             ->once()
-            ->withArgs([Side::BUY, 100 - 100 * $handler->ratio, 100, 1, true])
+            ->withArgs([Side::BUY, 100 - 100 * 0.001, 100, 1, true])
             ->andReturns(new Order());
 
         $this->assertOrder($handler, 1, 100, true);

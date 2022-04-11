@@ -10,7 +10,14 @@ use App\Trade\Side;
 
 class StopLimit extends Handler
 {
-    public float $ratio = 0.001;
+    public const DEFAULT_STOP_PRICE_RATIO = 0.001;
+
+    protected function getDefaultConfig(): array
+    {
+        return [
+            'stop_price_ratio' => static::DEFAULT_STOP_PRICE_RATIO,
+        ];
+    }
 
     public function getOrderType(): OrderType
     {
@@ -22,15 +29,15 @@ class StopLimit extends Handler
         $side = $this->getSide($reduceOnly);
 
         return $this->manager->stopLimit($side,
-            $this->getStopPrice($side, $price, $this->ratio),
+            $this->getStopPrice($side, $price, $this->config('stop_price_ratio', true)),
             $price,
             $quantity,
             $reduceOnly);
     }
 
-    protected function getStopPrice(Side $side, float $price, float $spreadRatio): float
+    protected function getStopPrice(Side $side, float $price, float $stopPriceRatio): float
     {
-        $spread = $price * $spreadRatio;
+        $spread = $price * $stopPriceRatio;
         return $side->isBuy() ? $price - $spread : $price + $spread;
     }
 }

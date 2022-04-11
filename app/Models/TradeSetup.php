@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Trade\Binding\HasBinding;
 use App\Trade\Contracts\Binding\Bindable;
 use App\Trade\Evaluation\Price;
+use App\Trade\Order\Type\StopLimit;
 use App\Trade\Side;
 use Database\Factories\TradeSetupFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string                                                 name
  * @property string                                                 side
  * @property OrderType                                              entry_order_type
+ * @property array                                                  order_type_params
  * @property float                                                  price
  * @property float                                                  size
  * @property float                                                  target_price
@@ -62,8 +64,9 @@ class TradeSetup extends Model implements Bindable
     ];
 
     protected $casts = [
-        'price'            => 'float',
-        'entry_order_type' => OrderType::class,
+        'price'             => 'float',
+        'order_type_params' => 'array',
+        'entry_order_type'  => OrderType::class,
     ];
 
     public function actions(): HasMany
@@ -128,18 +131,27 @@ class TradeSetup extends Model implements Bindable
         return $price;
     }
 
-    public function setStopPrice(float $percent): void
+    public function setStopPrice(float $percent, float $stopPriceRatio = StopLimit::DEFAULT_STOP_PRICE_RATIO): void
     {
         $price = $this->assertPrice();
 
-        if ($this->isBuy())
+        if ($stopPriceRatio < $percent / 100)
         {
-            $this->stop_price = $price - $price * $percent / 100;
+            throw new \LogicException('Stop price ratio can not be less than stop price percent.');
         }
-        else
-        {
-            $this->stop_price = $price + $price * $percent / 100;
-        }
+
+        $this->fillJsonAttribute('order_type_params->stop_price_ratio', $stopPriceRatio);
+
+        if ($percent)
+
+            if ($this->isBuy())
+            {
+                $this->stop_price = $price - $price * $percent / 100;
+            }
+            else
+            {
+                $this->stop_price = $price + $price * $percent / 100;
+            }
     }
 
     public function setTargetPrice(float $percent): void

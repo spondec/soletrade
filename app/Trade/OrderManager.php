@@ -8,9 +8,11 @@ use App\Models\Fill;
 use App\Models\Order;
 use App\Models\OrderType;
 use App\Models\Symbol;
+use App\Models\TradeSetup;
 use App\Trade\Contracts\Exchange\Orderer;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Order\Type\Handler;
+use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;
 
 class OrderManager
@@ -22,13 +24,16 @@ class OrderManager
     /**
      * @var Order[]
      */
-    protected array $orders = [];
+    protected Collection $orders;
 
     public function syncAll(): void
     {
         foreach ($this->orders as $order)
         {
-            $this->sync($order);
+            if ($order->isOpen())
+            {
+                $this->sync($order);
+            }
         }
     }
 
@@ -40,10 +45,17 @@ class OrderManager
         }
     }
 
-    public function __construct(protected Exchange $exchange,
-                                protected Symbol   $symbol,
-                                public             readonly TradeAsset $tradeAsset)
+    public function __construct(protected Exchange   $exchange,
+                                protected Symbol     $symbol,
+                                public               readonly TradeAsset $tradeAsset,
+                                protected TradeSetup $trade)
     {
+        $this->orders = new Collection();
+    }
+
+    public function orders(): Collection
+    {
+        return $this->orders;
     }
 
     /**
@@ -63,6 +75,13 @@ class OrderManager
 
     public function cancel(Order $order): Order
     {
+        $this->sync($order);
+
+        if (!$order->isOpen())
+        {
+            return $order;
+        }
+
         return $this->order()->cancel($order);
     }
 
@@ -113,6 +132,8 @@ class OrderManager
 
     public function handler(OrderType $orderType, Side $side): Handler
     {
-        return new (Handler::getClass($orderType))(side: $side, manager: $this);
+        return new (Handler::getClass($orderType))(side: $side,
+            manager: $this,
+            config: $this->trade->order_type_params[$orderType->value] ?? []);
     }
 }

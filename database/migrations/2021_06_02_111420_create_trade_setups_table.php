@@ -23,6 +23,7 @@ return new class extends Migration {
             $table->decimal('target_price')->nullable();
             $table->decimal('stop_price')->nullable();
             $table->enum('entry_order_type', \App\Trade\Enum::cases(\App\Models\OrderType::class));
+            $table->json('order_type_params')->nullable();
             $table->integer('signal_count');
             $table->bigInteger('timestamp');
             $table->bigInteger('price_date');

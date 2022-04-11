@@ -29,10 +29,11 @@ abstract class HandlerTestCase extends TestCase
 
     protected function getHandler(string                       $class,
                                   Side                         &$side = null,
-                                  OrderManager|m\MockInterface &$manager = null): Handler
+                                  OrderManager|m\MockInterface &$manager = null,
+                                  array                        $config = []): Handler
     {
         $manager = m::mock(OrderManager::class);
 
-        return new $class(side: $side = Side::SELL, manager: $manager);
+        return new $class(side: $side = Side::SELL, manager: $manager, config: $config);
     }
 }
