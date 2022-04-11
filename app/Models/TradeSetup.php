@@ -30,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string                                                 name
  * @property string                                                 side
  * @property OrderType                                              entry_order_type
- * @property array                                                  order_type_params
+ * @property array                                                  order_type_config
  * @property float                                                  price
  * @property float                                                  size
  * @property float                                                  target_price
@@ -65,7 +65,7 @@ class TradeSetup extends Model implements Bindable
 
     protected $casts = [
         'price'             => 'float',
-        'order_type_params' => 'array',
+        'order_type_config' => 'array',
         'entry_order_type'  => OrderType::class,
     ];
 
@@ -140,7 +140,7 @@ class TradeSetup extends Model implements Bindable
             throw new \LogicException('Stop price ratio can not be less than stop price percent.');
         }
 
-        $this->fillJsonAttribute('order_type_params->stop_price_ratio', $stopPriceRatio);
+        $this->fillJsonAttribute('order_type_config->stop_price_ratio', $stopPriceRatio);
 
         if ($percent)
 

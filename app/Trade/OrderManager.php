@@ -134,6 +134,6 @@ class OrderManager
     {
         return new (Handler::getClass($orderType))(side: $side,
             manager: $this,
-            config: $this->trade->order_type_params[$orderType->value] ?? []);
+            config: $this->trade->order_type_config[$orderType->value] ?? []);
     }
 }
