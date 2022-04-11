@@ -32,11 +32,11 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     }
 
     /**
-     * @param Order $order
-     * @param array $response
+     * @param Order  $order
+     * @param array  $response
+     * @param string $responseType
      *
      * @return Fill[]
-     * @throws \LogicException|\UnexpectedValueException
      */
     private function handleOrderResponse(Order $order, array $response, string $responseType): array
     {

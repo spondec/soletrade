@@ -73,6 +73,13 @@ class OrderManager
         return $this->exchange->order();
     }
 
+    /**
+     * @param Order $order
+     *
+     * @return Order
+     * @throws \App\Exceptions\OrderNotCanceledException
+     * @throws \App\Exceptions\OrderFilledInCancelRequest
+     */
     public function cancel(Order $order): Order
     {
         $this->sync($order);

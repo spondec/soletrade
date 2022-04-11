@@ -3,7 +3,6 @@
 namespace App\Trade\Contracts\Exchange;
 
 use App\Exceptions\OrderFailedException;
-use App\Exceptions\OrderNotCanceledException;
 use App\Models\Fill;
 use App\Models\Order;
 use App\Trade\Side;
@@ -21,7 +20,8 @@ interface Orderer
      * @param Order $order
      *
      * @return Order
-     * @throws OrderNotCanceledException
+     * @throws \App\Exceptions\OrderNotCanceledException
+     * @throws \App\Exceptions\OrderFilledInCancelRequest
      */
     public function cancel(Order $order): Order;
 

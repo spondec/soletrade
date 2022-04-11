@@ -6,6 +6,7 @@ use App\Models\Fill;
 use App\Models\Order;
 use App\Models\OrderType;
 use App\Trade\Calc;
+use App\Trade\Log;
 use App\Trade\OrderManager;
 use App\Trade\Side;
 use App\Trade\TradeAsset;
@@ -68,6 +69,11 @@ class LivePosition extends Position
         });
     }
 
+    protected function cancelOrder(Order $order): void
+    {
+        $this->manager->cancel($order);
+    }
+
     public function resendExitOrder(?OrderType $orderType = null): Order
     {
         if (!$this->manager->exit)
@@ -75,7 +81,17 @@ class LivePosition extends Position
             throw new \LogicException('Cannot resend exit order without an exit order.');
         }
 
-        $this->manager->cancel($this->manager->exit);
+        try
+        {
+            $this->manager->cancel($this->manager->exit);
+        } catch (\App\Exceptions\OrderFilledInCancelRequest $e)
+        {
+            //Order should be filled fully, fill listeners will handle the rest.
+            //Do not send another order.
+            Log::error($e);
+            return $this->manager->exit;
+        }
+
         $this->manager->exit = null;
         return $this->sendExitOrder($orderType);
     }
@@ -176,7 +192,20 @@ class LivePosition extends Position
         {
             throw new \LogicException('Can not resend stop order without a stop order.');
         }
-        $this->manager->cancel($this->manager->stop);
+
+        Log::info('Resending stop order.');
+
+        try
+        {
+            $this->manager->cancel($this->manager->stop);
+        } catch (\App\Exceptions\OrderFilledInCancelRequest $e)
+        {
+            //Order should be filled fully, fill listeners will handle the rest.
+            //Do not send another order.
+            Log::error($e);
+            return $this->manager->stop;
+        }
+
         $this->manager->stop = null;
         return $this->sendStopOrder($orderType);
     }
