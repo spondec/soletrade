@@ -62,6 +62,17 @@ class Order extends Model
         return in_array($this->status, [OrderStatus::OPEN, OrderStatus::NEW]);
     }
 
+    public function flushFillListeners(): void
+    {
+        if ($this->isOpen())
+        {
+            throw new \LogicException('Cannot flush fill listeners for an open order.');
+        }
+
+        unset(static::$fillListeners[$this->id]);
+        unset(static::$fills[$this->id]);
+    }
+
     public static function validationRules(): array
     {
         return [
