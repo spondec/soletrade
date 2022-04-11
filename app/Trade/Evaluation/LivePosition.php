@@ -70,8 +70,13 @@ class LivePosition extends Position
 
     public function resendExitOrder(?OrderType $orderType = null): Order
     {
-        $this->manager->cancel($this->manager->exit);
+        if (!$this->manager->exit)
+        {
+            throw new \LogicException('Cannot resend exit order without an exit order.');
+        }
 
+        $this->manager->cancel($this->manager->exit);
+        $this->manager->exit = null;
         return $this->sendExitOrder($orderType);
     }
 
@@ -167,8 +172,12 @@ class LivePosition extends Position
 
     public function resendStopOrder(?OrderType $orderType = null): Order
     {
+        if (!$this->manager->stop)
+        {
+            throw new \LogicException('Can not resend stop order without a stop order.');
+        }
         $this->manager->cancel($this->manager->stop);
-
+        $this->manager->stop = null;
         return $this->sendStopOrder($orderType);
     }
 
@@ -222,7 +231,7 @@ class LivePosition extends Position
 
     public function stop(int $exitTime): void
     {
-        if ($this->stop)
+        if ($this->stop && $this->manager->stop)
         {
             $this->resendStopOrder(OrderType::MARKET);
         }
@@ -234,7 +243,7 @@ class LivePosition extends Position
 
     public function close(int $exitTime): void
     {
-        if ($this->exit)
+        if ($this->exit && $this->manager->exit)
         {
             $this->resendExitOrder(OrderType::MARKET);
         }
