@@ -66,7 +66,7 @@ trait HasConfig
         }
     }
 
-    public function config(string $key, bool $assertNotNull = false): mixed
+    public function config(string $key, bool $assertNotEmpty = false): mixed
     {
         $keys = \explode('.', $key);
         $value = &$this->config;
@@ -83,7 +83,7 @@ trait HasConfig
             }
         }
 
-        if ($assertNotNull && $value === null)
+        if ($assertNotEmpty && empty($value))
         {
             throw new \LogicException("Config value of '$key' can not be null.");
         }
