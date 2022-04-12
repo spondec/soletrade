@@ -24,11 +24,7 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     public function sync(Order $order): array
     {
         $response = $this->executeOrderUpdate($order);
-        $fills = $this->handleOrderResponse($order, $response, 'sync');
-
-        $this->cleanup($order);
-
-        return $fills;
+        return $this->handleOrderResponse($order, $response, 'sync');
     }
 
     /**
@@ -77,8 +73,6 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         $response = $this->executeOrderCancel($order);
         $this->handleOrderResponse($order, $response, 'cancel');
 
-        $this->cleanup($order);
-
         return $order;
     }
 
@@ -122,8 +116,6 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
     {
         $response = $this->executeNewOrder($order);
         $this->handleOrderResponse($order, $response, 'new');
-
-        $this->cleanup($order);
 
         return $order;
     }
@@ -173,12 +165,4 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
      * @return Fill[]
      */
     abstract protected function processOrderFills(Order $order, array $response): array;
-
-    protected function cleanup(Order $order): void
-    {
-        if (!$order->isOpen())
-        {
-            $order->flushFillListeners();
-        }
-    }
 }
