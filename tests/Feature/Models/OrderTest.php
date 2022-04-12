@@ -5,6 +5,7 @@ namespace Models;
 use App\Models\Exchange;
 use App\Models\Fill;
 use App\Models\Order;
+use App\Models\OrderStatus;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -134,5 +135,15 @@ class OrderTest extends TestCase
             ->only(['id']);
 
         $this->assertEquals($fills->all(), $order->fills()->get()->only(['id'])->all());
+    }
+
+    public function test_on_cancel()
+    {
+        $order = $this->makeOrder();
+        $order->save();
+
+        $order->onCancel(fn() => $this->assertTrue(true));
+        $order->status = OrderStatus::CANCELED;
+        $order->save();
     }
 }

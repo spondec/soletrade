@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Trade\Log;
 use App\Trade\Side;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -39,11 +40,17 @@ class Order extends Model
     use HasFactory;
 
     /**
-     * @var \Closure[]
+     * @var \Closure[][]
      */
     static protected array $fillListeners = [];
-
+    /**
+     * @var Fill[][]
+     */
     static protected array $fills = [];
+    /**
+     * @var \Closure[][]
+     */
+    static protected array $cancelListeners = [];
 
     protected $table = 'orders';
     protected $casts = [
@@ -57,20 +64,51 @@ class Order extends Model
         'filled' => 0,
     ];
 
+    protected static function booted()
+    {
+        parent::booted();
+
+        static::saved(static function (self $order) {
+            if ($order->status === OrderStatus::CANCELED)
+            {
+                static::handleCancel($order);
+            }
+        });
+    }
+
+    protected static function handleCancel(Order $order): void
+    {
+        foreach (static::$cancelListeners[$order->id] ?? [] as $cancelListener)
+        {
+            $cancelListener($order);
+        }
+    }
+
+    public function onCancel(\Closure $callback): void
+    {
+        if (!$this->exists)
+        {
+            throw new \LogicException('Cannot attach listener to non-existing order.');
+        }
+
+        static::$cancelListeners[$this->id][] = $callback;
+    }
+
     public function isOpen(): bool
     {
         return in_array($this->status, [OrderStatus::OPEN, OrderStatus::NEW]);
     }
 
-    public function flushFillListeners(): void
+    public function flushListeners(): void
     {
         if ($this->isOpen())
         {
-            throw new \LogicException('Cannot flush fill listeners for an open order.');
+            throw new \LogicException('Cannot flush listeners for an open order.');
         }
 
         unset(static::$fillListeners[$this->id]);
         unset(static::$fills[$this->id]);
+        unset(static::$cancelListeners[$this->id]);
     }
 
     public static function validationRules(): array
