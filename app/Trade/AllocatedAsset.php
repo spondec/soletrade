@@ -10,10 +10,10 @@ final class AllocatedAsset
 {
     protected float $amount;
 
-    public function __construct(public          readonly Balance $balance,
-                                public          readonly Asset $asset,
-                                float           $amount,
-                                protected float $leverage = 1)
+    public function __construct(public       readonly Balance $balance,
+                                public       readonly Asset $asset,
+                                float        $amount,
+                                public float $leverage = 1)
     {
         $this->allocate($amount);
     }
@@ -70,6 +70,11 @@ final class AllocatedAsset
         }
     }
 
+    /**
+     * Returns leveraged amount.
+     *
+     * @return float
+     */
     public function amount(): float
     {
         return $this->amount;
