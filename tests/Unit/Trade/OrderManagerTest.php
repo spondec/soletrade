@@ -12,20 +12,13 @@ use App\Trade\Side;
 use App\Trade\TradeAsset;
 use Mockery as m;
 use Mockery\MockInterface;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @runTestsInSeparateProcesses
  * @preserveGlobalState disabled
  */
-class OrderManagerTest extends TestCase
+class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
 {
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-        m::close();
-    }
-
     public function test_sync(): void
     {
         /** @var Exchange|MockInterface $exchange */
@@ -61,9 +54,19 @@ class OrderManagerTest extends TestCase
         return new OrderManager($exchange, $symbol, m::mock(TradeAsset::class), m::mock(TradeSetup::class));
     }
 
-    protected function getOrderMock(): MockInterface|Order
+    protected function getOrderMock(?\Closure &$cancelListener = null): MockInterface|Order
     {
-        return m::mock(Order::class);
+        $order = m::mock(Order::class);
+
+        $order->shouldReceive('onCancel')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function (\Closure $callback) use (&$cancelListener) {
+                $cancelListener = $callback;
+            });
+        $order->shouldReceive('flushListeners');
+        $order->shouldReceive('isOpen')->zeroOrMoreTimes()->andReturn(true);
+
+        return $order;
     }
 
     public function test_stop_limit(): void
@@ -105,11 +108,6 @@ class OrderManagerTest extends TestCase
         $exchange->shouldReceive('order')
             ->zeroOrMoreTimes()
             ->andReturn($orderer);
-
-        $order
-            ->shouldReceive('isOpen')
-            ->once()
-            ->andReturn(true);
 
         $orderer
             ->shouldReceive('sync')
@@ -201,5 +199,37 @@ class OrderManagerTest extends TestCase
             1,
             100,
             true));
+    }
+
+    public function test_order_cancel_listener()
+    {
+        /** @var Exchange|MockInterface $exchange */
+        /** @var Symbol|MockInterface $symbol */
+        /** @var Orderer|MockInterface $orderer */
+        $manager = $this->getManager($exchange, $symbol, $orderer);
+        $order = $this->getOrderMock($cancelListener);
+
+        $orderer
+            ->shouldReceive('market')
+            ->once()
+            ->withArgs([
+                Side::SELL,
+                $symbol->symbol,
+                1,
+                true
+            ])
+            ->andReturn($order);
+
+        $manager->market(Side::SELL, 1, true);
+
+        $manager->entry = $order;
+        $manager->exit = $order;
+        $manager->stop = $order;
+
+        $cancelListener($order);
+
+        $this->assertEquals(null, $manager->entry);
+        $this->assertEquals(null, $manager->exit);
+        $this->assertEquals(null, $manager->stop);
     }
 }

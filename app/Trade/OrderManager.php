@@ -107,6 +107,21 @@ class OrderManager
 
     protected function registerOrderListeners(Order $order): void
     {
+        $order->onCancel(function (Order $order) {
+
+            if ($order === $this->stop)
+            {
+                $this->stop = null;
+            }
+            if ($order === $this->entry)
+            {
+                $this->entry = null;
+            }
+            if ($order === $this->exit)
+            {
+                $this->exit = null;
+            }
+        });
     }
 
     public function stopMarket(Side  $side,
@@ -142,5 +157,16 @@ class OrderManager
         return new (Handler::getClass($orderType))(side: $side,
             manager: $this,
             config: $this->trade->order_type_config[$orderType->value] ?? []);
+    }
+
+    public function __destruct()
+    {
+        foreach ($this->orders as $order)
+        {
+            if (!$order->isOpen())
+            {
+                $order->flushListeners();
+            }
+        }
     }
 }
