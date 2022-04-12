@@ -131,41 +131,39 @@ class TradeSetup extends Model implements Bindable
         return $price;
     }
 
-    public function setStopPrice(float $percent, float $stopPriceRatio = StopLimit::DEFAULT_STOP_PRICE_RATIO): void
+    public function setStopPrice(float $ratio, float $triggerPriceRatio = StopLimit::DEFAULT_TRIGGER_PRICE_RATIO): void
     {
-        $price = $this->assertPrice();
-
-        if ($stopPriceRatio < $percent / 100)
+        if (!$ratio)
         {
-            throw new \LogicException('Stop price ratio can not be less than stop price percent.');
+            throw new \LogicException('Invalid ratio.');
         }
 
-        $this->fillJsonAttribute('order_type_config->stop_price_ratio', $stopPriceRatio);
+        $price = $this->assertPrice();
 
-        if ($percent)
+        if ($ratio <= $triggerPriceRatio)
+        {
+            throw new \LogicException('Trigger price ratio can not be less than or equal to the stop price percent.');
+        }
 
-            if ($this->isBuy())
-            {
-                $this->stop_price = $price - $price * $percent / 100;
-            }
-            else
-            {
-                $this->stop_price = $price + $price * $percent / 100;
-            }
+        $this->fillJsonAttribute('order_type_config->trigger_price_ratio', $triggerPriceRatio);
+
+        $this->stop_price = $this->isBuy()
+            ? $price - $price * abs($ratio)
+            : $price + $price * abs($ratio);
     }
 
-    public function setTargetPrice(float $percent): void
+    public function setTargetPrice(float $ratio): void
     {
+        if (!$ratio)
+        {
+            throw new \LogicException('Invalid ratio.');
+        }
+
         $price = $this->assertPrice();
 
-        if ($this->isBuy())
-        {
-            $this->target_price = $price + $price * $percent / 100;
-        }
-        else
-        {
-            $this->target_price = $price - $price * $percent / 100;
-        }
+        $this->target_price = $this->isBuy()
+            ? $price + $price * abs($ratio)
+            : $price - $price * abs($ratio);
     }
 
     public function setSide(Side $side): void

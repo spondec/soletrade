@@ -4,6 +4,7 @@ namespace Models;
 
 use App\Models\TradeSetup;
 use App\Trade\Side;
+use App\Trade\Trader;
 use PHPUnit\Framework\TestCase;
 
 class TradeSetupTest extends TestCase
@@ -39,5 +40,29 @@ class TradeSetupTest extends TestCase
 
         $tradeSetup->side = 'SELL';
         $this->assertEquals(false, $tradeSetup->isBuy());
+    }
+
+    public function test_set_stop_price()
+    {
+        $trade = new TradeSetup();
+        $trade->price = 1000;
+        $trade->side = Side::BUY->value;
+
+        $trade->setStopPrice(0.001, 0.0005);
+        $this->assertEquals(999, $trade->stop_price);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Trigger price ratio can not be less than or equal to the stop price percent');
+        $trade->setStopPrice(0.001, 0.001);
+    }
+
+    public function test_set_target_price()
+    {
+        $trade = new TradeSetup();
+        $trade->price = 1000;
+        $trade->side = Side::BUY->value;
+
+        $trade->setTargetPrice(0.05);
+        $this->assertEquals(1050, $trade->target_price);
     }
 }

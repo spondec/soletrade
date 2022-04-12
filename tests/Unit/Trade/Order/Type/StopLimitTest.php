@@ -17,7 +17,7 @@ class StopLimitTest extends HandlerTestCase
     public function test_order_reduce_only_false(): void
     {
         /** @var MockInterface $manager */
-        $handler = $this->getHandler(StopLimit::class, $pos, $manager, ['stop_price_ratio' => 0.001]);
+        $handler = $this->getHandler(StopLimit::class, $pos, $manager, ['trigger_price_ratio' => 0.001]);
 
         $manager->shouldReceive('stopLimit')
             ->once()
@@ -30,7 +30,7 @@ class StopLimitTest extends HandlerTestCase
     public function test_order_reduce_only_true(): void
     {
         /** @var MockInterface $manager */
-        $handler = $this->getHandler(StopLimit::class, $side, $manager, ['stop_price_ratio' => 0.001]);
+        $handler = $this->getHandler(StopLimit::class, $side, $manager, ['trigger_price_ratio' => 0.001]);
 
         $manager->shouldReceive('stopLimit')
             ->once()

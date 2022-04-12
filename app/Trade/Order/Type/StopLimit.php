@@ -10,12 +10,12 @@ use App\Trade\Side;
 
 class StopLimit extends Handler
 {
-    public const DEFAULT_STOP_PRICE_RATIO = 0.001;
+    public const DEFAULT_TRIGGER_PRICE_RATIO = 0.001;
 
     protected function getDefaultConfig(): array
     {
         return [
-            'stop_price_ratio' => static::DEFAULT_STOP_PRICE_RATIO,
+            'trigger_price_ratio' => static::DEFAULT_TRIGGER_PRICE_RATIO,
         ];
     }
 
@@ -29,7 +29,7 @@ class StopLimit extends Handler
         $side = $this->getSide($reduceOnly);
 
         return $this->manager->stopLimit($side,
-            $this->getStopPrice($side, $price, $this->config('stop_price_ratio', true)),
+            $this->getStopPrice($side, $price, $this->config('trigger_price_ratio', true)),
             $price,
             $quantity,
             $reduceOnly);
