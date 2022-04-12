@@ -28,9 +28,12 @@ final class Log
         return static::$errors;
     }
 
-    public static function info(string $message)
+    public static function info(string|\Closure $message)
     {
-        Logger::info(ExecTimeMiddleware::getSessionPrefix() . $message);
+        if (class_exists(\App::class))//to prevent errors in unit tests
+        {
+            Logger::info(ExecTimeMiddleware::getSessionPrefix() . $message instanceof \Closure ? $message() : $message);
+        }
     }
 
     public static function execTimeStart(string $taskName): void
