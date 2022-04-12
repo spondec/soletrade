@@ -2,6 +2,7 @@
 
 namespace App\Trade\Exchange\FTX;
 
+use App\Exceptions\OrderFilledInCancelRequest;
 use App\Exceptions\OrderNotCanceledException;
 use App\Models\Fill;
 use App\Models\Order;
@@ -11,6 +12,7 @@ use App\Trade\Enum;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Log;
 use App\Trade\Process\RecoverableRequest;
+use ccxt\InvalidOrder;
 
 class Orderer extends \App\Trade\Exchange\Orderer
 {
@@ -32,9 +34,25 @@ class Orderer extends \App\Trade\Exchange\Orderer
     {
         $parsedType = $this->parseOrderType($order->type);
 
-        $response = $this->isConditional($order)
-            ? $this->sendConditionalOrderCancelRequest($order, $parsedType)
-            : $this->sendOrderCancelRequest($order);
+        try
+        {
+            $response = $this->isConditional($order)
+                ? $this->sendConditionalOrderCancelRequest($order, $parsedType)
+                : $this->sendOrderCancelRequest($order);
+        } catch (InvalidOrder $e)
+        {
+            if (str_contains($e->getMessage(), 'Order already closed'))
+            {
+                $this->sync($order); //to register fills
+
+                if ($order->filled)
+                {
+                    throw new OrderFilledInCancelRequest($e->getMessage());
+                }
+            }
+
+            throw $e;
+        }
 
         if ($response === 'Order cancelled')
         {
@@ -153,13 +171,14 @@ class Orderer extends \App\Trade\Exchange\Orderer
     private function handleOrderQueuedForCancellation(Order $order): array
     {
         return RecoverableRequest::new(function () use ($order) {
+
+            $response = $this->executeOrderUpdate($order);
+            $this->processOrderDetails($order, $response);
+
             if ($order->isOpen())
             {
                 throw new OrderNotCanceledException("Order queued for cancellation but unable to cancel. Order ID: " . $order->id);
             }
-
-            $response = $this->executeOrderUpdate($order);
-            $this->processOrderDetails($order, $response);
 
             return $response;
         }, handle: [OrderNotCanceledException::class])->run();
@@ -252,15 +271,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
 
         if ($order->type === OrderType::STOP_LIMIT)
         {
-            $isTriggered = $response['info']['status'] === 'triggered';
-
-            if (!$isTriggered)
-            {
-                Log::info('Order not triggered, skipping fills');
-                Log::info(json_encode($response));
-            }
-
-            return $isTriggered;
+            return $response['info']['status'] === 'triggered';
         }
 
         throw new \LogicException('Unhandled conditional order type: ' . Enum::case($order->type));
