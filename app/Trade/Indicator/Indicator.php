@@ -376,6 +376,7 @@ abstract class Indicator implements Binder
 
             if ($newSignal)
             {
+                $newSignal->price ??= $this->candle()->c;
                 $newSignal->timestamp = $openTime;
                 $newSignal->price_date = $priceDate;
                 $newSignal->is_confirmed = $nextOpenTime || ($lastCandle && $lastCandle->t > $openTime);//the candle is closed
