@@ -52,12 +52,11 @@ class TradeCollection extends Collection
     protected function findNextTrade(TradeSetup $trade): ?TradeSetup
     {
         $timestamp = $trade->timestamp;
-
         $iterator = $this->getIterator();
 
         while ($iterator->valid())
         {
-            if ($iterator->key() == $timestamp)
+            if ($iterator->current()->timestamp == $timestamp)
             {
                 $iterator->next();
                 return $iterator->current();
