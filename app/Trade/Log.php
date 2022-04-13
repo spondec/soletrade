@@ -5,30 +5,30 @@ declare(strict_types=1);
 namespace App\Trade;
 
 use App\Http\Middleware\ExecTimeMiddleware;
-use Illuminate\Support\Facades\Log as Logger;
+use Log as Logger;
 
 final class Log
 {
     /**
      * @var \Throwable[]
      */
-    protected static $errors = [];
+    protected static array $errors = [];
 
     /** @var string[] */
     protected static array $tasks = [];
 
-    public static function error(\Throwable $e)
+    public static function error(\Throwable $e): void
     {
-        \Log::error($e);
-        static::$errors[] = $e;
+        Logger::error($e);
+        self::$errors[] = $e;
     }
 
     public static function getErrors(): array
     {
-        return static::$errors;
+        return self::$errors;
     }
 
-    public static function info(string|\Closure $message)
+    public static function info(string|\Closure $message): void
     {
         if (class_exists(\App::class))//to prevent errors in unit tests
         {
@@ -38,27 +38,27 @@ final class Log
 
     public static function execTimeStart(string $taskName): void
     {
-        if (\in_array($taskName, static::$tasks))
+        if (\in_array($taskName, self::$tasks))
         {
             throw new \LogicException("Task $taskName is already started.");
         }
 
-        static::$tasks[(string)\microtime(true)] = $taskName;
-        static::info(\sprintf('Started: %s', $taskName));
+        self::$tasks[(string)\microtime(true)] = $taskName;
+        self::info(\sprintf('Started: %s', $taskName));
     }
 
-    public static function execTimeFinish(string $taskName)
+    public static function execTimeFinish(string $taskName): void
     {
-        if (!$time = \array_search($taskName, static::$tasks))
+        if (!$time = \array_search($taskName, self::$tasks))
         {
             throw new \LogicException("$taskName is not started, therefore can not be finished.");
         }
 
         $execTime = \microtime(true) - (float)$time;
 
-        static::info(\sprintf('Finished in %s seconds: %s',
-            \round($execTime, 2), static::$tasks[$time]));
+        self::info(\sprintf('Finished in %s seconds: %s',
+            \round($execTime, 2), self::$tasks[$time]));
 
-        unset(static::$tasks[$time]);
+        unset(self::$tasks[$time]);
     }
 }
