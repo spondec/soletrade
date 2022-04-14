@@ -33,4 +33,11 @@ class Runner extends Model
         $this->expire_date += $seconds;
         return $this;
     }
+
+    public static function purgeExpired(): void
+    {
+        \DB::table('runners')
+            ->where('expire_date', '<=', time())
+            ->delete();
+    }
 }
