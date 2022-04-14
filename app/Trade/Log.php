@@ -30,9 +30,9 @@ final class Log
 
     public static function info(string|\Closure $message): void
     {
-        if (class_exists(\App::class))//to prevent errors in unit tests
+        if (self::canLog())
         {
-            Logger::info(ExecTimeMiddleware::getSessionPrefix() . $message instanceof \Closure ? $message() : $message);
+            Logger::info(ExecTimeMiddleware::getSessionPrefix() . ($message instanceof \Closure ? $message() : $message));
         }
     }
 
@@ -60,5 +60,11 @@ final class Log
             \round($execTime, 2), self::$tasks[$time]));
 
         unset(self::$tasks[$time]);
+    }
+
+    protected static function canLog(): bool
+    {
+        //does not log in tests to prevent unexpected mock call errors
+        return !defined('PHPUNIT_COMPOSER_INSTALL') && !defined('__PHPUNIT_PHAR__');
     }
 }
