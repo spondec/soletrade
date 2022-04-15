@@ -117,13 +117,22 @@ class OrderTest extends TestCase
     public function test_log_response(): void
     {
         $order = $this->makeOrder();
-        $order->logResponse('test', $data = ['Response' => 'data']);
 
+        $order->logResponse('test', $data = ['test' => 'data']);
         $responses = $order->responses;
-
-        $order->save();
         $this->assertCount(1, end($responses));
         $this->assertEquals($data, end($responses)[0]);
+
+        $order->logResponse('test', ['test' => 'data']);
+        $responses = $order->responses;
+        $this->assertCount(1, end($responses));
+
+        $order->logResponse('test', $data = ['test' => 'data_changed']);
+        $responses = $order->responses;
+        $this->assertCount(2, end($responses));
+        $this->assertEquals($data, end($responses)[1]);
+
+        $order->save();
     }
 
     public function test_fills(): void

@@ -129,7 +129,7 @@ class Order extends Model
         ];
     }
 
-    public static function newFill(Fill $fill)
+    public static function newFill(Fill $fill): void
     {
         static::$fills[$fill->order_id][$fill->id] = $fill;
 
@@ -174,22 +174,16 @@ class Order extends Model
             ->avgPrice;
     }
 
-    public function setAttribute($key, $value)
-    {
-        parent::setAttribute($key, $value);
-    }
-
     public function logResponse(string $key, array $data): void
     {
         $responses = $this->responses ?? [];
 
-        $lastKey = \array_key_last($responses);
-
-        if ($lastKey === null || ($key !== $lastKey && $data !== $responses[$lastKey]))
+        if (!isset($responses[$key]) || end($responses[$key]) != $data)
         {
             $responses[$key][] = $data;
-            $this->responses = $responses;
         }
+
+        $this->responses = $responses;
     }
 
     public function exchange(): BelongsTo
