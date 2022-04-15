@@ -20,6 +20,8 @@ class CandleUpdater
      */
     protected array $symbols;
 
+    static bool $isShutdownCallbackRegistered = false;
+
     public function __construct(protected Exchange $exchange)
     {
         $this->symbolRepo = App::make(SymbolRepository::class);
@@ -29,6 +31,15 @@ class CandleUpdater
         $this->symbols = $fetch->symbols();
         $this->map = $fetch->candleMap();
         $this->limit = $fetch->getMaxCandlesPerRequest();
+
+        if (!static::$isShutdownCallbackRegistered)
+        {
+            on_shutdown(static function () {
+                //shutdowns may interrupt unlock query
+                DB::unprepared('UNLOCK TABLES');
+            });
+            static::$isShutdownCallbackRegistered = true;
+        }
     }
 
     /**
