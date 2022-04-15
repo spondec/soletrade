@@ -28,7 +28,6 @@ class Position
 
     protected ChangeLog $transactionLog;
 
-    protected float $multiplier = 1;
     protected float $amount = 0;
 
     protected float $pnl = 0;
@@ -168,11 +167,6 @@ class Position
     public function getExitPrice(): float
     {
         return $this->exitPrice;
-    }
-
-    public function setMultiplier(float $multiplier): void
-    {
-        $this->multiplier = $multiplier;
     }
 
     public function exitTime(): ?int
