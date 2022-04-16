@@ -53,10 +53,6 @@ class LiveTradeLoop extends TradeLoop
         {
             $this->order->sync($this->order->entry);
         }
-        else
-        {
-            Log::info('Entry order is filled, nothing to do...');
-        }
     }
 
     protected function sendEntryOrder(Price $price): Order
