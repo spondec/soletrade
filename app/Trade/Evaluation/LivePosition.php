@@ -10,6 +10,7 @@ use App\Trade\Log;
 use App\Trade\OrderManager;
 use App\Trade\Side;
 use App\Trade\TradeAsset;
+use Illuminate\Support\Collection;
 
 class LivePosition extends Position
 {
@@ -51,6 +52,14 @@ class LivePosition extends Position
             $exit,
             $stop);
         $this->registerPriceChangeListeners();
+    }
+
+    /**
+     * @return Collection<Order>
+     */
+    public function getOrders(): Collection
+    {
+        return $this->manager->orders();
     }
 
     protected function registerPriceChangeListeners(): void
