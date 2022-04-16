@@ -30,8 +30,9 @@ class LivePosition extends Position
                                 protected OrderManager $manager,
                                 Fill                   $fill)
     {
+        $this->entryPrice = $entry->get();
 
-        if ($entry->get() != $fill->price)
+        if ($this->entryPrice != $fill->price)
         {
             throw new \LogicException('Fill price does not match entry price.');
         }
@@ -261,9 +262,16 @@ class LivePosition extends Position
         }
     }
 
+    protected float $entryPrice;
+
+    public function getEntryPrice(): float
+    {
+        return $this->entryPrice;
+    }
+
     public function processEntryOrderFill(Fill $fill): void
     {
-        parent::increaseSize($this->proportional($fill->quantity * $this->getBreakEvenPrice()),
+        parent::increaseSize($this->proportional($fill->quantity * ($this->entryPrice = $this->getBreakEvenPrice())),
             $fill->price,
             $fill->timestamp,
             'Entry order fill.');
