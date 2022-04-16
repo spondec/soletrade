@@ -81,13 +81,28 @@ class LiveTradeLoop extends TradeLoop
 
     protected function tryPositionExit(Position $position, \stdClass $candle, int $priceDate): void
     {
+        $isEntryFilled = $this->order->entry->isAllFilled();
+
         if (!$this->order->exit && $this->status->getTargetPrice())
         {
+            if (!$isEntryFilled)
+            {
+                Log::info("Entry order not filled fully, cannot send exit order.");
+                return;
+            }
+
+            Log::info('Sending target order...');
             $this->live()->sendExitOrder(OrderType::LIMIT);
         }
 
         if (!$this->order->stop && $this->status->getStopPrice())
         {
+            if (!$isEntryFilled)
+            {
+                Log::info("Entry order not filled fully, cannot send stop order.");
+                return;
+            }
+
             Log::info('Sending stop order...');
             $this->live()->sendStopOrder(OrderType::STOP_LIMIT);
         }
