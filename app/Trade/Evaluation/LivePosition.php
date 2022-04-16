@@ -128,11 +128,7 @@ class LivePosition extends Position
     public function sendExitOrder(?OrderType $orderType = null): Order
     {
         $this->assertExitOrderNotSent();
-
-        if (!$this->exit)
-        {
-            throw new \LogicException('Exit price was not set.');
-        }
+        $this->assertExitPriceSet();
 
         $price = $this->exit->get();
 
@@ -236,11 +232,7 @@ class LivePosition extends Position
     public function sendStopOrder(?OrderType $orderType = null): Order
     {
         $this->assertStopOrderNotSent();
-
-        if (!$this->stop)
-        {
-            throw new \LogicException('Stop price was not set.');
-        }
+        $this->assertStopPriceSet();
 
         $price = $this->stop->get();
 
@@ -377,5 +369,27 @@ class LivePosition extends Position
     protected function insertStopTransaction(int $exitTime): void
     {
         //all transactions depend on order fills, emit any other transaction
+    }
+
+    /**
+     * @return void
+     */
+    protected function assertStopPriceSet(): void
+    {
+        if (!$this->stop)
+        {
+            throw new \LogicException('Stop price was not set.');
+        }
+    }
+
+    /**
+     * @return void
+     */
+    protected function assertExitPriceSet(): void
+    {
+        if (!$this->exit)
+        {
+            throw new \LogicException('Exit price was not set.');
+        }
     }
 }
