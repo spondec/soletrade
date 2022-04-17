@@ -60,6 +60,15 @@ abstract class Handler
         return null;
     }
 
+    /**
+     *
+     * Return true if the action is taken.
+     *
+     * @param \stdClass $candle
+     * @param int       $priceDate
+     *
+     * @return bool
+     */
     abstract protected function performAction(\stdClass $candle, int $priceDate): bool;
 
     protected function applyLocks(): void
