@@ -17,6 +17,7 @@ use Illuminate\Validation\Rules\Enum;
 /**
  * @property int         id
  * @property int         exchange_id
+ * @property int         position_id
  * @property bool        reduce_only
  * @property string      symbol
  * @property Side        side

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use App\Illuminate\Database\Schema\Blueprint;
 use App\Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
@@ -15,6 +15,7 @@ return new class extends Migration {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('exchange_id')->constrained();
+            $table->foreignId('position_id')->nullable()->constrained();
             $table->boolean('reduce_only');
             $table->enum('status', \App\Trade\Enum::cases(\App\Models\OrderStatus::class));
             $table->string('symbol', 50);
