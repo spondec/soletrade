@@ -28,6 +28,7 @@ class OrderManager
 
     public function syncAll(): void
     {
+        Log::info(fn() => 'Syncing all open orders');
         foreach ($this->orders as $order)
         {
             if ($order->isOpen())
@@ -39,6 +40,7 @@ class OrderManager
 
     public function cancelAll(): void
     {
+        Log::info(fn() => 'Cancelling all orders');
         foreach ($this->orders as $order)
         {
             $this->cancel($order);
@@ -65,6 +67,7 @@ class OrderManager
      */
     public function sync(Order $order): array
     {
+        Log::info(fn() => "Syncing order #{$order->id}");
         return $this->order()->sync($order);
     }
 
@@ -88,6 +91,7 @@ class OrderManager
         {
             return $order;
         }
+        Log::info(fn() => "Cancelling order {$order->id}");
 
         return $this->order()->cancel($order);
     }
@@ -100,6 +104,7 @@ class OrderManager
 
     protected function new(Order $order): Order
     {
+        Log::info(fn() => "New placed order {$order->id}");
         $this->registerOrderListeners($order);
 
         return $this->orders[] = $order;
@@ -161,6 +166,7 @@ class OrderManager
 
     public function __destruct()
     {
+        Log::info(fn() => 'Destroying manager');
         foreach ($this->orders as $order)
         {
             if (!$order->isOpen())
