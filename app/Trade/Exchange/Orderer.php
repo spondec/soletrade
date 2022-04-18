@@ -2,6 +2,7 @@
 
 namespace App\Trade\Exchange;
 
+use App\Exceptions\FailedOrderFillException;
 use App\Models\Fill;
 use App\Models\Order;
 use App\Models\OrderType;
@@ -44,12 +45,12 @@ abstract class Orderer implements \App\Trade\Contracts\Exchange\Orderer
         {
             if (!$fills->count())
             {
-                throw new \LogicException('Failed to process order fills.');
+                throw new FailedOrderFillException('Failed to process order fills.');
             }
 
             if ($filled != $fills->sum('quantity'))
             {
-                throw new \UnexpectedValueException('Filled quantity does not match.');
+                throw new FailedOrderFillException('Filled quantity does not match.');
             }
         }
 
