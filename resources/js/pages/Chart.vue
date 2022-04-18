@@ -192,13 +192,13 @@ export default {
 
     this.strategies = data.strategies;
     this.exchanges = data.exchanges;
-    this.indicators = data.indicators;
+    this.indicators = Object.keys(this.indicatorHandlers);
     this.symbols = data.symbols;
     this.intervals = data.intervals;
 
     this.sel.exchange = data.exchanges[0];
     this.sel.symbol = 'BTC/USDT';
-    this.sel.interval = '1h';
+    this.sel.interval = '1d';
 
     this.indicatorManager = new IndicatorManager(this.indicatorHandlers);
   },
