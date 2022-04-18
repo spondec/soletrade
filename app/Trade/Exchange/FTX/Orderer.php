@@ -2,6 +2,7 @@
 
 namespace App\Trade\Exchange\FTX;
 
+use App\Exceptions\FailedOrderFillException;
 use App\Exceptions\OrderFilledInCancelRequest;
 use App\Exceptions\OrderNotCanceledException;
 use App\Models\Fill;
@@ -10,7 +11,6 @@ use App\Models\OrderStatus;
 use App\Models\OrderType;
 use App\Trade\Enum;
 use App\Trade\Exchange\Exchange;
-use App\Trade\Log;
 use App\Trade\Process\RecoverableRequest;
 use ccxt\InvalidOrder;
 
@@ -299,18 +299,22 @@ class Orderer extends \App\Trade\Exchange\Orderer
             fn() => $this->api->fetch_order_trades($match['id'] ?? $order->exchange_order_id)
         )->run();
 
+        $order->logResponse('fills', $trades);
+
+        $filled = 0;
         foreach ($trades as $fill)
         {
             $fills[] = $new = new Fill();
 
             $new->timestamp = $fill['timestamp'];
             $new->price = $fill['price'];
-            $new->quantity = $fill['amount'];
+            $filled += $new->quantity = $fill['amount'];
             $new->commission = $fill['fee']['cost'];
             $new->commission_asset = $fill['fee']['currency'];
             $new->trade_id = $fill['id'];
         }
 
+        $order->filled = $filled;
         return $fills;
     }
 
