@@ -24,8 +24,6 @@ class Symbol extends Model
 {
     use HasExchange, HasFactory;
 
-    public const INDICATOR_DIR = "\App\Trade\Indicator";
-
     protected $table = 'symbols';
 
     /** @var Indicator[] */
@@ -110,14 +108,9 @@ class Symbol extends Model
     {
         return $this->indicators[$name] ??
             throw new \LogicException(
-                $this->indicatorExists($name) ?
+                indicator_exists($name) ?
                     "$name hasn't been set for this instance." :
                     "$name doesn't exist as an indicator.");
-    }
-
-    protected function indicatorExists(string $name): bool
-    {
-        return \class_exists(static::INDICATOR_DIR . "\\" . $name);
     }
 
     public function lastPrice(): float
