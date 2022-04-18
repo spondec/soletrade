@@ -1,0 +1,8 @@
+ {{ indicator }}::class => [
+
+                'config' => {{ config }},
+                'signal' => function (Signal $signal, {{ indicator }} $indicator, mixed $value): ?Signal {
+
+                    return null;
+                }
+            ]
