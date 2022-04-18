@@ -107,6 +107,7 @@ class Order extends Model
             throw new \LogicException('Cannot flush listeners for an open order.');
         }
 
+        Log::info('Flushing listeners for order #' . $this->id);
         unset(static::$fillListeners[$this->id]);
         unset(static::$fills[$this->id]);
         unset(static::$cancelListeners[$this->id]);
@@ -138,11 +139,9 @@ class Order extends Model
         {
             $callback($fill);
         }
-    }
 
-    public static function hasListener(Fill $fill): bool
-    {
-        return !empty(static::$fillListeners[$fill->order_id]);
+        Log::info(count(static::$fills[$fill->order_id]) . ' fills for order ' . $fill->order_id);
+        Log::info(count(static::$fills) . ' total fills');
     }
 
     public function isAllFilled(): bool
@@ -202,5 +201,8 @@ class Order extends Model
             //happens with immediate order fills
             $callback($fill);
         }
+
+        Log::info(count(static::$fillListeners[$this->id]) . ' fill listeners registered for order ' . $this->id);
+        Log::info(count(static::$fillListeners) . ' total fill listeners registered');
     }
 }
