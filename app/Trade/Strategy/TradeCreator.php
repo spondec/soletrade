@@ -194,6 +194,6 @@ class TradeCreator
 
     protected function runCallback(Candles $candles): ?TradeSetup
     {
-        return ($this->config->callback)(trade: $this->trade, candles: $candles, signals: collect($this->signals));
+        return ($this->config->setup)(trade: $this->trade, candles: $candles, signals: collect($this->signals));
     }
 }
