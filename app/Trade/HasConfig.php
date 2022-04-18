@@ -66,8 +66,13 @@ trait HasConfig
         }
     }
 
-    public function config(string $key, bool $assertNotEmpty = false): mixed
+    public function config(?string $key = null, bool $assertNotEmpty = false): mixed
     {
+        if ($key === null)
+        {
+            return $this->config;
+        }
+
         $keys = \explode('.', $key);
         $value = &$this->config;
 
