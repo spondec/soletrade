@@ -1,16 +1,17 @@
 <?php
 
-namespace App\Trade\Indicator;
+namespace App\Indicators;
 
 use App\Trade\Collection\CandleCollection;
+use App\Trade\Indicator\Indicator;
 
-class EMA extends Indicator
+class SMA extends Indicator
 {
     protected array $config = ['timePeriod' => 8];
 
     protected function calculate(CandleCollection $candles): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        return ($ema = \trader_ema($candles->closes(), $this->config['timePeriod'])) ? $ema : [];
+        return ($sma = \trader_sma($candles->closes(), $this->config['timePeriod'])) ? $sma : [];
     }
 }

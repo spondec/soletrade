@@ -1,9 +1,9 @@
 <?php
 
-namespace Tests\Feature\Trade\Indicator;
+namespace Tests\Feature\Indicators;
 
+use App\Indicators\ATR;
 use App\Repositories\SymbolRepository;
-use App\Trade\Indicator\ATR;
 
 class ATRTest extends IndicatorTestCase
 {

@@ -1,9 +1,9 @@
 <?php
 
-namespace Tests\Feature\Trade\Indicator;
+namespace Tests\Feature\Indicators;
 
+use App\Indicators\SMA;
 use App\Repositories\SymbolRepository;
-use App\Trade\Indicator\SMA;
 
 class SMATest extends IndicatorTestCase
 {

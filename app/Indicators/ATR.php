@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Trade\Indicator;
+namespace App\Indicators;
 
 use App\Trade\Collection\CandleCollection;
+use App\Trade\Indicator\Indicator;
 
 class ATR extends Indicator
 {

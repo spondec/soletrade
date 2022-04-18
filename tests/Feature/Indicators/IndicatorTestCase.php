@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Trade\Indicator;
+namespace Tests\Feature\Indicators;
 
 use App\Models\Candle;
 use App\Models\Symbol;
