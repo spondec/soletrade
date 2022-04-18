@@ -138,7 +138,13 @@ class TradeRunner extends Command
         $asset = $args['asset'];
         $leverage = $args['leverage'] ?? null;
 
-        $strategy = Strategy::from($args['strategy']);
+        if (!strategy_exists($args['strategy']))
+        {
+            $this->error('Strategy not found.');
+            exit(1);
+        }
+
+        $strategy = new (get_strategy_class($args['strategy']))();
         $exchange = Exchange::from($args['exchange']);
         $symbol = $this->symbolRepo->fetchSymbol($exchange, $args['symbol'], $args['interval']);
 
