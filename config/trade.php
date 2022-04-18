@@ -15,19 +15,6 @@ return [
         ]
     ],
 
-    'indicators' => [
-        \App\Trade\Indicator\RSI::class,
-        \App\Trade\Indicator\MACD::class,
-        \App\Trade\Indicator\Fib::class,
-        \App\Trade\Indicator\ATR::class,
-        \App\Trade\Indicator\SMA::class,
-        \App\Trade\Indicator\EMA::class
-    ],
-
-    'strategies' => [
-        \App\Trade\Strategy\RSICross::class
-    ],
-
     'telegram' => [
         'token'    => env('TELEGRAM_BOT_TOKEN'),
         'name'     => env('TELEGRAM_BOT_NAME'),

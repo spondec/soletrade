@@ -35,8 +35,8 @@ class ConfigRepository extends Repository
         $this->config = Config::get('trade');
 
         $this->options = $this->config['options'];
-        $this->indicators = $this->config['indicators'];
-        $this->strategies = $this->config['strategies'];
+        $this->indicators = get_indicators();
+        $this->strategies = get_strategies();
 
         $this->exchanges = $this->getExchanges();
         $this->symbols = $this->getSymbols();
