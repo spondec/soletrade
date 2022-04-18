@@ -145,7 +145,7 @@ class TradeSetup extends Model implements Bindable
             throw new \LogicException('Trigger price ratio can not be less than or equal to the stop price percent.');
         }
 
-        $this->fillJsonAttribute('order_type_config->trigger_price_ratio', $triggerPriceRatio);
+        $this->fillJsonAttribute('order_type_config->' . OrderType::STOP_LIMIT->value . '->trigger_price_ratio', $triggerPriceRatio);
 
         $this->stop_price = $this->isBuy()
             ? $price - $price * abs($ratio)
