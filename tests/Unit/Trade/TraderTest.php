@@ -119,7 +119,6 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $strategy->shouldReceive('config')->once()->with('evaluation.loop');
 
         \Closure::bind(function () use ($trade) {
-            /** @noinspection PhpUndefinedFieldInspection */
             return $this->runner->start_date = $trade->price_date - 1;
         }, $trader, $trader)();
 
@@ -167,18 +166,18 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $entry = m::mock('alias:' . TradeSetup::class);
         $entry->price_date = $entry->timestamp = time();
         $entry->id = 1;
-        $entry->shouldReceive('isBuy')->times(2)->andReturn(true);
+        $entry->shouldReceive('isBuy')->andReturn(true);
 
         $exit = m::mock('alias:' . TradeSetup::class);
         $exit->price_date = $exit->timestamp = $entry->price_date + 1;
         $exit->id = 1;
-        $exit->shouldReceive('isBuy')->times(2)->andReturn(false);
+        $exit->shouldReceive('isBuy')->andReturn(false);
 
         $status->shouldReceive('isEntered')->once()->andReturn(true);
         $loop->shouldReceive('setExitTrade')->once()->with($exit);
+        $loop->shouldReceive('hasExitTrade')->once()->andReturn(true);
 
         \Closure::bind(function () use ($entry, $loop) {
-            /** @noinspection PhpUndefinedFieldInspection */
             $this->runner->start_date = $entry->price_date - 1;
             $this->loop = $loop;
             /** @noinspection PhpReadonlyPropertyWrittenOutsideDeclarationScopeInspection */
@@ -198,6 +197,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
 
         \Closure::bind(function () {
             $this->loop = m::mock('alias:' . LiveTradeLoop::class);
+            /** @noinspection PhpReadonlyPropertyWrittenOutsideDeclarationScopeInspection */
             $this->loop->order = m::mock('alias:' . OrderManager::class);
             $this->loop->order->shouldReceive('cancelAll')->once();
             $this->loop->order->shouldReceive('syncAll')->times(2);

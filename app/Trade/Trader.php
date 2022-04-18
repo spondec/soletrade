@@ -7,7 +7,7 @@ use App\Models\Runner;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Contracts\Exchange\HasLeverage;
-use App\Trade\Evaluation\Position;
+use App\Trade\Evaluation\LivePosition;
 use App\Trade\Evaluation\TradeStatus;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Process\RecoverableRequest;
@@ -98,8 +98,14 @@ class Trader
 
         /** @var TradeSetup $lastTrade */
         $lastTrade = ($trades = $this->strategy->run($this->symbol))->last();
+        Log::info(fn() => "Total trades: {$trades->count()}");
 
-        if ($lastTrade && $lastTrade->price_date > $this->runner->start_date)
+        if ($trades->first())
+            Log::info(fn() => "First trade: {$trades->first()->id}");
+        if ($lastTrade)
+            Log::info(fn() => "Last trade #{$lastTrade->id}");
+
+        if ($lastTrade && Calc::asMs($lastTrade->price_date) > Calc::asMs($this->runner->start_date))
         {
             if (!$this->loop)
             {
@@ -107,17 +113,21 @@ class Trader
             }
             else if ($lastTrade->id == $trades->getNextTrade($this->loop->entry)?->id)
             {
+                Log::info(fn() => 'New trade detected. #' . $lastTrade->id);
                 if (!$this->loop->status()->isEntered())
                 {
+                    Log::info(fn() => "Entry failed, ending trade. #{$lastTrade->id}");
                     $this->endLoop();
                     $this->initNewLoop($lastTrade);
                 }
-                else if ($this->loop->entry->isBuy() != $lastTrade->isBuy())
+                else if (!$this->loop->hasExitTrade() && $this->loop->entry->isBuy() != $lastTrade->isBuy())
                 {
+                    Log::info(fn() => "Setting exit trade #{$lastTrade->id}");
                     $this->loop->setExitTrade($lastTrade);
                 }
             }
 
+            Log::info("Running loop...");
             $this?->loop->run();
         }
 
@@ -126,7 +136,7 @@ class Trader
 
     protected function initNewLoop(TradeSetup $trade): void
     {
-        Log::info('New trade loop initiated.');
+        Log::info(fn() => "Initializing new loop. #{$trade->id}");
         $orderManager = new OrderManager($this->exchange,
             $this->symbol,
             $this->tradeAsset,
@@ -147,33 +157,40 @@ class Trader
         });
     }
 
+    private bool $isEndingLoop = false;
+
     protected function endLoop(): void
     {
-        if (!$loop = $this->loop)
+        if ($this->isEndingLoop || !$this->loop)
         {
             return;
         }
+
+        $this->isEndingLoop = true;
+
         Log::info('Ending loop.');
 
-        $this->loop = null;
-        $loop->order->cancelAll();
-        $pos = $loop->status()->getPosition();
+        $this->loop->order->cancelAll();
+        $position = $this->loop->status()->getPosition();
 
-        if ($pos && $pos->isOpen())
+        if ($position && $position->isOpen())
         {
             Log::info('Force stopping position.');
-            $pos->stop(time());
+            $position->stop(time());
 
-            RecoverableRequest::new(static function () use ($pos, $loop) {
+            RecoverableRequest::new(function () use ($position) {
 
-                $loop->order->syncAll();
-                if ($pos->isOpen())
+                $this->loop->order->syncAll();
+                if ($position->isOpen())
                 {
                     throw new PositionExitFailed('Failed to stop position.');
                 }
 
             }, handle: [PositionExitFailed::class])->run();
         }
+
+        $this->isEndingLoop = false;
+        $this->loop = null;
     }
 
     protected function onShutdown(): void
@@ -183,7 +200,6 @@ class Trader
         if (!$called)
         {
             $called = true;
-//            \DB::unprepared('UNLOCK TABLES');
             try
             {
                 $this->endLoop();
@@ -200,14 +216,14 @@ class Trader
         }
     }
 
-    protected function onPositionExit(Position $position): void
+    protected function onPositionExit(LivePosition $position): void
     {
         $this->evaluate($position);
         $this->endLoop();
         $this->setStatus(Status::AWAITING_TRADE);
     }
 
-    protected function evaluate(Position $position): void
+    protected function evaluate(LivePosition $position): void
     {
         if ($position->isOpen())
         {
