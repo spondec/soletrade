@@ -28,7 +28,7 @@ class TradeLoop
     protected \stdClass $firstCandle;
     protected TradeStatus $status;
     protected ?int $timeout;
-    protected readonly TradeSetup $exit;
+    public readonly TradeSetup $exit;
     /**
      * Exit run sets the exit price of the trade and tries to exit once.
      *
@@ -100,6 +100,11 @@ class TradeLoop
         $this->exit = $exit;
     }
 
+    public function hasExitTrade(): bool
+    {
+        return isset($this->exit);
+    }
+
     protected function assertExitDateGreaterThanEntryDate(int $startDate, int $endDate): void
     {
         if ($endDate <= $startDate)
@@ -151,17 +156,7 @@ class TradeLoop
 
     protected function runLoop(Collection $candles): void
     {
-        if (!$first = $candles->first())
-        {
-            throw new \LogicException('Can not loop through an empty set.');
-        }
-
-        $evaluationSymbol = $this->evaluationSymbol;
-
-        if ($first->symbol_id != $evaluationSymbol->id)
-        {
-            throw new \InvalidArgumentException('Invalid candles provided.');
-        }
+        $this->assertPreLoopRequisites($candles);
 
         $iterator = $candles->getIterator();
 
@@ -182,14 +177,14 @@ class TradeLoop
 
             if (!$this->status->isEntered())
             {
-                $this->entry->loadBindingPrice($entry, 'price', $candle->t, $evaluationSymbol);
+                $this->entry->loadBindingPrice($entry, 'price', $candle->t, $this->evaluationSymbol);
                 $priceDate = $this->getPriceDate($candle, $nextCandle);
                 $this->tryPositionEntry($candle, $priceDate);
             }
             else if (!$this->status->isExited())
             {
-                $this->entry->loadBindingPrice($stop, 'stop_price', $candle->t, $evaluationSymbol);
-                $this->entry->loadBindingPrice($exit, 'target_price', $candle->t, $evaluationSymbol);
+                $this->entry->loadBindingPrice($stop, 'stop_price', $candle->t, $this->evaluationSymbol);
+                $this->entry->loadBindingPrice($exit, 'target_price', $candle->t, $this->evaluationSymbol);
 
                 $priceDate = $this->getPriceDate($candle, $nextCandle);
                 $position = $position ?? $this->getPosition();
@@ -322,11 +317,11 @@ class TradeLoop
 
         if ($position && $position->isOpen())
         {
-            $candle = $this->getLastCandle();
-            $priceDate = $this->getPriceDate($candle, null);
-
-            if ($this->config('closeOnExit') && isset($this->exit))
+            if ($this->config('closeOnExit') && $this->hasExitTrade() && !$position->price('exit'))
             {
+                $candle = $this->getLastCandle();
+                $priceDate = $this->getPriceDate($candle, null);
+
                 $this->status->setExitPrice((float)$this->exit->price, $priceDate);
                 $this->tryPositionExit($position, $candle, $priceDate);
             }
@@ -384,6 +379,19 @@ class TradeLoop
         if (!$this->timeoutDate && $this->timeout && $position = $this->getPosition())
         {
             $this->timeoutDate = $position->entryTime() + $this->timeout * 60 * 1000;
+        }
+    }
+
+    protected function assertPreLoopRequisites(Collection $candles): void
+    {
+        if (!$first = $candles->first())
+        {
+            throw new \LogicException('Can not loop through an empty set.');
+        }
+
+        if ($first->symbol_id != $this->evaluationSymbol->id)
+        {
+            throw new \InvalidArgumentException('Invalid candles provided.');
         }
     }
 }
