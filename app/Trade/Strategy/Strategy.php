@@ -52,16 +52,6 @@ abstract class Strategy
         return $this->evaluationSymbol;
     }
 
-    public static function from(string $nameOrClass, array $config = []): Strategy
-    {
-        if (class_exists($nameOrClass))
-        {
-            return new ($nameOrClass)($config);
-        }
-
-        return new ("App\Trade\Strategy\\$nameOrClass")($config);
-    }
-
     public function __construct(array $config = [])
     {
         $this->mergeConfig($config);
