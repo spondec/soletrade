@@ -10,35 +10,45 @@ namespace App\Trade\Indicator\Helpers;
  */
 trait CanCross
 {
+    /**
+     * Return true if x crosses over y.
+     *
+     * @param \Closure $x Takes indicator data as argument
+     * @param \Closure $y Takes indicator data as argument
+     *
+     * @return bool
+     */
     public function crossOver(\Closure $x, \Closure $y): bool
     {
-        if ($this->prev === null || $this->current === null)
+        $prev = $this->prev();
+        $current = $this->current();
+
+        if ($prev === null || $current === null)
         {
             return false;
         }
 
-        $prevX = $x($this->data[$this->prev]);
-        $prevY = $y($this->data[$this->prev]);
-
-        $currentX = $x($this->data[$this->current]);
-        $currentY = $y($this->data[$this->current]);
-
-        return $prevX < $prevY && $currentX > $currentY;
+        return $x($prev) < $y($prev) && $x($current) > $y($current);
     }
 
+    /**
+     * Return true if x crosses under y.
+     *
+     * @param \Closure $x Takes indicator data as argument
+     * @param \Closure $y Takes indicator data as argument
+     *
+     * @return bool
+     */
     public function crossUnder(\Closure $x, \Closure $y): bool
     {
-        if ($this->prev === null || $this->current === null)
+        $prev = $this->prev();
+        $current = $this->current();
+
+        if ($prev === null || $current === null)
         {
             return false;
         }
 
-        $prevX = $x($this->data[$this->prev]);
-        $prevY = $y($this->data[$this->prev]);
-
-        $currentX = $x($this->data[$this->current]);
-        $currentY = $y($this->data[$this->current]);
-
-        return $prevX > $prevY && $currentX < $currentY;
+        return $x($prev) > $y($prev) && $x($current) < $y($current);
     }
 }
