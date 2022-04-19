@@ -26,6 +26,11 @@ abstract class Exchange
 
     protected array $config;
 
+    public function hasApiAccess(): bool
+    {
+        return $this->apiKey && $this->secretKey;
+    }
+
     private function __construct()
     {
         /** @var ConfigRepository $repo */

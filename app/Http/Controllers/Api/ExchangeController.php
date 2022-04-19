@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Repositories\ConfigRepository;
 use App\Trade\Exchange\Exchange;
+use Illuminate\Support\Collection;
 
 class ExchangeController extends Controller
 {
@@ -12,9 +13,12 @@ class ExchangeController extends Controller
     {
     }
 
-    public function index(): array
+    public function index(): Collection
     {
-        return \array_map(static fn($v) => $v::instance()->info(), $this->configRepo->exchanges);
+        return collect($this->configRepo->exchanges)
+            ->map(fn(string|Exchange $e) => $e::instance())
+            ->filter(fn(Exchange $e) => $e->hasApiAccess())
+            ->map(fn(Exchange $e) => $e->info());
     }
 
     /**
@@ -27,7 +31,7 @@ class ExchangeController extends Controller
             return $exchange::instance()->fetch()->symbols();
         }
 
-        throw new \HttpException("Exchange $exchange doesn't exist.");
+        abort(404, "Exchange $exchange doesn't exist.");
     }
 
     public function balances(): array
@@ -38,13 +42,17 @@ class ExchangeController extends Controller
         {
             /** @var Exchange $exchange */
             $exchange = $exchange::instance();
-            $exchangeName = $exchange::name();
+
+            if (!$exchange->hasApiAccess())
+            {
+                continue;
+            }
 
             foreach ($exchange->fetch()->balance()->assets as $assetName => $asset)
             {
                 $balances[] = [
                     'name'      => $assetName,
-                    'exchange'  => $exchangeName,
+                    'exchange'  => $exchange::name(),
                     'available' => $asset->available(),
                     'total'     => $asset->total(),
                 ];
