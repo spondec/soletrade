@@ -18,10 +18,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
 Route::get('orders', [\App\Http\Controllers\Api\OrderController::class, 'index']);
 Route::get('exchanges', [\App\Http\Controllers\Api\ExchangeController::class, 'index']);
 Route::get('exchanges/balances', [\App\Http\Controllers\Api\ExchangeController::class, 'balances']);
 Route::get('exchanges/{exchange}/symbols', [\App\Http\Controllers\Api\ExchangeController::class, 'symbols']);
-Route::get('trades', [\App\Http\Controllers\Api\TradeController::class, 'index']);
 Route::get('chart', [\App\Http\Controllers\Api\ChartController::class, 'index']);
