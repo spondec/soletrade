@@ -29,12 +29,12 @@ export default class Chart
             height: 600,
 
             watermark: {
-                color: 'rgb(255,255,255)',
+                color: 'rgb(120,120,120)',
                 visible: true,
                 text: this.name,
-                fontSize: 12,
+                fontSize: 16,
                 horzAlign: 'left',
-                vertAlign: 'top',
+                vertAlign: 'bottom',
             },
 
             rightPriceScale: {
