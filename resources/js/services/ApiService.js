@@ -2,42 +2,51 @@ import axios from "axios";
 
 export default class ApiService
 {
-    static log = true;
-
-    static get(url, callback)
+    static async get(url)
     {
-        axios.get(url).then(response =>
+        return this.handle(await axios.get(url));
+    }
+
+    static setErrorHandler(callback)
+    {
+        axios.interceptors.response.use(response =>
         {
-            callback(response.data);
-        }).catch(error =>
+            return response;
+        }, error =>
         {
-            console.log(error);
+            callback(error);
         });
+    }
+
+    static handle(response)
+    {
+        if (response.status === 200)
+        {
+            console.log(response)
+            return response.data;
+        }
+
+        return {};
     }
 
     static async exchanges()
     {
-        return (await axios.get('api/exchanges')).data;
+        return await this.get('api/exchanges');
     }
 
     static async balances()
     {
-        return (await axios.get('api/exchanges/balances')).data;
-    }
-
-    static async trades()
-    {
-        return (await axios.get('api/trades')).data;
+        return await this.get('api/exchanges/balances');
     }
 
     static async chartData()
     {
-        return (await axios.get('api/chart')).data;
+        return await this.get('api/chart');
     }
 
     static async candles(exchange, symbol, interval, indicators, limit, strategy = null, range = {})
     {
-        return (await axios.get('api/chart', {
+        return await this.get('api/chart', {
             params: {
                 strategy: strategy,
                 symbol: symbol,
@@ -47,6 +56,6 @@ export default class ApiService
                 limit: limit,
                 range: range
             }
-        })).data;
+        });
     }
 }

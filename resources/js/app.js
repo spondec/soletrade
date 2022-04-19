@@ -15,6 +15,8 @@ const app = createApp({});
 import '../css/app.css'
 import Chart from "./pages/Chart";
 import Dashboard from "./pages/Dashboard";
+import ApiService from "./services/ApiService";
+import ErrorPage from "./pages/Error";
 
 /**
  * The following block of code may be used to automatically register your
@@ -39,7 +41,8 @@ app.component('card-table', require('./components/CardTable.vue').default);
 
 const routes = [
     {path: '/', component: Dashboard},
-    {path: '/chart', component: Chart}
+    {path: '/chart', component: Chart},
+    {path: '/error', component: ErrorPage},
 ];
 
 const router = VueRouter.createRouter({
@@ -47,6 +50,12 @@ const router = VueRouter.createRouter({
     history: VueRouter.createWebHashHistory(),
     routes, // short for `routes: routes`
 })
+
+ApiService.setErrorHandler((error) =>
+{
+    console.log(error);
+    router.push('/error');
+});
 
 app.use(router);
 app.mount('#app')
