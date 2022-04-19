@@ -22,16 +22,26 @@ export default class ApiService
     {
         if (response.status === 200)
         {
-            console.log(response)
+            // console.log(response)
             return response.data;
         }
 
-        return {};
+        return [];
+    }
+
+    static async recentTrades()
+    {
+        return await this.get("/api/trades/recent");
     }
 
     static async exchanges()
     {
         return await this.get('api/exchanges');
+    }
+
+    static async strategies()
+    {
+        return await this.get('api/strategies');
     }
 
     static async balances()
