@@ -23,3 +23,12 @@ Route::get('exchanges', [\App\Http\Controllers\Api\ExchangeController::class, 'i
 Route::get('exchanges/balances', [\App\Http\Controllers\Api\ExchangeController::class, 'balances']);
 Route::get('exchanges/{exchange}/symbols', [\App\Http\Controllers\Api\ExchangeController::class, 'symbols']);
 Route::get('chart', [\App\Http\Controllers\Api\ChartController::class, 'index']);
+Route::get('trades/recent', [\App\Http\Controllers\Api\TradeController::class, 'recent']);
+Route::get('strategies', function () {
+    $strategies = [];
+    foreach (get_strategies() as $name => $class)
+    {
+        $strategies[] = ['name' => $name];
+    }
+    return $strategies;
+});
