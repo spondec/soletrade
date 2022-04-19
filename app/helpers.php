@@ -14,7 +14,7 @@ if (!function_exists('array_merge_recursive_distinct'))
      *
      * @return array<int|string, mixed>
      */
-    function array_merge_recursive_distinct(array &$array1, array &$array2): array
+    function array_merge_recursive_distinct(array $array1, array &$array2): array
     {
         $merged = $array1;
         foreach ($array2 as $key => &$value)
@@ -35,10 +35,10 @@ if (!function_exists('array_merge_recursive_distinct'))
 
 if (!function_exists('recoverable'))
 {
-    function recoverable(\Closure $request,
-                         ?int     $retryInSeconds = null,
-                         ?int     $retryLimit = null,
-                         array    $handle = []): \App\Trade\Process\RecoverableRequest
+    function recoverable(Closure $request,
+                         ?int    $retryInSeconds = null,
+                         ?int    $retryLimit = null,
+                         array   $handle = []): \App\Trade\Process\RecoverableRequest
     {
         return \App\Trade\Process\RecoverableRequest::new($request, $retryInSeconds, $retryLimit, $handle);
     }
@@ -46,7 +46,7 @@ if (!function_exists('recoverable'))
 
 if (!function_exists('on_shutdown'))
 {
-    function on_shutdown(\Closure $callback): void
+    function on_shutdown(Closure $callback): void
     {
         static $callbacks = [];
         static $executed = new WeakMap();
@@ -59,7 +59,7 @@ if (!function_exists('on_shutdown'))
             }
         }
 
-        register_shutdown_function($callbacks[] = function () use ($callback, &$executed) {
+        register_shutdown_function($callbacks[] = static function () use ($callback, &$executed) {
             if (isset($executed[$callback]))
             {
                 return;
@@ -68,7 +68,7 @@ if (!function_exists('on_shutdown'))
             $callback();
         });
 
-        pcntl_signal(SIGINT, function () use (&$callbacks) {
+        pcntl_signal(SIGINT, static function () use (&$callbacks) {
             foreach ($callbacks as $callback)
             {
                 $callback();
@@ -103,7 +103,7 @@ if (!function_exists('get_strategy_class'))
             return $class;
         }
 
-        throw new \RuntimeException("Strategy $strategyName not found");
+        throw new RuntimeException("Strategy $strategyName not found");
     }
 }
 
@@ -115,7 +115,7 @@ if (!function_exists('get_indicator_class'))
         {
             return $class;
         }
-        throw new \RuntimeException("Indicator $indicatorName not found");
+        throw new RuntimeException("Indicator $indicatorName not found");
     }
 }
 
@@ -159,17 +159,17 @@ if (!function_exists('as_ms'))
 {
     function as_ms(int $timestamp): int
     {
-        if (\strlen((string)$timestamp) === 13)
+        if (strlen((string)$timestamp) === 13)
         {
             return $timestamp;
         }
 
-        if (\strlen((string)$timestamp) === 10)
+        if (strlen((string)$timestamp) === 10)
         {
             return $timestamp * 1000;
         }
 
-        throw new \LogicException('Argument $timestamp must be 10 or 13 digits long.');
+        throw new LogicException('Argument $timestamp must be 10 or 13 digits long.');
     }
 }
 
@@ -181,7 +181,7 @@ if (!function_exists('elapsed_time'))
         $time = time();
         if ($start > $time)
         {
-            throw new \LogicException('Argument $startTime must be older than current date.');
+            throw new LogicException('Argument $startTime must be older than current date.');
         }
 
         $elapsed = $time - $start;
