@@ -174,7 +174,9 @@ class Summarizer
         }
         if ($this->profitRoi && $this->lossRoi)
         {
-            $summary->risk_reward_ratio = \round(\abs($summary->avg_profit_roi / $summary->avg_loss_roi), 2);
+            $summary->risk_reward_ratio = $summary->avg_loss_roi
+                ? \round(\abs($summary->avg_profit_roi / $summary->avg_loss_roi), 2)
+                : 0;
         }
     }
 }
