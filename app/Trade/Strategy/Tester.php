@@ -14,7 +14,6 @@ use App\Trade\Log;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use JetBrains\PhpStorm\ArrayShape;
-use function array_merge_recursive_distinct;
 
 class Tester
 {
@@ -36,7 +35,7 @@ class Tester
     protected Evaluator $evaluator;
     protected Summarizer $summarizer;
 
-    public function __construct(protected SymbolRepository $symbolRepo, string $strategyClass, array $config = [])
+    public function __construct(string $strategyClass, array $config = [])
     {
         $this->mergeConfig($config);
         $this->strategy = $this->setupStrategy($strategyClass, $config);
@@ -66,21 +65,29 @@ class Tester
         return $trades;
     }
 
-    #[ArrayShape([
-        'evaluations' => "\Illuminate\Support\Collection|\App\Models\Evaluation[]",
-        'summary'     => Summary::class
-    ])]
-    public function summary(TradeCollection $trades): array
+    public function summary(TradeCollection $trades, ?Collection &$evaluations = null): Summary
     {
-        return [
-            'evaluations' => $evaluations = $this->evaluate($trades),
-            'summary'     => $this->summarizer->summarize($evaluations)
-        ];
+        $evaluations = new Collection();
+        foreach ($this->evaluate($trades) as $evaluation)
+        {
+            $evaluations[] = $evaluation;
+        }
+
+        return $this->summarizer->summarize($evaluations);
     }
 
-    protected function evaluate(TradeCollection $trades): Collection
+    public function progress(TradeCollection $trades, Summary &$summary = null): \Generator
     {
-        $evaluations = [];
+        foreach ($this->evaluate($trades) as $evaluation)
+        {
+            $this->summarizer->addEvaluation($evaluation);
+            $summary = $this->summarizer->getSummary();
+            yield $evaluation;
+        }
+    }
+
+    protected function evaluate(TradeCollection $trades): \Generator
+    {
         $evaluation = null;
 
         if ($first = $trades->getFirstTrade())
@@ -103,7 +110,7 @@ class Tester
                             $_evaluation = $this->evaluator->evaluate($setup, $next);
                             if ($evaluation->exit_timestamp <= $_evaluation->entry_timestamp)
                             {
-                                $evaluations[] = $evaluation = $_evaluation;
+                                yield $evaluation = $_evaluation;
                             }
                         }
                         else
@@ -113,7 +120,7 @@ class Tester
 
                         if ($evaluate)
                         {
-                            $evaluations[] = $evaluation = $this->evaluator->evaluate($setup, $next);
+                            yield $evaluation = $this->evaluator->evaluate($setup, $next);
                         }
                     }
                     $pending = [];
@@ -122,7 +129,5 @@ class Tester
                 $first = $next;
             }
         }
-
-        return new Collection($evaluations);
     }
 }
