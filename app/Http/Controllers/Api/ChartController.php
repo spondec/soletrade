@@ -13,6 +13,7 @@ use App\Trade\Log;
 use App\Trade\Strategy\Tester;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 class ChartController extends Controller
@@ -120,6 +121,7 @@ class ChartController extends Controller
             $trades = $tester->runStrategy($symbol);
 
             Log::execTimeStart('Evaluating trades');
+            /** @var Collection $evaluations */
             $summary = $tester->summary($trades, $evaluations);
             Log::execTimeFinish('Evaluating trades');
 
@@ -128,7 +130,7 @@ class ChartController extends Controller
             $symbol['strategy'] = [
                 'trades' => [
                     'summary'     => $summary,
-                    'evaluations' => $evaluations
+                    'evaluations' => $evaluations->map(fn(Evaluation $evaluation) => $evaluation->fresh())
                 ]
             ];
             Log::execTimeFinish('Preparing symbol');
