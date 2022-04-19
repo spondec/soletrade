@@ -45,8 +45,8 @@
       </template>
     </DatePicker>
 
-    <div class="mb-3">
-      <label class="form-label">Magnifier</label>
+    <div v-if="symbol?.strategy" class="mb-3">
+      <label class="form-label">Magnifier Interval</label>
       <vue-multiselect v-model="magnifier.interval" :allow-empty="false" :options="intervals"/>
     </div>
 
@@ -574,7 +574,7 @@ export default {
         this.initBalanceHistoryChart(this.$refs.balanceChart);
       }
 
-      const chart = this.createChart(this.$refs.chart, this.symbol.symbol + this.symbol.interval);
+      const chart = this.createChart(this.$refs.chart, this.symbol.symbol + ' ' + this.symbol.interval);
       const candlestickSeries = chart.addCandlestickSeries();
       candlestickSeries.setData(this.symbol.candles);
       this.series['candlestick'] = candlestickSeries;
@@ -707,7 +707,7 @@ export default {
 
     prepareSymbol: function (symbol)
     {
-      if (!Object.keys(symbol).length) return;
+      if (!symbol || !Object.keys(symbol).length) return;
 
       symbol.volumes = symbol.candles.map(x =>
       {
