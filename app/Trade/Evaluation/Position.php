@@ -191,7 +191,7 @@ class Position
             throw new \LogicException('Attempted to close an already closed position.');
         }
 
-        $exitTime = Calc::asMs($exitTime);
+        $exitTime = as_ms($exitTime);
 
         $this->lockIfUnlocked($this->exit);
         $this->exitPrice = $this->exit->get();
@@ -288,7 +288,7 @@ class Position
             throw new \LogicException('Attempted to stop an already stopped position.');
         }
 
-        $exitTime = Calc::asMs($exitTime);
+        $exitTime = as_ms($exitTime);
 
         $this->lockIfUnlocked($this->stop);
         $this->exitPrice = $this->stop->get();

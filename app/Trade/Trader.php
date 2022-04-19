@@ -103,7 +103,7 @@ class Trader
         Log::info(fn() => "First trade: {$trades->first()->id}", $trades->first());
         Log::info(fn() => "Last trade #{$lastTrade->id}", $lastTrade);
 
-        if ($lastTrade && Calc::asMs($lastTrade->price_date) > Calc::asMs($this->runner->start_date))
+        if ($lastTrade && as_ms($lastTrade->price_date) > as_ms($this->runner->start_date))
         {
             if (!$this->loop)
             {

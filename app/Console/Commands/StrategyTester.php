@@ -107,7 +107,7 @@ class StrategyTester extends Command
         {
             $section->clear();
             $e++;
-            $elapsed = Calc::elapsedTime($startTime);
+            $elapsed = elapsed_time($startTime);
             $section->overwrite("<info>Evaluated $e trades.\nElapsed time: $elapsed</info>");
             $table->setHeaders([
                 'ROI',

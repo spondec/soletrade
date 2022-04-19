@@ -68,9 +68,9 @@ class CandleFactory extends Factory
     public function fillBetween(int $startDate, int $endDate, int $interval): static
     {
         $this->interval = $interval * 1000;
-        $this->startDate = Carbon::createFromTimestampMs($startDate = Calc::asMs($startDate) - $this->interval);
+        $this->startDate = Carbon::createFromTimestampMs($startDate = as_ms($startDate) - $this->interval);
 
-        $endDate = Calc::asMs($endDate);
+        $endDate = as_ms($endDate);
 
         $this->count = 0;
 

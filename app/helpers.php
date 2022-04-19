@@ -154,3 +154,43 @@ if (!function_exists('get_strategies'))
         return $strategies;
     }
 }
+
+if (!function_exists('as_ms'))
+{
+    function as_ms(int $timestamp): int
+    {
+        if (\strlen((string)$timestamp) === 13)
+        {
+            return $timestamp;
+        }
+
+        if (\strlen((string)$timestamp) === 10)
+        {
+            return $timestamp * 1000;
+        }
+
+        throw new \LogicException('Argument $timestamp must be 10 or 13 digits long.');
+    }
+}
+
+if (!function_exists('elapsed_time'))
+{
+    function elapsed_time(int $startTime): string
+    {
+        $start = (int)(as_ms($startTime) / 1000);
+        $time = time();
+        if ($start > $time)
+        {
+            throw new \LogicException('Argument $startTime must be older than current date.');
+        }
+
+        $elapsed = $time - $start;
+
+        $seconds = $elapsed % 60;
+        $minutes = (int)($elapsed / 60) % 60;
+        $hours = (int)($elapsed / 60 / 60) % 60 % 24;
+        $days = (int)($elapsed / 60 / 60 / 24);
+
+        return "$days:$hours:$minutes:$seconds";
+    }
+}

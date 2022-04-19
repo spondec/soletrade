@@ -140,7 +140,7 @@ class LivePosition extends Position
                 /** @var Price $exitPrice */
                 $exitPrice = $this->price('exit');
                 $exitPrice->bypassEventOnce('changed');
-                $exitPrice->set($order->avgFillPrice(), Calc::asMs(time()), 'Exit order price.', true);
+                $exitPrice->set($order->avgFillPrice(), as_ms(time()), 'Exit order price.', true);
                 parent::close($fill->timestamp);
             }
         });
@@ -247,7 +247,7 @@ class LivePosition extends Position
                 /** @var Price $stopPrice */
                 $stopPrice = $this->price('stop');
                 $stopPrice->bypassEventOnce('changed');
-                $stopPrice->set($order->avgFillPrice(), Calc::asMs(time()), 'Stop order price.', true);
+                $stopPrice->set($order->avgFillPrice(), as_ms(time()), 'Stop order price.', true);
                 parent::stop($fill->timestamp);
             }
         });
