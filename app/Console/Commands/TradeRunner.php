@@ -264,7 +264,7 @@ class TradeRunner extends Command
                 'ROI'
             ])->setRows([
                 [
-                    Calc::elapsedTime($start),
+                    elapsed_time($start),
                     Util::memoryUsage(),
                     count(Log::getErrors()),
                     $status->value,
