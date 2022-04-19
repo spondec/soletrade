@@ -2,9 +2,9 @@ import axios from "axios";
 
 export default class ApiService
 {
-    static async get(url)
+    static async get(url, config)
     {
-        return this.handle(await axios.get(url));
+        return this.handle(await axios.get(url, config));
     }
 
     static setErrorHandler(callback)
