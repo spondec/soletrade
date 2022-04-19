@@ -23,7 +23,7 @@
       </div>
     </div>
 
-    <DatePicker v-model="range" :model-config="modelConfig" is-dark is-range is24hr>
+    <DatePicker v-model="range" :model-config="modelConfig" is-dark is-range is24hr timezone="UTC">
       <template v-slot="{ inputValue, inputEvents }">
         <div class="flex justify-center items-center">
           <input :value="inputValue.start"
