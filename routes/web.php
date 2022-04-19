@@ -15,11 +15,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/{any}', 'home')->where('any', '.*');
 
-//Route::get('/artisan', function ()
-//{
-//    \Illuminate\Support\Facades\Artisan::call('trader:run');
-//
-//    return view('home');
-//});
-
 Auth::routes();
