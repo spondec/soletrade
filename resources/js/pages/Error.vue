@@ -1,6 +1,6 @@
 <template>
   <main-layout>
-    <h1 class="text-white text-center text-lg">Page not found.</h1>
+    <h1 class="text-white text-center text-lg">An error occurred.</h1>
   </main-layout>
 </template>
 
