@@ -98,12 +98,10 @@ class Trader
 
         /** @var TradeSetup $lastTrade */
         $lastTrade = ($trades = $this->strategy->run($this->symbol))->last();
-        Log::info(fn() => "Total trades: {$trades->count()}");
 
-        if ($trades->first())
-            Log::info(fn() => "First trade: {$trades->first()->id}");
-        if ($lastTrade)
-            Log::info(fn() => "Last trade #{$lastTrade->id}");
+        Log::info(fn() => "Total trades: {$trades->count()}");
+        Log::info(fn() => "First trade: {$trades->first()->id}", $trades->first());
+        Log::info(fn() => "Last trade #{$lastTrade->id}", $lastTrade);
 
         if ($lastTrade && Calc::asMs($lastTrade->price_date) > Calc::asMs($this->runner->start_date))
         {
@@ -126,10 +124,10 @@ class Trader
                     $this->loop->setExitTrade($lastTrade);
                 }
             }
-
-            Log::info("Running loop...");
-            $this?->loop->run();
         }
+
+        Log::info("Running loop...", $this?->loop);
+        $this?->loop->run();
 
         return $this?->loop?->status();
     }
