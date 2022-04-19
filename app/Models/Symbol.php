@@ -28,6 +28,7 @@ class Symbol extends Model
 
     /** @var Indicator[] */
     protected ?Collection $indicators = null;
+    public ?CandleCollection $candles = null;
 
     public function toArray()
     {
@@ -35,7 +36,7 @@ class Symbol extends Model
             'start'      => $this->start,
             'end'        => $this->end,
             'limit'      => $this->limit,
-            'candles'    => $this->exists ? $this->candles()?->toArray() ?? [] : [],
+            'candles'    => $this->exists ? $this->candles?->toArray() ?? [] : [],
             'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
                     'data'        => $i->raw($i->data()),
                     'progressive' => $i->raw($i->progressiveData())
@@ -73,7 +74,7 @@ class Symbol extends Model
         }
 
         $candles = $query->get();
-        return new CandleCollection($order === 'DESC' ? $candles->reverse()->values() : $candles);
+        return $this->candles = new CandleCollection($order === 'DESC' ? $candles->reverse()->values() : $candles);
     }
 
     public function addIndicator(Indicator $indicator): void
