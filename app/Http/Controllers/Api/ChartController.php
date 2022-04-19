@@ -112,26 +112,25 @@ class ChartController extends Controller
 
         if ($strategy)
         {
-            $tester = new Tester(App::make(SymbolRepository::class), $strategy, [
+            $tester = new Tester($strategy, [
                 'startDate' => $start,
                 'endDate'   => $end
             ]);
 
             $trades = $tester->runStrategy($symbol);
 
-            Log::execTimeStart('Evaluating and summarizing trades');
-
-            $summary = $tester->summary($trades);
-            $summary['evaluations'] = $summary['evaluations']->map(
-                static fn(Evaluation $evaluation): Evaluation => $evaluation->fresh());
-
-            Log::execTimeFinish('Evaluating and summarizing trades');
+            Log::execTimeStart('Evaluating trades');
+            $summary = $tester->summary($trades, $evaluations);
+            Log::execTimeFinish('Evaluating trades');
 
             Log::execTimeStart('Preparing symbol');
-
             $symbol = $symbol->toArray();
-            $symbol['strategy'] = ['trades' => $summary];
-
+            $symbol['strategy'] = [
+                'trades' => [
+                    'summary'     => $summary,
+                    'evaluations' => $evaluations
+                ]
+            ];
             Log::execTimeFinish('Preparing symbol');
 
             return $symbol;
