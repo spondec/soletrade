@@ -28,9 +28,9 @@ final class Log
         return self::$errors;
     }
 
-    public static function info(string|\Closure $message): void
+    public static function info(string|\Closure $message, mixed $expression = true): void
     {
-        if (self::canLog())
+        if (self::canLog() && $expression)
         {
             Logger::info(ExecTimeMiddleware::getSessionPrefix() . ($message instanceof \Closure ? $message() : $message));
         }
