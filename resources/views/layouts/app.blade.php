@@ -30,7 +30,7 @@
 </head>
 <body class="bg-dark">
 <div id="app">
-    <main-layout></main-layout>
+    <router-view></router-view>
 </div>
 </body>
 </html>

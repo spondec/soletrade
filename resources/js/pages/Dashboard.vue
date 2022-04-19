@@ -13,14 +13,13 @@
 <script>
 
 import CardTable from "../components/CardTable";
-import VLink from "../components/VLink";
 import MainLayout from "../layouts/Main";
 import ApiService from "../services/ApiService";
 import VSpinner from "../components/VSpinner";
 
 export default {
   title: 'Dashboard',
-  components: {VSpinner, MainLayout, VLink, CardTable},
+  components: {VSpinner, MainLayout, CardTable},
   data: function ()
   {
     return {

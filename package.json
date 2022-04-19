@@ -27,11 +27,12 @@
       "vue-loader": "^16.3.2"
     },
     "dependencies": {
-        "lightweight-charts": "github:ntf/lightweight-charts",
-        "v-calendar": "^3.0.0-alpha.5",
-        "v-pagination-3": "^0.1.6",
-        "vue-json-pretty": "^2.0.4",
-        "vue-multiselect": "^3.0.0-alpha.2",
-        "vue3-tabs-component": "^1.0.3"
+      "lightweight-charts": "github:ntf/lightweight-charts#e3f0e922481c159bd0a128f78be50f421f2c771f",
+      "v-calendar": "^3.0.0-alpha.5",
+      "v-pagination-3": "^0.1.6",
+      "vue-json-pretty": "^2.0.4",
+      "vue-multiselect": "^3.0.0-alpha.2",
+      "vue-router": "^4.0.14",
+      "vue3-tabs-component": "^1.0.3"
     }
 }

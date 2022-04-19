@@ -1,13 +1,13 @@
 <template>
   <nav class="navbar navbar-expand-md navbar-dark shadow-sm">
     <div class="container">
-      <v-link class="navbar-brand" href="/">{{ appName }}</v-link>
+      <router-link class="navbar-brand" to="/">{{ appName }}</router-link>
 
       <div class="navbar-collapse">
         <!-- Left Side Of Navbar -->
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
-            <v-link class="nav-link" href="/chart">Chart</v-link>
+            <router-link class="nav-link" to="/chart">Chart</router-link>
           </li>
         </ul>
 
@@ -57,12 +57,9 @@
 </template>
 
 <script>
-import VLink from '../components/VLink.vue'
 
 export default {
-  components: {
-    VLink
-  },
+  components: {},
   props: ['title'],
   created()
   {

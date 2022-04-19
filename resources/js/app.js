@@ -4,14 +4,17 @@
  * building robust, powerful web applications using Vue and Laravel.
  */
 
+
 require("./bootstrap");
 
-import {createApp, h} from "vue";
+import {createApp} from "vue";
+import * as VueRouter from "vue-router";
 
 const app = createApp({});
 
 import '../css/app.css'
-import routes from './routes'
+import Chart from "./pages/Chart";
+import Dashboard from "./pages/Dashboard";
 
 /**
  * The following block of code may be used to automatically register your
@@ -27,7 +30,6 @@ import routes from './routes'
 app.component('dashboard-page', require('./pages/Dashboard.vue').default);
 app.component('main-layout', require('./layouts/Main.vue').default);
 app.component('card-table', require('./components/CardTable.vue').default);
-app.component('v-link', require('./components/VLink.vue').default);
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
@@ -35,33 +37,16 @@ app.component('v-link', require('./components/VLink.vue').default);
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
-const SimpleRouter = {
-    data: () => ({
-        currentRoute: window.location.pathname
-    }),
+const routes = [
+    {path: '/', component: Dashboard},
+    {path: '/chart', component: Chart}
+];
 
-    computed: {
-        ViewComponent()
-        {
-            const matchingPage = routes[this.currentRoute] || '404'
-            const component = require(`./pages/${matchingPage}.vue`).default;
-            if (component.title) document.title = component.title;
-            return component
-        }
-    },
+const router = VueRouter.createRouter({
+    // 4. Provide the history implementation to use. We are using the hash history for simplicity here.
+    history: VueRouter.createWebHashHistory(),
+    routes, // short for `routes: routes`
+})
 
-    render()
-    {
-        return h(this.ViewComponent)
-    },
-
-    created()
-    {
-        window.addEventListener('popstate', () =>
-        {
-            this.currentRoute = window.location.pathname
-        })
-    }
-}
-
-createApp(SimpleRouter).mount('#app')
+app.use(router);
+app.mount('#app')
