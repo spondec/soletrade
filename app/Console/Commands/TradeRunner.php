@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Util;
 use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
 use App\Trade\AllocatedAsset;
@@ -222,7 +223,7 @@ class TradeRunner extends Command
                     break;
 
                 case '/memory':
-                    $bot->sendMessage($this->memoryUsage(), $id);
+                    $bot->sendMessage(Util::memoryUsage(), $id);
                     break;
 
                 case '/memory_peak':
@@ -246,11 +247,6 @@ class TradeRunner extends Command
         }
     }
 
-    protected function memoryUsage(): string
-    {
-        return (int)(memory_get_usage(true) / 1024 / 1024) . 'MB';
-    }
-
     protected function renderDetailsTable(Table  $detailsTable,
                                           int    $start,
                                           Status $status,
@@ -269,30 +265,13 @@ class TradeRunner extends Command
             ])->setRows([
                 [
                     Calc::elapsedTime($start),
-                    $this->memoryUsage(),
+                    Util::memoryUsage(),
                     count(Log::getErrors()),
                     $status->value,
                     "$allocAmount $asset",
-                    $this->formatRoi($roi)
+                    Util::formatRoi($roi)
                 ]
             ])->render();
-    }
-
-    protected function formatRoi(float $roi): string
-    {
-        $rounded = round($roi, 2);
-
-        if ($roi > 0)
-        {
-            return "<info>$rounded%</info>";
-        }
-
-        if ($roi < 0)
-        {
-            return "<error>$rounded%</error>";
-        }
-
-        return "$rounded%";
     }
 
     protected function renderPositionTable(Table                          $positionTable,
@@ -314,7 +293,7 @@ class TradeRunner extends Command
             [
                 $symbol,
                 $position->side->value,
-                $this->formatRoi($roi),
+                Util::formatRoi($roi),
                 $tradeAsset->allocation->leverage . 'x',
                 $tradeAsset->real($position->getUsedSize()) . " $asset",
                 $position->price('entry')->get()
