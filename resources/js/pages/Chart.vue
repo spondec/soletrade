@@ -574,7 +574,7 @@ export default {
         this.initBalanceHistoryChart(this.$refs.balanceChart);
       }
 
-      const chart = this.createChart(this.$refs.chart, this.symbol.symbol + ' ' + this.symbol.interval);
+      const chart = this.createChart(this.$refs.chart, this.sel.exchange + ' • ' + this.sel.symbol + ' • ' + this.sel.interval);
       const candlestickSeries = chart.addCandlestickSeries();
       candlestickSeries.setData(this.symbol.candles);
       this.series['candlestick'] = candlestickSeries;
