@@ -10,7 +10,7 @@ trait HasSignature
     protected Signature $signature;
 
     /**
-     * @var Signature[]
+     * @var \WeakReference<string,Signature>
      */
     private array $signatureCache = [];
 
@@ -21,7 +21,7 @@ trait HasSignature
 
         if ($signature = $this->signatureCache[$hash] ?? null)
         {
-            return $signature;
+            return $signature->get();
         }
 
         /** @var Signature $signature */
@@ -34,8 +34,8 @@ trait HasSignature
         {
             throw new \LogicException("Hash collision detected for $signature->hash");
         }
-
-        return $this->signatureCache[$hash] = $signature;
+        $this->signatureCache[$hash] = \WeakReference::create($signature);
+        return $signature;
     }
 
     protected function hashCallbacksInArray(array $array): array
