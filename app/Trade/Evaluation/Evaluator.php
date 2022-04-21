@@ -25,7 +25,7 @@ class Evaluator
     public function evaluate(TradeSetup $entry, TradeSetup $exit): Evaluation
     {
         $evaluation = $this->setup($entry, $exit);
-        $this->realizeToExit($evaluation);
+        $this->realize($evaluation);
 
         return $evaluation->updateUniqueOrCreate();
     }
@@ -57,7 +57,7 @@ class Evaluator
             $this->strategy->config('evaluation.loop'));
     }
 
-    protected function realizeToExit(Evaluation $evaluation): void
+    protected function realize(Evaluation $evaluation): void
     {
         $loop = $this->newLoop($evaluation->entry);
         $loop->setExitTrade($evaluation->exit);
@@ -78,11 +78,6 @@ class Evaluator
 
         if ($position = $status->getPosition())
         {
-            if ($position->isOpen())
-            {
-                throw new \LogicException('Can not evaluate an open position.');
-            }
-
             $e->is_entry_price_valid = true;
             $e->entry_timestamp = $position->entryTime();
             $e->is_ambiguous = $status->isAmbiguous();
