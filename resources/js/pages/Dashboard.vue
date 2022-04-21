@@ -1,6 +1,5 @@
 <template>
   <main-layout title="Dashboard">
-    <v-spinner v-if="loading"/>
     <div class="grid xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 gap-4">
       <card-table title="Exchanges" itemName="exchange" v-bind:collection="exchanges"/>
       <card-table itemName="balance" title="Balance" v-bind:collection="balances"/>
@@ -15,15 +14,13 @@
 import CardTable from "../components/CardTable";
 import MainLayout from "../layouts/Main";
 import ApiService from "../services/ApiService";
-import VSpinner from "../components/VSpinner";
 
 export default {
   title: 'Dashboard',
-  components: {VSpinner, MainLayout, CardTable},
+  components: {MainLayout, CardTable},
   data: function ()
   {
     return {
-      loading: true,
       exchanges: [],
       balances: [],
       strategies: [],
@@ -56,8 +53,6 @@ export default {
       });
 
       this.balances = await ApiService.balances();
-
-      this.loading = false;
     },
   }
 }
