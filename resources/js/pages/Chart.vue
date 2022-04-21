@@ -1,5 +1,6 @@
 <template>
   <main-layout v-bind:title="title">
+    <v-spinner v-if="this.loading"></v-spinner>
     <div v-if="sel.exchange && sel.symbol" class="grid lg:grid-cols-5 md:grid-cols-2 sm:grid-cols-1 gap-4 form-group">
       <div class="mb-3">
         <label class="form-label">Strategy</label>
@@ -75,8 +76,7 @@
     </div>
 
     <div class="chart-container">
-      <v-spinner v-if="this.loading"/>
-      <p v-else-if="!this.symbol" class="text-lg-center">Requested chart is not available.</p>
+      <p v-if="!this.symbol" class="text-lg-center">Requested chart is not available.</p>
       <div v-if="symbol && symbol.strategy">
         <div class="grid grid-cols-10 text-center">
           <h1 class="text-lg" v-bind:class="{
