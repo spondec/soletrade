@@ -28,8 +28,8 @@ return new class extends Migration {
             $table->decimal('exit_price')->nullable();
             $table->decimal('target_price')->nullable();
             $table->decimal('stop_price')->nullable();
-            $table->decimal('highest_price');
-            $table->decimal('lowest_price');
+            $table->decimal('highest_price')->nullable();
+            $table->decimal('lowest_price')->nullable();
             $table->decimal('highest_entry_price')->nullable();
             $table->decimal('lowest_entry_price')->nullable();
             $table->boolean('is_entry_price_valid')->default(0);
