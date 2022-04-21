@@ -114,7 +114,7 @@ class Trader
                 Log::info(fn() => 'New trade detected. #' . $lastTrade->id);
                 if (!$this->loop->status()->isEntered())
                 {
-                    Log::info(fn() => "Entry failed, ending trade. #{$lastTrade->id}");
+                    Log::info(fn() => "Entry failed, ending loop. #{$lastTrade->id}");
                     $this->endLoop();
                     $this->initNewLoop($lastTrade);
                 }
