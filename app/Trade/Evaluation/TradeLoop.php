@@ -100,6 +100,11 @@ class TradeLoop
         $this->exit = $exit;
     }
 
+    public function isClosesOnExit(): bool
+    {
+        return $this->config('closeOnExit');
+    }
+
     public function hasExitTrade(): bool
     {
         return isset($this->exit);
@@ -116,7 +121,7 @@ class TradeLoop
     public function run(): TradeStatus
     {
         $candles = null;
-        if (isset($this->exit) && !isset($this->isExitRunCompleted))
+        if ($this->hasExitTrade() && !isset($this->isExitRunCompleted))
         {
             $this->isExitRunCompleted = true;
             $lastCandle = $this->repo->fetchNextCandle($this->evaluationSymbol, $this->exit->price_date);
@@ -317,12 +322,12 @@ class TradeLoop
 
         if ($position && $position->isOpen())
         {
-            if ($this->config('closeOnExit') && $this->hasExitTrade() && !$position->price('exit'))
+            if ($this->hasExitTrade() && $this->isClosesOnExit())
             {
                 $candle = $this->getLastCandle();
                 $priceDate = $this->getPriceDate($candle, null);
 
-                $this->status->setExitPrice((float)$this->exit->price, $priceDate);
+                $this->overrideTargetPrice($position, $candle, $priceDate);
                 $this->tryPositionExit($position, $candle, $priceDate);
             }
 
@@ -392,6 +397,18 @@ class TradeLoop
         if ($first->symbol_id != $this->evaluationSymbol->id)
         {
             throw new \InvalidArgumentException('Invalid candles provided.');
+        }
+    }
+
+    protected function overrideTargetPrice(Position $position, \stdClass $candle, int $priceDate): void
+    {
+        if ($target = $position->price('exit'))
+        {
+            $target->set((float)$candle->c, $priceDate, 'Target price overridden.', true);
+        }
+        else
+        {
+            $this->status->setExitPrice((float)$candle->c, $priceDate);
         }
     }
 }
