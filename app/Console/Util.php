@@ -10,7 +10,7 @@ class Util
 
         if ($roi > 0)
         {
-            return "<fg=red>$rounded%</>";
+            return "<fg=green>$rounded%</>";
         }
 
         if ($roi < 0)
