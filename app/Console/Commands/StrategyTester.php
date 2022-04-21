@@ -114,6 +114,7 @@ class StrategyTester extends Command
             $e++;
             $elapsed = elapsed_time($startTime);
             $section->overwrite("<info>Evaluated $e trades.\nElapsed time: $elapsed</info>");
+            $section->writeln('Memory usage: ' . Util::memoryUsage());
             $table->setHeaders([
                 'ROI',
                 'Avg. ROI',
