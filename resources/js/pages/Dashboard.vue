@@ -1,12 +1,12 @@
 <template>
   <main-layout title="Dashboard">
-    <div v-if="!loading" class="grid xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 gap-4">
+    <v-spinner v-if="loading"/>
+    <div class="grid xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 gap-4">
       <card-table title="Exchanges" itemName="exchange" v-bind:collection="exchanges"/>
-      <card-table title="Balances" itemName="balance" v-bind:collection="balances"/>
+      <card-table itemName="balance" title="Balance" v-bind:collection="balances"/>
       <card-table title="Trades" itemName="trade" v-bind:collection="trades"/>
       <card-table itemName="strategy" title="Strategies" v-bind:collection="strategies"/>
     </div>
-    <v-spinner v-else/>
   </main-layout>
 </template>
 
@@ -43,10 +43,8 @@ export default {
     load: async function ()
     {
       this.exchanges = await ApiService.exchanges();
-      this.balances = await ApiService.balances();
       this.strategies = await ApiService.strategies();
       const trades = await ApiService.recentTrades();
-
       this.trades = trades.map(trade =>
       {
         return {
@@ -56,6 +54,8 @@ export default {
           ROI: trade.roi + '%'
         }
       });
+
+      this.balances = await ApiService.balances();
 
       this.loading = false;
     },
