@@ -44,6 +44,11 @@ class StrategyTester extends Command
         if (!strategy_exists($name = $args['strategy']))
         {
             $this->error("Strategy $name not found.");
+            $this->info('Available strategies:');
+            foreach (get_strategies() as $name => $class)
+            {
+                $this->info($name);
+            }
             return 1;
         }
 
@@ -114,7 +119,7 @@ class StrategyTester extends Command
                 'Avg. ROI',
                 'Avg. Profit',
                 'Avg. Loss',
-                'Risk/Reward',
+                'Reward/Risk',
                 'Success Ratio',
                 'Profit',
                 'Loss',
