@@ -37,21 +37,23 @@ class {{ name }} extends Strategy
                  */
                 'timeout'     => 0,
                 /**
-                 * When true, reverse side setups will be used as an exit trade.
+                 * When true, an opposite side setup will be used as an exit trade.
                  * When false, exit trades will be through the target price.
                  */
                 'closeOnExit' => true,
             ],
             /**
              * If set, trades will be evaluated at this interval. E.g. 15m, 5m, 1m.
+             * Provides more accurate evaluation at the cost of performance.
+             * Lowest intervals can really slow down the strategy testing.
              */
             'interval' => null
         ],
         /**
-         * Trade commission cut ratio, each trade costs two of this fee
-         * and added to the final ROI when testing the strategy.
+         * Trade commission ratio. This will be reflected on the final ROI when tested. Disabled by default.
+         * Most exchanges charges between 0.0004(0.04%) and 0.001(0.1%).
          */
-        'feeRatio'   => 0.001
+        'feeRatio'   => 0.0000
     ];
 
     protected function indicatorConfig(): array
@@ -72,7 +74,7 @@ class {{ name }} extends Strategy
              * E.g. => RSI::class, MACD::class
              *
              * Above means, any MACD signal after an any RSI signal
-             * will trigger the trade setup function for further consideration.
+             * will trigger the trade setup function for further computation.
              */
             'signals' => [
                 {{ signals }}
@@ -93,6 +95,8 @@ class {{ name }} extends Strategy
                  * Analyze candlestick bars
                  * Check configured indicators
                  * Further analyze signals
+                 *
+                 * And possibly more...
                  */
 
                 return null;
