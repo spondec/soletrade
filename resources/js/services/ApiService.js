@@ -54,7 +54,7 @@ export default class ApiService
         return await this.get('api/chart');
     }
 
-    static async candles(exchange, symbol, interval, indicators, limit, strategy = null, range = {})
+    static async candles(exchange, symbol, interval, indicators, indicatorConfig, limit, strategy = null, range = {})
     {
         return await this.get('api/chart', {
             params: {
@@ -63,6 +63,7 @@ export default class ApiService
                 exchange: exchange,
                 interval: interval,
                 indicators: indicators,
+                indicatorConfig: indicatorConfig,
                 limit: limit,
                 range: range
             }

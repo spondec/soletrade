@@ -39,7 +39,8 @@ class Symbol extends Model
             'candles'    => $this->exists ? $this->candles?->toArray() ?? [] : [],
             'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
                     'data'        => $i->raw($i->data()),
-                    'progressive' => $i->raw($i->progressiveData())
+                    'progressive' => $i->raw($i->progressiveData()),
+                    'config'      => $i->config(),
                 ])?->toArray() ?? []
         ]);
     }

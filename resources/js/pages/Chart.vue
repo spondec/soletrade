@@ -45,6 +45,30 @@
       </template>
     </DatePicker>
 
+    <div v-show="sel.indicators.length && !sel.strategy" class="indicator-config-editor py-2">
+      <div class="flex justify-center items-center">
+        <button class="bg-sky-500/50 text-white font-bold2 px-4 rounded focus:outline-none focus:shadow-outline"
+                v-on:click="toggleJsonEditor">
+          Indicator Configuration
+        </button>
+      </div>
+      <div v-show="jsonEditorEnabled" class="py-2">
+        <Vue3JsonEditor
+            v-model="indicatorConfig"
+            :expandedOnStart="true"
+            :show-btns="false"
+            class="bg-white"
+            @json-change="onJsonChange"
+        />
+        <div class="flex justify-center items-center py-2">
+          <button class="bg-sky-500/50 text-white font-bold2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  v-on:click="onSelect(); toggleJsonEditor();">
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div v-if="symbol?.strategy" class="mb-3">
       <label class="form-label">Magnifier Interval</label>
       <vue-multiselect v-model="magnifier.interval" :allow-empty="false" :options="intervals"/>
@@ -65,7 +89,7 @@
             {{ 'Avg ROI: ' + symbol.strategy.trades.summary.avg_roi + '%' }} </h1>
           <h1 class="text-lg">Avg Profit: {{ symbol.strategy.trades.summary.avg_profit_roi + '%' }}</h1>
           <h1 class="text-lg">Avg Loss: {{ symbol.strategy.trades.summary.avg_loss_roi + '%' }}</h1>
-          <h1 class="text-lg">Risk/Reward: {{ symbol.strategy.trades.summary.risk_reward_ratio }}</h1>
+          <h1 class="text-lg">Reward/Risk: {{ symbol.strategy.trades.summary.risk_reward_ratio }}</h1>
           <h1 class="text-lg">Success Ratio: {{ symbol.strategy.trades.summary.success_ratio }}</h1>
           <h1 class="text-lg">Profit: {{ symbol.strategy.trades.summary.profit }}</h1>
           <h1 class="text-lg">Loss: {{ symbol.strategy.trades.summary.loss }}</h1>
@@ -94,6 +118,8 @@ import ApiService from "../services/ApiService";
 import Chart from "../services/Chart";
 
 import VueMultiselect from 'vue-multiselect'
+import {reactive, toRefs} from 'vue'
+import {Vue3JsonEditor} from 'vue3-json-editor'
 
 import {Tabs, Tab} from 'vue3-tabs-component';
 
@@ -108,20 +134,20 @@ import IndicatorManager from "../indicators/IndicatorManager";
 export default {
   title: "Chart",
   components: {
-    VSpinner, MainLayout, VueMultiselect, TradeTable, Tabs, Tab, DatePicker
+    VSpinner, MainLayout, VueMultiselect, TradeTable, Tabs, Tab, DatePicker, Vue3JsonEditor
   },
-  watch:
-      {
-        sel: {
-          handler: 'onSelect',
-          deep: true
-        },
-        range: 'onSelect',
-        magnifier: {
-          handler: 'magnifyUpdate',
-          deep: true
-        }
-      },
+  watch: {
+    sel: {
+      handler: 'onSelect',
+      deep: true
+    },
+    range: 'onSelect',
+    magnifier: {
+      handler: 'magnifyUpdate',
+      deep: true
+    },
+  },
+
   data: function ()
   {
     return {
@@ -151,6 +177,7 @@ export default {
         MACD: () => new MACD()
       },
       indicatorManager: null,
+      jsonEditorEnabled: false,
 
       toggle: true,
 
@@ -175,7 +202,7 @@ export default {
         exchange: null,
         symbol: null,
         interval: null,
-        indicators: []
+        indicators: [],
       },
 
       candlesPerRequest: 1000,
@@ -183,6 +210,23 @@ export default {
       balanceChart: null,
       charts: [],
       series: []
+    }
+  },
+
+  setup()
+  {
+    const state = reactive({
+      indicatorConfig: {}
+    })
+
+    function onJsonChange(value)
+    {
+      state.indicatorConfig = value;
+    }
+
+    return {
+      ...toRefs(state),
+      onJsonChange
     }
   },
 
@@ -217,6 +261,11 @@ export default {
         this.magnifiedCharts[i].remove();
       }
       this.magnifiedCharts = [];
+    },
+
+    toggleJsonEditor: function ()
+    {
+      this.jsonEditorEnabled = !this.jsonEditorEnabled;
     },
 
     reduceSeriesData: function (start, end, seriesData)
@@ -316,6 +365,7 @@ export default {
       const symbol = this.prepareSymbol(await ApiService.candles(this.sel.exchange,
           this.sel.symbol,
           interval,
+          null,
           null,
           null,
           null,
@@ -606,6 +656,9 @@ export default {
 
       this.loading = true;
       this.symbol = await this.prepareSymbol(await this.fetchSymbol());
+
+      this.indicatorConfig = this.prepareIndicatorConfig(this.symbol?.indicators);
+
       this.loading = false;
 
       if (this.useCache)
@@ -679,6 +732,7 @@ export default {
         this.purgeCharts();
         return;
       }
+
       this.replaceCandlestickChart();
     },
 
@@ -700,6 +754,7 @@ export default {
           this.sel.symbol,
           this.sel.interval,
           this.sel.indicators,
+          this.indicatorConfig,
           this.limit,
           this.sel.strategy,
           this.range);
@@ -735,6 +790,19 @@ export default {
     init: function ()
     {
       window.addEventListener('resize', this.resize);
+    },
+
+    prepareIndicatorConfig: function (indicators)
+    {
+      const config = {};
+      if (indicators)
+      {
+        for (let i in indicators)
+        {
+          config[i] = indicators[i].config;
+        }
+      }
+      return config;
     }
   }
 }

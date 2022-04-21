@@ -14,13 +14,12 @@ use App\Trade\Strategy\Tester;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 
 class ChartController extends Controller
 {
     public function __construct(protected Request          $request,
                                 protected SymbolRepository $symbolRepo,
-                                protected ConfigRepository $configRepo)
+                                protected ConfigRepository $config)
     {
 
     }
@@ -28,28 +27,26 @@ class ChartController extends Controller
     public function index(Request $request): array
     {
         $symbol = $request->get('symbol');
-        $exchange = $this->getKeyByValue('exchange',
-            $this->mapClassByName($this->configRepo->exchanges, true));
+        $exchange = $this->getKeyByValue('exchange', $this->mapByName($this->config->exchanges, true));
         $interval = $request->get('interval');
 
         if ($exchange && $symbol && $interval)
         {
-            $indicators = $this->mapClassByName($this->configRepo->indicators, true);
             return $this->candles(
                 exchange: $exchange,
                 symbolName: $symbol,
                 interval: $interval,
-                indicators: \array_map(static fn($v) => \array_search($v, $indicators), $request->get('indicators', [])),
-                strategy: $this->getKeyByValue('strategy', $this->mapClassByName($this->configRepo->strategies, true)),
-                range: \json_decode($request->get('range'), true, 512, JSON_THROW_ON_ERROR),
+                indicators: $this->getSelectedIndicators($request),
+                strategy: $this->getKeyByValue('strategy', $this->mapByName($this->config->strategies, true)),
+                range: \json_decode($request->get('range'), true),
                 limit: $request->get('limit'));
         }
 
         return [
-            'strategies' => $this->mapClassByName($this->configRepo->strategies),
-            'exchanges'  => $this->mapClassByName($this->configRepo->exchanges),
-            'symbols'    => $this->configRepo->symbols,
-            'indicators' => $this->mapClassByName($this->configRepo->indicators),
+            'strategies' => array_keys(get_strategies()),
+            'exchanges'  => $this->mapByName($this->config->exchanges),
+            'symbols'    => $this->config->symbols,
+            'indicators' => array_keys(get_indicators()),
             'intervals'  => $this->symbolRepo->fetchIntervals()
         ];
     }
@@ -66,12 +63,12 @@ class ChartController extends Controller
     /**
      * @param HasName[]|string[] $classes
      */
-    protected function mapClassByName(array $classes, bool $assoc = false): array
+    protected function mapByName(array $classes, bool $classAsKey = false): array
     {
         $mapped = [];
         foreach ($classes as $class)
         {
-            if ($assoc)
+            if ($classAsKey)
             {
                 $mapped[$class] = $class::name();
             }
@@ -93,17 +90,10 @@ class ChartController extends Controller
                             ?int            $limit = null): array
     {
 
-        $start = $range ? Carbon::parse($range['start'])->getTimestampMs() : null;
-        $end = $range ? Carbon::parse($range['end'])->getTimestampMs() : null;
+        $start = $range ? as_ms(Carbon::parse($range['start'])->getTimestamp()) : null;
+        $end = $range ? as_ms(Carbon::parse($range['end'])->getTimestamp()) : null;
 
         $symbol = $this->getSymbol($exchange, $symbolName, $interval);
-
-        if (!$symbol)
-        {
-            $filter = static fn(Symbol $symbol): bool => $symbol->symbol == $symbolName && $symbol->interval == $interval;
-            $symbol = $exchange::instance()->update()->byInterval(interval: $interval, filter: $filter)?->first();
-        }
-
         abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
 
         if ($symbol->last_update <= $end)
@@ -125,17 +115,15 @@ class ChartController extends Controller
             $summary = $tester->summary($trades, $evaluations);
             Log::execTimeFinish('Evaluating trades');
 
-            Log::execTimeStart('Preparing symbol');
-            $symbol = $symbol->toArray();
-            $symbol['strategy'] = [
-                'trades' => [
-                    'summary'     => $summary,
-                    'evaluations' => $evaluations->map(fn(Evaluation $evaluation) => $evaluation->fresh())
+            return [
+                ...$symbol->toArray(),
+                'strategy' => [
+                    'trades' => [
+                        'summary'     => $summary,
+                        'evaluations' => $evaluations->map(fn(Evaluation $evaluation) => $evaluation->fresh())
+                    ]
                 ]
             ];
-            Log::execTimeFinish('Preparing symbol');
-
-            return $symbol;
         }
 
         $symbol->updateCandlesIfOlderThan(60);
@@ -155,5 +143,15 @@ class ChartController extends Controller
     protected function getSymbol(Exchange|string $exchange, string $symbolName, string $interval): ?Symbol
     {
         return $this->symbolRepo->fetchSymbol(exchange: $exchange::instance(), symbolName: $symbolName, interval: $interval);
+    }
+
+    protected function getSelectedIndicators(Request $request): array
+    {
+        $indicators = get_indicators();
+        $indicatorConfig = \json_decode($request->get('indicatorConfig', []), true);
+        return collect($request->get('indicators', []))
+            ->mapWithKeys(function (string $name) use ($indicators, $indicatorConfig) {
+                return [$indicators[$name] => $indicatorConfig[$name] ?? []];
+            })->all();
     }
 }
