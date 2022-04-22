@@ -38,6 +38,7 @@ class Symbol extends Model
             'limit'      => $this->limit,
             'candles'    => $this->exists ? $this->candles?->toArray() ?? [] : [],
             'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
+                    'name'        => $i::name(),
                     'data'        => $i->raw($i->data()),
                     'progressive' => $i->raw($i->progressiveData()),
                     'config'      => $i->config(),
@@ -82,7 +83,7 @@ class Symbol extends Model
     {
         if ($indicator->symbol() !== $this)
         {
-            throw new \InvalidArgumentException("Indicator {$indicator::name()} doesn't belong to this symbol instance.");
+            throw new \InvalidArgumentException("Indicator must be attached to the same symbol.");
         }
 
         if (!$this->indicators)
@@ -90,7 +91,12 @@ class Symbol extends Model
             $this->indicators = new Collection();
         }
 
-        $this->indicators[$indicator->name()] = $indicator;
+        if (isset($this->indicators[$indicator->alias]))
+        {
+            throw new \InvalidArgumentException("Indicator with alias {$indicator->alias} already exists.");
+        }
+
+        $this->indicators[$indicator->alias] = $indicator;
     }
 
     public function updateCandlesIfOlderThan(int $seconds, int $maxRunTime = 0): void
@@ -106,13 +112,9 @@ class Symbol extends Model
         $this->exchange()->update()->bySymbol($this, $maxRunTime);
     }
 
-    public function indicator(string $name): Indicator
+    public function indicator(string $alias): Indicator
     {
-        return $this->indicators[$name] ??
-            throw new \LogicException(
-                indicator_exists($name) ?
-                    "$name hasn't been set for this instance." :
-                    "$name doesn't exist as an indicator.");
+        return $this->indicators[$alias];
     }
 
     public function lastPrice(): float

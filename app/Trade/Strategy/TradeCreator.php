@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 
 class TradeCreator
 {
-    public readonly array $signalClasses;
+    public readonly array $signalIndicatorAliases;
     public readonly array $signalOrderMap;
     public readonly string $firstSignalClass;
     public readonly int $requiredSignalCount;
@@ -24,8 +24,8 @@ class TradeCreator
 
     public function __construct(public TradeConfig $config)
     {
-        $this->signalClasses = $config->getSignalClasses();
-        $this->requiredSignalCount = \count($this->signalClasses);
+        $this->signalIndicatorAliases = $config->getSignalIndicatorAliases();
+        $this->requiredSignalCount = \count($this->signalIndicatorAliases);
         if ($this->requiredSignalCount)
         {
             $this->signalOrderMap = $this->getSignalOrderMap();
@@ -36,7 +36,7 @@ class TradeCreator
     protected function getSignalOrderMap(): array
     {
         $signalMap = [];
-        $iterator = new \ArrayIterator($this->signalClasses);
+        $iterator = new \ArrayIterator($this->signalIndicatorAliases);
 
         while ($iterator->valid())
         {
@@ -132,7 +132,7 @@ class TradeCreator
 
     protected function isRequiredNextSignal(Signal $signal): bool
     {
-        return !$this->requiredNextSignal || $signal->indicator::class === $this->requiredNextSignal;
+        return !$this->requiredNextSignal || $signal->indicator->alias === $this->requiredNextSignal;
     }
 
     protected function verifySignal(Signal $signal): bool
@@ -146,7 +146,7 @@ class TradeCreator
         }
 
         // signals must pass the name condition if defined in the config
-        $names = $this->config->signals[$signal->indicator::class] ?? null;
+        $names = $this->config->signals[$signal->indicator->alias] ?? null;
         if ($names && !\in_array($signal->name, $names))
         {
             return false;
@@ -163,7 +163,7 @@ class TradeCreator
     protected function handleNewRequiredSignal(Signal $signal): void
     {
         $this->signals[] = $signal;
-        $this->requiredNextSignal = $this->signalOrderMap[$signal->indicator::class] ?? null;
+        $this->requiredNextSignal = $this->signalOrderMap[$signal->indicator->alias] ?? null;
     }
 
     protected function areRequirementsComplete(): bool

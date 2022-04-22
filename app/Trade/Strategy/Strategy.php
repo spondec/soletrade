@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Trade\Strategy;
 
-use App\Models\Signal;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
@@ -18,7 +17,6 @@ use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Indicator\Indicator;
-use App\Trade\Log;
 use App\Trade\Strategy\Finder\TradeFinder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -70,11 +68,20 @@ abstract class Strategy
      */
     private function newIndicatorConfig(): array
     {
-        foreach ($config = $this->indicatorConfig() as $class => &$c)
+        $config = [];
+
+        $indicatorConfig = $this->indicatorConfig();
+        $aliases = array_column($indicatorConfig, 'alias');
+
+        if ($duplicate = array_diff_assoc($aliases, array_unique($aliases)))
         {
-            $c['class'] = $class;
+            throw new \LogicException('Duplicate indicator aliases: ' . implode(', ', $duplicate));
+        }
+
+        foreach ($indicatorConfig as &$c)
+        {
             $c['config'] = $c['config'] ?? [];
-            $config[$class] = IndicatorConfig::fromArray($c);
+            $config[$c['alias']] = IndicatorConfig::fromArray($c);
         }
 
         return $config;
@@ -94,15 +101,15 @@ abstract class Strategy
 
     protected function getTradeConfigSignature(array $config): Signature
     {
-        return $this->register(
-            ['strategy'        => [
+        return $this->register([
+            'strategy'        => [
                 'signature' => $this->signature->hash
             ],
-             'trade_setup'     => $config,
-             'indicator_setup' => \array_map(
-                 static fn(IndicatorConfig $i): array => $i->toArray(),
-                 $this->indicatorConfig)
-            ]);
+            'trade_setup'     => $config,
+            'indicator_setup' => \array_map(
+                static fn(IndicatorConfig $i): array => $i->toArray(),
+                $this->indicatorConfig)
+        ]);
     }
 
     public function newAction(TradeSetup $trade, string $actionClass, array $config): void
@@ -168,14 +175,15 @@ abstract class Strategy
     {
         $this->initHelperIndicators($this->symbol, $this->candles);
 
-        foreach ($this->indicatorConfig as $class => $setup)
+        foreach ($this->indicatorConfig as $c)
         {
             /** @var Indicator $indicator */
-            $indicator = new $class(symbol: $this->symbol,
+            $indicator = new $c->class(symbol: $this->symbol,
                 candles: $this->candles,
-                config: \is_array($setup) ? $setup['config'] ?? [] : []);
+                config: \is_array($c) ? $c['config'] ?? [] : []);
 
-            $this->indicators[$indicator->id()] = $indicator;
+            $this->indicators[$c->alias] = $indicator;
+            $indicator->alias = $c->alias;
             $this->symbol->addIndicator(indicator: $indicator);
         }
     }
@@ -231,10 +239,9 @@ abstract class Strategy
         return $this->helperIndicators[$class];
     }
 
-    protected function indicator(Signal $signal): Indicator
+    protected function indicator(string $alias): Indicator
     {
-        return $this->indicators[$signal->indicator_id]
-            ?? throw new \InvalidArgumentException('Signal indicator was not found.');
+        return $this->indicators[$alias];
     }
 
     final protected function getDefaultConfig(): array

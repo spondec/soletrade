@@ -48,11 +48,14 @@ abstract class Indicator implements Binder
     private Collection $progressiveCandles;
     private Collection $progressiveData;
 
+    public string $alias;
+
     public function __construct(protected Symbol         $symbol,
                                 private CandleCollection $candles,
                                 array                    $config = [])
     {
         $this->mergeConfig($config);
+        $this->alias = $config['alias'] ?? static::name();
         $this->symbolRepo = App::make(SymbolRepository::class);
 
         /** @var Signature signature */

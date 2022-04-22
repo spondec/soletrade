@@ -18,14 +18,13 @@ class TradeConfig extends Config
     /**
      * @return string[]
      */
-    public function getSignalClasses(): array
+    public function getSignalIndicatorAliases(): array
     {
         $indicators = [];
         foreach ($this->signals as $key => $indicator)
         {
             $indicators[] = \is_array($indicator) ? $key : $indicator;
         }
-
         return $indicators;
     }
 }

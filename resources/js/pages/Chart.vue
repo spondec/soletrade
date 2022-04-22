@@ -4,23 +4,24 @@
     <div v-if="sel.exchange && sel.symbol" class="grid lg:grid-cols-5 md:grid-cols-2 sm:grid-cols-1 gap-4 form-group">
       <div class="mb-3">
         <label class="form-label">Strategy</label>
-        <vue-multiselect v-model="sel.strategy" :allow-empty="true" :options="strategies"/>
+        <vue-multiselect v-model="sel.strategy" :allow-empty="true" :disabled="loading" :options="strategies"/>
       </div>
       <div class="mb-3">
         <label class="form-label">Exchange</label>
-        <vue-multiselect v-model="sel.exchange" :allow-empty="false" :options="exchanges"/>
+        <vue-multiselect v-model="sel.exchange" :allow-empty="false" :disabled="loading" :options="exchanges"/>
       </div>
       <div class="mb-3">
         <label class="form-label">Symbol</label>
-        <vue-multiselect v-model="sel.symbol" :allow-empty="false" :options="symbols[sel.exchange]"/>
+        <vue-multiselect v-model="sel.symbol" :allow-empty="false" :disabled="loading"
+                         :options="symbols[sel.exchange]"/>
       </div>
       <div class="mb-3">
         <label class="form-label">Interval</label>
-        <vue-multiselect v-model="sel.interval" :allow-empty="false" :options="intervals"/>
+        <vue-multiselect v-model="sel.interval" :allow-empty="false" :disabled="loading" :options="intervals"/>
       </div>
       <div class="mb-3">
         <label class="form-label">Indicators</label>
-        <vue-multiselect v-model="sel.indicators" :multiple="true" :options="indicators"/>
+        <vue-multiselect v-model="sel.indicators" :disabled="loading" :multiple="true" :options="indicators"/>
       </div>
     </div>
 
@@ -29,6 +30,7 @@
         <div class="flex justify-center items-center">
           <input :value="inputValue.start"
                  class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                 :disabled="loading"
                  v-on="inputEvents.start"/>
           <svg class="w-4 h-4 mx-2"
                fill="none"
@@ -41,7 +43,13 @@
           </svg>
           <input :value="inputValue.end"
                  class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                 :disabled="loading"
                  v-on="inputEvents.end"/>
+
+          <button v-if="!loading && this.range?.start" class="button w-16"
+                  v-on:click="this.preventLoad = true; this.range = {};">
+            Clear
+          </button>
         </div>
       </template>
     </DatePicker>
@@ -76,7 +84,7 @@
     </div>
 
     <div class="chart-container">
-      <p v-if="!this.symbol" class="text-lg-center">Requested chart is not available.</p>
+      <p v-if="!loading && !symbol" class="text-lg-center">Requested chart is not available.</p>
       <div v-if="symbol && symbol.strategy">
         <div class="grid grid-cols-10 text-center">
           <h1 class="text-lg" v-bind:class="{
@@ -182,6 +190,7 @@ export default {
       toggle: true,
 
       loading: false,
+      preventLoad: false,
 
       cache: [],
       useCache: false,
@@ -427,18 +436,14 @@ export default {
 
       const indicators = this.symbol.indicators;
 
-      for (let name in indicators)
+      for (let alias in indicators)
       {
-        let handler = this.getIndicatorHandler(name);
-        let magnified = this.reduceSeriesData(start, end, indicators[name].data); //TODO use recalculated
+        let handler = this.getIndicatorHandler(indicators[alias].name);
+        let magnified = this.reduceSeriesData(start, end, indicators[alias].data); //TODO use recalculated
         let chart = this.magnifiedCharts[0];
         let series = handler.init(magnified, chart)
         handler.update(series, magnified)
       }
-      //
-      // const secondaryCharts = [...this.magnifiedCharts];
-      // secondaryCharts.shift();
-      // this.registerVisibleLogicalRangeChangeEvent(secondaryCharts)
     },
 
     magnify: function (trade)
@@ -498,10 +503,11 @@ export default {
 
     prepareIndicatorData: function (indicators, length)
     {
-      for (let name in indicators)
+      for (let alias in indicators)
       {
-        indicators[name].data = this.getIndicatorHandler(name).prepare(indicators[name].data, length);
-        indicators[name].progressive = this.getIndicatorHandler(name).prepare(indicators[name].progressive, length);
+        const indicator = indicators[alias];
+        indicator.data = this.getIndicatorHandler(indicator.name).prepare(indicator.data, length);
+        indicator.progressive = this.getIndicatorHandler(indicator.name).prepare(indicator.progressive, length);
       }
       return indicators;
     },
@@ -510,16 +516,16 @@ export default {
     {
       const indicators = this.symbol.indicators;
 
-      for (let name in indicators)
+      for (let alias in indicators)
       {
-        let indicator = indicators[name];
+        let indicator = indicators[alias];
         if (indicator)
         {
           let data = indicator.data;
-          let handler = this.getIndicatorHandler(name);
+          let handler = this.getIndicatorHandler(indicator.name);
           let chart = this.charts[0];
-          this.series[name] = handler.init(data, chart);
-          handler.update(this.series[name], data);
+          this.series[alias] = handler.init(data, chart);
+          handler.update(this.series[alias], data);
         }
       }
     },
@@ -606,6 +612,12 @@ export default {
 
     replaceCandlestickChart: async function ()
     {
+      if (this.preventLoad)
+      {
+        this.preventLoad = false;
+        return;
+      }
+
       this.resetLimit();
 
       if (!this.sel.exchange || !this.sel.symbol || !this.sel.interval)
@@ -684,9 +696,9 @@ export default {
     {
       this.series['candlestick'].setData(await this.symbol.candles);
 
-      for (let name in this.symbol.indicators)
+      for (let alias in this.symbol.indicators)
       {
-        this.getIndicatorHandler(name).update(this.series[name], this.symbol.indicators[name].data);
+        this.getIndicatorHandler(indicators[alias].name).update(this.series[alias], this.symbol.indicators[alias].data);
       }
     },
 

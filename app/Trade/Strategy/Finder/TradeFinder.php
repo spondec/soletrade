@@ -59,9 +59,8 @@ class TradeFinder
     private function getSignalIndicators(): Collection
     {
         return $this->indicators
-            ->filter(fn(Indicator $indicator): bool => \in_array($indicator::class,
-                $this->creator->signalClasses))
-            ->keyBy(static fn(Indicator $indicator): string => $indicator::class);
+            ->filter(fn(Indicator $indicator, string $alias): bool => \in_array($alias,
+                $this->creator->signalIndicatorAliases));
     }
 
     /**
@@ -69,9 +68,13 @@ class TradeFinder
      */
     private function getSignalGenerators(): Collection
     {
-        return $this->signalIndicators->map(
-            fn(Indicator $indicator): \Generator => $indicator->scan(
-                $this->indicatorConfig[$indicator::class]->signal));
+        return $this->signalIndicators->mapWithKeys(
+            function (Indicator $indicator, string $alias) {
+                return [
+                    $alias => $indicator->scan($this->indicatorConfig[$alias]->signal)
+                ];
+            }
+        );
     }
 
     /**
@@ -99,7 +102,7 @@ class TradeFinder
             }
             else if ($i->isProgressive() !== $isProgressive)
             {
-                throw new \LogicException('All indicators must be either progressive or non-progressive');
+                throw new \LogicException('All indicators must be either progressive or non-progressive.');
             }
         }
     }
@@ -158,9 +161,9 @@ class TradeFinder
 
     protected function getSignalGeneratorResult(\stdClass $candle, ?Indicator &$indicator = null): ?array
     {
-        foreach ($this->signalGenerators as $class => $generator)
+        foreach ($this->signalGenerators as $alias => $generator)
         {
-            $indicator = $this->signalIndicators[$class];
+            $indicator = $this->signalIndicators[$alias];
             if (!$indicator->hasData())
             {
                 continue;

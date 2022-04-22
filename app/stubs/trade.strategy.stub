@@ -68,13 +68,12 @@ class {{ name }} extends Strategy
         return [
 
             /**
-             * Add any indicator classes of required signals for the trade setup. Optional.
+             * Add any indicator aliases of required subsequent signals for the trade setup. Optional.
              * If multiple signals are added, ordering will be followed.
              *
-             * E.g. => RSI::class, MACD::class
+             * E.g. => 'RSI', 'MACD'
              *
-             * Above means, any MACD signal after an any RSI signal
-             * will trigger the trade setup function for further computation.
+             * Above means, any MACD signal after an any RSI signal will trigger the trade setup function.
              */
             'signals' => [
                 {{ signals }}

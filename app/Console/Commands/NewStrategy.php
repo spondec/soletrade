@@ -71,10 +71,12 @@ class NewStrategy extends Command
             $indicatorStubs[] = str_replace(
                 [
                     '{{ indicator }}',
+                    '{{ alias }}',
                     '{{ config }}'
                 ],
                 [
                     $indicator,
+                    "'$indicator'",
                     "[\n{$this->getArrayExport($config)}\n\t\t\t\t]"
                 ],
                 $indicatorStub);
@@ -95,7 +97,7 @@ class NewStrategy extends Command
             ],
             [
                 $name,
-                $signals->map(fn(string $s) => $s . '::class')->implode(', '),
+                $signals->map(fn(string $s) => "'$s'")->implode(', '),
                 $indicatorStubs->implode(",\n\t\t\t"),
                 $indicators->implode(', ')
             ],
