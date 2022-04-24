@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Trade;
 
-class ChangeLog
+use Illuminate\Contracts\Support\Arrayable;
+
+class ChangeLog implements Arrayable
 {
     protected array $log = [];
 
@@ -48,5 +50,15 @@ class ChangeLog
     public function first(): array
     {
         return \reset($this->log);
+    }
+
+    public function toArray()
+    {
+        foreach ($log = $this->log as $k => $item)
+        {
+            $log[$k]['timestamp'] = \date('Y-m-d H:i:s', (int)(as_ms($item['timestamp']) / 1000));
+        }
+
+        return $log;
     }
 }

@@ -92,11 +92,11 @@ class Evaluator
 
             $log['position'] = [
                 'price_history' => [
-                    'entry' => $status->getEntryPrice()->log()->get(),
-                    'exit'  => $status->getTargetPrice()?->log()?->get() ?? [],
-                    'stop'  => $status->getStopPrice()?->log()?->get() ?? []
+                    'entry' => $status->getEntryPrice()->log()->toArray(),
+                    'exit'  => $status->getTargetPrice()?->log()?->toArray() ?? [],
+                    'stop'  => $status->getStopPrice()?->log()?->toArray() ?? []
                 ],
-                'transactions'  => $position->transactionLog()->get()
+                'transactions'  => $position->transactionLog()->toArray()
             ];
         }
         else
