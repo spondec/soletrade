@@ -8,6 +8,7 @@ namespace App\Trade;
 trait HasConfig
 {
     private readonly bool $hasDefaultConfig;
+    protected array $variableConfigKeys = [];
 
     protected function mergeConfig(array &$config): void
     {
@@ -59,9 +60,12 @@ trait HasConfig
                 throw new \UnexpectedValueException("Config key does not match: $key");
             }
 
-            if (\is_array($value) && !\array_is_list($value))
+            if (!in_array($key, $this->variableConfigKeys))
             {
-                $this->assertKeyMatch($original[$key], $value);
+                if (\is_array($value) && !\array_is_list($value))
+                {
+                    $this->assertKeyMatch($original[$key], $value);
+                }
             }
         }
     }
