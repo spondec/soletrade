@@ -182,14 +182,20 @@ class TradeLoop
 
             if (!$this->status->isEntered())
             {
-                $this->entry->loadBindingPrice($entry, 'price', $candle->t, $this->evaluationSymbol);
+                $this->loadBinding($entry, 'price', $candle);
                 $priceDate = $this->getPriceDate($candle, $nextCandle);
                 $this->tryPositionEntry($candle, $priceDate);
             }
             else if (!$this->status->isExited())
             {
-                $this->entry->loadBindingPrice($stop, 'stop_price', $candle->t, $this->evaluationSymbol);
-                $this->entry->loadBindingPrice($exit, 'target_price', $candle->t, $this->evaluationSymbol);
+                if ($stop)
+                {
+                    $this->loadBinding($stop, 'stop_price', $candle);
+                }
+                if ($exit)
+                {
+                    $this->loadBinding($exit, 'target_price', $candle);
+                }
 
                 $priceDate = $this->getPriceDate($candle, $nextCandle);
                 $position = $position ?? $this->getPosition();
@@ -410,5 +416,10 @@ class TradeLoop
         {
             $this->status->setExitPrice((float)$candle->c, $priceDate);
         }
+    }
+
+    protected function loadBinding(Price $price, string $column, \stdClass $candle): void
+    {
+        $this->entry->loadBindingPrice($price, $column, $candle->t, $this->evaluationSymbol);
     }
 }
