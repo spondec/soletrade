@@ -46,9 +46,10 @@ class Binding extends Model
         $this->callback = $callback;
     }
 
-    public function getBindValue(int $timestamp, ...$params)
+    public function getValue(int $timestamp, ...$params)
     {
-        $value = $this->binder->getBindValue($this->name, $timestamp, ...$params);
-        return $this->callback ? ($this->callback)($value) : $value;
+        $value = $this->binder->getBindValue($name = $this->name, $timestamp, ...$params);
+        $callbackParams = $this->binder->getExtraBindCallbackParams($name, $timestamp, ...$params);
+        return $this->callback ? ($this->callback)($value, ...$callbackParams) : $value;
     }
 }

@@ -21,10 +21,11 @@ trait CanBind
         $this->assertBindExists($bind);
 
         $value = $this->getBindValue($bind, $timestamp);
+        $params = $this->getExtraBindCallbackParams($bind, $timestamp);
 
         if ($callback)
         {
-            $value = $callback($value);
+            $value = $callback($value, ...$params);
         }
 
         $binding = $this->setupBinding($model, $column, $bind);

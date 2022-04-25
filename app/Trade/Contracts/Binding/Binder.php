@@ -21,4 +21,6 @@ interface Binder
      * @return string[]
      */
     public function getBindable(): array;
+
+    public function getExtraBindCallbackParams(int|string $bind, ?int $timestamp = null): array;
 }
