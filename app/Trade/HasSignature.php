@@ -32,6 +32,8 @@ trait HasSignature
 
         if ($signature->data !== $hashed)
         {
+            dump('Signature data: ', $signature->data);
+            dump('Hashed: ', $hashed);
             throw new \LogicException("Hash collision detected for $signature->hash");
         }
         $this->signatureCache[$hash] = \WeakReference::create($signature);
