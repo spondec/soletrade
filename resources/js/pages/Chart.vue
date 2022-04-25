@@ -1,86 +1,87 @@
 <template>
   <main-layout v-bind:title="title">
     <v-spinner v-if="this.loading"></v-spinner>
-    <div v-if="sel.exchange && sel.symbol" class="grid lg:grid-cols-5 md:grid-cols-2 sm:grid-cols-1 gap-4 form-group">
-      <div class="mb-3">
-        <label class="form-label">Strategy</label>
-        <vue-multiselect v-model="sel.strategy" :allow-empty="true" :disabled="loading" :options="strategies"/>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Exchange</label>
-        <vue-multiselect v-model="sel.exchange" :allow-empty="false" :disabled="loading" :options="exchanges"/>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Symbol</label>
-        <vue-multiselect v-model="sel.symbol" :allow-empty="false" :disabled="loading"
-                         :options="symbols[sel.exchange]"/>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Interval</label>
-        <vue-multiselect v-model="sel.interval" :allow-empty="false" :disabled="loading" :options="intervals"/>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Indicators</label>
-        <vue-multiselect v-model="sel.indicators" :disabled="loading" :multiple="true" :options="indicators"/>
-      </div>
-    </div>
 
-    <DatePicker v-model="range" :model-config="modelConfig" is-dark is-range is24hr timezone="UTC">
-      <template v-slot="{ inputValue, inputEvents }">
+    <div class="container">
+      <div v-if="sel.exchange && sel.symbol" class="grid lg:grid-cols-5 md:grid-cols-2 sm:grid-cols-1 gap-4 form-group">
+        <div class="mb-3">
+          <label class="form-label">Strategy</label>
+          <vue-multiselect v-model="sel.strategy" :allow-empty="true" :disabled="loading" :options="strategies"/>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Exchange</label>
+          <vue-multiselect v-model="sel.exchange" :allow-empty="false" :disabled="loading" :options="exchanges"/>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Symbol</label>
+          <vue-multiselect v-model="sel.symbol" :allow-empty="false" :disabled="loading"
+                           :options="symbols[sel.exchange]"/>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Interval</label>
+          <vue-multiselect v-model="sel.interval" :allow-empty="false" :disabled="loading" :options="intervals"/>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Indicators</label>
+          <vue-multiselect v-model="sel.indicators" :disabled="loading || symbol.strategy" :multiple="true"
+                           :options="indicators"/>
+        </div>
+      </div>
+      <DatePicker v-model="range" :model-config="modelConfig" is-dark is-range is24hr timezone="UTC">
+        <template v-slot="{ inputValue, inputEvents }">
+          <div class="flex justify-center items-center">
+            <input :disabled="loading"
+                   :value="inputValue.start"
+                   class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                   v-on="inputEvents.start"/>
+            <svg class="w-4 h-4 mx-2"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+              <path d="M14 5l7 7m0 0l-7 7m7-7H3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"/>
+            </svg>
+            <input :disabled="loading"
+                   :value="inputValue.end"
+                   class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                   v-on="inputEvents.end"/>
+
+            <button v-if="!loading && this.range?.start" class="button w-16"
+                    v-on:click="this.preventLoad = true; this.range = {};">
+              Clear
+            </button>
+          </div>
+        </template>
+      </DatePicker>
+      <div v-show="sel.indicators.length && !sel.strategy" class="indicator-config-editor py-2">
         <div class="flex justify-center items-center">
-          <input :value="inputValue.start"
-                 class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
-                 :disabled="loading"
-                 v-on="inputEvents.start"/>
-          <svg class="w-4 h-4 mx-2"
-               fill="none"
-               stroke="currentColor"
-               viewBox="0 0 24 24">
-            <path d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"/>
-          </svg>
-          <input :value="inputValue.end"
-                 class="text-dark border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
-                 :disabled="loading"
-                 v-on="inputEvents.end"/>
-
-          <button v-if="!loading && this.range?.start" class="button w-16"
-                  v-on:click="this.preventLoad = true; this.range = {};">
-            Clear
-          </button>
-        </div>
-      </template>
-    </DatePicker>
-
-    <div v-show="sel.indicators.length && !sel.strategy" class="indicator-config-editor py-2">
-      <div class="flex justify-center items-center">
-        <button class="bg-sky-500/50 text-white font-bold2 px-4 rounded focus:outline-none focus:shadow-outline"
-                v-on:click="toggleJsonEditor">
-          Indicator Configuration
-        </button>
-      </div>
-      <div v-show="jsonEditorEnabled" class="py-2">
-        <Vue3JsonEditor
-            v-model="indicatorConfig"
-            :expandedOnStart="true"
-            :show-btns="false"
-            class="bg-white"
-            @json-change="onJsonChange"
-        />
-        <div class="flex justify-center items-center py-2">
           <button class="bg-sky-500/50 text-white font-bold2 px-4 rounded focus:outline-none focus:shadow-outline"
-                  v-on:click="onSelect(); toggleJsonEditor();">
-            Apply
+                  v-on:click="toggleJsonEditor">
+            Indicator Configuration
           </button>
         </div>
+        <div v-show="jsonEditorEnabled" class="py-2">
+          <Vue3JsonEditor
+              v-model="indicatorConfig"
+              :expandedOnStart="true"
+              :show-btns="false"
+              class="bg-white"
+              @json-change="onJsonChange"
+          />
+          <div class="flex justify-center items-center py-2">
+            <button class="bg-sky-500/50 text-white font-bold2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    v-on:click="onSelect(); toggleJsonEditor();">
+              Apply
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <div v-if="symbol?.strategy" class="mb-3">
-      <label class="form-label">Magnifier Interval</label>
-      <vue-multiselect v-model="magnifier.interval" :allow-empty="false" :options="intervals"/>
+      <div v-if="symbol?.strategy" class="mb-3">
+        <label class="form-label">Magnifier Interval</label>
+        <vue-multiselect v-model="magnifier.interval" :allow-empty="false" :options="intervals"/>
+      </div>
     </div>
 
     <div class="chart-container">
@@ -110,8 +111,8 @@
       </div>
       <div v-show="balanceChart" ref="balanceChart" class="balance-chart"/>
       <div ref="chart" class="chart"/>
+      <span id="chart" class="anchor"></span>
     </div>
-    <span id="chart" class="anchor"></span>
   </main-layout>
 </template>
 
@@ -530,14 +531,14 @@ export default {
       }
     },
 
-    prepareSignalMarker: function (data, namePrefix)
+    prepareSignalMarker: function (data)
     {
       return {
         time: data.price_date / 1000,
         position: data.side === 'BUY' ? 'belowBar' : 'aboveBar',
         color: data.side === 'BUY' ? '#00ff68' : '#ff0062',
         shape: data.side === 'BUY' ? 'arrowUp' : 'arrowDown',
-        text: namePrefix !== undefined ? namePrefix + ': ' + data.name : data.name
+        text: data.name
       }
     },
 
@@ -551,7 +552,7 @@ export default {
         {
           let markers = [];
 
-          markers = this.prepareSignalMarkers(markers, strategy.trades.evaluations, true);
+          markers = this.prepareSignalMarkers(markers, strategy.trades.evaluations);
 
           this.symbol.markers.trades = markers;
           this.series['candlestick'].setMarkers(markers);
@@ -559,12 +560,12 @@ export default {
       }
     },
 
-    prepareSignalMarkers: function (markers, evaluations, prefix = false)
+    prepareSignalMarkers: function (markers, evaluations)
     {
       for (let id in evaluations)
       {
-        markers.push(this.prepareSignalMarker(evaluations[id]['entry'], prefix ? prefix + ' - ' + 'Entry' : ''));
-        markers.push(this.prepareSignalMarker(evaluations[id]['exit'], prefix ? prefix + ' - ' + 'Exit' : ''));
+        markers.push(this.prepareSignalMarker(evaluations[id]['entry']));
+        markers.push(this.prepareSignalMarker(evaluations[id]['exit']));
       }
 
       return markers.sort((a, b) => (a.time - b.time));
@@ -698,7 +699,8 @@ export default {
 
       for (let alias in this.symbol.indicators)
       {
-        this.getIndicatorHandler(indicators[alias].name).update(this.series[alias], this.symbol.indicators[alias].data);
+        let indicator = this.symbol.indicators[alias];
+        this.getIndicatorHandler(indicator.name).update(this.series[alias], indicator.data);
       }
     },
 
