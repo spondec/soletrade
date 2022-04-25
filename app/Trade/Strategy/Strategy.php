@@ -253,7 +253,7 @@ abstract class Strategy
 
             'trades'     => [
                 //when true, multiple trades to the same direction will be disregarded
-                'oppositeOnly' => false,
+                'oppositeOnly' => true,
             ],
             'evaluation' => [
                 'loop'     => [
