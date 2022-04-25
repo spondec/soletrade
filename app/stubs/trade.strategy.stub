@@ -9,9 +9,7 @@ use App\Trade\Candles;
 use App\Trade\Side;
 use Illuminate\Support\Collection;
 use App\Trade\Strategy\Strategy;
-use \App\Indicators\ {
-   {{ indicators }}
-};
+{{ use }}
 
 class {{ name }} extends Strategy
 {
@@ -27,7 +25,7 @@ class {{ name }} extends Strategy
             /**
              * When true, multiple trades to the same direction will be disregarded.
              */
-            'oppositeOnly' => false,
+            'oppositeOnly' => true,
         ],
         'evaluation' => [
             'loop'     => [
@@ -82,22 +80,20 @@ class {{ name }} extends Strategy
             /**
              * In this function, you should check the conditions for your trade.
              * If the conditions is met, return a new TradeSetup with your desired configuration, otherwise null.
+             *
+             * Here, you can:
+             *
+             * Set entry, exit, target prices
+             * Set order types
+             * Register trade actions
+             * Analyze candlestick bars
+             * Check configured indicators
+             * Further analyze signals
+             *
+             * And possibly more...
              */
             'setup' => function (TradeSetup $trade, Candles $candles, Collection $signals): ?TradeSetup {
-
-                /**
-                 * Here, you can:
-                 *
-                 * Set entry, exit, target prices
-                 * Set order types
-                 * Register trade actions
-                 * Analyze candlestick bars
-                 * Check configured indicators
-                 * Further analyze signals
-                 *
-                 * And possibly more...
-                 */
-
+                 {{ action_stubs }}
                 return null;
             }
         ];

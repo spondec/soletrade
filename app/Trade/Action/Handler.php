@@ -13,6 +13,13 @@ abstract class Handler
     use HasConfig;
     use HasName;
 
+    /**
+     * Return the available configuration for stubs.
+     *
+     * @return array
+     */
+    abstract public static function getStubConfig(): array;
+
     protected array $config = [];
     protected array $required = [];
 

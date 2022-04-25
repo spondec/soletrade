@@ -16,7 +16,7 @@ class NewStrategy extends Command
      *
      * @var string
      */
-    protected $signature = 'trade:strategy {name} {--indicators=} {--signals=}';
+    protected $signature = 'trade:strategy {name} {--indicators=} {--signals=} {--actions=}';
 
     /**
      * The console command description.
@@ -37,6 +37,11 @@ class NewStrategy extends Command
 
         $name = ucfirst($this->argument('name'));
         $signals = str($this->option('signals'))
+            ->explode(',')
+            ->filter()
+            ->map('trim');
+
+        $actions = str($this->option('actions'))
             ->explode(',')
             ->filter()
             ->map('trim');
@@ -81,6 +86,30 @@ class NewStrategy extends Command
                 ],
                 $indicatorStub);
         }
+        if (!$files->exists($actionStubPath = $stubsPath . 'trade.strategy.action.stub'))
+        {
+            throw new FileNotFoundException("Stub file not found at $actionStubPath");
+        }
+
+        $actionStub = $files->get($actionStubPath);
+
+        $actionStubs = new Collection();
+        foreach ($actions as $action)
+        {
+
+            /** @noinspection PhpUndefinedMethodInspection */
+            $actionStubs[] = str_replace(
+                [
+                    '{{ action_class }}',
+                    '{{ action_config }}'
+                ],
+                [
+                    "$action::class",
+                    "[\n{$this->getArrayExport(("\App\Trade\Action\\$action")::getStubConfig())}\n\t\t\t\t]",
+                ],
+                $actionStub);
+
+        }
 
         if (!$files->exists($strategyStubPath = $stubsPath . 'trade.strategy.stub'))
         {
@@ -93,13 +122,21 @@ class NewStrategy extends Command
                 '{{ name }}',
                 '{{ signals }}',
                 '{{ indicator_stubs }}',
-                '{{ indicators }}'
+                '{{ indicators }}',
+                '{{ actions }}',
+                '{{ action_stubs }}',
+                '{{ use }}'
             ],
             [
                 $name,
                 $signals->map(fn(string $s) => "'$s'")->implode(', '),
                 $indicatorStubs->implode(",\n\t\t\t"),
-                $indicators->implode(', ')
+                $_indicators = $indicators->implode(', '),
+                $_actions = $actions->implode(', '),
+                $actionStubs->implode("\n"),
+                ($_indicators ? "use \App\Indicators\ { $_indicators };" : '')
+                . "\n" .
+                ($_actions ? "use \App\Trade\Action\ { $_actions };" : '')
             ],
             $strategyStub
         );

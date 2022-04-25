@@ -1,0 +1,1 @@
+$this->newAction($trade, {{ action_class }}, {{ action_config }});
