@@ -103,9 +103,13 @@ class StrategyTester extends Command
         if ($count = $trades->count())
         {
             $this->info("$count possible trades found.");
+            $section->overwrite("<info>Evaluating trades...</info>");
+        }
+        else
+        {
+            $this->info("No possible trades found.");
         }
 
-        $section->overwrite("<info>Evaluating trades...</info>");
         $e = 0;
         /** @var Summary $summary */
         foreach ($tester->progress($trades, $summary) as $ignored)
