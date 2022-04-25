@@ -30,14 +30,36 @@ trait HasSignature
             'data' => $hashed
         ]);
 
-        if ($signature->data !== $hashed)
+        if ($collisions = $this->getHashCollisions($signature->data, $hashed))
         {
-            dump('Signature data: ', $signature->data);
-            dump('Hashed: ', $hashed);
-            throw new \LogicException("Hash collision detected for $signature->hash");
+            throw new \LogicException("Hash collisions detected:\n" . var_export($collisions, true));
         }
+
         $this->signatureCache[$hash] = \WeakReference::create($signature);
         return $signature;
+    }
+
+    private function getHashCollisions(array $array1, array $array2): array
+    {
+        $collisions = [];
+        foreach ($array1 as $key => $value)
+        {
+            if (is_array($value))
+            {
+                if ($c = $this->getHashCollisions($value, $array2[$key] ?? []))
+                {
+                    $collisions[$key] = $c;
+                }
+            }
+            else
+            {
+                if (($array2[$key] ?? null) != $value)
+                {
+                    $collisions[] = $key;
+                }
+            }
+        }
+        return $collisions;
     }
 
     protected function hashCallbacksInArray(array $array): array
