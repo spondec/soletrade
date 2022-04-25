@@ -23,13 +23,15 @@ class TradeFinder
 
     protected TradeCreator $creator;
 
-    /** @var Indicator[] */
-    protected Collection $signalIndicators;
-
     /** @var \Generator[] */
-    protected Collection $signalGenerators;
+    protected Collection $indicatorGenerators;
 
     protected SymbolRepository $symbolRepo;
+
+    /**
+     * @var TradeSetup[]
+     */
+    protected array $trades = [];
 
     /**
      * @param IndicatorConfig[] $indicatorConfig
@@ -46,32 +48,24 @@ class TradeFinder
         $this->creator = new TradeCreator($this->tradeConfig);
         $this->symbolRepo = App::make(SymbolRepository::class);
 
-        $this->signalIndicators = $this->getSignalIndicators();
-        $this->signalGenerators = $this->getSignalGenerators();
-        $this->initGenerators($this->signalGenerators);
+        $this->indicators = $this->indicators->filter(fn(Indicator $i): bool => $i->hasData());
+        $this->indicatorGenerators = $this->getIndicatorGenerators();
+        $this->initGenerators($this->indicatorGenerators);
 
-        $this->assertProgressiveness($indicators);
-    }
-
-    /**
-     * @return Indicator[]
-     */
-    private function getSignalIndicators(): Collection
-    {
-        return $this->indicators
-            ->filter(fn(Indicator $indicator, string $alias): bool => \in_array($alias,
-                $this->creator->signalIndicatorAliases));
+        $this->assertProgressiveness();
     }
 
     /**
      * @return \Generator[]
      */
-    private function getSignalGenerators(): Collection
+    private function getIndicatorGenerators(): Collection
     {
-        return $this->signalIndicators->mapWithKeys(
+        return $this->indicators->mapWithKeys(
             function (Indicator $indicator, string $alias) {
                 return [
-                    $alias => $indicator->scan($this->indicatorConfig[$alias]->signal)
+                    $alias => $indicator->scan(in_array($alias, $this->tradeConfig->signals)
+                        ? $this->indicatorConfig[$alias]->signal
+                        : null)
                 ];
             }
         );
@@ -90,11 +84,11 @@ class TradeFinder
         }
     }
 
-    private function assertProgressiveness(Collection $indicators): void
+    private function assertProgressiveness(): void
     {
         $isProgressive = null;
         /** @var Indicator $i */
-        foreach ($indicators as $i)
+        foreach ($this->indicators as $i)
         {
             if ($isProgressive === null)
             {
@@ -112,62 +106,53 @@ class TradeFinder
      */
     public function findTrades(): TradeCollection
     {
-        $trades = [];
         while ($this->candleIterator->valid())
         {
             /** @var \stdClass $candle */
             $candle = $this->candleIterator->current();
             $key = $this->candleIterator->key();
             $this->candleIterator->next();
+            $results = $this->getIndicatorGeneratorResults($candle, $indicator);
 
             if ($this->tradeConfig->withSignals)
             {
-                if (!$result = $this->getSignalGeneratorResult($candle, $indicator))
+                foreach ($results as $result)
                 {
-                    continue;
-                }
-
-                /** @var Signal $signal */
-                $signal = $result['signal'];
-
-                $this->runUnderCandle($key, $indicator->candle(), function () use (&$trades, &$signal) {
-                    if ($trade = $this->creator->findTradeWithSignal($this->_candles, $signal))
+                    /** @var Signal $signal */
+                    if (!$signal = $result['signal'] ?? null)
                     {
-                        if ($actions = $this->strategy->actions($trade))
-                        {
-                            $this->creator->setActions($actions);
-                        }
-                        $this->creator->setSymbol($this->strategy->symbol());
-                        $savedTrade = $this->creator->save();
-
-                        foreach ($this->indicators as $i)
-                        {
-                            $i->replaceBindable($trade, $savedTrade);
-                            $i->saveBindings($savedTrade);
-                        }
-
-                        $trades[$trade->timestamp] = $trade = $savedTrade;
+                        continue;
                     }
-                });
+
+                    $this->runUnderCandle($key, $indicator->candle(), function () use (&$signal) {
+                        if ($trade = $this->creator->findTradeWithSignal($this->_candles, $signal))
+                        {
+                            $this->saveTrade($trade);
+                        }
+                    });
+                }
             }
             else
             {
-                //TODO:: handle no signal case
+                $this->runUnderCandle($key, $candle, function () {
+                    if ($trade = $this->creator->findTrade($this->_candles))
+                    {
+                        $this->saveTrade($trade);
+                    }
+                });
             }
         }
 
-        return new TradeCollection($trades, $this->strategy->config('trades'));
+        return new TradeCollection($this->trades, $this->strategy->config('trades'));
     }
 
-    protected function getSignalGeneratorResult(\stdClass $candle, ?Indicator &$indicator = null): ?array
+    protected function getIndicatorGeneratorResults(\stdClass $candle, ?Indicator &$indicator = null): ?array
     {
-        foreach ($this->signalGenerators as $alias => $generator)
+        $results = [];
+        foreach ($this->indicatorGenerators as $alias => $generator)
         {
-            $indicator = $this->signalIndicators[$alias];
-            if (!$indicator->hasData())
-            {
-                continue;
-            }
+            $indicator = $this->indicators[$alias];
+
             $indicatorCandle = $indicator->candle();
 
             if ($indicatorCandle->t < $candle->t)
@@ -178,16 +163,23 @@ class TradeFinder
 
                     if ($indicator->candle()->t == $candle->t)
                     {
-                        return $generator->current();
+                        $results[] = $generator->current();
                     }
                 }
             }
             else if ($indicatorCandle->t == $candle->t)
             {
-                return $generator->current();
+                $results[] = $generator->current();
+            }
+            else
+            {
+                //TODO:: indicator is in the future?
             }
         }
-        return null;
+
+        uasort($results, fn(array $a, array $b): int => $a['price_date'] <=> $b['price_date']);
+
+        return $results;
     }
 
     protected function runUnderCandle(int $key, \stdClass $candle, \Closure $closure): void
@@ -200,5 +192,23 @@ class TradeFinder
         {
             $this->candles->forgetOverride($key);
         }
+    }
+
+    protected function saveTrade(TradeSetup $trade): void
+    {
+        if ($actions = $this->strategy->actions($trade))
+        {
+            $this->creator->setActions($actions);
+        }
+        $this->creator->setSymbol($this->strategy->symbol());
+        $savedTrade = $this->creator->save();
+
+        foreach ($this->indicators as $i)
+        {
+            $i->replaceBindable($trade, $savedTrade);
+            $i->saveBindings($savedTrade);
+        }
+
+        $this->trades[$savedTrade->timestamp] = $savedTrade;
     }
 }

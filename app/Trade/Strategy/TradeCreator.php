@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade\Strategy;
 
 use App\Models\OrderType;
@@ -20,13 +22,13 @@ class TradeCreator
     protected ?Collection $actions = null;
     protected ?TradeSetup $trade = null;
     protected ?string $requiredNextSignal = null;
-    protected array $signals = [];
+    protected Collection $signals;
 
     public function __construct(public TradeConfig $config)
     {
+        $this->signals = new Collection();
         $this->signalIndicatorAliases = $config->getSignalIndicatorAliases();
-        $this->requiredSignalCount = \count($this->signalIndicatorAliases);
-        if ($this->requiredSignalCount)
+        if ($this->requiredSignalCount = \count($this->signalIndicatorAliases))
         {
             $this->signalOrderMap = $this->getSignalOrderMap();
             $this->firstSignalClass = $this->requiredNextSignal = \array_key_first($this->signalOrderMap);
@@ -80,7 +82,8 @@ class TradeCreator
         }
 
         $tradeSetup->signals()
-            ->sync(\array_map(static fn(Signal $signal): int => $signal->id, $this->signals));
+            ->sync($this->signals
+                ->map(static fn(Signal $signal): int => $signal->id));
         $this->finalize();
 
         return $tradeSetup;
@@ -90,44 +93,33 @@ class TradeCreator
     {
         if ($this->requiredSignalCount)
         {
-            $this->signals = [];
+            $this->signals = new Collection();
             $this->requiredNextSignal = $this->firstSignalClass;
         }
 
         $this->trade = $this->actions = null;
     }
 
-    public function findTradeWithSignal(Candles $candles, ?Signal $signal = null): ?TradeSetup
+    public function findTradeWithSignal(Candles $candles, Signal $signal): ?TradeSetup
     {
-        if (!$signal && !$this->requiredSignalCount)
+        if (!$this->isRequiredNextSignal($signal) || !$this->verifySignal($signal))
         {
-            //TODO:: handle no signal setups
             return null;
         }
 
-        if ($signal && $this->isRequiredNextSignal($signal) && $this->verifySignal($signal))
+        $this->handleNewRequiredSignal($signal);
+
+        if ($this->areRequirementsComplete())
         {
-            $this->handleNewRequiredSignal($signal);
-
-            if ($this->areRequirementsComplete())
-            {
-                if ($this->trade)
-                {
-                    if ($this->trade->isDirty())
-                    {
-                        throw new \UnexpectedValueException('Incomplete trades must not be modified.');
-                    }
-                }
-                else
-                {
-                    $this->trade = $this->setup();
-                }
-
-                return $this->runCallback($candles);
-            }
+            return $this->runCallback($candles);
         }
 
         return null;
+    }
+
+    public function findTrade(Candles $candles): ?TradeSetup
+    {
+        return $this->runCallback($candles);
     }
 
     protected function isRequiredNextSignal(Signal $signal): bool
@@ -155,9 +147,9 @@ class TradeCreator
         return true;
     }
 
-    public function getLastSignal(): bool|Signal
+    public function getLastSignal(): ?Signal
     {
-        return \end($this->signals);
+        return $this->signals->last();
     }
 
     protected function handleNewRequiredSignal(Signal $signal): void
@@ -168,32 +160,39 @@ class TradeCreator
 
     protected function areRequirementsComplete(): bool
     {
-        return \count($this->signals) == $this->requiredSignalCount;
+        return $this->signals->count() == $this->requiredSignalCount;
     }
 
     protected function setup(): TradeSetup
     {
-        $tradeSetup = new TradeSetup();
+        $setup = new TradeSetup();
 
-        $tradeSetup->signature()->associate($this->config->signature);
+        $setup->signature()->associate($this->config->signature);
 
-        /** @var Signal $lastSignal */
-        $lastSignal = $this->getLastSignal();
+        $setup->entry_order_type = OrderType::MARKET;
 
-        $tradeSetup->signal_count = \count($this->signals);
-        $tradeSetup->name = \implode('|',
-            \array_map(static fn(Signal $signal): string => $signal->name, $this->signals));
-        $tradeSetup->side = $lastSignal->side;
-        $tradeSetup->timestamp = $lastSignal->timestamp;
-        $tradeSetup->price = $lastSignal->price;
-        $tradeSetup->entry_order_type = OrderType::MARKET;
-        $tradeSetup->price_date = $lastSignal->price_date;
+        if ($this->config->withSignals)
+        {
+            /** @var Signal $lastSignal */
+            $lastSignal = $this->getLastSignal();
 
-        return $tradeSetup;
+            $setup->name = $this->signals
+                ->map(static fn(Signal $signal): string => $signal->name)
+                ->implode('|');
+            $setup->side = $lastSignal->side;
+            $setup->timestamp = $lastSignal->timestamp;
+            $setup->price = $lastSignal->price;
+            $setup->price_date = $lastSignal->price_date;
+            $setup->signal_count = $this->signals->count();
+        }
+
+        return $setup;
     }
 
     protected function runCallback(Candles $candles): ?TradeSetup
     {
-        return ($this->config->setup)(trade: $this->trade, candles: $candles, signals: collect($this->signals));
+        $this->trade = $this->setup();
+
+        return ($this->config->setup)(trade: $this->trade, candles: $candles, signals: $this->signals);
     }
 }
