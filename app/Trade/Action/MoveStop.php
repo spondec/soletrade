@@ -118,4 +118,16 @@ class MoveStop extends Handler
 
         return false;
     }
+
+    public static function getStubConfig(): array
+    {
+        return [
+            'target'         => [
+                'price' => null,
+                'roi'   => null
+            ],
+            'new_stop_price' => null,
+            'lock'           => true
+        ];
+    }
 }
