@@ -76,13 +76,15 @@ class TradeSetup extends Model implements Bindable
 
     public function loadBindingPrice(?Price $price, string $column, int $timestamp, ...$params): void
     {
-        if ($price && !$price->isLocked())
+        if (!$price)
         {
-            $binding = $this->bindings[$column] ?? null;
-            if ($binding && $entryPrice = $binding->getBindValue($timestamp, ...$params))
-            {
-                $price->set($entryPrice, $timestamp, 'Binding: ' . $binding->name);
-            }
+            return;
+        }
+
+        $binding = $this->bindings[$column] ?? null;
+        if ($binding && $entryPrice = $binding->getValue($timestamp, ...$params))
+        {
+            $price->set($entryPrice, $timestamp, 'Binding: ' . $binding->name, true);
         }
     }
 
