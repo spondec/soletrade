@@ -59,8 +59,8 @@ abstract class Indicator implements Binder
         $this->repo = App::make(SymbolRepository::class);
 
         /** @var Signature signature */
-        $this->signature = $this->register(['contents' => $this->contents(),
-                                            'config'   => $this->config]);
+        $this->signature = $this->register(['config'   => $this->config,
+                                            'contents' => $this->contents()]);
 
         $this->loadConfigDependencies();
 
