@@ -53,7 +53,7 @@ trait HasSignature
             }
             else
             {
-                if (($array2[$key] ?? null) != $value)
+                if (!array_key_exists($key, $array2) || $array2[$key] != $value)
                 {
                     $collisions[] = $key;
                 }
