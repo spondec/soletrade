@@ -3,22 +3,20 @@
 namespace App\Trade\Indicator\Helpers;
 
 /**
- * @property int|null                       prev
- * @property int|null                       current
- * @property int|null                       next
- * @property \Illuminate\Support\Collection data
+ * @method array prev()
+ * @method array current()
  */
 trait CanCross
 {
     /**
      * Return true if x crosses over y.
      *
-     * @param \Closure $x Takes indicator data as argument
-     * @param \Closure $y Takes indicator data as argument
+     * @param string $x One of the values calculated by the indicator.
+     * @param string $y One of the values calculated by the indicator.
      *
      * @return bool
      */
-    public function crossOver(\Closure $x, \Closure $y): bool
+    public function crossOver(string $x, string $y): bool
     {
         $prev = $this->prev();
         $current = $this->current();
@@ -28,18 +26,18 @@ trait CanCross
             return false;
         }
 
-        return $x($prev) < $y($prev) && $x($current) > $y($current);
+        return $prev[$x] < $prev[$y] && $current[$x] > $current[$y];
     }
 
     /**
      * Return true if x crosses under y.
      *
-     * @param \Closure $x Takes indicator data as argument
-     * @param \Closure $y Takes indicator data as argument
+     * @param string $x One of the values calculated by the indicator.
+     * @param string $y One of the values calculated by the indicator.
      *
      * @return bool
      */
-    public function crossUnder(\Closure $x, \Closure $y): bool
+    public function crossUnder(string $x, string $y): bool
     {
         $prev = $this->prev();
         $current = $this->current();
@@ -49,6 +47,6 @@ trait CanCross
             return false;
         }
 
-        return $x($prev) > $y($prev) && $x($current) < $y($current);
+        return $prev[$x] > $prev[$y] && $current[$x] < $current[$y];
     }
 }
