@@ -21,32 +21,25 @@ class Combined extends Indicator
          *      ]
          * ]
          */
-        'indicators' => []
+        'indicators' => [
+
+        ]
     ];
     protected array $variableConfigKeys = ['indicators'];
-    /**
-     * @var Indicator[]
-     */
-    protected array $indicators = [];
-
-    public function indicator(string $alias): Indicator
-    {
-        return $this->indicators[$alias];
-    }
 
     protected function calculate(CandleCollection $candles): array
     {
         $data = [];
-        foreach ($this->config('indicators') as $alias => $indicator)
+        foreach ($this->config('indicators') as $alias => $config)
         {
-            /** @var Indicator $instance */
-            $instance = $this->indicators[$alias] = new $indicator['class'](
+            /** @var Indicator $indicator */
+            $indicator = new $config['class'](
                 symbol: $this->symbol,
                 candles: $candles,
-                config: $indicator['config']
+                config: $config['config']
             );
 
-            foreach ($instance->data() as $k => $value)
+            foreach ($indicator->data() as $k => $value)
             {
                 $data[$k][$alias] = $value;
             }
