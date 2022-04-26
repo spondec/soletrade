@@ -6,6 +6,7 @@ use App\Exceptions\PositionExitFailed;
 use App\Models\Runner;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
+use App\Trade\Collection\TradeCollection;
 use App\Trade\Contracts\Exchange\HasLeverage;
 use App\Trade\Evaluation\LivePosition;
 use App\Trade\Evaluation\TradeStatus;
@@ -27,6 +28,8 @@ class Trader
 
     protected Status $status = Status::STOPPED;
     protected Runner $runner;
+    protected TradeCollection $trades;
+    private bool $isEndingLoop = false;
 
     public function __construct(public readonly Strategy $strategy,
                                 public readonly Exchange $exchange,
@@ -69,26 +72,6 @@ class Trader
         )->run();
     }
 
-    public function getStatus(): Status
-    {
-        return $this->status;
-    }
-
-    public function setStatus(Status $status): void
-    {
-        $this->status = $status;
-
-        if ($this->status === Status::STOPPED)
-        {
-            $this->endLoop();
-        }
-    }
-
-    public function keepAlive(): void
-    {
-        $this->runner->lengthenExpiry(600)->save();
-    }
-
     public function run(): ?TradeStatus
     {
         if ($this->status === Status::STOPPED)
@@ -96,11 +79,23 @@ class Trader
             return null;
         }
 
+        $trades = $this->strategy->run($this->symbol);
+
+        if (!isset($this->trades))
+        {
+            $this->trades = $trades;
+        }
+        else
+        {
+            $this->trades->merge($trades);
+        }
+
         /** @var TradeSetup $lastTrade */
-        $lastTrade = ($trades = $this->strategy->run($this->symbol))->last();
+        $lastTrade = $this->trades->last();
 
         Log::info(fn() => "Total trades: {$trades->count()}");
-        Log::info(fn() => "First trade: {$trades->first()->id}", $trades->first());
+        Log::info(fn() => "Cached trades: {$this->trades->count()}");
+        Log::info(fn() => "First trade: {$this->trades->first()->id}", $this->trades->first());
         Log::info(fn() => "Last trade #{$lastTrade->id}", $lastTrade);
 
         if ($lastTrade && as_ms($lastTrade->price_date) > as_ms($this->runner->start_date))
@@ -109,7 +104,7 @@ class Trader
             {
                 $this->initNewLoop($lastTrade);
             }
-            else if ($lastTrade->id == $trades->getNextTrade($this->loop->entry)?->id)
+            else if ($lastTrade->id == $this->trades->getNextTrade($this->loop->entry)?->id)
             {
                 Log::info(fn() => 'New trade detected. #' . $lastTrade->id);
                 if (!$this->loop->status()->isEntered())
@@ -153,9 +148,9 @@ class Trader
             $status->getPosition()->listen('exit', $this->onPositionExit(...));
             $this->setStatus(Status::IN_POSITION);
         });
-    }
 
-    private bool $isEndingLoop = false;
+        $this->trades->cleanUpBefore($trade);
+    }
 
     protected function endLoop(): void
     {
@@ -189,6 +184,26 @@ class Trader
 
         $this->isEndingLoop = false;
         $this->loop = null;
+    }
+
+    public function getStatus(): Status
+    {
+        return $this->status;
+    }
+
+    public function setStatus(Status $status): void
+    {
+        $this->status = $status;
+
+        if ($this->status === Status::STOPPED)
+        {
+            $this->endLoop();
+        }
+    }
+
+    public function keepAlive(): void
+    {
+        $this->runner->lengthenExpiry(600)->save();
     }
 
     protected function onShutdown(): void

@@ -112,6 +112,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $status->shouldReceive('listen')->once();
 
         $trade = m::mock('alias:' . TradeSetup::class);
+        $trade->id = 1;
         $trade->price_date = time();
 
         $this->expectStrategyRun($strategy, $symbol, [$trade]);

@@ -20,6 +20,25 @@ class TradeCollection extends Collection
         $this->mergeConfig($config);
     }
 
+    public function merge($items): static
+    {
+        $this->items = array_merge($this->items, $this->getArrayableItems($items));
+        return $this;
+    }
+
+    public function cleanUpBefore(TradeSetup $setup): void
+    {
+        foreach ($this->items as $k => $item)
+        {
+            if ($item->id == $setup->id)
+            {
+                return;
+            }
+
+            unset($this->items[$k]);
+        }
+    }
+
     public function getFirstTrade(): ?TradeSetup
     {
         return $this->first();
