@@ -112,20 +112,14 @@ class TradeFinder
             $candle = $this->candleIterator->current();
             $key = $this->candleIterator->key();
             $this->candleIterator->next();
-            $results = $this->getIndicatorGeneratorResults($candle, $indicator);
+            $results = $this->getIndicatorGeneratorResults($candle, $indicator) ?? [];
 
             if ($this->tradeConfig->withSignals)
             {
-                foreach ($results as $result)
+                if ($signals = $this->extractSignals($results))
                 {
-                    /** @var Signal $signal */
-                    if (!$signal = $result['signal'] ?? null)
-                    {
-                        continue;
-                    }
-
-                    $this->runUnderCandle($key, $indicator->candle(), function () use (&$signal) {
-                        if ($trade = $this->creator->findTradeWithSignal($this->_candles, $signal))
+                    $this->runUnderCandle($key, $indicator->candle(), function () use (&$signals) {
+                        if ($trade = $this->creator->findTradeWithSignals($this->_candles, $signals))
                         {
                             $this->saveTrade($trade);
                         }
@@ -210,5 +204,18 @@ class TradeFinder
         }
 
         $this->trades[$savedTrade->timestamp] = $savedTrade;
+    }
+
+    protected function extractSignals(array $results): array
+    {
+        $signals = [];
+        foreach ($results as $result)
+        {
+            if ($signal = $result['signal'] ?? null)
+            {
+                $signals[] = $signal;
+            }
+        }
+        return $signals;
     }
 }

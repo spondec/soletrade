@@ -16,12 +16,13 @@ class TradeCreator
 {
     public readonly array $signalIndicatorAliases;
     public readonly array $signalOrderMap;
+    public readonly array $signalOrder;
     public readonly string $firstSignalClass;
     public readonly int $requiredSignalCount;
 
     protected ?Collection $actions = null;
     protected ?TradeSetup $trade = null;
-    protected ?string $requiredNextSignal = null;
+    protected ?string $nextRequiredSignalAlias = null;
     protected Collection $signals;
 
     public function __construct(public TradeConfig $config)
@@ -31,7 +32,8 @@ class TradeCreator
         if ($this->requiredSignalCount = \count($this->signalIndicatorAliases))
         {
             $this->signalOrderMap = $this->getSignalOrderMap();
-            $this->firstSignalClass = $this->requiredNextSignal = \array_key_first($this->signalOrderMap);
+            $this->signalOrder = $this->getSignalOrder($this->signalOrderMap);
+            $this->firstSignalClass = $this->nextRequiredSignalAlias = \array_key_first($this->signalOrderMap);
         }
     }
 
@@ -94,24 +96,40 @@ class TradeCreator
         if ($this->requiredSignalCount)
         {
             $this->signals = new Collection();
-            $this->requiredNextSignal = $this->firstSignalClass;
+            $this->nextRequiredSignalAlias = $this->firstSignalClass;
         }
 
         $this->trade = $this->actions = null;
     }
 
-    public function findTradeWithSignal(Candles $candles, Signal $signal): ?TradeSetup
+    /**
+     * @param Candles  $candles
+     * @param Signal[] $signals
+     *
+     * @return TradeSetup|null
+     */
+    public function findTradeWithSignals(Candles $candles, array $signals): ?TradeSetup
     {
-        if (!$this->isRequiredNextSignal($signal) || !$this->verifySignal($signal))
+        if (!$signals)
         {
-            return null;
+            throw new \LogicException('$signals must not be empty.');
         }
 
-        $this->handleNewRequiredSignal($signal);
+        $this->sortByRequiredOrder($signals);
 
-        if ($this->areRequirementsComplete())
+        foreach ($signals as $signal)
         {
-            return $this->runCallback($candles);
+            if (!$this->isRequiredNextSignal($signal) || !$this->verifySignal($signal))
+            {
+                return null;
+            }
+
+            $this->handleNewRequiredSignal($signal);
+
+            if ($this->areRequirementsComplete())
+            {
+                return $this->runCallback($candles);
+            }
         }
 
         return null;
@@ -124,7 +142,7 @@ class TradeCreator
 
     protected function isRequiredNextSignal(Signal $signal): bool
     {
-        return !$this->requiredNextSignal || $signal->indicator->alias === $this->requiredNextSignal;
+        return !$this->nextRequiredSignalAlias || $signal->indicator->alias === $this->nextRequiredSignalAlias;
     }
 
     protected function verifySignal(Signal $signal): bool
@@ -155,7 +173,7 @@ class TradeCreator
     protected function handleNewRequiredSignal(Signal $signal): void
     {
         $this->signals[] = $signal;
-        $this->requiredNextSignal = $this->signalOrderMap[$signal->indicator->alias] ?? null;
+        $this->nextRequiredSignalAlias = $this->signalOrderMap[$signal->indicator->alias] ?? null;
     }
 
     protected function areRequirementsComplete(): bool
@@ -194,5 +212,38 @@ class TradeCreator
         $this->trade = $this->setup();
 
         return ($this->config->setup)(trade: $this->trade, candles: $candles, signals: $this->signals);
+    }
+
+    /**
+     * @param Signal[] $signals
+     *
+     * @return void
+     */
+    protected function sortByRequiredOrder(array &$signals): void
+    {
+        if (count($signals) <= 1)
+        {
+            return;
+        }
+        uasort($signals, function (Signal $a, Signal $b): int {
+            return $this->signalOrder[$a->indicator->alias] <=> $this->signalOrder[$b->indicator->alias];
+        });
+    }
+
+    private function getSignalOrder(array $signalOrderMap): array
+    {
+        $order = [];
+
+        foreach ($signalOrderMap as $first => $next)
+        {
+            $order[] = $first;
+
+            if ($next)
+            {
+                $order[] = $next;
+            }
+        }
+
+        return array_flip($order);
     }
 }
