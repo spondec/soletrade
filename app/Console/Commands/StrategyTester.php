@@ -2,12 +2,11 @@
 
 namespace App\Console\Commands;
 
-use App\Console\Util;
 use App\Models\Summary;
 use App\Repositories\SymbolRepository;
-use App\Trade\Calc;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Strategy\Tester;
+use App\Trade\Util;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Console\Command;

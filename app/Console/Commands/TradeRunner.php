@@ -2,17 +2,16 @@
 
 namespace App\Console\Commands;
 
-use App\Console\Util;
 use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
 use App\Trade\AllocatedAsset;
-use App\Trade\Calc;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Log;
 use App\Trade\Status;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Telegram\Bot;
 use App\Trade\TradeAsset;
+use App\Trade\Util;
 use Illuminate\Console\Command;
 use Longman\TelegramBot\Entities\Update;
 use Symfony\Component\Console\Helper\Helper;
