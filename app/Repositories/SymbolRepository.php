@@ -189,7 +189,7 @@ class SymbolRepository extends Repository
             ->where('symbol_id', $id)
             ->where('t', '>', $timestamp)
             ->orderBy('t', 'ASC')
-            ->limit(10000)
+            ->limit(100)
             ->get();
 
         $candles->pop(2);//remove last 2 candles for precaution
@@ -199,7 +199,7 @@ class SymbolRepository extends Repository
             static::$nextCandleCache[$id][$candle->t] = $candles[$k + 1] ?? null;
         }
 
-        return $candles->first();
+        return $candles[0] ?? null;
     }
 
     public function assertNextCandle(Symbol|int $symbol, int $timestamp): \stdClass
