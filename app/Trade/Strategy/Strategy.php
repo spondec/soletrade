@@ -18,6 +18,7 @@ use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Indicator\Indicator;
 use App\Trade\Strategy\Finder\TradeFinder;
+use App\Trade\Util;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
@@ -71,9 +72,8 @@ abstract class Strategy
         $config = [];
 
         $indicatorConfig = $this->indicatorConfig();
-        $aliases = array_column($indicatorConfig, 'alias');
 
-        if ($duplicate = array_diff_assoc($aliases, array_unique($aliases)))
+        if ($duplicate = Util::getDuplicates(array_column($indicatorConfig, 'alias')))
         {
             throw new \LogicException('Duplicate indicator aliases: ' . implode(', ', $duplicate));
         }
@@ -180,7 +180,7 @@ abstract class Strategy
             /** @var Indicator $indicator */
             $indicator = new $c->class(symbol: $this->symbol,
                 candles: $this->candles,
-                config: \is_array($c) ? $c['config'] ?? [] : []);
+                config: $c->config);
 
             $this->indicators[$c->alias] = $indicator;
             $indicator->alias = $c->alias;
