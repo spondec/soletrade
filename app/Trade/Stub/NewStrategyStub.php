@@ -44,7 +44,7 @@ class NewStrategyStub extends Creator
         $params['indicators'] = $indicators->implode(', ');
         $params['actions'] = $actionsImplode = $params['actions']->implode(', ');
 
-        $params['use'] = ($useIndicators ? "use \App\Indicators\ { {$useIndicators->implode(', ')} };" : '')
+        $params['use'] = ($useIndicators->first() ? "use \App\Indicators\ { {$useIndicators->implode(', ')} };" : '')
             . "\n" .
             ($actionsImplode ? "use \App\Trade\Action\ { $actionsImplode };" : '');
 
