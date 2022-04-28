@@ -14,6 +14,8 @@ use JetBrains\PhpStorm\ArrayShape;
 
 class SymbolRepository extends Repository
 {
+    protected static array $nextCandleCache = [];
+
     /**
      * @param string[]|array[] $indicators
      */
@@ -108,6 +110,16 @@ class SymbolRepository extends Repository
         return $candles;
     }
 
+    public function findSymbolIdForInterval(Symbol $symbol, ?string $interval = null): int
+    {
+        return !$interval || $symbol->interval === $interval ? $symbol->id :
+            DB::table('symbols')
+                ->where('exchange_id', $symbol->exchange_id)
+                ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval)
+                ->where('symbol', $symbol->symbol)
+                ->get('id')->first()->id;
+    }
+
     public function assertCandlesBetween(Symbol  $symbol,
                                          int     $startDate,
                                          int     $endDate,
@@ -136,16 +148,6 @@ class SymbolRepository extends Repository
         return $candles;
     }
 
-    public function findSymbolIdForInterval(Symbol $symbol, ?string $interval = null): int
-    {
-        return !$interval || $symbol->interval === $interval ? $symbol->id :
-            DB::table('symbols')
-                ->where('exchange_id', $symbol->exchange_id)
-                ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval)
-                ->where('symbol', $symbol->symbol)
-                ->get('id')->first()->id;
-    }
-
     public function findCandles(Symbol $symbol): Builder
     {
         return DB::table('candles')->where('symbol_id', $symbol->id);
@@ -156,15 +158,6 @@ class SymbolRepository extends Repository
         return DB::table('candles')
             ->where('symbol_id', $interval ? $this->findSymbolIdForInterval($symbol, $interval) : $symbol->id)
             ->where('t', $timestamp)
-            ->first();
-    }
-
-    public function fetchNextCandle(Symbol|int $symbol, int $timestamp): ?\stdClass
-    {
-        return DB::table('candles')
-            ->where('symbol_id', \is_int($symbol) ? $symbol : $symbol->id)
-            ->where('t', '>', $timestamp)
-            ->orderBy('t', 'ASC')
             ->first();
     }
 
@@ -181,6 +174,32 @@ class SymbolRepository extends Repository
         }
 
         return $symbol->last_update;
+    }
+
+    public function fetchNextCandle(Symbol|int $symbol, int $timestamp): ?\stdClass
+    {
+        $id = \is_int($symbol) ? $symbol : $symbol->id;
+
+        if ($nextCandle = static::$nextCandleCache[$id][$timestamp] ?? null)
+        {
+            return $nextCandle;
+        }
+
+        $candles = DB::table('candles')
+            ->where('symbol_id', $id)
+            ->where('t', '>', $timestamp)
+            ->orderBy('t', 'ASC')
+            ->limit(10000)
+            ->get();
+
+        $candles->pop(2);//remove last 2 candles for precaution
+
+        foreach ($candles as $k => $candle)
+        {
+            static::$nextCandleCache[$id][$candle->t] = $candles[$k + 1] ?? null;
+        }
+
+        return $candles->first();
     }
 
     public function assertNextCandle(Symbol|int $symbol, int $timestamp): \stdClass
@@ -225,6 +244,14 @@ class SymbolRepository extends Repository
             ->get();
     }
 
+    /**
+     * @return Symbol[]
+     */
+    public function fetchSymbols(array $symbols, string $interval, int $exchangeId): Collection
+    {
+        return $this->findSymbols($exchangeId, $symbols, $interval)->get();
+    }
+
     public function findSymbols(Exchange|int $exchange, string|array $symbolName, string $interval): \Illuminate\Database\Eloquent\Builder
     {
         $query = Symbol::query()
@@ -241,14 +268,6 @@ class SymbolRepository extends Repository
         }
 
         return $query;
-    }
-
-    /**
-     * @return Symbol[]
-     */
-    public function fetchSymbols(array $symbols, string $interval, int $exchangeId): Collection
-    {
-        return $this->findSymbols($exchangeId, $symbols, $interval)->get();
     }
 
     public function fetchIntervals(): Collection
