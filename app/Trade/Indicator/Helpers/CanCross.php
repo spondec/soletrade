@@ -21,10 +21,16 @@ trait CanCross
         $prev = $this->prev();
         $current = $this->current();
 
-        if ($prev === null || $current === null)
+        if (
+            empty($prev[$x]) ||
+            empty($prev[$y]) ||
+            empty($current[$x]) ||
+            empty($current[$y])
+        )
         {
             return false;
         }
+
 
         return $prev[$x] < $prev[$y] && $current[$x] > $current[$y];
     }
@@ -42,7 +48,12 @@ trait CanCross
         $prev = $this->prev();
         $current = $this->current();
 
-        if ($prev === null || $current === null)
+        if (
+            empty($prev[$x]) ||
+            empty($prev[$y]) ||
+            empty($current[$x]) ||
+            empty($current[$y])
+        )
         {
             return false;
         }
