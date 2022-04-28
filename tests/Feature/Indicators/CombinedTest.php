@@ -14,10 +14,12 @@ class CombinedTest extends IndicatorTestCase
         $symbol = $this->createCandles(100);
         $combined = new Combined($symbol, $symbol->candles(100), [
             'indicators.sma_8'  => [
+                'alias'  => 'sma_8',
                 'class'  => SMA::class,
                 'config' => ['timePeriod' => 8]
             ],
             'indicators.ema_13' => [
+                'alias'  => 'ema_13',
                 'class'  => EMA::class,
                 'config' => ['timePeriod' => 13]
             ]

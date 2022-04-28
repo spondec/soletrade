@@ -5,6 +5,7 @@ namespace App\Indicators;
 use App\Trade\Collection\CandleCollection;
 use App\Trade\Indicator\Helpers\CanCross;
 use App\Trade\Indicator\Indicator;
+use App\Trade\Util;
 
 class Combined extends Indicator
 {
@@ -14,14 +15,16 @@ class Combined extends Indicator
         /**
          * Example:
          * [
-         *      'sma_8' => [
+         *       [
+         *              'alias' => 'sma_8
          *              'class' => \App\Indicators\SMA::class,
          *              'config' => ['timeFrame' => 8]
-         *      ],
-         *      'ema_20' => [
+         *       ],
+         *       [
+         *              'alias' => 'ema_20'
          *              'class' => \App\Indicators\EMA::class,
          *              'config' => ['timeFrame' => 20]
-         *      ]
+         *       ]
          * ]
          */
         'indicators' => [
@@ -33,7 +36,14 @@ class Combined extends Indicator
     protected function calculate(CandleCollection $candles): array
     {
         $data = [];
-        foreach ($this->config('indicators') as $alias => $config)
+        $indicators = $this->config('indicators');
+
+        if ($duplicates = Util::getDuplicates(array_column($indicators, 'alias')))
+        {
+            throw new \LogicException('Duplicate indicator aliases: ' . implode(', ', $duplicates));
+        }
+
+        foreach ($indicators as $config)
         {
             /** @var Indicator $indicator */
             $indicator = new $config['class'](
@@ -42,6 +52,7 @@ class Combined extends Indicator
                 config: $config['config']
             );
 
+            $alias = $config['alias'];
             foreach ($indicator->data() as $k => $value)
             {
                 $data[$k][$alias] = $value;
