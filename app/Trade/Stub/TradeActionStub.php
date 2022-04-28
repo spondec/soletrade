@@ -38,4 +38,9 @@ class TradeActionStub extends Creator
 
         return $params;
     }
+
+    protected function modifyContent(string $content): string
+    {
+        return "\n $content \n";
+    }
 }
