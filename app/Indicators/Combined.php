@@ -36,6 +36,7 @@ class Combined extends Indicator
     protected function calculate(CandleCollection $candles): array
     {
         $data = [];
+
         $indicators = $this->config('indicators');
 
         if ($duplicates = Util::getDuplicates(array_column($indicators, 'alias')))
@@ -53,11 +54,13 @@ class Combined extends Indicator
             );
 
             $alias = $config['alias'];
-            foreach ($indicator->data() as $k => $value)
+            foreach ($indicator->data() as $timestamp => $value)
             {
-                $data[$k][$alias] = $value;
+                $data[$timestamp][$alias] = $value;
             }
         }
+
+        ksort($data);
 
         return $data;
     }
