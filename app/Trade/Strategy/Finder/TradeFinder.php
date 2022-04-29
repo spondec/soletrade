@@ -28,6 +28,8 @@ class TradeFinder
 
     protected SymbolRepository $symbolRepo;
 
+    protected \Closure $hasNextCandle;
+
     /**
      * @var TradeSetup[]
      */
@@ -53,6 +55,13 @@ class TradeFinder
         $this->initGenerators($this->indicatorGenerators);
 
         $this->assertProgressiveness();
+
+        $this->hasNextCandle = \Closure::bind(function (): bool {
+            return isset($this->candles[$this->iterator->key() + 1]);
+        },
+            $this->_candles,
+            Candles::class
+        );
     }
 
     /**
@@ -195,6 +204,9 @@ class TradeFinder
             $this->creator->setActions($actions);
         }
         $this->creator->setSymbol($this->strategy->symbol());
+
+        $trade->is_permanent = ($this->hasNextCandle)();
+
         $savedTrade = $this->creator->save();
 
         foreach ($this->indicators as $i)

@@ -22,7 +22,6 @@ return new class extends Migration {
             $table->decimal('price');
             $table->bigInteger('timestamp');
             $table->bigInteger('price_date');
-            $table->boolean('is_confirmed')->default(false);
             $table->json('info')->nullable(true);
             $table->unique(['symbol_id', 'indicator_id', 'signature_id', 'timestamp']);
             $table->timestamps();

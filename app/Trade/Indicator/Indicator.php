@@ -17,7 +17,6 @@ use App\Trade\HasSignature;
 use App\Trade\Helper\ClosureHash;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 use JetBrains\PhpStorm\Pure;
 
 abstract class Indicator implements Binder
@@ -407,17 +406,9 @@ abstract class Indicator implements Binder
                     $newSignal->price ??= $this->candle()->c;
                     $newSignal->timestamp = $openTime;
                     $newSignal->price_date = $priceDate;
-                    $newSignal->is_confirmed = $nextOpenTime || ($lastCandle && $lastCandle->t > $openTime);//the candle is closed
 
                     $newSignal = $this->saveSignal($newSignal);
                     $signal = $this->setupSignal($signalSignature);
-                }
-                else
-                {
-                    // possible signals that are no longer valid
-                    // but might exist in the database
-                    // needs to be marked as unconfirmed
-                    $unconfirmed[] = $openTime;
                 }
             }
 
@@ -426,11 +417,6 @@ abstract class Indicator implements Binder
             yield ['signal'     => $newSignal,
                    'timestamp'  => $openTime,
                    'price_date' => $priceDate ?? null] ?? null;
-        }
-
-        if ($unconfirmed)
-        {
-            $this->unconfirmSignals($unconfirmed, $signalSignature);
         }
 
         //the loop is over, reset state
@@ -562,16 +548,6 @@ abstract class Indicator implements Binder
         $this->signals[] = $signal = $signal->updateUniqueOrCreate();
         $signal->setIndicator($this);
         return $signal;
-    }
-
-    protected function unconfirmSignals(array $unconfirmed, Signature $signalSignature): void
-    {
-        DB::table('signals')
-            ->where('symbol_id', $this->symbol->id)
-            ->where('indicator_id', $this->signature->id)
-            ->where('signature_id', $signalSignature->id)
-            ->whereIn('timestamp', $unconfirmed)
-            ->update(['is_confirmed' => false]);
     }
 
     final protected function getDefaultConfig(): array

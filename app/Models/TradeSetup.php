@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\Rules\Enum;
 
 /**
  * @property Signal[]|\Illuminate\Database\Eloquent\Collection      signals
@@ -25,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int                                                    symbol_id
  * @property int                                                    signature_id
  * @property int                                                    signal_count
+ * @property bool                                                   is_permanent
  * @property int                                                    timestamp
  * @property int                                                    price_date
  * @property string                                                 name
@@ -61,6 +63,8 @@ class TradeSetup extends Model implements Bindable
         'size'         => 100,
         'target_price' => null,
         'stop_price'   => null,
+        'signal_count' => 0,
+        'is_permanent' => false,
     ];
 
     protected $casts = [
