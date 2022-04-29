@@ -94,7 +94,7 @@ class {{ name }} extends Strategy
              */
             'setup' => function (TradeSetup $trade, Candles $candles, Collection $signals): ?TradeSetup {
                  {{ action_stubs }}
-                return null;
+                return $trade;
             }
         ];
     }
