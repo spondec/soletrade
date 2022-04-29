@@ -192,8 +192,6 @@ class SymbolRepository extends Repository
             ->limit(100)
             ->get();
 
-        $candles->pop(2);//remove last 2 candles for precaution
-
         foreach ($candles as $k => $candle)
         {
             static::$nextCandleCache[$id][$candle->t] = $candles[$k + 1] ?? null;
