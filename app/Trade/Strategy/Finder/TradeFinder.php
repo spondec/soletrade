@@ -46,7 +46,7 @@ class TradeFinder
                                 protected Collection       $indicators)
     {
         $this->candleIterator = $this->candles->getIterator();
-        $this->_candles = new Candles($this->candleIterator, $this->candles);
+        $this->_candles = new Candles($this->candleIterator, $this->candles, $this->strategy->symbol());
         $this->creator = new TradeCreator($this->tradeConfig);
         $this->symbolRepo = App::make(SymbolRepository::class);
 

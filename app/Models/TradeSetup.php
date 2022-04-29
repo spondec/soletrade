@@ -30,7 +30,7 @@ use Illuminate\Validation\Rules\Enum;
  * @property int                                                    timestamp
  * @property int                                                    price_date
  * @property string                                                 name
- * @property string                                                 side
+ * @property Side                                                   side
  * @property OrderType                                              entry_order_type
  * @property array                                                  order_type_config
  * @property float                                                  price
@@ -50,7 +50,10 @@ class TradeSetup extends Model implements Bindable
     public static function validationRules(): array
     {
         return [
+            'name'       => 'required|string|max:255',
             'price_date' => 'gte:timestamp',
+            'price'      => 'required|numeric',
+            'side'       => ['required', new Enum(Side::class)]
         ];
     }
 
@@ -68,6 +71,7 @@ class TradeSetup extends Model implements Bindable
     ];
 
     protected $casts = [
+        'side'              => Side::class,
         'price'             => 'float',
         'order_type_config' => 'array',
         'entry_order_type'  => OrderType::class,
@@ -110,9 +114,13 @@ class TradeSetup extends Model implements Bindable
     public function toArray()
     {
         $result = parent::toArray();
-        $result['price'] = \round((float)$result['price'], 2);
-        $result['target_price'] = $result['target_price'] ? \round((float)$result['target_price'], 2) : null;
-        $result['stop_price'] = $result['stop_price'] ? \round((float)$result['stop_price'], 2) : null;
+
+        if (!empty($result['price']) || !empty($result['target_price']) || !empty($result['stop_price']))
+        {
+            $result['price'] = \round((float)$result['price'], 2);
+            $result['target_price'] = $result['target_price'] ? \round((float)$result['target_price'], 2) : null;
+            $result['stop_price'] = $result['stop_price'] ? \round((float)$result['stop_price'], 2) : null;
+        }
 
         return $result;
     }
@@ -124,7 +132,7 @@ class TradeSetup extends Model implements Bindable
 
     public function side(): Side
     {
-        return Side::from($this->side);
+        return $this->side;
     }
 
     protected function assertPrice(): float

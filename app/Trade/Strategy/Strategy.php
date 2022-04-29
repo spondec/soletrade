@@ -81,6 +81,7 @@ abstract class Strategy
         foreach ($indicatorConfig as &$c)
         {
             $c['config'] = $c['config'] ?? [];
+            $c['signal'] = $c['signal'] ?? null;
             $config[$c['alias']] = IndicatorConfig::fromArray($c);
         }
 

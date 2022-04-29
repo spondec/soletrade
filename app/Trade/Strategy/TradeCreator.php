@@ -8,6 +8,7 @@ use App\Models\OrderType;
 use App\Models\Signal;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
+use App\Repositories\SymbolRepository;
 use App\Trade\Candles;
 use App\Trade\Config\TradeConfig;
 use Illuminate\Support\Collection;
@@ -25,6 +26,8 @@ class TradeCreator
     protected ?string $nextRequiredSignalAlias = null;
     protected Collection $signals;
 
+    protected readonly SymbolRepository $repo;
+
     public function __construct(public TradeConfig $config)
     {
         $this->signals = new Collection();
@@ -35,6 +38,7 @@ class TradeCreator
             $this->signalOrder = $this->getSignalOrder($this->signalOrderMap);
             $this->firstSignalClass = $this->nextRequiredSignalAlias = \array_key_first($this->signalOrderMap);
         }
+        $this->repo = \App::make(SymbolRepository::class);
     }
 
     protected function getSignalOrderMap(): array
@@ -181,7 +185,7 @@ class TradeCreator
         return $this->signals->count() == $this->requiredSignalCount;
     }
 
-    protected function setup(): TradeSetup
+    protected function setup(Candles $candles, \stdClass $candle): TradeSetup
     {
         $setup = new TradeSetup();
 
@@ -203,13 +207,24 @@ class TradeCreator
             $setup->price_date = $lastSignal->price_date;
             $setup->signal_count = $this->signals->count();
         }
+        else
+        {
+            $setup->price = $candle->c;
+            $setup->timestamp = $candle->t;
+            $setup->price_date = $this->repo->getPriceDate($candle->t, null, $candles->symbol);
+        }
 
         return $setup;
     }
 
     protected function runCallback(Candles $candles): ?TradeSetup
     {
-        $this->trade = $this->setup();
+        if (!$candle = $candles->candle())
+        {
+            return null;
+        }
+
+        $this->trade = $this->setup($candles, $candle);
 
         return ($this->config->setup)(trade: $this->trade, candles: $candles, signals: $this->signals);
     }
