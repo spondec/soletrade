@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 use App\Trade\Strategy\Strategy;
 {{ use }}
 
-class {{ name }} extends Strategy
+final class {{ name }} extends Strategy
 {
     protected array $config = [
         /**

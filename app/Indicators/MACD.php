@@ -6,7 +6,7 @@ use App\Trade\Collection\CandleCollection;
 use App\Trade\Indicator\Helpers\CanCross;
 use App\Trade\Indicator\Indicator;
 
-class MACD extends Indicator
+final class MACD extends Indicator
 {
     use CanCross;
 

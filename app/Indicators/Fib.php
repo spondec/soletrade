@@ -7,7 +7,7 @@ use App\Trade\Indicator\Indicator;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\ArrayShape;
 
-class Fib extends Indicator
+final class Fib extends Indicator
 {
     protected array $config = [
         'period' => 144,

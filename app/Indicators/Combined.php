@@ -7,7 +7,7 @@ use App\Trade\Indicator\Helpers\CanCross;
 use App\Trade\Indicator\Indicator;
 use App\Trade\Util;
 
-class Combined extends Indicator
+final class Combined extends Indicator
 {
     use CanCross;
 

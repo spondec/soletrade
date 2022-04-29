@@ -5,7 +5,7 @@ namespace App\Indicators;
 use App\Trade\Collection\CandleCollection;
 use App\Trade\Indicator\Indicator;
 
-class SMA extends Indicator
+final class SMA extends Indicator
 {
     protected array $config = ['timePeriod' => 8];
 
