@@ -248,26 +248,48 @@ abstract class Strategy
     final protected function getDefaultConfig(): array
     {
         return [
+            /**
+             * The amount of candles to run the strategy.
+             * If the strategy requires less than the default,
+             * this can be set to a lower value so that the strategy runs faster.
+             */
             'maxCandles' => 1000,
-            'startDate'  => null,
-            'endDate'    => null,
 
             'trades'     => [
-                //when true, multiple trades to the same direction will be disregarded
-                'oppositeOnly' => true,
+                /**
+                 * When true, multiple trades to the same direction will be disregarded.
+                 */
+                'oppositeOnly'  => true,
+                /**
+                 * When true, waits for the next candle to open before trading.
+                 */
+                'permanentOnly' => true,
             ],
             'evaluation' => [
                 'loop'     => [
-                    //trade duration in minutes, 0 to disable
-                    //exceeding trades will be stopped at close price
+                    /**
+                     * Maximum trade duration in minutes, 0 to disable.
+                     * Exceeding trades will be stopped at close price.
+                     */
                     'timeout'     => 0,
-                    //when true, close trade immediately at reverse(exit) setup
+                    /**
+                     * When true, an opposite side setup will be used as an exit trade.
+                     * When false, exit trades will be through the target price.
+                     */
                     'closeOnExit' => true,
                 ],
+                /**
+                 * If set, trades will be evaluated at this interval. E.g. 15m, 5m, 1m.
+                 * Provides more accurate evaluation at the cost of performance.
+                 * Lowest intervals can really slow down the strategy testing.
+                 */
                 'interval' => null
             ],
-            //trade commission cut, each trade costs two fees
-            'feeRatio'   => 0.001
+            /**
+             * Trade commission ratio. This will be reflected on the final ROI when tested. Disabled by default.
+             * Most exchanges charges between 0.0004(0.04%) and 0.001(0.1%).
+             */
+            'feeRatio'   => 0.0000
         ];
     }
 }

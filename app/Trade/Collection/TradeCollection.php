@@ -11,13 +11,19 @@ class TradeCollection extends Collection
     use HasConfig;
 
     protected array $config = [
-        'oppositeOnly' => true
+        'oppositeOnly'  => false,
+        'permanentOnly' => false,
     ];
 
     public function __construct($items = [], array $config = [])
     {
         parent::__construct($items);
         $this->mergeConfig($config);
+
+        if ($this->config('permanentOnly'))
+        {
+            $this->items = array_filter($this->items, fn(TradeSetup $trade) => $trade->is_permanent);
+        }
     }
 
     public function merge($items): static

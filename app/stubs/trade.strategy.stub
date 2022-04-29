@@ -26,6 +26,10 @@ final class {{ name }} extends Strategy
              * When true, multiple trades to the same direction will be disregarded.
              */
             'oppositeOnly' => true,
+            /**
+            * When true, waits for the next candle to open before trading.
+            */
+            'permanentOnly' => true,
         ],
         'evaluation' => [
             'loop'     => [
