@@ -4,6 +4,12 @@ export default class MACD extends Indicator
 {
     prepare(data, length)
     {
+        data = {
+            macd: this.objectColumn(data, "macd"),
+            signal: this.objectColumn(data, "signal"),
+            divergence: this.objectColumn(data, "divergence")
+        };
+
         for (let key in data)
         {
             data[key] = this.objectMap((val, k) =>
