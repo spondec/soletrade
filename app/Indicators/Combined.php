@@ -33,6 +33,16 @@ class Combined extends Indicator
     ];
     protected array $variableConfigKeys = ['indicators'];
 
+    protected function setup(): void
+    {
+        foreach ($this->config['indicators'] ?? [] as $k => $item)
+        {
+            /** @var class-string<Indicator> $class */
+            $class = $item['class'];
+            $this->config['indicators'][$k]['name'] = $class::name();
+        }
+    }
+
     protected function calculate(CandleCollection $candles): array
     {
         $data = [];
