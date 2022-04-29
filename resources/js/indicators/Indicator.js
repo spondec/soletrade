@@ -12,6 +12,22 @@ export default class Indicator
         return ++this.paneCounter;
     }
 
+    objectColumn(object, column)
+    {
+        const result = {};
+
+        for (let i in object)
+        {
+            let value = object[i][column];
+            if (value)
+            {
+                result[i] = value;
+            }
+        }
+
+        return result;
+    }
+
     prepare(data, length)
     {
         throw Error('Indicator.prepare() should be overridden.');

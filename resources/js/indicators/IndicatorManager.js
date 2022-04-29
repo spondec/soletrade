@@ -25,5 +25,4 @@ export default class IndicatorManager
 
         return this.handlers[name];
     }
-
 }

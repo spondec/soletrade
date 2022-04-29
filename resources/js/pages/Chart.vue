@@ -23,7 +23,7 @@
         </div>
         <div class="mb-3">
           <label class="form-label">Indicators</label>
-          <vue-multiselect v-model="sel.indicators" :disabled="loading || symbol.strategy" :multiple="true"
+          <vue-multiselect v-model="sel.indicators" :disabled="loading || !!symbol.strategy" :multiple="true"
                            :options="indicators"/>
         </div>
       </div>
@@ -139,6 +139,7 @@ import RSI from "../indicators/RSI";
 import SimpleLineSeries from "../indicators/SimpleLineSeries";
 import Fib from "../indicators/Fib";
 import IndicatorManager from "../indicators/IndicatorManager";
+import Combined from "../indicators/Combined";
 
 export default {
   title: "Chart",
@@ -183,7 +184,11 @@ export default {
         EMA: () => new SimpleLineSeries(false, {color: 'rgb(49,255,0)', lineWidth: 1, lineType: 0}),
         Fib: () => new Fib(),
         RSI: () => new RSI(true, {color: 'rgb(170,42,252)', lineWidth: 1}),
-        MACD: () => new MACD()
+        MACD: () => new MACD(),
+        Combined: () =>
+        {
+          return new Combined(false, this.indicatorHandlers)
+        },
       },
       indicatorManager: null,
       jsonEditorEnabled: false,
@@ -238,7 +243,8 @@ export default {
       ...toRefs(state),
       onJsonChange
     }
-  },
+  }
+  ,
 
   async created()
   {
@@ -271,7 +277,8 @@ export default {
         this.magnifiedCharts[i].remove();
       }
       this.magnifiedCharts = [];
-    },
+    }
+    ,
 
     toggleJsonEditor: function ()
     {
@@ -307,6 +314,7 @@ export default {
 
       return acc;
     },
+
     preparePriceChangeMarker: function (log, color, size = 0.5)
     {
       return {
@@ -442,8 +450,8 @@ export default {
         let handler = this.getIndicatorHandler(indicators[alias].name);
         let magnified = this.reduceSeriesData(start, end, indicators[alias].data); //TODO use recalculated
         let chart = this.magnifiedCharts[0];
-        let series = handler.init(magnified, chart)
-        handler.update(series, magnified)
+        let series = handler.init(magnified, chart, indicators)
+        handler.update(series, magnified, indicators)
       }
     },
 
@@ -507,8 +515,8 @@ export default {
       for (let alias in indicators)
       {
         const indicator = indicators[alias];
-        indicator.data = this.getIndicatorHandler(indicator.name).prepare(indicator.data, length);
-        indicator.progressive = this.getIndicatorHandler(indicator.name).prepare(indicator.progressive, length);
+        indicator.data = this.getIndicatorHandler(indicator.name).prepare(indicator.data, length, indicators);
+        indicator.progressive = this.getIndicatorHandler(indicator.name).prepare(indicator.progressive, length, indicators);
       }
       return indicators;
     },
@@ -525,8 +533,8 @@ export default {
           let data = indicator.data;
           let handler = this.getIndicatorHandler(indicator.name);
           let chart = this.charts[0];
-          this.series[alias] = handler.init(data, chart);
-          handler.update(this.series[alias], data);
+          this.series[alias] = handler.init(data, chart, indicators);
+          handler.update(this.series[alias], data, indicators);
         }
       }
     },
@@ -697,10 +705,11 @@ export default {
     {
       this.series['candlestick'].setData(await this.symbol.candles);
 
-      for (let alias in this.symbol.indicators)
+      const indicators = this.symbol.indicators;
+      for (let alias in indicators)
       {
-        let indicator = this.symbol.indicators[alias];
-        this.getIndicatorHandler(indicator.name).update(this.series[alias], indicator.data);
+        let indicator = indicators[alias];
+        this.getIndicatorHandler(indicator.name).update(this.series[alias], indicator.data, indicators);
       }
     },
 
