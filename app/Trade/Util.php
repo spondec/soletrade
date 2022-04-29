@@ -43,4 +43,9 @@ class Util
     {
         return (new (INDICATOR_NAMESPACE . $indicator)(new Symbol(), new CandleCollection()))->config();
     }
+
+    public static function getDuplicates(array $array): array
+    {
+        return array_diff_assoc($array, array_unique($array));
+    }
 }
