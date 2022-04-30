@@ -1,6 +1,6 @@
 <?php
 
-namespace Trade\Evaluation;
+namespace Tests\Feature\Trade\Evaluation;
 
 use App\Models\Candle;
 use App\Trade\Evaluation\Position;

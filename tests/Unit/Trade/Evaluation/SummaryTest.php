@@ -1,6 +1,6 @@
 <?php
 
-namespace Trade\Evaluation;
+namespace Tests\Unit\Trade\Evaluation;
 
 use App\Models\Evaluation;
 use App\Trade\Evaluation\Summarizer;

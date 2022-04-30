@@ -1,6 +1,6 @@
 <?php
 
-namespace Trade;
+namespace Tests\Feature\Trade;
 
 use App\Trade\HasSignature;
 use Illuminate\Foundation\Testing\RefreshDatabase;

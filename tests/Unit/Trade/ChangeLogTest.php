@@ -1,6 +1,6 @@
 <?php
 
-namespace Trade;
+namespace Tests\Unit\Trade;
 
 use App\Trade\ChangeLog;
 use PHPUnit\Framework\TestCase;

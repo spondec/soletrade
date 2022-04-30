@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\Trade\Evaluation;
 
+use App\Actions\MoveStop;
 use App\Models\TradeAction;
 use App\Models\TradeSetup;
-use App\Trade\Action\MoveStop;
 use App\Trade\Evaluation\TradeStatus;
 use App\Trade\Side;
 use Illuminate\Support\Collection;

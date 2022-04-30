@@ -1,6 +1,6 @@
 <?php
 
-namespace Trade\Process;
+namespace Tests\Unit\Trade\Process;
 
 use App\Trade\Process\Recoverable;
 use PHPUnit\Framework\TestCase;

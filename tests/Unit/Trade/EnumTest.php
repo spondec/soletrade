@@ -1,6 +1,6 @@
 <?php
 
-namespace Trade;
+namespace Tests\Unit\Trade;
 
 use App\Trade\Enum;
 use PHPUnit\Framework\TestCase;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Trade\Exchange;
+namespace Tests\Feature\Trade\Exchange;
 
 use App\Trade\CandleMap;
 use App\Trade\Exchange\Account\Asset;

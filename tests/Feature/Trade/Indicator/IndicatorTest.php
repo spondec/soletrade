@@ -1,6 +1,6 @@
 <?php
 
-namespace Trade\Indicator;
+namespace Tests\Feature\Trade\Indicator;
 
 use App\Indicators\MA;
 use App\Trade\Indicator\Indicator;

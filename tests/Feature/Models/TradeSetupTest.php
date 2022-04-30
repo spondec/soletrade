@@ -1,6 +1,6 @@
 <?php
 
-namespace Models;
+namespace Tests\Feature\Models;
 
 use App\Models\TradeSetup;
 use App\Trade\Side;

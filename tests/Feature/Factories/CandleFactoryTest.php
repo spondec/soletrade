@@ -1,6 +1,6 @@
 <?php
 
-namespace Factories;
+namespace Tests\Feature\Factories;
 
 use App\Models\Symbol;
 use Database\Factories\CandleFactory;

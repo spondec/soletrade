@@ -1,6 +1,6 @@
 <?php
 
-namespace Trade;
+namespace Tests\Unit\Trade;
 
 use App\Models\Order;
 use App\Models\Symbol;

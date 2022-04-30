@@ -1,6 +1,6 @@
 <?php
 
-namespace Indicators;
+namespace Tests\Feature\Indicators;
 
 use App\Indicators\Combined;
 use App\Indicators\EMA;
