@@ -80,7 +80,9 @@ class TradeRunner extends Command
         $this->section = $output->section();
 
         $detailsTable = new Table($this->section);
+        $detailsTable->setHorizontal();
         $positionTable = new Table($this->section);
+        $positionTable->setHorizontal();
 
         $telegramUpdateFreq = 5;
         $telegramLastUpdate = time();

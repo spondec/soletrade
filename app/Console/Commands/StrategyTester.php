@@ -95,6 +95,7 @@ class StrategyTester extends Command
         $output = $this->output->getOutput();
         $section = $output->section();
         $table = new Table($section);
+        $table->setHorizontal();
 
         $this->info("Running strategy...");
         $trades = $tester->runStrategy($symbol);
