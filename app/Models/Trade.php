@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Trade\Evaluation\LivePosition;
 use App\Trade\LiveTradeLoop;
 use App\Trade\Side;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
