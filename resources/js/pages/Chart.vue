@@ -78,7 +78,7 @@
           </div>
         </div>
       </div>
-      <div v-if="symbol?.strategy" class="mb-3">
+      <div v-if="hasTrades()" class="mb-3 inline-block">
         <label class="form-label">Magnifier Interval</label>
         <vue-multiselect v-model="magnifier.interval" :allow-empty="false" :options="intervals"/>
       </div>
@@ -86,7 +86,7 @@
 
     <div class="chart-container">
       <p v-if="!loading && !symbol" class="text-lg-center">Requested chart is not available.</p>
-      <div v-if="symbol && symbol.strategy">
+      <div v-if="hasTrades()">
         <div class="grid grid-cols-10 text-center">
           <h1 class="text-lg" v-bind:class="{
                         'text-danger': symbol.strategy.trades.summary.roi < 0,
@@ -108,6 +108,9 @@
         <trade-table chart-id="chart" v-bind:trades="symbol.strategy.trades.evaluations"
                      @dateClick="showRange"
                      @magnify="magnify"/>
+      </div>
+      <div v-else-if="symbol?.strategy" class="text-lg-center">
+        <p>No trades.</p>
       </div>
       <div v-show="balanceChart" ref="balanceChart" class="balance-chart"/>
       <div ref="chart" class="chart"/>
@@ -619,6 +622,11 @@ export default {
       this.purgeBalanceHistoryChart();
     },
 
+    hasTrades: function ()
+    {
+      return this.symbol?.strategy?.trades?.evaluations?.length > 0;
+    },
+
     replaceCandlestickChart: async function ()
     {
       if (this.preventLoad)
@@ -640,9 +648,10 @@ export default {
 
       if (!this.symbol) return;
 
-      if (this.symbol.strategy)
+      if (this.hasTrades())
       {
         this.initBalanceHistoryChart(this.$refs.balanceChart);
+        this.magnifier.interval = this.sel.interval;
       }
 
       const chart = this.createChart(this.$refs.chart, this.sel.exchange + ' • ' + this.sel.symbol + ' • ' + this.sel.interval);
