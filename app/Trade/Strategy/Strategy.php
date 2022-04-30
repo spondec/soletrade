@@ -167,7 +167,7 @@ abstract class Strategy
 
     protected function populateCandles(): void
     {
-        $this->candles = $this->symbol->candles(limit: $this->config['maxCandles'],
+        $this->candles = $this->symbol->candles(limit: $this->config['minCandles'],
             start: $this->config['startDate'],
             end: $this->config['endDate']);
     }
@@ -256,7 +256,7 @@ abstract class Strategy
              * If the strategy requires less than the default,
              * this can be set to a lower value so that the strategy runs faster.
              */
-            'maxCandles' => 1000,
+            'minCandles' => 1000,
 
             'trades'     => [
                 /**

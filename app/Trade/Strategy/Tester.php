@@ -24,7 +24,7 @@ class Tester
     final protected function getDefaultConfig(): array
     {
         return [
-            'maxCandles' => null,
+            'minCandles' => null,
             'startDate'  => null,
             'endDate'    => null
         ];

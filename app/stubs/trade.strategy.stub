@@ -19,7 +19,7 @@ final class {{ name }} extends Strategy
          * If the strategy requires less than the default,
          * this can be set to a lower value so that the strategy runs faster.
          */
-        'maxCandles' => 1000,
+        'minCandles' => 1000,
 
         'trades'     => [
             /**
