@@ -190,7 +190,7 @@ class TradeRunner extends Command
 
     protected function getTelegramBot(): Bot
     {
-        $c = \Config::get('trade.telegram');
+        $c = config('trade.telegram');
         return new Bot($c['token'], $c['name'], $c['password']);
     }
 

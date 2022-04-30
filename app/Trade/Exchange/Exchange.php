@@ -94,7 +94,10 @@ abstract class Exchange
             return $nameOrClass::instance();
         }
 
-        return \Config::get("trade.exchanges.$nameOrClass.class")::instance();
+        /** @var class-string<Exchange> $class */
+        $class = config("trade.exchanges.$nameOrClass.class");
+
+        return $class::instance();
     }
 
     public function update(): CandleUpdater
