@@ -1,6 +1,6 @@
 [
                 /**
-                 * The alias must be unique amongst this file, change it if you want but
+                 * This alias must be unique amongst this file, change it if you want but
                  * don't forget the change all occurrences in this file.
                  */
                 'alias' => {{ alias }},
