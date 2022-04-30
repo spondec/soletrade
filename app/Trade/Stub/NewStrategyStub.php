@@ -52,8 +52,6 @@ class NewStrategyStub extends Creator
         $params['indicator_stubs'] = $params['indicator_stubs']->implode(",\n\t\t\t");
         $params['signals'] = $params['signals']->map(fn(string $s) => "'$s'")->implode(', ');
 
-        echo $params['signals'];
-
         return $params;
     }
 
