@@ -4,7 +4,7 @@ namespace Indicators;
 
 use App\Indicators\Combined;
 use App\Indicators\EMA;
-use App\Indicators\SMA;
+use App\Indicators\MA;
 use Tests\Feature\Indicators\IndicatorTestCase;
 
 class CombinedTest extends IndicatorTestCase
@@ -15,7 +15,7 @@ class CombinedTest extends IndicatorTestCase
         $combined = new Combined($symbol, $symbol->candles(100), [
             'indicators.sma_8'  => [
                 'alias'  => 'sma_8',
-                'class'  => SMA::class,
+                'class'  => MA::class,
                 'config' => ['timePeriod' => 8]
             ],
             'indicators.ema_13' => [
@@ -25,7 +25,7 @@ class CombinedTest extends IndicatorTestCase
             ]
         ]);
 
-        $sma = new SMA($symbol, $symbol->candles(100), ['timePeriod' => 8]);
+        $sma = new MA($symbol, $symbol->candles(100), ['timePeriod' => 8]);
         $ema = new EMA($symbol, $symbol->candles(100), ['timePeriod' => 13]);
 
         $data = $combined->data();

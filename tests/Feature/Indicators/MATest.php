@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Indicators;
 
-use App\Indicators\SMA;
+use App\Indicators\MA;
 use App\Repositories\SymbolRepository;
 
-class SMATest extends IndicatorTestCase
+class MATest extends IndicatorTestCase
 {
     public function test_sma()
     {
@@ -14,9 +14,9 @@ class SMATest extends IndicatorTestCase
 
         $repo->initIndicators($symbol,
             $candles = $symbol->candles(100),
-            [SMA::class => ['timePeriod' => 8]]);
+            [MA::class => ['timePeriod' => 8]]);
 
-        $sma = $symbol->indicator(SMA::name());
+        $sma = $symbol->indicator(MA::name());
         $this->assertIsFloat($sma->data()->first());
         $this->assertIsFloat($sma->data()->last());
         $this->assertCount(100 - 7, $sma->data());

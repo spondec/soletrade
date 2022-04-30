@@ -180,7 +180,7 @@ export default {
 
       indicatorHandlers: {
         ATR: () => new SimpleLineSeries(true, {color: 'rgb(255,0,0)', lineWidth: 1, lineType: 0}),
-        SMA: () => new SimpleLineSeries(false, {color: 'rgb(0,153,255)', lineWidth: 1, lineType: 0}),
+        MA: () => new SimpleLineSeries(false, {color: 'rgb(0,153,255)', lineWidth: 1, lineType: 0}),
         EMA: () => new SimpleLineSeries(false, {color: 'rgb(49,255,0)', lineWidth: 1, lineType: 0}),
         Fib: () => new Fib(),
         RSI: () => new RSI(true, {color: 'rgb(170,42,252)', lineWidth: 1}),

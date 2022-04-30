@@ -2,7 +2,7 @@
 
 namespace Trade\Indicator;
 
-use App\Indicators\SMA;
+use App\Indicators\MA;
 use App\Trade\Indicator\Indicator;
 use Tests\Feature\Indicators\IndicatorTestCase;
 
@@ -11,7 +11,7 @@ class IndicatorTest extends IndicatorTestCase
     public function test_scan_without_signal_callback()
     {
         $symbol = $this->createCandles(10);
-        $sma = new SMA($symbol, $candles = $symbol->candles(10), ['timePeriod' => 8]);
+        $sma = new MA($symbol, $candles = $symbol->candles(10), ['timePeriod' => 8]);
 
         $data = $sma->data();
         $iterator = $data->getIterator();
