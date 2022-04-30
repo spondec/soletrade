@@ -243,7 +243,7 @@ class Trader
             throw new \LogicException('Can not evaluate an open position.');
         }
 
-        \App\Models\Position::from($this->loop);
+        \App\Models\Trade::from($this->loop);
         //TODO:: register fill commissions
         $this->tradeAsset->registerRoi($position->relativeExitRoi());
     }

@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property Order[] orders
  */
-class Position extends Model
+class Trade extends Model
 {
     use HasFactory;
 
