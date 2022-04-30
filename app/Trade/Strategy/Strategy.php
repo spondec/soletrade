@@ -248,6 +248,9 @@ abstract class Strategy
     final protected function getDefaultConfig(): array
     {
         return [
+            'startDate'  => null,
+            'endDate'    => null,
+
             /**
              * The amount of candles to run the strategy.
              * If the strategy requires less than the default,
