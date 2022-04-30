@@ -87,7 +87,7 @@ class Trader
         }
         else
         {
-            $this->trades->merge($trades);
+            $this->trades->mergeTrades($trades);
         }
 
         /** @var TradeSetup $lastTrade */
@@ -122,7 +122,7 @@ class Trader
         }
 
         Log::info("Running loop...", $this?->loop);
-        $this?->loop->run();
+        $this?->loop?->run();
 
         return $this?->loop?->status();
     }

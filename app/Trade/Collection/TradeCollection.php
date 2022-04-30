@@ -26,9 +26,13 @@ class TradeCollection extends Collection
         }
     }
 
-    public function merge($items): static
+    public function mergeTrades(TradeCollection $trades): static
     {
-        $this->items = array_merge($this->items, $this->getArrayableItems($items));
+        foreach ($trades as $timestamp => $trade)
+        {
+            $this->items[$timestamp] = $trade;
+        }
+
         return $this;
     }
 
