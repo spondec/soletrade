@@ -688,7 +688,7 @@ export default {
 
     lazyLoad: async function ()
     {
-      if (this.loading || this.limitReached || !this.charts[0]) return;
+      if (this.loading || this.limitReached || !this.charts[0] || this.sel.strategy) return;
       this.loading = true;
       this.limit = this.symbol.candles.length + this.candlesPerRequest;
 
