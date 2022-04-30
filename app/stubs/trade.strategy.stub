@@ -83,7 +83,7 @@ final class {{ name }} extends Strategy
 
             /**
              * In this function, you should check the conditions for your trade.
-             * If the conditions is met, return a new TradeSetup with your desired configuration, otherwise null.
+             * If the conditions is met, return $trade with your desired configuration, otherwise null.
              *
              * Here, you can:
              *
