@@ -40,6 +40,11 @@ class StrategyTester extends Command
         $args = $this->arguments();
         $startTime = time();
 
+        if ($debug = config('app.debug'))
+        {
+            \DB::enableQueryLog();
+        }
+
         if (!strategy_exists($name = $args['strategy']))
         {
             $this->error("Strategy $name not found.");
@@ -118,7 +123,10 @@ class StrategyTester extends Command
             $e++;
             $elapsed = elapsed_time($startTime);
             $section->overwrite("<info>Evaluated $e trades.\nElapsed time: $elapsed</info>");
-            $section->writeln('Memory usage: ' . Util::memoryUsage());
+            if ($debug)
+            {
+                $section->writeln('Memory usage: ' . Util::memoryUsage());
+            }
             $table->setHeaders([
                 'ROI',
                 'Avg. ROI',
@@ -146,6 +154,19 @@ class StrategyTester extends Command
                 ]
             ]);
             $table->render();
+        }
+
+        if (!$e)
+        {
+            $section->overwrite('<info>Trades could not be evaluated.</info>');
+        }
+
+        if ($debug)
+        {
+            $log = \DB::getQueryLog();
+            $time = array_sum(array_column($log, 'time')) / 1000;
+            $this->line("Total query time: $time");
+            $this->line("Queries: " . count($log));
         }
         return 0;
     }
