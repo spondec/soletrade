@@ -103,6 +103,8 @@ class LiveTradeLoop extends TradeLoop
             $this->live()->sendStopOrder(OrderType::STOP_LIMIT);
         }
 
+        parent::tryPositionExit($position, $candle, $priceDate);
+
         $this->order->syncAll();
     }
 
