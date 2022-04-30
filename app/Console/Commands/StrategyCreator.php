@@ -7,7 +7,7 @@ use App\Trade\Stub\TradeActionStub;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
-class NewStrategy extends Command
+class StrategyCreator extends Command
 {
     /**
      * The name and signature of the console command.
@@ -53,8 +53,8 @@ class NewStrategy extends Command
             ->filter()
             ->map('trim')
             ->merge($signals)
+            ->filter(fn(string $i) => $i !== 'Combined')
             ->unique();
-
 
         $indicatorStubs = $this->getIndicatorStubs($indicators, $combined);
         $actionStubs = $this->getActionStubs($actions);
@@ -81,16 +81,6 @@ class NewStrategy extends Command
         return 0;
     }
 
-    protected function newTradeActionStub(): TradeActionStub
-    {
-        return \App::make(TradeActionStub::class);
-    }
-
-    protected function newStrategyIndicatorStub(): StrategyIndicatorStub
-    {
-        return \App::make(StrategyIndicatorStub::class);
-    }
-
     protected function getIndicatorStubs(Collection $indicators, Collection $combined): Collection
     {
         $indicatorStubs = new Collection();
@@ -105,22 +95,6 @@ class NewStrategy extends Command
             $indicatorStubs[] = $this->getIndicatorStub($indicator)->apply()->content;
         }
         return $indicatorStubs;
-    }
-
-    protected function getActionStubs(Collection $actions): Collection
-    {
-        $actionStubs = new Collection();
-
-        foreach ($actions as $action)
-        {
-            $actionStubs[] = $this->newTradeActionStub()
-                ->setParams([
-                    'action' => $action
-                ])
-                ->apply()
-                ->content;
-        }
-        return $actionStubs;
     }
 
     protected function getIndicatorStub(string      $indicator,
@@ -140,5 +114,31 @@ class NewStrategy extends Command
                 'config'    => $config,
                 'combined'  => $combined
             ]);
+    }
+
+    protected function newStrategyIndicatorStub(): StrategyIndicatorStub
+    {
+        return \App::make(StrategyIndicatorStub::class);
+    }
+
+    protected function getActionStubs(Collection $actions): Collection
+    {
+        $actionStubs = new Collection();
+
+        foreach ($actions as $action)
+        {
+            $actionStubs[] = $this->newTradeActionStub()
+                ->setParams([
+                    'action' => $action
+                ])
+                ->apply()
+                ->content;
+        }
+        return $actionStubs;
+    }
+
+    protected function newTradeActionStub(): TradeActionStub
+    {
+        return \App::make(TradeActionStub::class);
     }
 }
