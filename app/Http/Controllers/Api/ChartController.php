@@ -148,7 +148,7 @@ class ChartController extends Controller
     protected function getSelectedIndicators(Request $request): array
     {
         $indicators = get_indicators();
-        $indicatorConfig = \json_decode($request->get('indicatorConfig', []), true);
+        $indicatorConfig = \json_decode($request->get('indicatorConfig', '{}'), true);
         return collect($request->get('indicators', []))
             ->mapWithKeys(function (string $name) use ($indicators, $indicatorConfig) {
                 return [$indicators[$name] => $indicatorConfig[$name] ?? []];
