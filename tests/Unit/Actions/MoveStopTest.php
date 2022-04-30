@@ -1,9 +1,9 @@
 <?php
 
-namespace Trade\Strategy\TradeAction;
+namespace Tests\Unit\Actions;
 
+use App\Actions\MoveStop;
 use App\Models\TradeAction;
-use App\Trade\Action\MoveStop;
 use App\Trade\Evaluation\Position;
 use App\Trade\Evaluation\Price;
 use App\Trade\Side;

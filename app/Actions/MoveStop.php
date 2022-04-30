@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Trade\Action;
+namespace App\Actions;
 
+use App\Trade\Action\Handler;
 use App\Trade\Evaluation\Price;
 
 class MoveStop extends Handler
