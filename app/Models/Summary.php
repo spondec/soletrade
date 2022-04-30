@@ -29,6 +29,8 @@ class Summary extends Model
     ];
 
     protected $attributes = [
+        'roi'               => 0,
+        'avg_roi'           => 0,
         'avg_profit_roi'    => 0,
         'avg_loss_roi'      => 0,
         'risk_reward_ratio' => 0,
