@@ -91,11 +91,6 @@ class Symbol extends Model
             $this->indicators = new Collection();
         }
 
-        if (isset($this->indicators[$indicator->alias]))
-        {
-            throw new \InvalidArgumentException("Indicator with alias {$indicator->alias} already exists.");
-        }
-
         $this->indicators[$indicator->alias] = $indicator;
     }
 
