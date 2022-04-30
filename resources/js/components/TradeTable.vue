@@ -1,5 +1,5 @@
 <template>
-  <table class="table table-responsive text-white">
+  <table v-if="paginated.length" class="table table-responsive text-white">
     <thead>
     <tr>
       <th>Magnifier</th>
