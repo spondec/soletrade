@@ -119,14 +119,11 @@ class StrategyTester extends Command
         /** @var Summary $summary */
         foreach ($tester->progress($trades, $summary) as $ignored)
         {
-            $section->clear();
             $e++;
+            $section->clear();
             $elapsed = elapsed_time($startTime);
             $section->overwrite("<info>Evaluated $e trades.\nElapsed time: $elapsed</info>");
-            if ($debug)
-            {
-                $section->writeln('Memory usage: ' . Util::memoryUsage());
-            }
+
             $table->setHeaders([
                 'ROI',
                 'Avg. ROI',
@@ -138,8 +135,7 @@ class StrategyTester extends Command
                 'Loss',
                 'Ambiguous',
                 'Failed'
-            ]);
-            $table->setRows([
+            ])->setRows([
                 [
                     Util::formatRoi($summary->roi),
                     Util::formatRoi($summary->avg_roi),
@@ -152,8 +148,12 @@ class StrategyTester extends Command
                     $summary->ambiguous,
                     $summary->failed
                 ]
-            ]);
-            $table->render();
+            ])->render();
+
+            if ($debug)
+            {
+                $section->writeln('Memory usage: ' . Util::memoryUsage());
+            }
         }
 
         if (!$e)
