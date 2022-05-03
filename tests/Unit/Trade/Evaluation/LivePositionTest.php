@@ -4,12 +4,12 @@ namespace Tests\Unit\Trade\Evaluation;
 
 use App\Models\Fill;
 use App\Models\Order;
-use App\Models\OrderType;
+use App\Trade\Enum\OrderType;
+use App\Trade\Enum\Side;
 use App\Trade\Evaluation\LivePosition;
 use App\Trade\Evaluation\Price;
 use App\Trade\Order\Type\Handler;
 use App\Trade\OrderManager;
-use App\Trade\Side;
 use App\Trade\TradeAsset;
 use Mockery as m;
 use Mockery\MockInterface;

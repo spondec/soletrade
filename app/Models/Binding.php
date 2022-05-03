@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Trade\Contracts\Binding\Bindable;
-use App\Trade\Contracts\Binding\Binder;
+use App\Trade\Contract\Binding\Bindable;
+use App\Trade\Contract\Binding\Binder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 

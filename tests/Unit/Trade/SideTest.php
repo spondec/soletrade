@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Trade;
 
-use App\Trade\Side;
+use App\Trade\Enum\Side;
 use PHPUnit\Framework\TestCase;
 
 class SideTest extends TestCase

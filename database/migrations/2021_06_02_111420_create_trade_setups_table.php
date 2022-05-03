@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
 use App\Illuminate\Database\Schema\Blueprint;
 use App\Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration {
     /**
@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->float('size');
             $table->decimal('target_price')->nullable();
             $table->decimal('stop_price')->nullable();
-            $table->enum('entry_order_type', \App\Trade\Enum::cases(\App\Models\OrderType::class));
+            $table->enum('entry_order_type', \App\Trade\Enum::cases(\App\Trade\Enum\OrderType::class));
             $table->json('order_type_config')->nullable();
             $table->integer('signal_count');
             $table->boolean('is_permanent')->default(false);

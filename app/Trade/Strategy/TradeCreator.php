@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Trade\Strategy;
 
-use App\Models\OrderType;
 use App\Models\Signal;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\SymbolRepository;
 use App\Trade\Candles;
 use App\Trade\Config\TradeConfig;
+use App\Trade\Enum\OrderType;
 use Illuminate\Support\Collection;
 
 class TradeCreator

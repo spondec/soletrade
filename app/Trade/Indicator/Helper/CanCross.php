@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Indicator\Helpers;
+namespace App\Trade\Indicator\Helper;
 
 /**
  * @method array prev()

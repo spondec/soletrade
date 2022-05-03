@@ -5,7 +5,7 @@ namespace Tests\Feature\Models;
 use App\Models\Exchange;
 use App\Models\Fill;
 use App\Models\Order;
-use App\Models\OrderStatus;
+use App\Trade\Enum\OrderStatus;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

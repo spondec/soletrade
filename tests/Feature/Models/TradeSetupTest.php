@@ -3,8 +3,7 @@
 namespace Tests\Feature\Models;
 
 use App\Models\TradeSetup;
-use App\Trade\Side;
-use App\Trade\Trader;
+use App\Trade\Enum\Side;
 use PHPUnit\Framework\TestCase;
 
 class TradeSetupTest extends TestCase

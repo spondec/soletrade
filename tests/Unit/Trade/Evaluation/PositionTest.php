@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\Trade\Evaluation;
 
+use App\Trade\Enum\Side;
 use App\Trade\Evaluation\Position;
 use App\Trade\Evaluation\Price;
-use App\Trade\Side;
 use PHPUnit\Framework\TestCase;
 
 class PositionTest extends TestCase

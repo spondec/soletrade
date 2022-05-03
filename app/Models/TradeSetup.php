@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Trade\Binding\HasBinding;
-use App\Trade\Contracts\Binding\Bindable;
+use App\Trade\Contract\Binding\Bindable;
+use App\Trade\Enum\OrderType;
+use App\Trade\Enum\Side;
 use App\Trade\Evaluation\Price;
 use App\Trade\Order\Type\StopLimit;
-use App\Trade\Side;
 use Database\Factories\TradeSetupFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

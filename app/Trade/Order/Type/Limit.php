@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Trade\Order\Type;
 
 use App\Models\Order;
-use App\Models\OrderType;
+use App\Trade\Enum\OrderType;
 
 class Limit extends Handler
 {

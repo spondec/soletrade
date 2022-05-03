@@ -6,7 +6,7 @@ namespace App\Trade\Evaluation;
 
 use App\Trade\Action\Handler;
 use App\Trade\ChangeLog;
-use App\Trade\Contracts\Binding\Bindable;
+use App\Trade\Contract\Binding\Bindable;
 use App\Trade\HasInstanceEvents;
 use JetBrains\PhpStorm\Pure;
 

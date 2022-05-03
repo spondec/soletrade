@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Trade\Enum\OrderStatus;
+use App\Trade\Enum\OrderType;
+use App\Trade\Enum\Side;
 use App\Trade\Log;
-use App\Trade\Side;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

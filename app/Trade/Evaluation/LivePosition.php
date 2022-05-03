@@ -4,11 +4,11 @@ namespace App\Trade\Evaluation;
 
 use App\Models\Fill;
 use App\Models\Order;
-use App\Models\OrderStatus;
-use App\Models\OrderType;
+use App\Trade\Enum\OrderStatus;
+use App\Trade\Enum\OrderType;
+use App\Trade\Enum\Side;
 use App\Trade\Log;
 use App\Trade\OrderManager;
-use App\Trade\Side;
 use App\Trade\TradeAsset;
 use Illuminate\Support\Collection;
 

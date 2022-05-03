@@ -4,8 +4,8 @@ namespace App\Trade\Binding;
 
 use App\Models\Binding;
 use App\Models\Model;
-use App\Trade\Contracts\Binding\Bindable;
-use App\Trade\Contracts\Binding\Binder;
+use App\Trade\Contract\Binding\Bindable;
+use App\Trade\Contract\Binding\Binder;
 
 /** @implements Binder */
 trait CanBind

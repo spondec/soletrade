@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\TradeSetup;
 use App\Trade\Enum;
-use App\Trade\Side;
+use App\Trade\Enum\Side;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

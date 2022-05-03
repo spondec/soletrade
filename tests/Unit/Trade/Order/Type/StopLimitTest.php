@@ -1,10 +1,10 @@
 <?php
 
-namespace Trade\Order\Type;
+namespace Tests\Unit\Trade\Order\Type;
 
 use App\Models\Order;
+use App\Trade\Enum\Side;
 use App\Trade\Order\Type\StopLimit;
-use App\Trade\Side;
 use Mockery\MockInterface;
 use Tests\Unit\Trade\Order\Type\HandlerTestCase;
 

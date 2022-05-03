@@ -5,7 +5,7 @@ namespace App\Trade\Contract\Exchange;
 use App\Exceptions\OrderFailedException;
 use App\Models\Fill;
 use App\Models\Order;
-use App\Trade\Side;
+use App\Trade\Enum\Side;
 
 interface Orderer
 {

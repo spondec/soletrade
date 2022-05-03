@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\OrderStatus;
-use App\Models\OrderType;
 use App\Trade\Enum;
-use App\Trade\Side;
+use App\Trade\Enum\OrderStatus;
+use App\Trade\Enum\OrderType;
+use App\Trade\Enum\Side;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

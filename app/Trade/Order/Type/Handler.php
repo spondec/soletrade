@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Trade\Order\Type;
 
 use App\Models\Order;
-use App\Models\OrderType;
 use App\Trade\Enum;
+use App\Trade\Enum\OrderType;
+use App\Trade\Enum\Side;
 use App\Trade\HasConfig;
 use App\Trade\OrderManager;
-use App\Trade\Side;
 
 abstract class Handler
 {

@@ -1,16 +1,15 @@
 <?php
 
-namespace App\Trade;
+namespace App\Trade\Evaluation;
 
 use App\Models\Fill;
 use App\Models\Order;
-use App\Models\OrderType;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
-use App\Trade\Evaluation\LivePosition;
-use App\Trade\Evaluation\Position;
-use App\Trade\Evaluation\Price;
-use App\Trade\Evaluation\TradeLoop;
+use App\Trade\Enum\OrderType;
+use App\Trade\Log;
+use App\Trade\OrderManager;
+use App\Trade\TradeAsset;
 
 class LiveTradeLoop extends TradeLoop
 {

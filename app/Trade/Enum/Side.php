@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade;
+namespace App\Trade\Enum;
 
 enum Side: string
 {

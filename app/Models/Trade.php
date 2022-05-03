@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Trade\LiveTradeLoop;
-use App\Trade\Side;
+use App\Trade\Enum\Side;
+use App\Trade\Evaluation\LiveTradeLoop;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

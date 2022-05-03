@@ -6,8 +6,8 @@ namespace App\Trade\Evaluation;
 
 use App\Trade\Calc;
 use App\Trade\ChangeLog;
+use App\Trade\Enum\Side;
 use App\Trade\HasInstanceEvents;
-use App\Trade\Side;
 
 class Position
 {

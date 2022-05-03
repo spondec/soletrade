@@ -17,7 +17,6 @@ use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Indicator\Indicator;
-use App\Trade\Strategy\Finder\TradeFinder;
 use App\Trade\Util;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;

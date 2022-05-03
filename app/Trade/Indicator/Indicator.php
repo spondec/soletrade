@@ -10,7 +10,7 @@ use App\Models\Symbol;
 use App\Repositories\SymbolRepository;
 use App\Trade\Binding\CanBind;
 use App\Trade\Collection\CandleCollection;
-use App\Trade\Contracts\Binding\Binder;
+use App\Trade\Contract\Binding\Binder;
 use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;

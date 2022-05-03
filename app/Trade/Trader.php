@@ -7,27 +7,21 @@ use App\Models\Runner;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Collection\TradeCollection;
-use App\Trade\Contracts\Exchange\HasLeverage;
+use App\Trade\Contract\Exchange\HasLeverage;
 use App\Trade\Evaluation\LivePosition;
+use App\Trade\Evaluation\LiveTradeLoop;
 use App\Trade\Evaluation\Price;
 use App\Trade\Evaluation\TradeStatus;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Process\RecoverableRequest;
 use App\Trade\Strategy\Strategy;
-
-enum Status: string
-{
-    case STOPPED = 'Stopped';
-    case AWAITING_ENTRY = 'Awaiting Entry';
-    case IN_POSITION = 'In Position';
-    case AWAITING_TRADE = 'Awaiting Trade';
-}
+use App\Trade\Enum\TraderStatus;
 
 class Trader
 {
     protected ?LiveTradeLoop $loop = null;
 
-    protected Status $status = Status::STOPPED;
+    protected TraderStatus $status = TraderStatus::STOPPED;
     protected Runner $runner;
     protected TradeCollection $trades;
     private bool $isEndingLoop = false;
@@ -75,7 +69,7 @@ class Trader
 
     public function run(): ?TradeStatus
     {
-        if ($this->status === Status::STOPPED)
+        if ($this->status === TraderStatus::STOPPED)
         {
             return null;
         }
@@ -142,12 +136,12 @@ class Trader
             $orderManager);
 
         $status = $this->loop->status();
-        $this->setStatus(Status::AWAITING_ENTRY);
+        $this->setStatus(TraderStatus::AWAITING_ENTRY);
 
         $status->listen('positionEntry', function (TradeStatus $status) {
             /** @noinspection NullPointerExceptionInspection */
             $status->getPosition()->listen('exit', $this->onPositionExit(...));
-            $this->setStatus(Status::IN_POSITION);
+            $this->setStatus(TraderStatus::IN_POSITION);
         });
 
         $this->trades->cleanUpBefore($trade);
@@ -193,16 +187,16 @@ class Trader
         $this->loop = null;
     }
 
-    public function getStatus(): Status
+    public function getStatus(): TraderStatus
     {
         return $this->status;
     }
 
-    public function setStatus(Status $status): void
+    public function setStatus(TraderStatus $status): void
     {
         $this->status = $status;
 
-        if ($this->status === Status::STOPPED)
+        if ($this->status === TraderStatus::STOPPED)
         {
             $this->endLoop();
         }
@@ -241,7 +235,7 @@ class Trader
         Log::info(fn() => "Position exited. Evaluating...");
         $this->evaluate($position);
         $this->endLoop();
-        $this->setStatus(Status::AWAITING_TRADE);
+        $this->setStatus(TraderStatus::AWAITING_TRADE);
     }
 
     protected function evaluate(LivePosition $position): void

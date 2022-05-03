@@ -3,7 +3,7 @@
 namespace App\Indicators;
 
 use App\Trade\Collection\CandleCollection;
-use App\Trade\Indicator\Helpers\CanCross;
+use App\Trade\Indicator\Helper\CanCross;
 use App\Trade\Indicator\Indicator;
 
 final class MACD extends Indicator

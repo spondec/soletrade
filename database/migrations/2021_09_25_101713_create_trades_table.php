@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
 use App\Illuminate\Database\Schema\Blueprint;
 use App\Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration {
     /**
@@ -14,7 +14,7 @@ return new class extends Migration {
     {
         Schema::create('trades', function (Blueprint $table) {
             $table->id();
-            $table->enum('side', \App\Trade\Enum::cases(\App\Trade\Side::class));
+            $table->enum('side', \App\Trade\Enum::cases(\App\Trade\Enum\Side::class));
             $table->foreignId('entry_id')->constrained('trade_setups');
             $table->foreignId('exit_id')->nullable()->constrained('trade_setups');
             $table->boolean('is_stopped');

@@ -8,13 +8,13 @@ use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Repositories\ConfigRepository;
 use App\Trade\Collection\TradeCollection;
-use App\Trade\Contracts\Exchange\HasLeverage;
+use App\Trade\Contract\Exchange\HasLeverage;
 use App\Trade\Evaluation\LivePosition;
+use App\Trade\Evaluation\LiveTradeLoop;
 use App\Trade\Evaluation\TradeStatus;
 use App\Trade\Exchange\Exchange;
-use App\Trade\LiveTradeLoop;
 use App\Trade\OrderManager;
-use App\Trade\Status;
+use App\Trade\Enum\TraderStatus;
 use App\Trade\Strategy\Strategy;
 use App\Trade\TradeAsset;
 use App\Trade\Trader;
@@ -32,7 +32,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
 
         $trader = $this->getTrader();
 
-        $trader->setStatus(Status::STOPPED);
+        $trader->setStatus(TraderStatus::STOPPED);
         $this->assertNull($trader->run());
     }
 
@@ -122,7 +122,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
             return $this->runner->start_date = $trade->price_date - 1;
         }, $trader, $trader)();
 
-        $trader->setStatus(Status::AWAITING_TRADE);
+        $trader->setStatus(TraderStatus::AWAITING_TRADE);
         $trader->run();
     }
 
@@ -185,14 +185,14 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
 
         $this->expectStrategyRun($strategy, $symbol, [$entry, $exit]);
 
-        $trader->setStatus(Status::AWAITING_TRADE);
+        $trader->setStatus(TraderStatus::AWAITING_TRADE);
         $trader->run();
     }
 
     public function test_end_loop(): void
     {
         $trader = $this->getTrader(symbol: $symbol, runner: $runner, app: $app);
-        $trader->setStatus(Status::AWAITING_TRADE);
+        $trader->setStatus(TraderStatus::AWAITING_TRADE);
 
         \Closure::bind(function () {
             $this->loop = m::mock('alias:' . LiveTradeLoop::class);
@@ -213,7 +213,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $this->expectException(PositionExitFailed::class);
         $this->expectRecoverableRequest($app, [PositionExitFailed::class]);
 
-        $trader->setStatus(Status::STOPPED);
+        $trader->setStatus(TraderStatus::STOPPED);
     }
 
     protected function newTrade(): TradeSetup&m\MockInterface

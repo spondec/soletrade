@@ -6,10 +6,11 @@ namespace App\Trade;
 
 use App\Models\Fill;
 use App\Models\Order;
-use App\Models\OrderType;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
-use App\Trade\Contracts\Exchange\Orderer;
+use App\Trade\Contract\Exchange\Orderer;
+use App\Trade\Enum\OrderType;
+use App\Trade\Enum\Side;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Order\Type\Handler;
 use Illuminate\Support\Collection;

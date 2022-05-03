@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Trade\Order\Type;
 
 use App\Models\Order;
-use App\Models\OrderType;
-use App\Trade\Side;
+use App\Trade\Enum\OrderType;
+use App\Trade\Enum\Side;
 
 class StopLimit extends Handler
 {

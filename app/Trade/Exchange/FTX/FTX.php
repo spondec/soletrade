@@ -2,7 +2,7 @@
 
 namespace App\Trade\Exchange\FTX;
 
-use App\Trade\Contracts\Exchange\HasLeverage;
+use App\Trade\Contract\Exchange\HasLeverage;
 use App\Trade\Exchange\Exchange;
 
 class FTX extends Exchange implements HasLeverage
