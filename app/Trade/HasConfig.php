@@ -125,7 +125,7 @@ trait HasConfig
         }
     }
 
-    protected function assertPreRequisites(): void
+    private function assertPreRequisites(): void
     {
         if ($parent = get_parent_class(static::class))
         {
