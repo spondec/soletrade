@@ -120,7 +120,6 @@ class TradeFinder
             /** @var \stdClass $candle */
             $candle = $this->candleIterator->current();
             $key = $this->candleIterator->key();
-            $this->candleIterator->next();
             $results = $this->getIndicatorGeneratorResults($candle, $indicator) ?? [];
 
             if ($this->tradeConfig->withSignals)
@@ -144,6 +143,8 @@ class TradeFinder
                     }
                 });
             }
+
+            $this->candleIterator->next();
         }
 
         return new TradeCollection($this->trades, $this->strategy->config('trades'));
