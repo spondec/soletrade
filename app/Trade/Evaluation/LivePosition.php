@@ -4,8 +4,8 @@ namespace App\Trade\Evaluation;
 
 use App\Models\Fill;
 use App\Models\Order;
+use App\Models\OrderStatus;
 use App\Models\OrderType;
-use App\Trade\Calc;
 use App\Trade\Log;
 use App\Trade\OrderManager;
 use App\Trade\Side;
@@ -21,6 +21,7 @@ class LivePosition extends Position
     public OrderType $decreaseOrderType = OrderType::LIMIT;
 
     protected float $ownedQuantity = 0;
+    protected float $entryPrice;
 
     public function __construct(Side                   $side,
                                 float                  $size,
@@ -54,12 +55,14 @@ class LivePosition extends Position
         $this->registerPriceChangeListeners();
     }
 
-    /**
-     * @return Collection<Order>
-     */
-    public function getOrders(): Collection
+    public function proportional(float $realSize): float
     {
-        return $this->manager->orders();
+        return $this->asset()->proportional($realSize);
+    }
+
+    public function asset(): TradeAsset
+    {
+        return $this->manager->tradeAsset;
     }
 
     protected function registerPriceChangeListeners(): void
@@ -79,8 +82,28 @@ class LivePosition extends Position
         });
     }
 
+    public function resendExitOrder(?OrderType $orderType = null): Order
+    {
+        if (!$order = $this->manager->exit)
+        {
+            throw new \LogicException('Cannot resend exit order without an present exit order.');
+        }
+
+        if (!$this->cancelOrder($order, $error))
+        {
+            return $order;
+        }
+
+        return $this->sendExitOrder($orderType);
+    }
+
     protected function cancelOrder(Order $order, ?\Throwable &$error = null): bool
     {
+        if (!$order->isOpen())
+        {
+            throw new \LogicException('Attempted to cancel a closed order.');
+        }
+
         try
         {
             $this->manager->cancel($order);
@@ -98,7 +121,7 @@ class LivePosition extends Position
             }
         }
 
-        return true;
+        return $order->status === OrderStatus::CANCELED;
     }
 
     protected function assertOrderFilledFully(Order $order): void
@@ -109,30 +132,15 @@ class LivePosition extends Position
         }
     }
 
-    public function resendExitOrder(?OrderType $orderType = null): Order
-    {
-        if (!$order = $this->manager->exit)
-        {
-            throw new \LogicException('Cannot resend exit order without an exit order.');
-        }
-
-        if (!$this->cancelOrder($order, $error))
-        {
-            return $order;
-        }
-
-        $order = null;
-        return $this->sendExitOrder($orderType);
-    }
-
     public function sendExitOrder(?OrderType $orderType = null): Order
     {
+        $orderType = $orderType ?? $this->exitOrderType;
         $this->assertExitOrderNotSent();
-        $this->assertExitPriceSet();
+        $this->assertExitPriceSet($orderType);
 
-        $price = $this->exit->get();
+        $price = $this->exit?->get() ?? throw new \LogicException('Exit price not set.');
 
-        $order = $this->sendDecreaseOrder($orderType ?? $this->exitOrderType, $this->getUsedSize(), $price, 'Exit order fill.');
+        $order = $this->sendDecreaseOrder($orderType, $this->getUsedSize(), $price, 'Exit order fill.');
 
         $order->onFill(function (Fill $fill) use ($order) {
             if ($order->isAllFilled())
@@ -156,6 +164,17 @@ class LivePosition extends Position
         }
     }
 
+    /**
+     * @return void
+     */
+    protected function assertExitPriceSet(OrderType $orderType): void
+    {
+        if (!$this->exit && $orderType !== OrderType::MARKET)
+        {
+            throw new \LogicException('Exit price was not set.');
+        }
+    }
+
     protected function sendDecreaseOrder(OrderType $orderType, float $proportionalSize, float $price, string $reason): Order
     {
         $this->assertNotGreaterThanUsedSize($proportionalSize);
@@ -176,11 +195,6 @@ class LivePosition extends Position
         return $order;
     }
 
-    public function getOwnedQuantity(): float
-    {
-        return $this->ownedQuantity;
-    }
-
     protected function order(OrderType $orderType,
                              float     $quantity,
                              float     $price,
@@ -191,14 +205,21 @@ class LivePosition extends Position
             ->order($orderType, $quantity, $price, $reduceOnly);
     }
 
-    public function proportional(float $realSize): float
+    public function decreaseSize(float $size, float $price, int $timestamp, string $reason): void
     {
-        return $this->asset()->proportional($realSize);
+        $this->sendDecreaseOrder($this->decreaseOrderType, $size, $price, $reason);
     }
 
-    public function asset(): TradeAsset
+    public function close(int $exitTime): void
     {
-        return $this->manager->tradeAsset;
+        if ($this->exit && $this->manager->exit)
+        {
+            $this->resendExitOrder(OrderType::MARKET);
+        }
+        else
+        {
+            $this->sendExitOrder(OrderType::MARKET);
+        }
     }
 
     protected function registerStopPriceListeners(): void
@@ -225,18 +246,18 @@ class LivePosition extends Position
             return $order;
         }
 
-        $order = null;
         return $this->sendStopOrder($orderType);
     }
 
     public function sendStopOrder(?OrderType $orderType = null): Order
     {
+        $orderType = $orderType ?? $this->stopOrderType;
         $this->assertStopOrderNotSent();
-        $this->assertStopPriceSet();
+        $this->assertStopPriceSet($orderType);
 
-        $price = $this->stop->get();
+        $price = $this->stop?->get() ?? throw new \LogicException('Stop price not set.');
 
-        $order = $this->sendDecreaseOrder($orderType ?? $this->stopOrderType,
+        $order = $this->sendDecreaseOrder($orderType,
             $this->getUsedSize(),
             $price,
             'Stop order fill.');
@@ -263,21 +284,12 @@ class LivePosition extends Position
         }
     }
 
-    protected float $entryPrice;
-
-    public function getEntryPrice(): float
+    protected function assertStopPriceSet(OrderType $orderType): void
     {
-        return $this->entryPrice;
-    }
-
-    public function processEntryOrderFill(Fill $fill): void
-    {
-        parent::increaseSize($this->proportional($fill->quantity * ($this->entryPrice = $this->getBreakEvenPrice())),
-            $fill->price,
-            $fill->timestamp,
-            'Entry order fill.');
-
-        $this->ownedQuantity += $fill->quantity;
+        if (!$this->stop && $orderType !== OrderType::MARKET)
+        {
+            throw new \LogicException('Stop price was not set.');
+        }
     }
 
     public function stop(int $exitTime): void
@@ -292,16 +304,32 @@ class LivePosition extends Position
         }
     }
 
-    public function close(int $exitTime): void
+    /**
+     * @return Collection<Order>
+     */
+    public function getOrders(): Collection
     {
-        if ($this->exit && $this->manager->exit)
-        {
-            $this->resendExitOrder(OrderType::MARKET);
-        }
-        else
-        {
-            $this->sendExitOrder(OrderType::MARKET);
-        }
+        return $this->manager->orders();
+    }
+
+    public function getOwnedQuantity(): float
+    {
+        return $this->ownedQuantity;
+    }
+
+    public function getEntryPrice(): float
+    {
+        return $this->entryPrice;
+    }
+
+    public function processEntryOrderFill(Fill $fill): void
+    {
+        parent::increaseSize($this->proportional($fill->quantity * ($this->entryPrice = $this->getBreakEvenPrice())),
+            $fill->price,
+            $fill->timestamp,
+            'Entry order fill.');
+
+        $this->ownedQuantity += $fill->quantity;
     }
 
     public function increaseSize(float $size, float $price, int $timestamp, string $reason): void
@@ -327,11 +355,6 @@ class LivePosition extends Position
         });
 
         return $order;
-    }
-
-    public function decreaseSize(float $size, float $price, int $timestamp, string $reason): void
-    {
-        $this->sendDecreaseOrder($this->decreaseOrderType, $size, $price, $reason);
     }
 
     public function addStopPrice(Price $price): void
@@ -369,27 +392,5 @@ class LivePosition extends Position
     protected function insertStopTransaction(int $exitTime): void
     {
         //all transactions depend on order fills, emit any other transaction
-    }
-
-    /**
-     * @return void
-     */
-    protected function assertStopPriceSet(): void
-    {
-        if (!$this->stop)
-        {
-            throw new \LogicException('Stop price was not set.');
-        }
-    }
-
-    /**
-     * @return void
-     */
-    protected function assertExitPriceSet(): void
-    {
-        if (!$this->exit)
-        {
-            throw new \LogicException('Exit price was not set.');
-        }
     }
 }
