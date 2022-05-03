@@ -9,6 +9,7 @@ use App\Models\TradeSetup;
 use App\Trade\Collection\TradeCollection;
 use App\Trade\Contracts\Exchange\HasLeverage;
 use App\Trade\Evaluation\LivePosition;
+use App\Trade\Evaluation\Price;
 use App\Trade\Evaluation\TradeStatus;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Process\RecoverableRequest;
@@ -90,7 +91,7 @@ class Trader
             $this->trades->mergeTrades($trades);
         }
 
-        /** @var TradeSetup $lastTrade */
+        /** @var TradeSetup|null $lastTrade */
         $lastTrade = $this->trades->last();
 
         Log::info(fn() => "Total trades: {$trades->count()}");
@@ -121,10 +122,10 @@ class Trader
             }
         }
 
-        Log::info("Running loop...", $this?->loop);
-        $this?->loop?->run();
+        Log::info("Running loop...", $this->loop);
+        $this->loop?->run();
 
-        return $this?->loop?->status();
+        return $this->loop?->status();
     }
 
     protected function initNewLoop(TradeSetup $trade): void
@@ -169,6 +170,12 @@ class Trader
         if ($position && $position->isOpen())
         {
             Log::info('Force stopping position.');
+
+            if (!$position->price('stop'))
+            {
+                $lastCandle = $this->symbol->lastCandle();
+                $position->addStopPrice(new Price($lastCandle->c, millitime()));
+            }
             $position->stop(time());
 
             RecoverableRequest::new(function () use ($position) {
@@ -231,6 +238,7 @@ class Trader
 
     protected function onPositionExit(LivePosition $position): void
     {
+        Log::info(fn() => "Position exited. Evaluating...");
         $this->evaluate($position);
         $this->endLoop();
         $this->setStatus(Status::AWAITING_TRADE);

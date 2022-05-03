@@ -111,8 +111,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $this->expectLoopRun($status, $loop);
         $status->shouldReceive('listen')->once();
 
-        $trade = m::mock('alias:' . TradeSetup::class);
-        $trade->id = 1;
+        $trade = $this->newTrade();
         $trade->price_date = time();
 
         $this->expectStrategyRun($strategy, $symbol, [$trade]);
@@ -144,6 +143,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
      * @param TradeSetup[]             $trades
      *
      * @return void
+     * @throws \Exception
      */
     protected function expectStrategyRun(m\MockInterface&Strategy $strategy, $symbol, array $trades): void
     {
@@ -164,14 +164,12 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         /** @var m\MockInterface&TradeStatus $status */
         $this->expectLoopRun($status, $loop);
 
-        $entry = m::mock('alias:' . TradeSetup::class);
+        $entry = $this->newTrade();
         $entry->price_date = $entry->timestamp = time();
-        $entry->id = 1;
         $entry->shouldReceive('isBuy')->andReturn(true);
 
-        $exit = m::mock('alias:' . TradeSetup::class);
+        $exit = $this->newTrade();
         $exit->price_date = $exit->timestamp = $entry->price_date + 1;
-        $exit->id = 1;
         $exit->shouldReceive('isBuy')->andReturn(false);
 
         $status->shouldReceive('isEntered')->once()->andReturn(true);
@@ -193,7 +191,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
 
     public function test_end_loop(): void
     {
-        $trader = $this->getTrader(symbol: $symbol, runner: $runne, app: $app);
+        $trader = $this->getTrader(symbol: $symbol, runner: $runner, app: $app);
         $trader->setStatus(Status::AWAITING_TRADE);
 
         \Closure::bind(function () {
@@ -208,6 +206,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
             $status->shouldReceive('getPosition')->once()->andReturn($position);
             $position->shouldReceive('isOpen')->times(3)->andReturn(true);
             $position->shouldReceive('stop')->once();
+            $position->shouldReceive('price')->with('stop')->once()->andReturn(true);
         }, $trader, $trader)();
 
         m::mock('overload:' . \Log::class)->shouldReceive('error')->once();
@@ -215,5 +214,15 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $this->expectRecoverableRequest($app, [PositionExitFailed::class]);
 
         $trader->setStatus(Status::STOPPED);
+    }
+
+    protected function newTrade(): TradeSetup&m\MockInterface
+    {
+        static $timestamp = 1651421085000;
+        static $id = 0;
+        $trade = m::mock('alias:' . TradeSetup::class);
+        $trade->timestamp = ++$timestamp;
+        $trade->id = ++$id;
+        return $trade;
     }
 }
