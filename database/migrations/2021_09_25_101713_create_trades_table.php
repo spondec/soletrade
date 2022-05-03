@@ -22,11 +22,11 @@ return new class extends Migration {
             $table->bigInteger('entry_time');
             $table->bigInteger('exit_time')->nullable();
             $table->json('transactions');
-            $table->float('max_used_size');
+            $table->decimal('max_used_size');
             $table->decimal('entry_price');
             $table->decimal('exit_price')->nullable();
-            $table->float('roi');
-            $table->float('relative_roi');
+            $table->decimal('roi');
+            $table->decimal('relative_roi');
             $table->timestamps();
         });
     }
