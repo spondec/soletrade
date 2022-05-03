@@ -6,6 +6,9 @@ use App\Models\TradeSetup;
 use App\Trade\HasConfig;
 use Illuminate\Support\Collection;
 
+/**
+ * @property TradeSetup[] items
+ */
 class TradeCollection extends Collection
 {
     use HasConfig;
@@ -15,17 +18,28 @@ class TradeCollection extends Collection
         'permanentOnly' => false,
     ];
 
+    /**
+     * @param TradeSetup[] $items
+     * @param array        $config
+     *
+     * @throws \Exception
+     */
     public function __construct($items = [], array $config = [])
     {
-        parent::__construct($items);
         $this->mergeConfig($config);
 
-        if ($this->config('permanentOnly'))
-        {
-            $this->items = array_filter($this->items, fn(TradeSetup $trade) => $trade->is_permanent);
-        }
+        $items = $this->filterByConfig($items);
+        $items = $this->keyByTimestamp($items);
+        ksort($items);
+
+        parent::__construct($items);
     }
 
+    /**
+     * @param TradeCollection<TradeSetup> $trades
+     *
+     * @return $this
+     */
     public function mergeTrades(TradeCollection $trades): static
     {
         foreach ($trades as $timestamp => $trade)
@@ -33,19 +47,21 @@ class TradeCollection extends Collection
             $this->items[$timestamp] = $trade;
         }
 
+        ksort($this->items);
+
         return $this;
     }
 
-    public function cleanUpBefore(TradeSetup $setup): void
+    public function cleanUpBefore(TradeSetup $trade): void
     {
-        foreach ($this->items as $k => $item)
+        foreach ($this->items as $t => $_trade)
         {
-            if ($item->id == $setup->id)
+            if ($_trade->id == $trade->id)
             {
                 return;
             }
 
-            unset($this->items[$k]);
+            unset($this->items[$t]);
         }
     }
 
@@ -54,20 +70,20 @@ class TradeCollection extends Collection
         return $this->first();
     }
 
-    public function getNextTrade(TradeSetup $tradeSetup): ?TradeSetup
+    public function getNextTrade(TradeSetup $trade): ?TradeSetup
     {
         if ($this->config('oppositeOnly'))
         {
-            return $this->findNextOppositeTrade($tradeSetup);
+            return $this->findNextOppositeTrade($trade);
         }
-        return $this->findNextTrade($tradeSetup);
+        return $this->findNextTrade($trade);
     }
 
-    protected function findNextOppositeTrade(TradeSetup $tradeSetup): ?TradeSetup
+    protected function findNextOppositeTrade(TradeSetup $trade): ?TradeSetup
     {
-        $isBuy = $tradeSetup->isBuy();
+        $isBuy = $trade->isBuy();
 
-        while ($next = $this->findNextTrade($next ?? $tradeSetup))
+        while ($next = $this->findNextTrade($next ?? $trade))
         {
             if ($next->isBuy() !== $isBuy)
             {
@@ -85,7 +101,7 @@ class TradeCollection extends Collection
 
         while ($iterator->valid())
         {
-            if ($iterator->current()->timestamp == $timestamp)
+            if ($iterator->key() == $timestamp)
             {
                 $iterator->next();
                 return $iterator->current();
@@ -94,6 +110,42 @@ class TradeCollection extends Collection
             $iterator->next();
         }
 
-        return null;
+        throw new \InvalidArgumentException('Argument $trade is not in collection.');
+    }
+
+    /**
+     * @param TradeSetup[] $items
+     *
+     * @return array
+     * @throws \Exception
+     */
+    protected function keyByTimestamp(array $items): array
+    {
+        $keyed = [];
+        foreach ($items as $trade)
+        {
+            $t = $trade->timestamp;
+            if (isset($keyed[$t]))
+            {
+                throw new \Exception('Duplicate trade timestamp.');
+            }
+
+            $keyed[$t] = $trade;
+        }
+        return $keyed;
+    }
+
+    /**
+     * @param array $items
+     *
+     * @return TradeSetup[]|array
+     */
+    protected function filterByConfig(array $items): array
+    {
+        if ($this->config('permanentOnly'))
+        {
+            $items = array_filter($items, fn(TradeSetup $trade) => $trade->is_permanent);
+        }
+        return $items;
     }
 }

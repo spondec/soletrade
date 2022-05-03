@@ -23,22 +23,24 @@ class TradeCollectionTest extends TestCase
 
     protected function newTrade(): m\MockInterface&TradeSetup
     {
-        return m::mock('alias:' . TradeSetup::class);
+        static $id = 0;
+        static $timestamp = 1651419409000;
+        $trade = m::mock('alias:' . TradeSetup::class);
+        $trade->id = ++$id;
+        $trade->timestamp = ++$timestamp;
+        return $trade;
     }
 
     public function test_find_next_trade()
     {
         $trade = $this->newTrade();
         $trade->shouldReceive('isBuy')->andReturn(false);
-        $trade->timestamp = time();
 
         $trade2 = $this->newTrade();
         $trade2->shouldReceive('isBuy')->andReturn(true);
-        $trade2->timestamp = $trade->timestamp + 1;
 
         $trade3 = $this->newTrade();
         $trade3->shouldReceive('isBuy')->andReturn(true);
-        $trade3->timestamp = $trade->timestamp + 2;
 
         $tradeCollection = new TradeCollection([$trade, $trade2, $trade3], ['oppositeOnly' => false]);
 
@@ -53,15 +55,12 @@ class TradeCollectionTest extends TestCase
     {
         $trade = $this->newTrade();
         $trade->shouldReceive('isBuy')->andReturn(true);
-        $trade->timestamp = time();
 
         $trade2 = $this->newTrade();
         $trade2->shouldReceive('isBuy')->andReturn(true);
-        $trade2->timestamp = $trade->timestamp + 1;
 
         $trade3 = $this->newTrade();
         $trade3->shouldReceive('isBuy')->andReturn(false);
-        $trade3->timestamp = $trade->timestamp + 2;
 
         $tradeCollection = new TradeCollection([$trade, $trade2, $trade3], ['oppositeOnly' => true]);
 
@@ -69,5 +68,23 @@ class TradeCollectionTest extends TestCase
 
         $tradeCollection = new TradeCollection([$trade], ['oppositeOnly' => true]);
         $this->assertNull($tradeCollection->getNextTrade($trade));
+    }
+
+    public function test_merge_trades()
+    {
+        $trade = $this->newTrade();
+        $trade->shouldReceive('isBuy')->andReturn(true);
+
+        $trade2 = $this->newTrade();
+        $trade2->shouldReceive('isBuy')->andReturn(false);
+
+        $trade3 = $this->newTrade();
+        $trade3->shouldReceive('isBuy')->andReturn(true);
+
+        $tradeCollection = new TradeCollection([$trade, $trade2], ['oppositeOnly' => true]);
+        $tradeCollection->mergeTrades(new TradeCollection([$trade, $trade2, $trade3], ['oppositeOnly' => true]));
+
+        $this->assertEquals($trade2->id, $tradeCollection->getNextTrade($trade)->id);
+        $this->assertEquals($trade3->id, $tradeCollection->getNextTrade($trade2)->id);
     }
 }
