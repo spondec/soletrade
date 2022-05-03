@@ -116,7 +116,7 @@ class TradeRunner extends Command
 
                 if ($position && $position->isOpen())
                 {
-                    $roi = $position->roi($trader->symbol->lastPrice()) * $leverage;
+                    $roi = $position->roi($trader->symbol->lastCandle()->c) * $leverage;
                     $this->renderPositionTable($positionTable,
                         $args['symbol'],
                         $position,

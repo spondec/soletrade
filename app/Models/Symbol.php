@@ -112,12 +112,11 @@ class Symbol extends Model
         return $this->indicators[$alias];
     }
 
-    public function lastPrice(): float
+    public function lastCandle(): object
     {
         return \DB::table('candles')
             ->where('symbol_id', $this->id)
             ->orderBy('t', 'DESC')
-            ->first()
-            ->c;
+            ->first();
     }
 }
