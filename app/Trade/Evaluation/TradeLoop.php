@@ -202,7 +202,7 @@ class TradeLoop
 
                 if ($this->timeout && $this->hasPositionTimedOut($priceDate))
                 {
-                    $this->exitPositionAtClosePrice($position, $candle, 'Trade timed out. Stopping.');
+                    $this->stopPositionAtClosePrice($position, $candle, 'Trade timed out. Stopping.');
                     break;
                 }
 
@@ -240,7 +240,7 @@ class TradeLoop
         return $this->timeoutDate <= $priceDate;
     }
 
-    protected function exitPositionAtClosePrice(Position $position, \stdClass $candle, string $reason): void
+    protected function stopPositionAtClosePrice(Position $position, \stdClass $candle, string $reason): void
     {
         if ($this->status->isAmbiguous())
         {
