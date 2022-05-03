@@ -86,13 +86,13 @@ class OrderManager
     public function cancel(Order $order): Order
     {
         $this->sync($order);
-
         if (!$order->isOpen())
         {
+            Log::info(fn() => "Order #{$order->id} is {$order->status->value} and can't be cancelled.");
             return $order;
         }
-        Log::info(fn() => "Cancelling order {$order->id}");
 
+        Log::info(fn() => "Cancelling order {$order->id}");
         return $this->order()->cancel($order);
     }
 
@@ -114,15 +114,15 @@ class OrderManager
     {
         $order->onCancel(function (Order $order) {
 
-            if ($order === $this->stop)
+            if ($order->id == $this->stop?->id)
             {
                 $this->stop = null;
             }
-            if ($order === $this->entry)
+            if ($order->id == $this->entry?->id)
             {
                 $this->entry = null;
             }
-            if ($order === $this->exit)
+            if ($order->id == $this->exit?->id)
             {
                 $this->exit = null;
             }

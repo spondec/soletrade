@@ -56,7 +56,9 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
 
     protected function getOrderMock(?\Closure &$cancelListener = null): MockInterface|Order
     {
-        $order = m::mock(Order::class);
+        static $id = 0;
+        $order = m::mock('alias:' . Order::class);
+        $order->id = ++$id;
 
         $order->shouldReceive('onCancel')
             ->zeroOrMoreTimes()
