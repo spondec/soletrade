@@ -1,9 +1,9 @@
 <template>
   <main-layout title="Dashboard">
-    <div class="container m-auto grid m-3 xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 gap-4">
-      <card-table title="Exchanges" itemName="exchange" v-bind:collection="exchanges"/>
+    <div class="container m-auto grid m-3 xl:grid-cols-4 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-4">
+      <card-table itemName="exchange" title="Active Exchanges" v-bind:collection="exchanges"/>
       <card-table itemName="balance" title="Balances" v-bind:collection="balances"/>
-      <card-table title="Trades" itemName="trade" v-bind:collection="trades"/>
+      <card-table itemName="trade" title="Recent Trades" v-bind:collection="trades"/>
       <card-table itemName="strategy" title="Strategies" v-bind:collection="strategies"/>
     </div>
   </main-layout>
@@ -42,7 +42,7 @@ export default {
       this.exchanges = await ApiService.exchanges();
       this.strategies = await ApiService.strategies();
       const trades = await ApiService.recentTrades();
-      this.trades = trades.map(trade =>
+      this.trades = trades.data.map(trade =>
       {
         return {
           Symbol: trade.entry.symbol.symbol,
