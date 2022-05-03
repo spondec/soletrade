@@ -78,6 +78,14 @@ if (!function_exists('on_shutdown'))
     }
 }
 
+if (!function_exists('millitime'))
+{
+    function millitime(): int
+    {
+        return (int)(microtime(true) * 1000);
+    }
+}
+
 if (!function_exists('indicator_exists'))
 {
     function indicator_exists(string $indicatorName): bool
