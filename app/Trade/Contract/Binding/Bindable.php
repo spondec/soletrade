@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Contracts\Binding;
+namespace App\Trade\Contract\Binding;
 
 use App\Models\Binding;
 use Illuminate\Database\Eloquent\Relations\MorphMany;

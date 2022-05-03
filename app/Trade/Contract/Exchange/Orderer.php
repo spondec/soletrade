@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Contracts\Exchange;
+namespace App\Trade\Contract\Exchange;
 
 use App\Exceptions\OrderFailedException;
 use App\Models\Fill;
