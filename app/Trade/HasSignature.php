@@ -32,7 +32,7 @@ trait HasSignature
 
         if ($collisions = $this->getKeyDiff($signature->data, $hashed))
         {
-            throw new \LogicException("Hash collisions detected:\n" . var_export($collisions, true));
+            throw new \LogicException("Hash collisions detected:\n" . \var_export($collisions, true));
         }
 
         $this->signatureCache[$hash] = \WeakReference::create($signature);
@@ -44,7 +44,7 @@ trait HasSignature
         $collisions = [];
         foreach ($array1 as $key => $value)
         {
-            if (is_array($value))
+            if (\is_array($value))
             {
                 if ($c = $this->getKeyDiff($value, $array2[$key] ?? []))
                 {
@@ -53,7 +53,7 @@ trait HasSignature
             }
             else
             {
-                if (!array_key_exists($key, $array2) || $array2[$key] != $value)
+                if (!\array_key_exists($key, $array2) || $array2[$key] != $value)
                 {
                     $collisions[] = $key;
                 }
@@ -81,7 +81,7 @@ trait HasSignature
 
     protected function hash(string|array $subject): string
     {
-        if (is_array($subject))
+        if (\is_array($subject))
         {
             $subject = \json_encode($this->hashCallbacksInArray($subject));
         }

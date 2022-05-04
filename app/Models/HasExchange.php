@@ -28,7 +28,7 @@ trait HasExchange
             throw new \LogicException("Class '$class' does not exist.");
         }
 
-        if (!is_subclass_of($class, Exchange::class))
+        if (!\is_subclass_of($class, Exchange::class))
         {
             throw new \LogicException("Class '$class' is not a subclass of '" . Exchange::class . "'");
         }

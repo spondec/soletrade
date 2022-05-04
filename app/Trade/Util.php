@@ -9,7 +9,7 @@ class Util
 {
     public static function formatRoi(float $roi): string
     {
-        $rounded = round($roi, 2);
+        $rounded = \round($roi, 2);
 
         if ($roi > 0)
         {
@@ -26,16 +26,16 @@ class Util
 
     public static function memoryUsage(): string
     {
-        return (int)(memory_get_usage(true) / 1024 / 1024) . 'MB';
+        return (int)(\memory_get_usage(true) / 1024 / 1024) . 'MB';
     }
 
     public static function varExport(mixed $expression): string
     {
-        $export = var_export($expression, TRUE);
-        $export = preg_replace("/^([ ]*)(.*)/m", '$1$1$2', $export);
-        $array = preg_split("/\r\n|\n|\r/", $export);
-        $array = preg_replace(["/\s*array\s\($/", "/\)(,)?$/", "/\s=>\s$/"], [NULL, ']$1', ' => ['], $array);
-        $export = implode(PHP_EOL, array_filter(["["] + $array));
+        $export = \var_export($expression, TRUE);
+        $export = \preg_replace("/^([ ]*)(.*)/m", '$1$1$2', $export);
+        $array = \preg_split("/\r\n|\n|\r/", $export);
+        $array = \preg_replace(["/\s*array\s\($/", "/\)(,)?$/", "/\s=>\s$/"], [NULL, ']$1', ' => ['], $array);
+        $export = \implode(PHP_EOL, \array_filter(["["] + $array));
         return $export;
     }
 
@@ -46,6 +46,6 @@ class Util
 
     public static function getDuplicates(array $array): array
     {
-        return array_diff_assoc($array, array_unique($array));
+        return \array_diff_assoc($array, \array_unique($array));
     }
 }

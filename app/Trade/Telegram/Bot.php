@@ -24,7 +24,7 @@ class Bot
     {
         $response = $this->telegram->handleGetUpdates();
 
-        return array_filter($response->getResult(),
+        return \array_filter($response->getResult(),
             function (Update $update) {
                 $message = $update->getMessage() ?? $update->getEditedMessage();
 
@@ -39,7 +39,7 @@ class Bot
             return true;
         }
 
-        if (trim($password) === '/password ' . trim($this->password))
+        if (\trim($password) === '/password ' . \trim($this->password))
         {
             $this->authenticatedChatIds[] = $chatId;
             return true;
@@ -52,7 +52,7 @@ class Bot
 
     protected function isAuthenticated(int $chatId): bool
     {
-        return !$this->password || in_array($chatId, $this->authenticatedChatIds);
+        return !$this->password || \in_array($chatId, $this->authenticatedChatIds);
     }
 
     public function sendMessage(string $message, int $chatId): ServerResponse

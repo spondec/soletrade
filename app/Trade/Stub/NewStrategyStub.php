@@ -59,7 +59,7 @@ class NewStrategyStub extends Creator
     {
         foreach ($this->params['combined'] as $indicator)
         {
-            $content = str_replace(
+            $content = \str_replace(
                 [
                     "'{{ {$indicator}_alias }}'",
                     "'{{ {$indicator}_class }}'"

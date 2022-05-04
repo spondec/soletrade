@@ -72,9 +72,9 @@ abstract class Strategy
 
         $indicatorConfig = $this->indicatorConfig();
 
-        if ($duplicate = Util::getDuplicates(array_column($indicatorConfig, 'alias')))
+        if ($duplicate = Util::getDuplicates(\array_column($indicatorConfig, 'alias')))
         {
-            throw new \LogicException('Duplicate indicator aliases: ' . implode(', ', $duplicate));
+            throw new \LogicException('Duplicate indicator aliases: ' . \implode(', ', $duplicate));
         }
 
         foreach ($indicatorConfig as &$c)

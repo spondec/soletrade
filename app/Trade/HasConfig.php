@@ -12,7 +12,7 @@ trait HasConfig
 
     protected function mergeConfig(array &$config): void
     {
-        $this->hasDefaultConfig = method_exists(static::class, 'getDefaultConfig');
+        $this->hasDefaultConfig = \method_exists(static::class, 'getDefaultConfig');
         $this->assertPreRequisites();
 
         $this->buildDefaultConfig();
@@ -60,7 +60,7 @@ trait HasConfig
                 throw new \UnexpectedValueException("Config key does not match: $key");
             }
 
-            if (!in_array($key, $this->variableConfigKeys))
+            if (!\in_array($key, $this->variableConfigKeys))
             {
                 if (\is_array($value) && !\array_is_list($value))
                 {
@@ -127,14 +127,14 @@ trait HasConfig
 
     private function assertPreRequisites(): void
     {
-        if ($parent = get_parent_class(static::class))
+        if ($parent = \get_parent_class(static::class))
         {
-            if (get_parent_class($parent))
+            if (\get_parent_class($parent))
             {
                 throw new \LogicException('Only one level of parent config is allowed.');
             }
 
-            if (!$this->hasDefaultConfig && in_array(HasConfig::class, class_uses($parent)))
+            if (!$this->hasDefaultConfig && \in_array(HasConfig::class, \class_uses($parent)))
             {
                 throw new \LogicException('Parent class must implement getDefaultConfig() method.');
             }

@@ -236,11 +236,11 @@ class TradeCreator
      */
     protected function sortByRequiredOrder(array &$signals): void
     {
-        if (count($signals) <= 1)
+        if (\count($signals) <= 1)
         {
             return;
         }
-        uasort($signals, function (Signal $a, Signal $b): int {
+        \uasort($signals, function (Signal $a, Signal $b): int {
             return $this->signalOrder[$a->indicator->alias] <=> $this->signalOrder[$b->indicator->alias];
         });
     }
@@ -259,6 +259,6 @@ class TradeCreator
             }
         }
 
-        return array_flip($order);
+        return \array_flip($order);
     }
 }

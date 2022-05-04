@@ -42,7 +42,7 @@ class StrategyIndicatorStub extends Creator
             ])->all();
         }
 
-        $params['config'] = static::getConfigExport(array_merge($default, $params['config']));
+        $params['config'] = static::getConfigExport(\array_merge($default, $params['config']));
         $params['alias'] = "'$indicator'";
 
         return $params;

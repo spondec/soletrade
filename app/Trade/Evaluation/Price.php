@@ -41,7 +41,7 @@ class Price
 
     protected function getCaller(): string
     {
-        return debug_backtrace()[2]['class'];
+        return \debug_backtrace()[2]['class'];
     }
 
     public function unlock(): void
@@ -110,7 +110,7 @@ class Price
     {
         foreach (static::$modifiers as $class)
         {
-            if ($modifier === $class || is_subclass_of($modifier, $class))
+            if ($modifier === $class || \is_subclass_of($modifier, $class))
             {
                 return;
             }

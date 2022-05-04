@@ -69,7 +69,7 @@ class TradeFinder
         return $this->indicators->mapWithKeys(
             function (Indicator $indicator, string $alias) {
                 return [
-                    $alias => $indicator->scan(in_array($alias, $this->tradeConfig->signals)
+                    $alias => $indicator->scan(\in_array($alias, $this->tradeConfig->signals)
                         ? $this->indicatorConfig[$alias]->signal
                         : null)
                 ];
@@ -178,7 +178,7 @@ class TradeFinder
             }
         }
 
-        uasort($results, fn(array $a, array $b): int => $a['price_date'] <=> $b['price_date']);
+        \uasort($results, fn(array $a, array $b): int => $a['price_date'] <=> $b['price_date']);
 
         return $results;
     }

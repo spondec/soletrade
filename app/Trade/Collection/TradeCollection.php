@@ -30,7 +30,7 @@ class TradeCollection extends Collection
 
         $items = $this->filterByConfig($items);
         $items = $this->keyByTimestamp($items);
-        ksort($items);
+        \ksort($items);
 
         parent::__construct($items);
     }
@@ -47,7 +47,7 @@ class TradeCollection extends Collection
             $this->items[$timestamp] = $trade;
         }
 
-        ksort($this->items);
+        \ksort($this->items);
 
         return $this;
     }
@@ -144,7 +144,7 @@ class TradeCollection extends Collection
     {
         if ($this->config('permanentOnly'))
         {
-            $items = array_filter($items, fn(TradeSetup $trade) => $trade->is_permanent);
+            $items = \array_filter($items, fn(TradeSetup $trade) => $trade->is_permanent);
         }
         return $items;
     }

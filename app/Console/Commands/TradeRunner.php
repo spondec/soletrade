@@ -7,7 +7,7 @@ use App\Repositories\SymbolRepository;
 use App\Trade\AllocatedAsset;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Log;
-use App\Trade\Status;
+use App\Trade\Enum\TraderStatus;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Telegram\Bot;
 use App\Trade\TradeAsset;
@@ -50,10 +50,10 @@ class TradeRunner extends Command
      */
     public function handle(): int
     {
-        $start = time();
+        $start = \time();
         $args = $this->arguments();
 
-        if (!is_numeric($args['amount']))
+        if (!\is_numeric($args['amount']))
         {
             $this->error('Amount must be numeric.');
             return 1;
@@ -85,20 +85,20 @@ class TradeRunner extends Command
         $positionTable->setHorizontal();
 
         $telegramUpdateFreq = 5;
-        $telegramLastUpdate = time();
+        $telegramLastUpdate = \time();
         $lastPrint = 0;
 
         while (true)
         {
-            if (time() >= $telegramLastUpdate + $telegramUpdateFreq)
+            if (\time() >= $telegramLastUpdate + $telegramUpdateFreq)
             {
-                $telegramLastUpdate = time();
+                $telegramLastUpdate = \time();
                 $this->handleTelegramUpdates($bot, $trader);
             }
 
             $status = $trader->run();
 
-            if (time() - $lastPrint >= 1)
+            if (\time() - $lastPrint >= 1)
             {
                 $position = $status?->getPosition();
 
@@ -125,7 +125,7 @@ class TradeRunner extends Command
                         $asset);
                 }
 
-                $lastPrint = time();
+                $lastPrint = \time();
             }
         }
 
@@ -206,12 +206,12 @@ class TradeRunner extends Command
             switch ($text)
             {
                 case '/start':
-                    $trader->setStatus(Status::AWAITING_TRADE);
+                    $trader->setStatus(TraderStatus::AWAITING_TRADE);
                     $bot->sendMessage($trader->getStatus()->value, $id);
                     break;
 
                 case '/stop':
-                    $trader->setStatus(Status::STOPPED);
+                    $trader->setStatus(TraderStatus::STOPPED);
                     $bot->sendMessage($trader->getStatus()->value, $id);
                     break;
 
@@ -228,15 +228,15 @@ class TradeRunner extends Command
                     break;
 
                 case '/memory_peak':
-                    $bot->sendMessage((int)(memory_get_peak_usage(true) / 1024 / 1024) . 'MB', $id);
+                    $bot->sendMessage((int)(\memory_get_peak_usage(true) / 1024 / 1024) . 'MB', $id);
                     break;
 
                 case '/errors':
                     if ($errors = Log::getErrors())
                     {
                         $bot->sendMessage(
-                            implode("\n",
-                                array_map(static fn(\Throwable $e) => $e->getMessage(),
+                            \implode("\n",
+                                \array_map(static fn(\Throwable $e) => $e->getMessage(),
                                     $errors)), $id
                         );
                     }
@@ -248,12 +248,12 @@ class TradeRunner extends Command
         }
     }
 
-    protected function renderDetailsTable(Table  $detailsTable,
-                                          int    $start,
-                                          Status $status,
-                                          float  $allocAmount,
-                                          mixed  $asset,
-                                          float  $roi): void
+    protected function renderDetailsTable(Table        $detailsTable,
+                                          int          $start,
+                                          TraderStatus $status,
+                                          float        $allocAmount,
+                                          mixed        $asset,
+                                          float        $roi): void
     {
         $detailsTable
             ->setHeaders([
@@ -267,7 +267,7 @@ class TradeRunner extends Command
                 [
                     elapsed_time($start),
                     Util::memoryUsage(),
-                    count(Log::getErrors()),
+                    \count(Log::getErrors()),
                     $status->value,
                     "$allocAmount $asset",
                     Util::formatRoi($roi)

@@ -49,9 +49,9 @@ final class Combined extends Indicator
 
         $indicators = $this->config('indicators');
 
-        if ($duplicates = Util::getDuplicates(array_column($indicators, 'alias')))
+        if ($duplicates = Util::getDuplicates(\array_column($indicators, 'alias')))
         {
-            throw new \LogicException('Duplicate indicator aliases: ' . implode(', ', $duplicates));
+            throw new \LogicException('Duplicate indicator aliases: ' . \implode(', ', $duplicates));
         }
 
         foreach ($indicators as $config)
@@ -70,7 +70,7 @@ final class Combined extends Indicator
             }
         }
 
-        ksort($data);
+        \ksort($data);
 
         return $data;
     }

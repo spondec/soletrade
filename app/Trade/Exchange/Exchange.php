@@ -89,7 +89,7 @@ abstract class Exchange
      */
     public static function from(string $nameOrClass): Exchange
     {
-        if (class_exists($nameOrClass))
+        if (\class_exists($nameOrClass))
         {
             return $nameOrClass::instance();
         }

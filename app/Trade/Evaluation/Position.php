@@ -86,7 +86,7 @@ class Position
             'increase'    => $increase,
             'price'       => $price,
             'size'        => $size,
-            'system_time' => microtime(true), //for uniqueness
+            'system_time' => \microtime(true), //for uniqueness
         ];
 
         if (isset($this->transactionLog))

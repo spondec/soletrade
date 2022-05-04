@@ -19,12 +19,12 @@ class Runner extends Model
     {
         parent::__construct($attributes);
 
-        $this->start_date = time();
+        $this->start_date = \time();
     }
 
     public function setExpiry(int $seconds): static
     {
-        $this->expire_date = time() + $seconds;
+        $this->expire_date = \time() + $seconds;
         return $this;
     }
 
@@ -37,7 +37,7 @@ class Runner extends Model
     public static function purgeExpired(): void
     {
         \DB::table('runners')
-            ->where('expire_date', '<=', time())
+            ->where('expire_date', '<=', \time())
             ->delete();
     }
 }

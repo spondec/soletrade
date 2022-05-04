@@ -163,8 +163,8 @@ class TradeSetup extends Model implements Bindable
         $this->fillJsonAttribute('order_type_config->' . OrderType::STOP_LIMIT->value . '->trigger_price_ratio', $triggerPriceRatio);
 
         $this->stop_price = $this->isBuy()
-            ? $price - $price * abs($ratio)
-            : $price + $price * abs($ratio);
+            ? $price - $price * \abs($ratio)
+            : $price + $price * \abs($ratio);
     }
 
     public function setTargetPrice(float $ratio): void
@@ -177,8 +177,8 @@ class TradeSetup extends Model implements Bindable
         $price = $this->assertPrice();
 
         $this->target_price = $this->isBuy()
-            ? $price + $price * abs($ratio)
-            : $price - $price * abs($ratio);
+            ? $price + $price * \abs($ratio)
+            : $price - $price * \abs($ratio);
     }
 
     public function setSide(Side $side): void

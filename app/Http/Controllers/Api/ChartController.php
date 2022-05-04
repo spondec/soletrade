@@ -43,10 +43,10 @@ class ChartController extends Controller
         }
 
         return [
-            'strategies' => array_keys(get_strategies()),
+            'strategies' => \array_keys(get_strategies()),
             'exchanges'  => $this->mapByName($this->config->exchanges),
             'symbols'    => $this->config->symbols,
-            'indicators' => array_keys(get_indicators()),
+            'indicators' => \array_keys(get_indicators()),
             'intervals'  => $this->symbolRepo->fetchIntervals()
         ];
     }

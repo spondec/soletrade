@@ -99,7 +99,7 @@ class Order extends Model
 
     public function isOpen(): bool
     {
-        return in_array($this->status, [OrderStatus::OPEN, OrderStatus::NEW]);
+        return \in_array($this->status, [OrderStatus::OPEN, OrderStatus::NEW]);
     }
 
     public function flushListeners(): void
@@ -142,8 +142,8 @@ class Order extends Model
             $callback($fill);
         }
 
-        Log::info(count(static::$fills[$fill->order_id]) . ' fills for order ' . $fill->order_id);
-        Log::info(count(static::$fills) . ' total fills');
+        Log::info(\count(static::$fills[$fill->order_id]) . ' fills for order ' . $fill->order_id);
+        Log::info(\count(static::$fills) . ' total fills');
     }
 
     public function isAllFilled(): bool
@@ -180,7 +180,7 @@ class Order extends Model
     {
         $responses = $this->responses ?? [];
 
-        if (!isset($responses[$key]) || end($responses[$key]) != $data)
+        if (!isset($responses[$key]) || \end($responses[$key]) != $data)
         {
             $responses[$key][] = $data;
         }
@@ -204,7 +204,7 @@ class Order extends Model
             $callback($fill);
         }
 
-        Log::info(count(static::$fillListeners[$this->id]) . ' fill listeners registered for order ' . $this->id);
-        Log::info(count(static::$fillListeners) . ' total fill listeners registered');
+        Log::info(\count(static::$fillListeners[$this->id]) . ' fill listeners registered for order ' . $this->id);
+        Log::info(\count(static::$fillListeners) . ' total fill listeners registered');
     }
 }

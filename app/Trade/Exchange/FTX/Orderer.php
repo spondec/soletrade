@@ -40,7 +40,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
                 : $this->sendOrderCancelRequest($order);
         } catch (InvalidOrder $e)
         {
-            if (str_contains($e->getMessage(), 'Order already closed'))
+            if (\str_contains($e->getMessage(), 'Order already closed'))
             {
                 $this->sync($order); //to register fills
 
@@ -84,7 +84,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
 
     protected function isConditional(Order $order): bool
     {
-        return in_array($order->type, static::CONDITIONAL_ORDER_TYPES);
+        return \in_array($order->type, static::CONDITIONAL_ORDER_TYPES);
     }
 
     private function sendConditionalOrderCancelRequest(Order $order, string $parsedType): string
@@ -121,7 +121,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
             fn() => $this->api->fetch_orders($order->symbol, params: ['type' => $parsedType])
         )->run();
 
-        $responses = array_filter($conditionals, static function (array $conditional) use ($order) {
+        $responses = \array_filter($conditionals, static function (array $conditional) use ($order) {
             return $conditional['id'] == $order->exchange_order_id;
         });
 
@@ -143,12 +143,12 @@ class Orderer extends \App\Trade\Exchange\Orderer
             throw new \LogicException('Order not found for ID: ' . $order->id);
         }
 
-        if (count($responses) > 1)
+        if (\count($responses) > 1)
         {
             throw new \LogicException('Multiple orders found for order ID: ' . $order->id);
         }
 
-        return reset($responses);
+        return \reset($responses);
     }
 
     private function sendOrderUpdateRequest(Order $order, string $parsedType): array
@@ -188,7 +188,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
         $order->type = $this->parseOrderTypeString($response['type']);
         $order->symbol = $response['info']['market'];
         $order->status = $this->parseOrderStatusString($response['status']);
-        $order->side = strtoupper($response['side']);
+        $order->side = \strtoupper($response['side']);
         $order->stop_price = $response['info']['triggerPrice'] ?? null;
         $order->exchange_order_id = $response['id'];
         $order->price = $response['info']['orderPrice'] ?? $response['price'];
@@ -199,7 +199,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
     protected function parseOrderTypeString(string $type): OrderType
     {
         $map = $this->orderTypeMap();
-        $key = array_search($type, $map);
+        $key = \array_search($type, $map);
         return OrderType::from($key)
             ?? throw new \LogicException('Unsupported order type: ' . $type);
     }
@@ -210,9 +210,9 @@ class Orderer extends \App\Trade\Exchange\Orderer
 
         foreach ($map as $enum => $value)
         {
-            if (is_array($value))
+            if (\is_array($value))
             {
-                if (in_array($status, $value))
+                if (\in_array($status, $value))
                 {
                     return OrderStatus::from($enum);
                 }
@@ -246,7 +246,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
         return RecoverableRequest::new(
             fn() => $this->api->create_order($order->symbol,
                 $this->parseOrderType($order->type),
-                strtolower(Enum::case($order->side)),
+                \strtolower(Enum::case($order->side)),
                 $order->quantity,
                 $order->price,
                 [
@@ -331,9 +331,9 @@ class Orderer extends \App\Trade\Exchange\Orderer
             throw new \LogicException('No conditional response found. Order ID: ' . $order->id);
         }
 
-        $conditionalResponse = end($conditionalResponse);
+        $conditionalResponse = \end($conditionalResponse);
 
-        return array_filter($orders, static function (array $orderResponse) use ($conditionalResponse) {
+        return \array_filter($orders, static function (array $orderResponse) use ($conditionalResponse) {
 
             if ($orderResponse['timestamp'] < $conditionalResponse['timestamp'])
             {

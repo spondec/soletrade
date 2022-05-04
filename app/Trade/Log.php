@@ -65,6 +65,6 @@ final class Log
     protected static function canLog(): bool
     {
         //does not log in tests to prevent unexpected mock call errors
-        return !defined('PHPUNIT_COMPOSER_INSTALL') && !defined('__PHPUNIT_PHAR__');
+        return !\defined('PHPUNIT_COMPOSER_INSTALL') && !\defined('__PHPUNIT_PHAR__');
     }
 }

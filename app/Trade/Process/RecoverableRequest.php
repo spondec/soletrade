@@ -22,7 +22,7 @@ class RecoverableRequest extends Recoverable
         return new static($request,
             $retryInSeconds ?? $config['retryInSeconds'],
             $retryLimit ?? $config['retryLimit'],
-            array_merge($handle, $config['handle']));
+            \array_merge($handle, $config['handle']));
     }
 
     protected function handle(\Throwable $e): void

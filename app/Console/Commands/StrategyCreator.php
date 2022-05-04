@@ -31,7 +31,7 @@ class StrategyCreator extends Command
      */
     public function handle(\App\Trade\Stub\NewStrategyStub $newStrategy)
     {
-        $name = ucfirst($this->argument('name'));
+        $name = \ucfirst($this->argument('name'));
         $signals = str($this->option('signals'))
             ->explode(',')
             ->filter()

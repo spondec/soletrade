@@ -38,7 +38,7 @@ class Trader
             throw new \LogicException('Live trading is only available in CLI.');
         }
 
-        set_time_limit(0);
+        \set_time_limit(0);
         on_shutdown($this->onShutdown(...));
 
         if (Runner::query()->first())
@@ -170,7 +170,7 @@ class Trader
                 $lastCandle = $this->symbol->lastCandle();
                 $position->addStopPrice(new Price($lastCandle->c, millitime()));
             }
-            $position->stop(time());
+            $position->stop(\time());
 
             RecoverableRequest::new(function () use ($position) {
 

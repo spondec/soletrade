@@ -161,7 +161,7 @@ abstract class Indicator implements Binder
     public function getBindable(): array
     {
         $value = $this->data()->first();
-        if (is_array($value))
+        if (\is_array($value))
         {
             return \array_keys($value);
         }
@@ -170,7 +170,7 @@ abstract class Indicator implements Binder
 
     protected function getBind(int|string $bind, mixed $value): mixed
     {
-        if (is_array($value))
+        if (\is_array($value))
         {
             return $value[$bind];
         }

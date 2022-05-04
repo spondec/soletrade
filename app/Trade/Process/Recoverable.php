@@ -31,7 +31,7 @@ class Recoverable
         {
             if ($this->retryLimit > 0 && $this->isHandled($e))
             {
-                sleep($this->retryInSeconds);
+                \sleep($this->retryInSeconds);
                 $this->handle($e);
 
                 $retryLimit--;
@@ -50,7 +50,7 @@ class Recoverable
     {
         foreach ($this->handle as $throwable)
         {
-            if ($e::class === $throwable || is_subclass_of($e, $throwable))
+            if ($e::class === $throwable || \is_subclass_of($e, $throwable))
             {
                 return true;
             }

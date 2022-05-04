@@ -38,7 +38,7 @@ class StrategyTester extends Command
     {
         $options = $this->options();
         $args = $this->arguments();
-        $startTime = time();
+        $startTime = \time();
 
         if ($debug = config('app.debug'))
         {
@@ -164,9 +164,9 @@ class StrategyTester extends Command
         if ($debug)
         {
             $log = \DB::getQueryLog();
-            $time = array_sum(array_column($log, 'time')) / 1000;
+            $time = \array_sum(\array_column($log, 'time')) / 1000;
             $this->line("Total query time: $time");
-            $this->line("Queries: " . count($log));
+            $this->line("Queries: " . \count($log));
         }
         return 0;
     }

@@ -86,7 +86,7 @@ abstract class Creator
     {
         foreach ($placeholders as $placeHolder)
         {
-            $content = str_replace($this->wrapPlaceholder($placeHolder), $replacements[$placeHolder], $content);
+            $content = \str_replace($this->wrapPlaceholder($placeHolder), $replacements[$placeHolder], $content);
         }
         return $content;
     }
@@ -101,7 +101,7 @@ abstract class Creator
         $p = [];
         foreach ($this->getPlaceholders() as $placeHolder)
         {
-            if (str_contains($content, $this->wrapPlaceholder($placeHolder)))
+            if (\str_contains($content, $this->wrapPlaceholder($placeHolder)))
             {
                 $p[] = $placeHolder;
             }
@@ -109,7 +109,7 @@ abstract class Creator
 
         if ($p)
         {
-            throw new \UnexpectedValueException('Failed to replace placeholders: ' . implode(', ', $p));
+            throw new \UnexpectedValueException('Failed to replace placeholders: ' . \implode(', ', $p));
         }
     }
 

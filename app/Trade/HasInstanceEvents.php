@@ -29,7 +29,7 @@ trait HasInstanceEvents
     {
         $this->assertEventExists($eventName);
 
-        if (in_array($hash = ClosureHash::from($onEvent), $this->listenerHash[$eventName] ?? []))
+        if (\in_array($hash = ClosureHash::from($onEvent), $this->listenerHash[$eventName] ?? []))
         {
             throw new \LogicException("Listener already registered.");
         }

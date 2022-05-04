@@ -17,8 +17,8 @@ class TradeResource extends JsonResource
     {
         $trade = parent::toArray($request);
 
-        $trade['roi'] = round($trade['roi'], 2);
-        $trade['relative_roi'] = round($trade['relative_roi'], 2);
+        $trade['roi'] = \round($trade['roi'], 2);
+        $trade['relative_roi'] = \round($trade['relative_roi'], 2);
 
         return $trade;
     }
