@@ -14,9 +14,6 @@ final class Fib extends Indicator
         'levels' => [236, 382, 500, 618, 786]
     ];
 
-    protected bool $isProgressive = true;
-    protected bool $recalculate = false;
-
     /**
      * Whether the retracement goes from low to high.
      */

@@ -51,8 +51,6 @@ class TradeFinder
         $this->indicatorGenerators = $this->getIndicatorGenerators();
         $this->initGenerators($this->indicatorGenerators);
 
-        $this->assertProgressiveness();
-
         $this->hasNextCandle = \Closure::bind(function (): bool {
             return isset($this->candles[$this->iterator->key() + 1]);
         },
@@ -87,23 +85,6 @@ class TradeFinder
         foreach ($generators as $generator)
         {
             $generator->current();
-        }
-    }
-
-    private function assertProgressiveness(): void
-    {
-        $isProgressive = null;
-        /** @var Indicator $i */
-        foreach ($this->indicators as $i)
-        {
-            if ($isProgressive === null)
-            {
-                $isProgressive = $i->isProgressive();
-            }
-            else if ($i->isProgressive() !== $isProgressive)
-            {
-                throw new \LogicException('All indicators must be either progressive or non-progressive.');
-            }
         }
     }
 
