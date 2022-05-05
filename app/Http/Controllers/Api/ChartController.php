@@ -133,13 +133,6 @@ class ChartController extends Controller
         return $symbol->toArray();
     }
 
-    /**
-     * @param Exchange|string $exchange
-     * @param string          $symbolName
-     * @param string          $interval
-     *
-     * @return Symbol|null
-     */
     protected function getSymbol(Exchange|string $exchange, string $symbolName, string $interval): ?Symbol
     {
         return $this->symbolRepo->fetchSymbol(exchange: $exchange::instance(), symbolName: $symbolName, interval: $interval);
