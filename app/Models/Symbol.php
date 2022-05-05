@@ -40,7 +40,6 @@ class Symbol extends Model
             'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
                     'name'        => $i::name(),
                     'data'        => $i->raw($i->data()),
-                    'progressive' => $i->raw($i->progressiveData()),
                     'config'      => $i->config(),
                 ])?->toArray() ?? []
         ]);

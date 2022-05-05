@@ -519,7 +519,6 @@ export default {
       {
         const indicator = indicators[alias];
         indicator.data = this.getIndicatorHandler(indicator.name).prepare(indicator.data, length, indicators);
-        indicator.progressive = this.getIndicatorHandler(indicator.name).prepare(indicator.progressive, length, indicators);
       }
       return indicators;
     },
