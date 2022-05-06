@@ -42,7 +42,7 @@ For installation, clone the repository and run these commands in the project roo
 
 `npm install`
 
-`mix --production`
+`npm run production`
 
 ## Documentation
 
