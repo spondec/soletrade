@@ -11,7 +11,6 @@
 
     <!-- Scripts -->
     <script src="{{ asset('js/app.js') }}" defer></script>
-{{--    <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.js"></script>--}}
 
 <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
@@ -24,7 +23,7 @@
         (function ()
         {
             window.__MF = {};
-            window.__MF.appName = "{{ config('app.name', 'Laravel') }}";
+            window.__MF.appName = "{{ config('app.name', 'SoleTrade') }}";
         })();
     </script>
 </head>
