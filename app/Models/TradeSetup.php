@@ -83,7 +83,7 @@ class TradeSetup extends Model implements Bindable
         return $this->hasMany(TradeAction::class);
     }
 
-    public function loadBindingPrice(?Price $price, string $column, int $timestamp, ...$params): void
+    public function loadBindingPrice(?Price $price, string $column, int $timestamp): void
     {
         if (!$price)
         {
@@ -91,7 +91,7 @@ class TradeSetup extends Model implements Bindable
         }
 
         $binding = $this->bindings[$column] ?? null;
-        if ($binding && $entryPrice = $binding->getValue($timestamp, ...$params))
+        if ($binding && $entryPrice = $binding->getValue($timestamp))
         {
             $price->set($entryPrice, $timestamp, 'Binding: ' . $binding->name, true);
         }

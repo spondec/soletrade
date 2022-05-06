@@ -420,6 +420,6 @@ class TradeLoop
 
     protected function loadBinding(Price $price, string $column, \stdClass $candle): void
     {
-        $this->entry->loadBindingPrice($price, $column, $candle->t, $this->evaluationSymbol);
+        $this->entry->loadBindingPrice($price, $column, $candle->t);
     }
 }
