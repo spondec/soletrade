@@ -32,6 +32,8 @@ For installation, clone the repository and run these commands in the project roo
 
 `composer install --optimize-autoloader --no-dev`
 
+`php -r "copy('.env.example', '.env');"`
+
 `php artisan key:generate`
 
 `php artisan migrate`
@@ -40,7 +42,7 @@ For installation, clone the repository and run these commands in the project roo
 
 `npm install`
 
-`mix --production`
+`npm run production`
 
 ## Documentation
 
@@ -292,14 +294,14 @@ protected function indicatorConfig(): array
             'config' => [
                 'indicators' => [
                     0 => [
-                        'alias' => 'shortTerm',
+                        'alias' => 'short-term',
                         'class' => MA::class,
                         'config' => [
                             'timePeriod' => 50,
                         ],
                     ],
                     1 => [
-                        'alias' => 'longTerm',
+                        'alias' => 'long-term',
                         'class' => MA::class,
                         'config' => [
                             'timePeriod' => 200,
@@ -309,7 +311,7 @@ protected function indicatorConfig(): array
             ],
             'signal' => function (Signal $signal, Combined $indicator, mixed $value): ?Signal {
 
-                if ($indicator->crossOver('shortTerm', 'longTerm'))
+                if ($indicator->crossOver('short-term', 'long-term'))
                 {
                     $signal->name = 'Golden Cross';
                     $signal->side = Side::BUY;
@@ -317,7 +319,7 @@ protected function indicatorConfig(): array
                     return $signal;
                 }
 
-                if ($indicator->crossUnder('shortTerm', 'longTerm'))
+                if ($indicator->crossUnder('short-term', 'long-term'))
                 {
                     $signal->name = 'Death Cross';
                     $signal->side = Side::SELL;
