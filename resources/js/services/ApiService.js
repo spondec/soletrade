@@ -31,7 +31,7 @@ export default class ApiService
 
     static async recentTrades()
     {
-        return await this.get("/api/trades/recent");
+        return await this.get("api/trades/recent");
     }
 
     static async exchanges()

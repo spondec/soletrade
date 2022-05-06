@@ -135,6 +135,11 @@ if (!function_exists('get_indicators'))
 
         $indicators = [];
 
+        if (!$files->exists(INDICATOR_DIR))
+        {
+            return $indicators;
+        }
+
         foreach ($files->allFiles(base_path(INDICATOR_DIR)) as $file)
         {
             $basename = $file->getBasename('.php');
@@ -152,6 +157,11 @@ if (!function_exists('get_strategies'))
         $files = new Illuminate\Filesystem\Filesystem();
 
         $strategies = [];
+
+        if (!$files->exists(STRATEGY_DIR))
+        {
+            return $strategies;
+        }
 
         foreach ($files->allFiles(base_path(STRATEGY_DIR)) as $file)
         {
