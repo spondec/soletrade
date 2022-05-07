@@ -119,7 +119,7 @@ entire position in result of
 complex computation.
 There are built-in trade action classes, but you can also write your own.
 A trade action class only takes a Position object as an argument and only performs things on this object.
-app/Trade/Action/Handler is the core class of trade actions.
+app/Trade/Action/Handler is the core class of trade actions. Of course, you can invent your own just like in indicators by extending the handler.
 
 ### Strategy Testing
 
