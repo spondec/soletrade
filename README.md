@@ -399,3 +399,8 @@ The author or any contributor to this software is not responsible for any loss o
 Do not risk money that you cannot afford to lose. Monitor the software and the exchange it's trading at regular
 intervals to make sure both parties are in a consistent state.
 The software is provided as-is. No guarantees are made. Use at your own risk and discretion.
+
+## Screenshots
+<img src="https://user-images.githubusercontent.com/19874501/167264486-d4bfbbd5-cdf4-492e-8e72-22b7eaad41fc.png" alt="Indicator Chart View"></a>
+<img src="https://user-images.githubusercontent.com/19874501/167264488-c1497620-556f-4ea7-b921-4646a1790672.png" alt="Strategy View"></a>
+<img src="https://user-images.githubusercontent.com/19874501/167264489-d0ca6b5d-38a5-4bbb-ba02-b1661018da74.png" alt="Strategy Chart View"></a>
