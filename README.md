@@ -81,8 +81,7 @@ Most of the built-in indicators just calls one of the PHP Trader extension funct
 
 #### Signals
 
-A signal is a specific indicator state and a required step to trigger your trade setup function.
-Required signals defined in signals array in the strategy.
+A signal is a specific indicator state and if preferred, it becomes a required step to trigger your trade setup function. Required signals are defined in the signals array in the strategy.
 
 #### Price Bindings
 
