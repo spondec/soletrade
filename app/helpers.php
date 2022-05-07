@@ -134,13 +134,14 @@ if (!function_exists('get_indicators'))
         $files = new Illuminate\Filesystem\Filesystem();
 
         $indicators = [];
+        $path = base_path(INDICATOR_DIR);
 
-        if (!$files->exists(INDICATOR_DIR))
+        if (!$files->isDirectory($path))
         {
             return $indicators;
         }
 
-        foreach ($files->allFiles(base_path(INDICATOR_DIR)) as $file)
+        foreach ($files->allFiles($path) as $file)
         {
             $basename = $file->getBasename('.php');
             $indicators[$basename] = INDICATOR_NAMESPACE . $basename;
@@ -157,13 +158,14 @@ if (!function_exists('get_strategies'))
         $files = new Illuminate\Filesystem\Filesystem();
 
         $strategies = [];
+        $path = base_path(STRATEGY_DIR);
 
-        if (!$files->exists(STRATEGY_DIR))
+        if (!$files->isDirectory($path))
         {
             return $strategies;
         }
 
-        foreach ($files->allFiles(base_path(STRATEGY_DIR)) as $file)
+        foreach ($files->allFiles($path) as $file)
         {
             $basename = $file->getBasename('.php');
             $strategies[$basename] = STRATEGY_NAMESPACE . $basename;
