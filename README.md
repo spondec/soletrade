@@ -34,7 +34,7 @@ For installation, clone the repository and run these commands in the project roo
 
 `php -r "file_exists('.env') || copy('.env.example', '.env');"`
 
-`php artisan key:generate --ansi`
+`php artisan key:generate`
 
 `php artisan migrate`
 
