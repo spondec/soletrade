@@ -34,7 +34,9 @@ abstract class Creator
     {
         $fileName = $this->getFileName();
         $destination = $this->getDestinationDir();
-
+        
+        $this->files->ensureDirectoryExists($destination);
+        
         if (!$destination || !$fileName)
         {
             throw new \LogicException('Destination directory or filename was not set.');
