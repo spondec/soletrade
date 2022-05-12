@@ -28,7 +28,76 @@ Features include:
 
 ## Installation
 
-For installation, clone the repository and run these commands in the project root directory:
+### Docker
+Docker helps you to get started quickly without installing any dependencies on your computer other than Docker itself. 
+* Install Docker Desktop and make sure it's running and ready
+   * If you're on Windows, make sure to activate WSL2 and open a WSL session:
+   ```
+   wsl
+   ```
+   * Enter the home directory: 
+   ```
+   cd ~ 
+   ```
+* Open a terminal in your desired location for this app and clone the repository:
+   ```bash
+   git clone https://github.com/spondec/soletrade.git 
+   ```
+   * To run the rest of the commands, we must enter the root directory of the repository:
+   ```
+   cd soletrade 
+   ```
+* Install the composer dependencies with the following command. Just copy and paste it into your terminal:
+```
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v $(pwd):/var/www/html \
+    -w /var/www/html \
+    spondec/soletrade-composer:latest \
+    composer install \
+    && php -r "file_exists('.env') || copy('.env.example', '.env');" \
+    && php artisan key:generate 
+```
+Now we're ready to build our Docker container. We're going to do that with Sail. From now on, any interaction with the app will go through our dear friend, Sail. Sail is just a proxy between your machine and Docker container, that's all. We'll pretty much prefix every command with `./vendor/bin/sail`. Optionally you can create a bash alias to just `sail`. 
+
+* Boot up the container(it can take a while, only for once):
+
+   ```
+   ./vendor/bin/sail up -d
+   ```
+
+* After boot, run these commands in order:
+
+```
+./vendor/bin/sail php artisan migrate
+```
+
+```
+./vendor/bin/sail php artisan db:seed
+```
+
+```
+./vendor/bin/sail npm install
+```
+
+```
+./vendor/bin/sail npm run production
+```
+
+* Now you're ready. You can go to localhost in your browser and use CLI.
+* To see available trade commands, run: 
+```
+./vendor/bin/sail artisan trade
+```
+   * You can see that we *must* prefix any commands to our app with `./vendor/bin/sail`.
+
+### Full
+
+For full installation, after installing all the dependencies, run these commands in order:
+
+`git clone https://github.com/spondec/soletrade.git`
+
+`cd soletrade`
 
 `composer install --optimize-autoloader --no-dev`
 
