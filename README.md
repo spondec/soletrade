@@ -49,14 +49,7 @@ Docker helps you to get started quickly without installing any dependencies on y
    ```
 * Install the composer dependencies with the following command. Just copy and paste it into your terminal:
 ```
-docker run --rm \
-    -u "$(id -u):$(id -g)" \
-    -v $(pwd):/var/www/html \
-    -w /var/www/html \
-    spondec/soletrade-composer:latest \
-    composer install \
-    && php -r "file_exists('.env') || copy('.env.example', '.env');" \
-    && php artisan key:generate 
+docker run --rm     -u "$(id -u):$(id -g)"     -v $(pwd):/var/www/html     -w /var/www/html     spondec/soletrade-composer:latest /bin/bash -c "composer install; php -r \"file_exists('.env') || copy('.env.example', '.env');\"; php artisan key:generate"
 ```
 Now we're ready to build our Docker container. We're going to do that with Sail. From now on, any interaction with the app will go through our dear friend, Sail. Sail is just a proxy between your machine and Docker container, that's all. We'll pretty much prefix every command with `./vendor/bin/sail`. Optionally you can create a bash alias to just `sail`. 
 
