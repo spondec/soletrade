@@ -82,7 +82,7 @@ Now we're ready to build our Docker container. We're going to do that with Sail.
 ```
 ./vendor/bin/sail artisan trade
 ```
-   * You can see that we *must* prefix any commands to our app with `./vendor/bin/sail`.
+   * You can see that we *must* prefix any commands to our app with `./vendor/bin/sail` when using Docker.
 
 ### Full
 
