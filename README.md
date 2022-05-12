@@ -7,10 +7,10 @@
 
 Features include:
 
-* A minimalist GUI to review your back-test results in depth with charting.
-* A real-time bot to automate trading on an exchange.
-* A well-commented strategy template with additional helper options on creation to help you get started quickly.
-* A Telegram Bot for basic controls.
+* Minimalist GUI to review your back-test results in depth with charting.
+* Real-time bot to automate trading on an exchange.
+* A well-commented strategy template with additional helper options on creation to get started quickly.
+* Telegram Bot support for basic controls.
 
 ## Requirements
 
