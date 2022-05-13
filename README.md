@@ -82,7 +82,9 @@ Now we're ready to build our Docker container. We're going to do that with Sail.
 ```
 ./vendor/bin/sail artisan trade
 ```
-   * You can see that we *must* prefix any commands to our app with `./vendor/bin/sail` when using Docker.
+   #### Running commands on Docker
+We *must* prefix any commands to our app with `./vendor/bin/sail` when using Docker.
+So `php artisan some:command` becomes `./vendor/bin/sail php artisan some:command` on Docker or `sail php artisan some:command` if you aliased it to `sail`.
 
 ### Full
 
@@ -198,6 +200,8 @@ You can test your strategies in CLI or GUI. CLI is the recommended way for faste
 
 `php artisan trade:strategy-test {strategyName} {symbol} {interval} {exchange}`
 
+[Run this command on Docker](#running-commands-on-docker)
+
 An example result:
 
 ```
@@ -240,6 +244,8 @@ To go live with a strategy, you need to fill credentials for at least one exchan
 can use `php artisan trade:run` command:
 
 `php artisan trade:run {strategy} {exchange} {symbol} {interval} {asset} {amount} {leverage=1}`
+
+[Run this command on Docker](#running-commands-on-docker)
 
 An example for trading 100 USD at 5x leverage would be:
 
@@ -306,6 +312,8 @@ them as one.
 Run this command to create the strategy template:
 
 `php artisan trade:strategy GoldenDeathCross --combined=MA,MA --signals=Combined`
+
+[Run this command on Docker](#running-commands-on-docker)
 
 Change every alias you see to something unique and explanatory.
 The default alias for an indicator is going to be the name of its class.
@@ -431,6 +439,7 @@ manually.
 
 Now let's test our strategy and see what happens.
 
+[Run this command on Docker](#running-commands-on-docker)
 ```
 php artisan trade:strategy-test GoldenDeathCross BTC/USDT 1h Binance
 Running strategy...
