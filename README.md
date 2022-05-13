@@ -30,7 +30,7 @@ Features include:
 
 ### Docker
 Docker helps you to get started quickly without installing any dependencies on your computer other than Docker itself. 
-* Install Docker Desktop and make sure it's running and ready
+* Install Docker Desktop and make sure it's running and ready. Then open a terminal.
    * If you're on Windows, make sure to activate WSL2 and open a WSL session:
    ```
    wsl
@@ -39,7 +39,7 @@ Docker helps you to get started quickly without installing any dependencies on y
    ```
    cd ~ 
    ```
-* Open a terminal in your desired location for this app and clone the repository:
+* Clone the repository:
    ```bash
    git clone https://github.com/spondec/soletrade.git 
    ```
