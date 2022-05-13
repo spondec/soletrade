@@ -88,24 +88,33 @@ Now we're ready to build our Docker container. We're going to do that with Sail.
 
 For full installation, after installing all the dependencies, run these commands in order:
 
-`git clone https://github.com/spondec/soletrade.git`
-
-`cd soletrade`
-
-`composer install --optimize-autoloader --no-dev`
-
-`php -r "file_exists('.env') || copy('.env.example', '.env');"`
-
-`php artisan key:generate`
-
-`php artisan migrate`
-
-`php artisan db:seed`
-
-`npm install`
-
-`npm run production`
-
+```
+git clone https://github.com/spondec/soletrade.git
+```
+```
+cd soletrade
+```
+```
+composer install --optimize-autoloader --no-dev
+```
+```
+php -r "file_exists('.env') || copy('.env.example', '.env');"
+```
+```
+php artisan key:generate
+```
+```
+php artisan migrate
+```
+```
+php artisan db:seed
+```
+```
+npm install
+```
+```
+npm run production
+```
 ## Documentation
 
 ### Strategy
