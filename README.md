@@ -67,11 +67,11 @@ alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'
 * After boot, run these commands in order:
 
 ```bash
-sail php artisan migrate
+sail artisan migrate
 ```
 
 ```bash
-sail php artisan db:seed
+sail artisan db:seed
 ```
 
 ```bash
@@ -89,7 +89,7 @@ sail artisan trade
 ```
    #### Running commands on Docker
 We *must* prefix any commands to our app with `./vendor/bin/sail` or `sail`(if you've created the bash alias) when using Docker.
-So `php artisan some:command` becomes `./vendor/bin/sail php artisan some:command` on Docker or `sail php artisan some:command` if you aliased it to `sail`.
+So `php artisan some:command` becomes `./vendor/bin/sail artisan some:command` on Docker or `sail artisan some:command` if you aliased it to `sail`.
 
 ### Full
 
