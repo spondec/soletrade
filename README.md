@@ -32,11 +32,11 @@ Features include:
 Docker helps you to get started quickly without installing any dependencies on your computer other than Docker itself. 
 * Install Docker Desktop and make sure it's running and ready. Then open a terminal.
    * If you're on Windows, make sure to activate WSL2 and open a WSL session:
-   ```
+   ```bash
    wsl
    ```
    * Enter the home directory: 
-   ```
+   ```bash
    cd ~ 
    ```
 * Clone the repository:
@@ -44,42 +44,45 @@ Docker helps you to get started quickly without installing any dependencies on y
    git clone https://github.com/spondec/soletrade.git 
    ```
    * To run the rest of the commands, we must enter the root directory of the repository:
-   ```
+   ```bash
    cd soletrade 
    ```
 * Install the composer dependencies with the following command. Just copy and paste it into your terminal:
 ```
 docker run --rm     -u "$(id -u):$(id -g)"     -v $(pwd):/var/www/html     -w /var/www/html     spondec/soletrade-composer:latest /bin/bash -c "composer install; php -r \"file_exists('.env') || copy('.env.sail.example', '.env');\"; php artisan key:generate"
 ```
-Now we're ready to build our Docker container. We're going to do that with Sail. From now on, any interaction with the app will go through our dear friend, Sail. Sail is just a proxy between your machine and Docker container, that's all. We'll pretty much prefix every command with `./vendor/bin/sail`. Optionally you can create a bash alias to just `sail`. 
+Now we're ready to build our Docker container. We're going to do that with Sail. From now on, any interaction with the app will go through our dear friend, Sail. Sail is just a proxy between your machine and Docker container, that's all. We'll pretty much prefix every command with `./vendor/bin/sail`. Optionally you can create a bash alias to just `sail` by running this command:
+```bash
+alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'
+```
 
 * Boot up the container(it can take a while, only for once):
 
-   ```
+   ```bash
    ./vendor/bin/sail up -d
    ```
 
 * After boot, run these commands in order:
 
-```
+```bash
 ./vendor/bin/sail php artisan migrate
 ```
 
-```
+```bash
 ./vendor/bin/sail php artisan db:seed
 ```
 
-```
+```bash
 ./vendor/bin/sail npm install
 ```
 
-```
+```bash
 ./vendor/bin/sail npm run production
 ```
 
 * Now you're ready. You can go to localhost in your browser and use CLI.
 * To see available trade commands, run: 
-```
+```bash
 ./vendor/bin/sail artisan trade
 ```
    #### Running commands on Docker
@@ -90,31 +93,31 @@ So `php artisan some:command` becomes `./vendor/bin/sail php artisan some:comman
 
 For full installation, after installing all the dependencies, run these commands in order:
 
-```
+```bash
 git clone https://github.com/spondec/soletrade.git
 ```
-```
+```bash
 cd soletrade
 ```
-```
+```bash
 composer install --optimize-autoloader --no-dev
 ```
-```
+```bash
 php -r "file_exists('.env') || copy('.env.example', '.env');"
 ```
-```
+```bash
 php artisan key:generate
 ```
-```
+```bash
 php artisan migrate
 ```
-```
+```bash
 php artisan db:seed
 ```
-```
+```bash
 npm install
 ```
-```
+```bash
 npm run production
 ```
 ## Documentation
@@ -200,11 +203,9 @@ You can test your strategies in CLI or GUI. CLI is the recommended way for faste
 
 `php artisan trade:strategy-test {strategyName} {symbol} {interval} {exchange}`
 
-[Run this command on Docker](#running-commands-on-docker)
-
 An example result:
 
-```
+```bash
 Running strategy...
 151 possible trades found.
 Evaluated 150 trades.
@@ -245,11 +246,13 @@ can use `php artisan trade:run` command:
 
 `php artisan trade:run {strategy} {exchange} {symbol} {interval} {asset} {amount} {leverage=1}`
 
-[Run this command on Docker](#running-commands-on-docker)
-
 An example for trading 100 USD at 5x leverage would be:
 
-`php artisan trade:run GoldenDeathCross FTX BTC/USDT 1h USDT 100 5`
+```bash
+php artisan trade:run GoldenDeathCross FTX BTC/USDT 1h USDT 100 5
+```
+
+[Run this command on Docker](#running-commands-on-docker)
 
 Your total trading volume will be 500 USD because of that 5x leverage.
 
@@ -311,8 +314,9 @@ them as one.
 
 Run this command to create the strategy template:
 
-`php artisan trade:strategy GoldenDeathCross --combined=MA,MA --signals=Combined`
-
+```bash
+php artisan trade:strategy GoldenDeathCross --combined=MA,MA --signals=Combined
+```
 [Run this command on Docker](#running-commands-on-docker)
 
 Change every alias you see to something unique and explanatory. In this example we'll use `shortTerm` for 50MA and `longTerm` for 200MA as our aliases.
@@ -436,9 +440,12 @@ manually.
 
 Now let's test our strategy and see what happens.
 
-[Run this command on Docker](#running-commands-on-docker)
-```
+```bash
 php artisan trade:strategy-test GoldenDeathCross BTC/USDT 1h Binance
+```
+
+[Run this command on Docker](#running-commands-on-docker)
+```bash
 Running strategy...
 257 possible trades found.
 Evaluated 255 trades.
