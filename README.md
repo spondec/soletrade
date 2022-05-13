@@ -315,19 +315,16 @@ Run this command to create the strategy template:
 
 [Run this command on Docker](#running-commands-on-docker)
 
-Change every alias you see to something unique and explanatory.
-The default alias for an indicator is going to be the name of its class.
-We can change that to include one of the key config parameters.
-In moving averages, that important parameter is the length of the time period.
-So we change the alias for each MA to MA-{length} format. In this example, we'll use 50MA and 200MA as our aliases.
+Change every alias you see to something unique and explanatory. In this example we'll use `shortTerm` for 50MA and `longTerm` for 200MA as our aliases.
 
 If we want to look up the values of these moving averages at any point in signal function, we need to get it like
 on of these:
 
 ```php
-$value['50MA'];
+//get 50-period moving average(aliased as shortTerm) 
+$value['shortTerm'];
 //or
-$indicator->current()['50MA'];
+$indicator->current()['shortTerm'];
 ```
 
 This only applies to the Combined indicator. Other indicators that only provide one value, such as RSI, won't need any
