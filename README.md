@@ -51,7 +51,9 @@ Docker helps you to get started quickly without installing any dependencies on y
 ```
 docker run --rm     -u "$(id -u):$(id -g)"     -v $(pwd):/var/www/html     -w /var/www/html     spondec/soletrade-composer:latest /bin/bash -c "composer install; php -r \"file_exists('.env') || copy('.env.sail.example', '.env');\"; php artisan key:generate"
 ```
-Now we're ready to build our Docker container. We're going to do that with Sail. From now on, any interaction with the app will go through our dear friend, Sail. Sail is just a proxy between your machine and Docker container, that's all. We'll pretty much prefix every command with `./vendor/bin/sail`. Optionally you can create a bash alias to just `sail` by running this command:
+Now we're ready to build our Docker container. We're going to do that with Sail. From now on, any interaction with the app will go through our dear friend, Sail. Sail is just a proxy between your machine and Docker container, that's all. We'll pretty much prefix every command with `./vendor/bin/sail`. 
+
+You can create a bash alias for `sail` by running this command:
 ```bash
 alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'
 ```
@@ -59,34 +61,34 @@ alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'
 * Boot up the container(it can take a while, only for once):
 
    ```bash
-   ./vendor/bin/sail up -d
+   sail up -d
    ```
 
 * After boot, run these commands in order:
 
 ```bash
-./vendor/bin/sail php artisan migrate
+sail php artisan migrate
 ```
 
 ```bash
-./vendor/bin/sail php artisan db:seed
+sail php artisan db:seed
 ```
 
 ```bash
-./vendor/bin/sail npm install
+sail npm install
 ```
 
 ```bash
-./vendor/bin/sail npm run production
+sail npm run production
 ```
 
 * Now you're ready. You can go to localhost in your browser and use CLI.
 * To see available trade commands, run: 
 ```bash
-./vendor/bin/sail artisan trade
+sail artisan trade
 ```
    #### Running commands on Docker
-We *must* prefix any commands to our app with `./vendor/bin/sail` when using Docker.
+We *must* prefix any commands to our app with `./vendor/bin/sail` or `sail`(if you've created the bash alias) when using Docker.
 So `php artisan some:command` becomes `./vendor/bin/sail php artisan some:command` on Docker or `sail php artisan some:command` if you aliased it to `sail`.
 
 ### Full
