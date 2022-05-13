@@ -2,11 +2,11 @@
 
 namespace App\Strategies;
 
-use App\Models\OrderType;
+use App\Trade\Enum\OrderType;
 use App\Models\Signal;
 use App\Models\TradeSetup;
 use App\Trade\Candles;
-use App\Trade\Side;
+use App\Trade\Enum\Side;
 use Illuminate\Support\Collection;
 use App\Trade\Strategy\Strategy;
 {{ use }}
