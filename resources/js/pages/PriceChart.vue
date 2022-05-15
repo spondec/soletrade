@@ -23,7 +23,7 @@
         </div>
         <div class="mb-3">
           <label class="form-label">Indicators</label>
-          <vue-multiselect v-model="sel.indicators" :disabled="loading || !!symbol.strategy" :multiple="true"
+          <vue-multiselect v-model="sel.indicators" :disabled="loading || !!symbol?.strategy" :multiple="true"
                            :options="indicators"/>
         </div>
       </div>
@@ -85,7 +85,7 @@
     </div>
 
     <div class="chart-container">
-      <p v-if="!loading && !symbol" class="text-lg-center">Requested chart is not available.</p>
+      <p v-if="!loading && !sel.symbol" class="text-lg-center">Requested chart is not available. Did you seed?</p>
       <div v-if="hasTrades()">
         <div class="grid grid-cols-10 text-center">
           <h1 class="text-lg" v-bind:class="{
@@ -133,8 +133,6 @@ import VueMultiselect from 'vue-multiselect'
 import {reactive, toRefs} from 'vue'
 import {Vue3JsonEditor} from 'vue3-json-editor'
 
-import {Tabs, Tab} from 'vue3-tabs-component';
-
 import {DatePicker} from 'v-calendar';
 
 import MACD from "../indicators/MACD";
@@ -147,7 +145,7 @@ import Combined from "../indicators/Combined";
 export default {
   title: "Chart",
   components: {
-    VSpinner, MainLayout, VueMultiselect, TradeTable, Tabs, Tab, DatePicker, Vue3JsonEditor
+    VSpinner, MainLayout, VueMultiselect, TradeTable, DatePicker, Vue3JsonEditor
   },
   watch: {
     sel: {
@@ -758,7 +756,7 @@ export default {
 
     onSelect: function ()
     {
-      if (!this.symbols[this.sel.exchange].includes(this.sel.symbol))
+      if (!this.symbols[this.sel.exchange]?.includes(this.sel.symbol))
       {
         this.purgeCharts();
         return;
