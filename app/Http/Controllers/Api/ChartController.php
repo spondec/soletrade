@@ -103,12 +103,12 @@ class ChartController extends Controller
 
         if ($strategy)
         {
-            $tester = new Tester($strategy, [
+            $tester = new Tester($strategy, $symbol, [
                 'startDate' => $start,
                 'endDate'   => $end
             ]);
 
-            $trades = $tester->runStrategy($symbol);
+            $trades = $tester->runStrategy();
 
             Log::execTimeStart('Evaluating trades');
             /** @var Collection $evaluations */

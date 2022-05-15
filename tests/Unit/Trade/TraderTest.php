@@ -148,9 +148,10 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
     protected function expectStrategyRun(m\MockInterface&Strategy $strategy, $symbol, array $trades): void
     {
         $strategy->shouldReceive('run')
-            ->with($symbol)
             ->once()
             ->andReturn(new TradeCollection($trades));
+
+        $strategy->shouldReceive('updateSymbols')->once();
     }
 
     public function test_run_with_exit_trade(): void

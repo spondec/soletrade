@@ -32,7 +32,6 @@ abstract class Strategy
     protected SymbolRepository $symbolRepo;
     protected Symbol $evaluationSymbol;
     protected CandleCollection $candles;
-    protected Symbol $symbol;
     /** @var IndicatorConfig[] */
     private array $indicatorConfig;
     private TradeConfig $tradeConfig;
@@ -45,22 +44,14 @@ abstract class Strategy
      */
     private Collection $helperIndicators;
 
-    public function evaluationSymbol(): Symbol
-    {
-        return $this->evaluationSymbol;
-    }
-
-    public function __construct(array $config = [])
+    public function __construct(protected Symbol $symbol, array $config = [])
     {
         $this->mergeConfig($config);
-        $this->signature = $this->register(['contents' => $this->contents()]);
 
+        $this->signature = $this->register(['contents' => $this->contents()]);
         $this->symbolRepo = App::make(SymbolRepository::class);
 
-        $this->indicators = new Collection();
-        $this->actions = new \WeakMap();
-        $this->indicatorConfig = $this->newIndicatorConfig();
-        $this->tradeConfig = $this->newTradeConfig();
+        $this->evaluationSymbol = $this->getEvaluationSymbol();
     }
 
     /**
@@ -112,6 +103,30 @@ abstract class Strategy
         ]);
     }
 
+    protected function getEvaluationSymbol(): Symbol
+    {
+        $exchange = $this->symbol->exchange();
+        $symbolName = $this->symbol->symbol;
+
+        if (!$evaluationInterval = $this->config('evaluation.interval'))
+        {
+            return $this->symbol;
+        }
+
+        return $this->symbolRepo->fetchSymbol($exchange, $symbolName, $evaluationInterval)
+            ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
+    }
+
+    public function evaluationSymbol(): Symbol
+    {
+        return $this->evaluationSymbol;
+    }
+
+    public function optimizableParameters(): array
+    {
+        return [];
+    }
+
     public function newAction(TradeSetup $trade, string $actionClass, array $config): void
     {
         if (!\is_subclass_of($actionClass, Handler::class))
@@ -127,17 +142,19 @@ abstract class Strategy
         $this->actions[$trade][$actionClass] = $config;
     }
 
-    public function run(Symbol $symbol): TradeCollection
+    public function updateSymbols()
     {
-        $this->symbol = $symbol;
         $this->symbol->updateCandles();
-
-        $this->evaluationSymbol = $this->getEvaluationSymbol();
 
         if ($this->evaluationSymbol->interval != $this->symbol->interval)
         {
             $this->evaluationSymbol->updateCandles();
         }
+    }
+
+    public function run(): TradeCollection
+    {
+        $this->init();
 
         $this->populateCandles();
         $this->initIndicators();
@@ -148,20 +165,6 @@ abstract class Strategy
             collect($this->indicatorConfig),
             $this->indicators);
         return $finder->findTrades();
-    }
-
-    protected function getEvaluationSymbol(): Symbol
-    {
-        $exchange = $this->symbol->exchange();
-        $symbolName = $this->symbol->symbol;
-
-        if (!$evaluationInterval = $this->config('evaluation.interval'))
-        {
-            return $this->symbol;
-        }
-
-        return $this->symbolRepo->fetchSymbol($exchange, $symbolName, $evaluationInterval)
-            ?? $this->symbolRepo->fetchSymbolFromExchange($exchange, $symbolName, $evaluationInterval);
     }
 
     protected function populateCandles(): void
@@ -293,5 +296,13 @@ abstract class Strategy
              */
             'feeRatio'   => 0.0000
         ];
+    }
+
+    protected function init(): void
+    {
+        $this->indicators = new Collection();
+        $this->actions = new \WeakMap();
+        $this->indicatorConfig = $this->newIndicatorConfig();
+        $this->tradeConfig = $this->newTradeConfig();
     }
 }

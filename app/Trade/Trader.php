@@ -26,9 +26,9 @@ class Trader
     protected TradeCollection $trades;
     private bool $isEndingLoop = false;
 
-    public function __construct(public readonly Strategy $strategy,
-                                public readonly Exchange $exchange,
-                                public readonly Symbol $symbol,
+    public function __construct(public readonly Strategy   $strategy,
+                                public readonly Exchange   $exchange,
+                                public readonly Symbol     $symbol,
                                 public readonly TradeAsset $tradeAsset)
     {
         Runner::purgeExpired();
@@ -74,7 +74,8 @@ class Trader
             return null;
         }
 
-        $trades = $this->strategy->run($this->symbol);
+        $this->strategy->updateSymbols();
+        $trades = $this->strategy->run();
 
         if (!isset($this->trades))
         {

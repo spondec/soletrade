@@ -11,6 +11,7 @@ use App\Trade\Enum\TraderStatus;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Telegram\Bot;
 use App\Trade\TradeAsset;
+use App\Trade\Trader;
 use App\Trade\Util;
 use Illuminate\Console\Command;
 use Longman\TelegramBot\Entities\Update;
@@ -19,7 +20,7 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\ConsoleSectionOutput;
 
-class TradeRunner extends Command
+class TraderRunner extends Command
 {
     /**
      * The name and signature of the console command.
@@ -128,11 +129,9 @@ class TradeRunner extends Command
                 $lastPrint = \time();
             }
         }
-
-        return 0;
     }
 
-    protected function getTrader(): \App\Trade\Trader
+    protected function getTrader(): Trader
     {
         $args = $this->arguments();
 
@@ -146,7 +145,6 @@ class TradeRunner extends Command
             exit(1);
         }
 
-        $strategy = new (get_strategy_class($args['strategy']))();
         $exchange = Exchange::from($args['exchange']);
         $symbol = $this->symbolRepo->fetchSymbol($exchange, $args['symbol'], $args['interval']);
 
@@ -155,13 +153,17 @@ class TradeRunner extends Command
             throw new \UnexpectedValueException("Symbol '{$args['symbol']}' not found");
         }
 
+        $strategyClass = get_strategy_class($args['strategy']);
+        /** @var Strategy $strategy */
+        $strategy = new $strategyClass(symbol: $symbol);
+
         $this->renderHeader($strategy, $symbol, $amount, $asset, $leverage, $exchange);
 
         $balance = $exchange->fetch()->balance();
 
         $allocation = new AllocatedAsset($balance, $balance[$asset], $amount, $leverage ?? 1);
         $tradeAsset = new TradeAsset($allocation);
-        $trader = new \App\Trade\Trader($strategy, $exchange, $symbol, $tradeAsset);
+        $trader = new Trader($strategy, $exchange, $symbol, $tradeAsset);
 
         if ($leverage)
         {
@@ -194,7 +196,7 @@ class TradeRunner extends Command
         return new Bot($c['token'], $c['name'], $c['password']);
     }
 
-    protected function handleTelegramUpdates(Bot $bot, \App\Trade\Trader $trader): void
+    protected function handleTelegramUpdates(Bot $bot, Trader $trader): void
     {
         /** @var Update $update */
         foreach ($bot->updates() as $update)
@@ -290,6 +292,7 @@ class TradeRunner extends Command
             'Amount',
             'Entry Price'
         ]);
+        /** @noinspection NullPointerExceptionInspection */
         $positionTable->setRows([
             [
                 $symbol,
