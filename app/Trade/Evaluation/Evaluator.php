@@ -80,7 +80,7 @@ class Evaluator
         {
             $e->is_entry_price_valid = true;
             $e->entry_timestamp = $position->entryTime();
-            $e->is_ambiguous = $status->isAmbiguous();
+            $e->is_ambiguous = $status->isAmbiguous() || $position->entryTime() === $position->exitTime();
             $e->used_size = $position->getMaxUsedSize();
 
             if (!$e->is_ambiguous)
