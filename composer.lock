@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d7e829df1535da211951292dbc9b69bc",
+    "content-hash": "6bcc252f0637ca7e94ea4909f077b48a",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -61,6 +61,50 @@
                 "source": "https://github.com/asm89/stack-cors/tree/v2.1.1"
             },
             "time": "2022-01-18T09:12:03+00:00"
+        },
+        {
+            "name": "bentools/cartesian-product",
+            "version": "1.4.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bpolaszek/cartesian-product.git",
+                "reference": "ae6b437c3fc8243c6a5ab67fe270e032f4ce2f7b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bpolaszek/cartesian-product/zipball/ae6b437c3fc8243c6a5ab67fe270e032f4ce2f7b",
+                "reference": "ae6b437c3fc8243c6a5ab67fe270e032f4ce2f7b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "dms/phpunit-arraysubset-asserts": "^0.3.1",
+                "php-coveralls/php-coveralls": "@stable",
+                "phpunit/phpunit": "^8.0|^9.0",
+                "squizlabs/php_codesniffer": "@stable",
+                "symfony/var-dumper": "^3.2|^4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/function.php"
+                ],
+                "psr-4": {
+                    "BenTools\\CartesianProduct\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A simple, low-memory footprint function to generate all combinations from a multi-dimensionnal array.",
+            "support": {
+                "issues": "https://github.com/bpolaszek/cartesian-product/issues",
+                "source": "https://github.com/bpolaszek/cartesian-product/tree/1.4.1"
+            },
+            "time": "2022-01-19T13:31:38+00:00"
         },
         {
             "name": "brick/math",
@@ -4087,6 +4131,70 @@
                 }
             ],
             "time": "2021-07-11T12:37:55+00:00"
+        },
+        {
+            "name": "spatie/fork",
+            "version": "1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/fork.git",
+                "reference": "b42152f47904b67334b147875553a6106c1b14ec"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/fork/zipball/b42152f47904b67334b147875553a6106c1b14ec",
+                "reference": "b42152f47904b67334b147875553a6106c1b14ec",
+                "shasum": ""
+            },
+            "require": {
+                "ext-pcntl": "*",
+                "ext-sockets": "*",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "nesbot/carbon": "^2.47",
+                "phpunit/phpunit": "^9.5",
+                "spatie/ray": "^1.10"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Spatie\\Fork\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Brent Roose",
+                    "email": "brent@spatie.be",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A lightweight solution for running code concurrently in PHP",
+            "homepage": "https://github.com/spatie/fork",
+            "keywords": [
+                "fork",
+                "spatie"
+            ],
+            "support": {
+                "issues": "https://github.com/spatie/fork/issues",
+                "source": "https://github.com/spatie/fork/tree/1.1.1"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/spatie",
+                    "type": "github"
+                }
+            ],
+            "time": "2021-12-09T08:07:00+00:00"
         },
         {
             "name": "symfony/console",

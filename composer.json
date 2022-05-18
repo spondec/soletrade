@@ -11,6 +11,7 @@
     "php": "^8.1",
     "ext-pcntl": "*",
     "ext-trader": "*",
+    "bentools/cartesian-product": "^1.4",
     "ccxt/ccxt": "^1.72",
     "fruitcake/laravel-cors": "^2.0",
     "guzzlehttp/guzzle": "^7.4",
@@ -19,7 +20,8 @@
     "laravel/tinker": "^2.7",
     "laravel/ui": "^3.4",
     "longman/telegram-bot": "^0.76.1",
-    "ratchet/pawl": "^0.4.1"
+    "ratchet/pawl": "^0.4.1",
+    "spatie/fork": "^1.1"
   },
   "require-dev": {
     "brianium/paratest": "^6.4",
