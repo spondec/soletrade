@@ -22,12 +22,15 @@ return [
     ],
 
     'options' => [
+
+        'concurrentProcesses' => env('CONCURRENT_PROCESSES', 8),
+
         'recoverableRequest' => [
             'retryInSeconds' => 5,
             'retryLimit'     => 5,
             'handle'         => [
                 \ccxt\NetworkError::class
             ]
-        ]
+        ],
     ],
 ];
