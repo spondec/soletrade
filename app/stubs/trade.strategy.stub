@@ -8,6 +8,8 @@ use App\Models\TradeSetup;
 use App\Trade\Candles;
 use App\Trade\Enum\Side;
 use Illuminate\Support\Collection;
+use App\Trade\Strategy\Parameter\RangedSet;
+use App\Trade\Strategy\Parameter\DefinedSet;
 use App\Trade\Strategy\Strategy;
 {{ use }}
 
@@ -56,7 +58,37 @@ final class {{ name }} extends Strategy
          * Most exchanges charges between 0.0004(0.04%) and 0.001(0.1%).
          */
         'feeRatio'   => 0.0000
+
+        /**
+         * You can add more config parameters below like the above and use them throughout this class.
+         * It'll be pretty useful especially if you want to optimize those parameters.
+         *
+         * Example:
+         *
+         * 'shortTermPeriod' => 50,
+         * 'longTermPeriod'  => 200,
+         *
+         */
     ];
+
+    /**
+     * Define optimizable parameters in key-value pairs.
+     * Value must be either a RangedSet or a DefinedSet.
+     *
+     * Example:
+     *
+     * return [
+     *      'shortTermPeriod' => new RangedSet(min:2,max:20, step:1),
+     *      'longTermPeriod'  => new DefinedSet([2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]),
+     * ];
+     *
+     */
+    public function optimizableParameters(): array
+    {
+        return [
+
+        ];
+    }
 
     protected function indicatorConfig(): array
     {
