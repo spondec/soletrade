@@ -381,7 +381,7 @@ class TradeLoop
     {
         return [
             'closeOnExit' => true,
-            'timeout'     => 1440
+            'timeout'     => 0
         ];
     }
 
