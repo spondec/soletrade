@@ -17,6 +17,7 @@ use App\Trade\HasConfig;
 use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Indicator\Indicator;
+use App\Trade\Strategy\Parameter\ParameterSet;
 use App\Trade\Util;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -52,6 +53,8 @@ abstract class Strategy
         $this->symbolRepo = App::make(SymbolRepository::class);
 
         $this->evaluationSymbol = $this->getEvaluationSymbol();
+
+        $this->validate();
     }
 
     /**
@@ -304,5 +307,19 @@ abstract class Strategy
         $this->actions = new \WeakMap();
         $this->indicatorConfig = $this->newIndicatorConfig();
         $this->tradeConfig = $this->newTradeConfig();
+    }
+
+    protected function validate(): void
+    {
+        foreach ($this->optimizableParameters() as $name => $parameter)
+        {
+            //this will throw an exception if the parameter is invalid
+            $this->config($name);
+
+            if (!$parameter instanceof ParameterSet)
+            {
+                throw new \UnexpectedValueException("$name is not a ParameterSet.");
+            }
+        }
     }
 }
