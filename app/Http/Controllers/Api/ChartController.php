@@ -108,6 +108,7 @@ class ChartController extends Controller
                 'endDate'   => $end
             ]);
 
+            $tester->strategy->updateSymbols();
             $trades = $tester->runStrategy();
 
             Log::execTimeStart('Evaluating trades');
