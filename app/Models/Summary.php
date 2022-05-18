@@ -28,6 +28,8 @@ class Summary extends Model
         'balance_history' => 'array'
     ];
 
+    public array $parameters = [];
+
     protected $attributes = [
         'roi'               => 0,
         'avg_roi'           => 0,
