@@ -36,9 +36,9 @@ class TradeLoop
      */
     protected readonly bool $isExitRunCompleted;
 
-    public function __construct(public           readonly TradeSetup $entry,
-                                protected Symbol $evaluationSymbol,
-                                array            $config)
+    public function __construct(public readonly TradeSetup $entry,
+                                protected Symbol           $evaluationSymbol,
+                                array                      $config)
     {
         $this->mergeConfig($config);
         $this->assertTradeSymbolMatchesEvaluationSymbol();
@@ -227,6 +227,7 @@ class TradeLoop
         if (Calc::inRange($this->status->getEntryPrice()->get(), $candle->h, $candle->l))
         {
             $this->status->enterPosition($priceDate);
+            $this->tryPositionExit($this->getPosition(), $candle, $priceDate);
         }
     }
 
