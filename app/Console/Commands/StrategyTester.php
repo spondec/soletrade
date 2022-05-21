@@ -15,7 +15,6 @@ use App\Trade\Strategy\Tester;
 use App\Trade\Util;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
-use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Spatie\Fork\Fork;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -23,7 +22,7 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\ConsoleSectionOutput;
 
-class StrategyTester extends Command
+class StrategyTester extends TradeCommand
 {
     use HasInstanceEvents;
 

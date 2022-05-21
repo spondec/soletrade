@@ -4,10 +4,9 @@ namespace App\Console\Commands;
 
 use App\Trade\Stub\StrategyIndicatorStub;
 use App\Trade\Stub\TradeActionStub;
-use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
-class StrategyCreator extends Command
+class StrategyCreator extends TradeCommand
 {
     /**
      * The name and signature of the console command.

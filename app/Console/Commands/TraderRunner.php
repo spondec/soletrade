@@ -13,14 +13,13 @@ use App\Trade\Telegram\Bot;
 use App\Trade\TradeAsset;
 use App\Trade\Trader;
 use App\Trade\Util;
-use Illuminate\Console\Command;
 use Longman\TelegramBot\Entities\Update;
 use Symfony\Component\Console\Helper\Helper;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\ConsoleSectionOutput;
 
-class TraderRunner extends Command
+class TraderRunner extends TradeCommand
 {
     /**
      * The name and signature of the console command.
