@@ -71,7 +71,7 @@ class Optimizer
 
         return (new SummaryCollection(...$results))
             ->filter()
-            ->sort(fn($a, $b) => $a['roi'] < $b['roi']);
+            ->sort(fn($a, $b) => $a['roi'] < $b['roi']); //sort by ROI desc
     }
 
     protected function newFork(?Closure $callback = null): Fork
