@@ -3,11 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Models\Symbol;
-use App\Repositories\SymbolRepository;
 use App\Trade\AllocatedAsset;
+use App\Trade\Enum\TraderStatus;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Log;
-use App\Trade\Enum\TraderStatus;
+use App\Trade\Repository\SymbolRepository;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Telegram\Bot;
 use App\Trade\TradeAsset;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Trade\Repository;
 
 abstract class Repository
 {

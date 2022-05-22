@@ -3,7 +3,7 @@
 namespace Tests\Feature\Indicators;
 
 use App\Indicators\ATR;
-use App\Repositories\SymbolRepository;
+use App\Trade\Repository\SymbolRepository;
 
 class ATRTest extends IndicatorTestCase
 {

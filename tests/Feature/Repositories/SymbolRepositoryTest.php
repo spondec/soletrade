@@ -4,7 +4,7 @@ namespace Tests\Feature\Repositories;
 
 use App\Models\Candle;
 use App\Models\Symbol;
-use App\Repositories\SymbolRepository;
+use App\Trade\Repository\SymbolRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;

@@ -3,9 +3,9 @@
 namespace App\Trade\Exchange;
 
 use App\Models\Exchange as ExchangeModel;
-use App\Repositories\ConfigRepository;
-use App\Trade\HasName;
 use App\Trade\CandleUpdater;
+use App\Trade\HasName;
+use App\Trade\Repository\ConfigRepository;
 use Illuminate\Support\Facades\App;
 
 abstract class Exchange

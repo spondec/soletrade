@@ -8,8 +8,8 @@ namespace App\Trade\Evaluation;
 
 use App\Models\Evaluation;
 use App\Models\TradeSetup;
-use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
+use App\Trade\Repository\SymbolRepository;
 use App\Trade\Strategy\Strategy;
 use Illuminate\Support\Facades\App;
 

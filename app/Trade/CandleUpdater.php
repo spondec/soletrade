@@ -3,8 +3,8 @@
 namespace App\Trade;
 
 use App\Models\Symbol;
-use App\Repositories\SymbolRepository;
 use App\Trade\Exchange\Exchange;
+use App\Trade\Repository\SymbolRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;

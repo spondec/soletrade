@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\ConfigRepository;
 use App\Trade\Exchange\Exchange;
+use App\Trade\Repository\ConfigRepository;
 use Illuminate\Support\Collection;
 
 class ExchangeController extends Controller

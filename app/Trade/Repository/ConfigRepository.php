@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Trade\Repository;
 
 use App\Models\Exchange;
 use Illuminate\Support\Facades\Config;

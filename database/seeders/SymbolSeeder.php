@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Repositories\ConfigRepository;
 use App\Trade\Exchange\Exchange;
+use App\Trade\Repository\ConfigRepository;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\App;
 

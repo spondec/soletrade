@@ -3,7 +3,7 @@
 namespace Tests\Feature\Indicators;
 
 use App\Indicators\MA;
-use App\Repositories\SymbolRepository;
+use App\Trade\Repository\SymbolRepository;
 
 class MATest extends IndicatorTestCase
 {

@@ -3,23 +3,18 @@
 namespace App\Console\Commands;
 
 use App\Models\Summary;
-use App\Models\Symbol;
-use App\Repositories\SymbolRepository;
 use App\Trade\Collection\SummaryCollection;
 use App\Trade\Collection\TradeCollection;
-use App\Trade\Exchange\Exchange;
 use App\Trade\HasInstanceEvents;
+use App\Trade\Repository\SymbolRepository;
 use App\Trade\Strategy\Optimization\Optimizer;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Strategy\Tester;
 use App\Trade\Util;
-use Carbon\Carbon;
-use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Support\Facades\DB;
 use Spatie\Fork\Fork;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\ConsoleSectionOutput;
 
 class StrategyTester extends TradeCommand

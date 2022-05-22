@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Symbol;
-use App\Repositories\SymbolRepository;
 use App\Trade\Exchange\Exchange;
+use App\Trade\Repository\SymbolRepository;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Console\Command;
