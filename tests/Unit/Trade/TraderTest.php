@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Trade;
 
-use App\Exceptions\PositionExitFailed;
 use App\Models\Runner;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
@@ -12,6 +11,7 @@ use App\Trade\Enum\TraderStatus;
 use App\Trade\Evaluation\LivePosition;
 use App\Trade\Evaluation\LiveTradeLoop;
 use App\Trade\Evaluation\TradeStatus;
+use App\Trade\Exception\PositionExitFailed;
 use App\Trade\Exchange\Exchange;
 use App\Trade\OrderManager;
 use App\Trade\Repository\ConfigRepository;

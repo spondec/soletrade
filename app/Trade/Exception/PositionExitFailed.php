@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exceptions;
+namespace App\Trade\Exception;
 
 class PositionExitFailed extends ExchangeError
 {

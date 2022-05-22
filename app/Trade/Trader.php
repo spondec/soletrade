@@ -2,20 +2,20 @@
 
 namespace App\Trade;
 
-use App\Exceptions\PositionExitFailed;
 use App\Models\Runner;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Collection\TradeCollection;
 use App\Trade\Contract\Exchange\HasLeverage;
+use App\Trade\Enum\TraderStatus;
 use App\Trade\Evaluation\LivePosition;
 use App\Trade\Evaluation\LiveTradeLoop;
 use App\Trade\Evaluation\Price;
 use App\Trade\Evaluation\TradeStatus;
+use App\Trade\Exception\PositionExitFailed;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Process\RecoverableRequest;
 use App\Trade\Strategy\Strategy;
-use App\Trade\Enum\TraderStatus;
 
 class Trader
 {

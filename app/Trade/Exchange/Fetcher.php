@@ -34,7 +34,7 @@ abstract class Fetcher
      * @param string $symbol
      *
      * @return OrderBook
-     * @throws \App\Exceptions\EmptyOrderBookException
+     * @throws \App\Trade\Exception\EmptyOrderBookException
      */
     public function orderBook(string $symbol): OrderBook
     {
@@ -95,7 +95,6 @@ abstract class Fetcher
         return $this->balance()->calculateRoi($this->prevBalance);
     }
 
-    /** @noinspection PhpUndefinedFieldInspection */
     protected function registerBalanceListeners(Balance $balance): void
     {
         foreach ($balance->assets as $asset)

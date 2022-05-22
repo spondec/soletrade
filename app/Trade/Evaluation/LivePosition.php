@@ -107,7 +107,7 @@ class LivePosition extends Position
         try
         {
             $this->manager->cancel($order);
-        } catch (\App\Exceptions\OrderFilledInCancelRequest $error)
+        } catch (\App\Trade\Exception\OrderFilledInCancelRequest $error)
         {
             //Order should be filled fully, fill listeners will handle the rest.
             //Do not resend the order.
