@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use App\Illuminate\Database\Schema\Blueprint;
 use App\Models\Signal;
 use App\Models\TradeSetup;
+use App\Trade\Illuminate\Database\Schema\Blueprint;
 use App\Trade\Repository\ConfigRepository;
 use App\Trade\Repository\SymbolRepository;
 use Illuminate\Database\Eloquent\Relations\Relation;

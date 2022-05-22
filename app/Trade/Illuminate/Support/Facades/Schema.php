@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Illuminate\Support\Facades;
+namespace App\Trade\Illuminate\Support\Facades;
 
-use App\Illuminate\Database\Schema\Blueprint;
+use App\Trade\Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder;
 
 class Schema extends \Illuminate\Support\Facades\Schema

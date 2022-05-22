@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Illuminate\Database\Schema;
+namespace App\Trade\Illuminate\Database\Schema;
 
 class Blueprint extends \Illuminate\Database\Schema\Blueprint
 {
