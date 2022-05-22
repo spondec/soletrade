@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Trade\Command;
 
 use App\Models\Symbol;
 use App\Trade\AllocatedAsset;

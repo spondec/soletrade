@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Trade\Command;
 
 use App\Models\Summary;
 use App\Trade\Collection\SummaryCollection;
