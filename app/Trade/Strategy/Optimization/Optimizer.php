@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Trade\Strategy\Optimization;
 
 use App\Trade\Collection\SummaryCollection;
-use App\Trade\Strategy\Parameter\ParameterSet;
+use App\Trade\Strategy\Optimization\Parameter\ParameterSet;
 use App\Trade\Strategy\Tester;
 use BenTools\CartesianProduct\CartesianProduct;
 use Closure;
