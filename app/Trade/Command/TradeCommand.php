@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\ConsoleSectionOutput;
 
 abstract class TradeCommand extends Command
 {
-    protected function assertStrategyExists(string $strategyName): void
+    protected function assertStrategyClass(string $strategyName): string
     {
         if (!strategy_exists($name = $strategyName))
         {
@@ -25,6 +25,8 @@ abstract class TradeCommand extends Command
             }
             exit(1);
         }
+
+        return get_strategy_class($name);
     }
 
     /**

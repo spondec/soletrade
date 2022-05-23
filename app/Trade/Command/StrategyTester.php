@@ -33,7 +33,7 @@ class StrategyTester extends TradeCommand
      *
      * @var string
      */
-    protected $description = 'Tests specified strategy on specified symbol.';
+    protected $description = 'Tests specified strategy on a specified symbol.';
 
     /**
      * @var ConsoleSectionOutput[]
@@ -62,10 +62,9 @@ class StrategyTester extends TradeCommand
             DB::enableQueryLog();
         }
 
-        $this->assertStrategyExists($args['strategy']);
-
+        $strategyClass = $this->assertStrategyClass($args['strategy']);
         $symbol = $this->assertSymbol($repo, $args);
-        $strategyClass = get_strategy_class($args['strategy']);
+
         [$startDate, $endDate] = $this->getDateRange($options);
 
         $tester = new Tester($strategyClass, $symbol, [
@@ -285,12 +284,16 @@ class StrategyTester extends TradeCommand
             $this->sections['state']->overwrite("<info>Running strategy...</info>\n");
         });
 
-        $tester->listen('strategy_post_run', function (Tester $strategyTester, Strategy $strategy, TradeCollection $trades) {
+        $tester->listen('strategy_post_run', function (Tester          $strategyTester,
+                                                       Strategy        $strategy,
+                                                       TradeCollection $trades) {
             $this->sections['possibleTrades']->overwrite("{$trades->count()} possible trades found.");
             $this->sections['state']->overwrite("<info>Evaluating trades...</info>\n");
         });
 
-        $tester->listen('summary_updated', function (Tester $strategyTester, Summary $summary, int $tradeCount) {
+        $tester->listen('summary_updated', function (Tester  $strategyTester,
+                                                     Summary $summary,
+                                                     int     $tradeCount) {
             $this->sections['evalTable']->clear();
 
             $this->sections['evaluatedTrades']->overwrite("Evaluated $tradeCount trades.\n");
@@ -302,7 +305,9 @@ class StrategyTester extends TradeCommand
                 ->render();
         });
 
-        $tester->listen('summary_finished', function (Tester $strategyTester, Summary $summary, int $tradeCount) {
+        $tester->listen('summary_finished', function (Tester  $strategyTester,
+                                                      Summary $summary,
+                                                      int     $tradeCount) {
             if (!$tradeCount)
             {
                 $this->sections['evaluatedTrades']->overwrite("No evaluations.\n");
