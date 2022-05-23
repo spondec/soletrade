@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Strategy\Parameter;
+namespace App\Trade\Strategy\Optimization\Parameter;
 
 abstract class ParameterSet
 {
