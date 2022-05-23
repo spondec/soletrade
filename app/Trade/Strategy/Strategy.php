@@ -17,7 +17,7 @@ use App\Trade\HasName;
 use App\Trade\HasSignature;
 use App\Trade\Indicator\Indicator;
 use App\Trade\Repository\SymbolRepository;
-use App\Trade\Strategy\Parameter\ParameterSet;
+use App\Trade\Strategy\Optimization\Parameter\ParameterSet;
 use App\Trade\Util;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
