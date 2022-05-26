@@ -13,7 +13,7 @@
     "ext-trader": "*",
     "ccxt/ccxt": "^1.72",
     "fruitcake/laravel-cors": "^2.0",
-    "guzzlehttp/guzzle": "^7.4",
+    "guzzlehttp/guzzle": "^7.4.3",
     "itsgoingd/clockwork": "^5.1",
     "laravel/framework": "^9.0",
     "laravel/tinker": "^2.7",
