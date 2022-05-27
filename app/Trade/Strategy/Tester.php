@@ -137,7 +137,7 @@ class Tester
             yield $evaluation;
         }
 
-        $this->fireEvent('summary_finished', $summary, $tradeCount);
+        $this->fireEvent('summary_finished', $summary ?? new Summary(), $tradeCount);
     }
 
     final protected function getDefaultConfig(): array
