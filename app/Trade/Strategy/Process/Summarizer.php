@@ -4,7 +4,7 @@ namespace App\Trade\Strategy\Process;
 
 use App\Trade\Strategy\Tester;
 
-class ParallelSummarizer extends ParallelSummarization
+class Summarizer extends Summarization
 {
     public function __construct(protected Tester $tester, protected array $configs)
     {

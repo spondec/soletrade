@@ -8,7 +8,7 @@ use App\Trade\Strategy\Tester;
 use Illuminate\Support\Facades\DB;
 use Spatie\Fork\Fork;
 
-abstract class ParallelSummarization extends Process
+abstract class Summarization extends Process
 {
     protected function setupFork(Fork $fork): Fork
     {

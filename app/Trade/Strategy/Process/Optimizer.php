@@ -9,7 +9,7 @@ use App\Trade\Strategy\Optimization\Parameter\ParameterSet;
 use App\Trade\Strategy\Tester;
 use BenTools\CartesianProduct\CartesianProduct;
 
-class ParallelOptimizer extends ParallelSummarization
+class Optimizer extends Summarization
 {
     protected CartesianProduct $combinator;
 

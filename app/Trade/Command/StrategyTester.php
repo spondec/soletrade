@@ -8,8 +8,8 @@ use App\Trade\Collection\SummaryCollection;
 use App\Trade\Collection\TradeCollection;
 use App\Trade\HasInstanceEvents;
 use App\Trade\Repository\SymbolRepository;
-use App\Trade\Strategy\Process\ParallelOptimizer;
-use App\Trade\Strategy\Process\ParallelSummarizer;
+use App\Trade\Strategy\Process\Optimizer;
+use App\Trade\Strategy\Process\Summarizer;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Strategy\Tester;
 use App\Trade\Util;
@@ -152,7 +152,7 @@ class StrategyTester extends TradeCommand
             exit(1);
         }
 
-        $optimizer = new ParallelOptimizer($tester, $parameters);
+        $optimizer = new Optimizer($tester, $parameters);
         $optimizer->setParallelProcesses($this->processes);
 
         /** @var ProgressBar $progressBar */
@@ -391,7 +391,7 @@ class StrategyTester extends TradeCommand
             $startDate,
             $walkForwardEndDate);
 
-        $summarizer = new ParallelSummarizer($tester,
+        $summarizer = new Summarizer($tester,
             $summaries->pluck('parameters')->all()
         );
         $summarizer->setParallelProcesses($this->processes);
