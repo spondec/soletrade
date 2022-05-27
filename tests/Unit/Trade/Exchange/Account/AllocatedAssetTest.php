@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Trade;
+namespace Tests\Unit\Trade\Exchange\Account;
 
 use App\Trade\Exchange\Account\AllocatedAsset;
 use App\Trade\Exchange\Account\Asset;
