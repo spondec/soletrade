@@ -8,8 +8,8 @@ use App\Models\TradeSetup;
 use App\Trade\Candles;
 use App\Trade\Enum\Side;
 use Illuminate\Support\Collection;
-use App\Trade\Strategy\Optimization\Parameter\RangedSet;
-use App\Trade\Strategy\Optimization\Parameter\DefinedSet;
+use App\Trade\Strategy\Parameter\RangedSet;
+use App\Trade\Strategy\Parameter\DefinedSet;
 use App\Trade\Strategy\Strategy;
 {{ use }}
 

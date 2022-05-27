@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Strategy\Optimization\Parameter;
+namespace App\Trade\Strategy\Parameter;
 
 class DefinedSet extends ParameterSet
 {
