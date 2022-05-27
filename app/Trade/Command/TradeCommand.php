@@ -30,22 +30,20 @@ abstract class TradeCommand extends Command
     }
 
     /**
-     * @param array $options
-     *
      * @return int[]
      */
-    protected function getDateRange(array $options): array
+    protected function assertDateRange(string $start, ?string $end = null): array
     {
         try
         {
-            $startDate = $options['start']
-                ? $this->newDate($options['start'])
+            $startDate = $start
+                ? $this->newDate($start)
                     ->setTime(0, 0)
                     ->getTimestamp() * 1000
                 : null;
 
-            $endDate = $options['end']
-                ? $this->newDate($options['end'])
+            $endDate = $end
+                ? $this->newDate($end)
                     ->setTime(23, 59, 59)
                     ->getTimestamp() * 1000
                 : null;

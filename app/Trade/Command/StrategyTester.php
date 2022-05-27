@@ -3,11 +3,13 @@
 namespace App\Trade\Command;
 
 use App\Models\Summary;
+use App\Models\Symbol;
 use App\Trade\Collection\SummaryCollection;
 use App\Trade\Collection\TradeCollection;
 use App\Trade\HasInstanceEvents;
 use App\Trade\Repository\SymbolRepository;
-use App\Trade\Strategy\Optimization\Optimizer;
+use App\Trade\Strategy\Process\ParallelOptimizer;
+use App\Trade\Strategy\Process\ParallelSummarizer;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Strategy\Tester;
 use App\Trade\Util;
@@ -46,6 +48,8 @@ class StrategyTester extends TradeCommand
 
     protected int $startTime;
 
+    protected int $processes;
+
     /**
      * Execute the console command.
      *
@@ -56,6 +60,7 @@ class StrategyTester extends TradeCommand
         $options = $this->options();
         $args = $this->arguments();
         $this->startTime = \time();
+        $this->processes = config('trade.options.concurrentProcesses');
 
         if (self::$isDebug = config('app.debug'))
         {
@@ -65,12 +70,12 @@ class StrategyTester extends TradeCommand
         $strategyClass = $this->assertStrategyClass($args['strategy']);
         $symbol = $this->assertSymbol($repo, $args);
 
-        [$startDate, $endDate] = $this->getDateRange($options);
+        [$startDate, $endDate] = $this->assertDateRange($options['start'] ?? '01-01-1970', $options['end']);
 
-        $tester = new Tester($strategyClass, $symbol, [
-            'startDate' => $startDate,
-            'endDate'   => $endDate,
-        ]);
+        $tester = $this->newRangedTester($strategyClass,
+            $symbol,
+            $startDate,
+            $endDate);
 
         $this->initSections();
 
@@ -115,12 +120,14 @@ class StrategyTester extends TradeCommand
 
         $this->sections['evalTable'] = $this->newOutputSection();
         $this->sections['optSummaryTable'] = $this->newOutputSection();
+        $this->sections['walkForwardSummaryTable'] = $this->newOutputSection();
         $this->sections['optProgressBar'] = $this->newOutputSection();
 
         $this->helpers['progressBar']['opt'] = new ProgressBar($this->sections['optProgressBar']);
         $this->helpers['table']['eval'] = new Table($this->sections['evalTable']);
         $this->helpers['table']['eval']->setHorizontal();
         $this->helpers['table']['optSummary'] = new Table($this->sections['optSummaryTable']);
+        $this->helpers['table']['walkForwardSummary'] = new Table($this->sections['walkForwardSummaryTable']);
     }
 
     protected function updateSymbols(Strategy $strategy): void
@@ -145,8 +152,8 @@ class StrategyTester extends TradeCommand
             exit(1);
         }
 
-        $optimizer = new Optimizer($tester, $parameters);
-        $optimizer->setProcesses(config('trade.options.concurrentProcesses'));
+        $optimizer = new ParallelOptimizer($tester, $parameters);
+        $optimizer->setParallelProcesses($this->processes);
 
         /** @var ProgressBar $progressBar */
         $progressBar = $this->helpers['progressBar']['opt'];
@@ -161,23 +168,50 @@ class StrategyTester extends TradeCommand
             exit(1);
         }
 
-        $progressBar->start($optimizer->total);
+        if ($walkForward = ($this->ask('Do you want to run Walk Forward Analysis? (y|n)') === 'y'))
+        {
+            [$walkForwardStartDate, $walkForwardEndDate] = $this->assertDateRange(
+                $startDateString = $this->ask('Enter the start date (DD-MM-YYYY): '),
+                $this->ask('Enter the end date (DD-MM-YYYY) (optional): ')
+            );
 
+            $optimizationEndDate = $tester->strategy->config('endDate');
+
+            if ($walkForwardStartDate < $optimizationEndDate)
+            {
+                if ($startDateString !== $this->option('end'))
+                {
+                    $this->error("Walk Forward Analysis can't start before the end date of the optimization.");
+                    exit(1);
+                }
+            }
+        }
+
+        $progressBar->start($optimizer->total);
         $summaries = $optimizer->run(callback: function (Fork $fork) use ($progressBar) {
             $fork->after(parent: function () use ($progressBar) {
                 $progressBar->advance();
             });
         });
 
-        $rows = $this->filterOptimizedSummaries($summaries);
+        $filtered = $this->filterOptimizedSummaries($summaries);
 
-        $this->updateSummaryTable($rows);
+        $this->updateSummaryTable('optSummary', $filtered->all());
+
+        if ($walkForward)
+        {
+            $this->runWalkForwardAnalysis($strategy,
+                $walkForwardStartDate,
+                $walkForwardEndDate,
+                $filtered,
+                $progressBar);
+        }
 
         $this->sections['possibleTrades']->clear();
         $this->sections['evaluatedTrades']->clear();
     }
 
-    protected function filterOptimizedSummaries(SummaryCollection $summaries): array
+    protected function filterOptimizedSummaries(SummaryCollection $summaries): SummaryCollection
     {
         $filtered = [];
         if ($summaries->count() > 10)
@@ -201,10 +235,10 @@ class StrategyTester extends TradeCommand
                 $filtered[] = $summary;
             }
         }
-        return $filtered;
+        return new SummaryCollection($filtered);
     }
 
-    protected function updateSummaryTable(array $summaries): void
+    protected function updateSummaryTable(string $tableName, array $summaries): void
     {
         $rows = [];
         foreach ($summaries as $k => $summary)
@@ -212,7 +246,21 @@ class StrategyTester extends TradeCommand
             $rows[$k] = $this->getSummaryRow($summary);
         }
 
-        $this->getTable('optSummary')
+        $this->getTable($tableName)
+            ->setHeaders($this->getSummaryHeader())
+            ->setRows($rows)
+            ->render();
+    }
+
+    protected function updateWalkForwardSummaryTable(array $summaries): void
+    {
+        $rows = [];
+        foreach ($summaries as $k => $summary)
+        {
+            $rows[$k] = $this->getSummaryRow($summary);
+        }
+
+        $this->getTable('walkForwardSummary')
             ->setHeaders($this->getSummaryHeader())
             ->setRows($rows)
             ->render();
@@ -319,5 +367,51 @@ class StrategyTester extends TradeCommand
     {
         $elapsed = elapsed_time($this->startTime);
         $this->sections['elapsedTime']->overwrite("Elapsed time: $elapsed");
+    }
+
+    protected function newRangedTester(string $strategyClass,
+                                       Symbol $symbol,
+                                       ?int   $startDate,
+                                       ?int   $endDate): Tester
+    {
+        return new Tester($strategyClass, $symbol, [
+            'startDate' => $startDate,
+            'endDate'   => $endDate,
+        ]);
+    }
+
+    protected function runWalkForwardAnalysis(Strategy          $strategy,
+                                              int               $startDate,
+                                              int               $walkForwardEndDate,
+                                              SummaryCollection $summaries,
+                                              ProgressBar       $progressBar): void
+    {
+        $tester = $this->newRangedTester($strategy::class,
+            $strategy->symbol(),
+            $startDate,
+            $walkForwardEndDate);
+
+        $summarizer = new ParallelSummarizer($tester,
+            $summaries->pluck('parameters')->all()
+        );
+        $summarizer->setParallelProcesses($this->processes);
+
+        $progressBar->setMaxSteps($summarizer->total);
+        $progressBar->setProgress(0);
+
+        $walkForwardSummaries = $summarizer->run(callback: function (Fork $fork) use ($progressBar) {
+            $fork->after(parent: function () use ($progressBar) {
+                $progressBar->advance();
+            });
+        });
+
+        $parameters = $summaries->pluck('parameters')->values()->all();
+
+        //sort by parameter order
+        $walkForwardSummaries = $walkForwardSummaries->sortBy(function ($summary) use ($parameters) {
+            return array_search($summary->parameters, $parameters);
+        });
+
+        $this->updateSummaryTable('walkForwardSummary', $walkForwardSummaries->all());
     }
 }
