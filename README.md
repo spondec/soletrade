@@ -230,7 +230,11 @@ Elapsed time: 0:0:0:6
 
 An ambiguous trade is a trade when its entry, target or stop prices kicked in at the same candlestick but since the
 candlestick is closed, the testing module can not tell which price trade has closed with so these trades are marked as "
-ambiguous" and excluded from the trade summary which will have no effect on the final test report.
+ambiguous" and excluded from the trade summary which will have no effect on the final test report. 
+
+As a best practice, ambiguous trades must be reduced as much as possible,
+either by using wider stops and targets or lower evaluation intervals,
+which can test your strategy more precisely at the cost of performance.
 
 #### Optimization
 
