@@ -400,18 +400,4 @@ class StrategyTester extends TradeCommand
         $elapsed = elapsed_time($this->startTime);
         $this->sections['elapsedTime']->overwrite("Elapsed time: $elapsed");
     }
-
-    protected function updateWalkForwardSummaryTable(array $summaries): void
-    {
-        $rows = [];
-        foreach ($summaries as $k => $summary)
-        {
-            $rows[$k] = $this->getSummaryRow($summary);
-        }
-
-        $this->getTable('walkForwardSummary')
-            ->setHeaders($this->getSummaryHeader())
-            ->setRows($rows)
-            ->render();
-    }
 }
