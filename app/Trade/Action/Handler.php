@@ -68,7 +68,6 @@ abstract class Handler
     }
 
     /**
-     *
      * Return true if the action is taken.
      *
      * @param \stdClass $candle
