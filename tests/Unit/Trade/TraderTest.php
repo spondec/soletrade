@@ -12,12 +12,12 @@ use App\Trade\Evaluation\LivePosition;
 use App\Trade\Evaluation\LiveTradeLoop;
 use App\Trade\Evaluation\TradeStatus;
 use App\Trade\Exception\PositionExitFailed;
+use App\Trade\Exchange\Account\TradeAsset;
 use App\Trade\Exchange\Exchange;
-use App\Trade\OrderManager;
+use App\Trade\Exchange\OrderManager;
+use App\Trade\Exchange\Trader;
 use App\Trade\Repository\ConfigRepository;
 use App\Trade\Strategy\Strategy;
-use App\Trade\TradeAsset;
-use App\Trade\Trader;
 use Mockery as m;
 
 /**

@@ -7,9 +7,9 @@ use App\Models\Order;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Enum\OrderType;
+use App\Trade\Exchange\Account\TradeAsset;
+use App\Trade\Exchange\OrderManager;
 use App\Trade\Log;
-use App\Trade\OrderManager;
-use App\Trade\TradeAsset;
 
 class LiveTradeLoop extends TradeLoop
 {

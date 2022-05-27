@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade;
+namespace App\Trade\Exchange;
 
 use App\Models\Runner;
 use App\Models\Symbol;
@@ -13,7 +13,8 @@ use App\Trade\Evaluation\LiveTradeLoop;
 use App\Trade\Evaluation\Price;
 use App\Trade\Evaluation\TradeStatus;
 use App\Trade\Exception\PositionExitFailed;
-use App\Trade\Exchange\Exchange;
+use App\Trade\Exchange\Account\TradeAsset;
+use App\Trade\Log;
 use App\Trade\Process\RecoverableRequest;
 use App\Trade\Strategy\Strategy;
 

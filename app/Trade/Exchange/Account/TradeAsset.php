@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Trade;
+namespace App\Trade\Exchange\Account;
+
+use App\Trade\Calc;
 
 class TradeAsset
 {

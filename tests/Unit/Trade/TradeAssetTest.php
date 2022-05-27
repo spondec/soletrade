@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Trade;
 
-use App\Trade\AllocatedAsset;
-use App\Trade\TradeAsset;
+use App\Trade\Exchange\Account\AllocatedAsset;
+use App\Trade\Exchange\Account\TradeAsset;
 use Mockery as m;
 
 /**

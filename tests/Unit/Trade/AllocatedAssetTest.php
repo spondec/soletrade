@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Trade;
 
-use App\Trade\AllocatedAsset;
+use App\Trade\Exchange\Account\AllocatedAsset;
 use App\Trade\Exchange\Account\Asset;
 use App\Trade\Exchange\Account\Balance;
 use PHPUnit\Framework\TestCase;

@@ -3,15 +3,15 @@
 namespace App\Trade\Command;
 
 use App\Models\Symbol;
-use App\Trade\AllocatedAsset;
 use App\Trade\Enum\TraderStatus;
+use App\Trade\Exchange\Account\AllocatedAsset;
+use App\Trade\Exchange\Account\TradeAsset;
 use App\Trade\Exchange\Exchange;
+use App\Trade\Exchange\Trader;
 use App\Trade\Log;
 use App\Trade\Repository\SymbolRepository;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Telegram\Bot;
-use App\Trade\TradeAsset;
-use App\Trade\Trader;
 use App\Trade\Util;
 use Longman\TelegramBot\Entities\Update;
 use Symfony\Component\Console\Helper\Helper;

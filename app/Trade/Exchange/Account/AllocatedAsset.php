@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Trade;
+namespace App\Trade\Exchange\Account;
 
 use App\Trade\Evaluation\Position;
-use App\Trade\Exchange\Account\Asset;
-use App\Trade\Exchange\Account\Balance;
 
 final class AllocatedAsset
 {

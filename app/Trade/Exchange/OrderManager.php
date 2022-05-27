@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Trade;
+namespace App\Trade\Exchange;
 
 use App\Models\Fill;
 use App\Models\Order;
@@ -11,7 +11,8 @@ use App\Models\TradeSetup;
 use App\Trade\Contract\Exchange\Orderer;
 use App\Trade\Enum\OrderType;
 use App\Trade\Enum\Side;
-use App\Trade\Exchange\Exchange;
+use App\Trade\Exchange\Account\TradeAsset;
+use App\Trade\Log;
 use App\Trade\Order\Type\Handler;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\Pure;

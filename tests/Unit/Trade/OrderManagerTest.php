@@ -6,10 +6,10 @@ use App\Models\Order;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Enum\Side;
+use App\Trade\Exchange\Account\TradeAsset;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Exchange\Orderer;
-use App\Trade\OrderManager;
-use App\Trade\TradeAsset;
+use App\Trade\Exchange\OrderManager;
 use Mockery as m;
 use Mockery\MockInterface;
 
