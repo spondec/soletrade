@@ -109,6 +109,17 @@ class StrategyTester extends TradeCommand
         return 0;
     }
 
+    protected function newRangedTester(string $strategyClass,
+                                       Symbol $symbol,
+                                       ?int   $startDate,
+                                       ?int   $endDate): Tester
+    {
+        return new Tester($strategyClass, $symbol, [
+            'startDate' => $startDate,
+            'endDate'   => $endDate,
+        ]);
+    }
+
     protected function initSections(): void
     {
         $this->sections['state'] = $this->newOutputSection();
@@ -252,20 +263,6 @@ class StrategyTester extends TradeCommand
             ->render();
     }
 
-    protected function updateWalkForwardSummaryTable(array $summaries): void
-    {
-        $rows = [];
-        foreach ($summaries as $k => $summary)
-        {
-            $rows[$k] = $this->getSummaryRow($summary);
-        }
-
-        $this->getTable('walkForwardSummary')
-            ->setHeaders($this->getSummaryHeader())
-            ->setRows($rows)
-            ->render();
-    }
-
     protected function getSummaryRow(Summary $summary): array
     {
         $params = '';
@@ -319,6 +316,41 @@ class StrategyTester extends TradeCommand
         ];
     }
 
+    protected function runWalkForwardAnalysis(Strategy          $strategy,
+                                              int               $startDate,
+                                              int               $walkForwardEndDate,
+                                              SummaryCollection $summaries,
+                                              ProgressBar       $progressBar): void
+    {
+        $tester = $this->newRangedTester($strategy::class,
+            $strategy->symbol(),
+            $startDate,
+            $walkForwardEndDate);
+
+        $summarizer = new Summarizer($tester,
+            $summaries->pluck('parameters')->all()
+        );
+        $summarizer->setParallelProcesses($this->processes);
+
+        $progressBar->setMaxSteps($summarizer->total);
+        $progressBar->setProgress(0);
+
+        $walkForwardSummaries = $summarizer->run(callback: function (Fork $fork) use ($progressBar) {
+            $fork->after(parent: function () use ($progressBar) {
+                $progressBar->advance();
+            });
+        });
+
+        $parameters = $summaries->pluck('parameters')->values()->all();
+
+        //sort by parameter order
+        $walkForwardSummaries = $walkForwardSummaries->sortBy(function ($summary) use ($parameters) {
+            return array_search($summary->parameters, $parameters);
+        });
+
+        $this->updateSummaryTable('walkForwardSummary', $walkForwardSummaries->all());
+    }
+
     protected function handleTest(Tester $tester): void
     {
         $this->registerTesterEvents($tester);
@@ -369,49 +401,17 @@ class StrategyTester extends TradeCommand
         $this->sections['elapsedTime']->overwrite("Elapsed time: $elapsed");
     }
 
-    protected function newRangedTester(string $strategyClass,
-                                       Symbol $symbol,
-                                       ?int   $startDate,
-                                       ?int   $endDate): Tester
+    protected function updateWalkForwardSummaryTable(array $summaries): void
     {
-        return new Tester($strategyClass, $symbol, [
-            'startDate' => $startDate,
-            'endDate'   => $endDate,
-        ]);
-    }
+        $rows = [];
+        foreach ($summaries as $k => $summary)
+        {
+            $rows[$k] = $this->getSummaryRow($summary);
+        }
 
-    protected function runWalkForwardAnalysis(Strategy          $strategy,
-                                              int               $startDate,
-                                              int               $walkForwardEndDate,
-                                              SummaryCollection $summaries,
-                                              ProgressBar       $progressBar): void
-    {
-        $tester = $this->newRangedTester($strategy::class,
-            $strategy->symbol(),
-            $startDate,
-            $walkForwardEndDate);
-
-        $summarizer = new Summarizer($tester,
-            $summaries->pluck('parameters')->all()
-        );
-        $summarizer->setParallelProcesses($this->processes);
-
-        $progressBar->setMaxSteps($summarizer->total);
-        $progressBar->setProgress(0);
-
-        $walkForwardSummaries = $summarizer->run(callback: function (Fork $fork) use ($progressBar) {
-            $fork->after(parent: function () use ($progressBar) {
-                $progressBar->advance();
-            });
-        });
-
-        $parameters = $summaries->pluck('parameters')->values()->all();
-
-        //sort by parameter order
-        $walkForwardSummaries = $walkForwardSummaries->sortBy(function ($summary) use ($parameters) {
-            return array_search($summary->parameters, $parameters);
-        });
-
-        $this->updateSummaryTable('walkForwardSummary', $walkForwardSummaries->all());
+        $this->getTable('walkForwardSummary')
+            ->setHeaders($this->getSummaryHeader())
+            ->setRows($rows)
+            ->render();
     }
 }

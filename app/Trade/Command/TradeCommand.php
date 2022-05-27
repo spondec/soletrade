@@ -63,6 +63,11 @@ abstract class TradeCommand extends Command
         return [$startDate, $endDate];
     }
 
+    protected function newDate(string $date): Carbon
+    {
+        return Carbon::createFromFormat('d-m-Y', $date);
+    }
+
     protected function assertSymbol(SymbolRepository $repo, array $args): Symbol
     {
         $symbol = $repo->fetchSymbol(Exchange::from($args['exchange']),
@@ -76,11 +81,6 @@ abstract class TradeCommand extends Command
         }
 
         return $symbol;
-    }
-
-    protected function newDate(string $date): Carbon
-    {
-        return Carbon::createFromFormat('d-m-Y', $date);
     }
 
     protected function newOutputSection(): ConsoleSectionOutput
