@@ -85,7 +85,7 @@ class StrategyTester extends TradeCommand
 
         if ($options['optimize'])
         {
-            $this->handleOptimize($strategy, $tester, $args);
+            $this->runOptimizer($strategy, $tester, $args);
         }
         else
         {
@@ -148,14 +148,7 @@ class StrategyTester extends TradeCommand
         $this->info("Done.\n");
     }
 
-    /**
-     * @param Strategy $strategy
-     * @param          $strategy1
-     * @param Tester   $tester
-     *
-     * @return void
-     */
-    protected function handleOptimize(Strategy $strategy, Tester $tester, array $args): void
+    protected function runOptimizer(Strategy $strategy, Tester $tester, array $args): void
     {
         if (!$parameters = $strategy->optimizableParameters())
         {
@@ -188,13 +181,11 @@ class StrategyTester extends TradeCommand
 
             $optimizationEndDate = $tester->strategy->config('endDate');
 
-            if ($walkForwardStartDate < $optimizationEndDate)
+            if (($walkForwardStartDate < $optimizationEndDate) &&
+                $startDateString !== $this->option('end'))
             {
-                if ($startDateString !== $this->option('end'))
-                {
-                    $this->error("Walk Forward Analysis can't start before the end date of the optimization.");
-                    exit(1);
-                }
+                $this->error("Walk Forward Analysis can't start before the end date of the optimization.");
+                exit(1);
             }
         }
 
