@@ -72,7 +72,7 @@ class Evaluator
         $e->entry_price = $status->getEntryPrice()->get();
         $e->stop_price = $status->getStopPrice()?->get();
         $e->target_price = $status->getTargetPrice()?->get();
-        $e->evaluation_interval = $this->strategy->config('evaluation.interval') ?? $this->strategy->symbol()->interval;
+        $e->symbol()->associate($this->strategy->evaluationSymbol());
 
         $log = [];
 
@@ -138,7 +138,7 @@ class Evaluator
     {
         $entryPivots = $this
             ->symbolRepo
-            ->assertLowestHighestCandle($e->entry->symbol_id,
+            ->assertLowestHighestCandle($e->symbol_id,
                 $e->entry->price_date,
                 $e->entry_timestamp);
 
@@ -147,7 +147,7 @@ class Evaluator
 
         $pivots = $this
             ->symbolRepo
-            ->assertLowestHighestCandle($e->entry->symbol_id,
+            ->assertLowestHighestCandle($e->symbol_id,
                 $e->entry_timestamp,
                 $e->exit_timestamp);
 
