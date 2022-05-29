@@ -13,12 +13,20 @@ use App\Trade\Log;
 
 class LiveTradeLoop extends TradeLoop
 {
-    public function __construct(TradeSetup $entry,
-                                Symbol     $evaluationSymbol,
-                                array      $config,
-                                public     readonly OrderManager $order)
+    public function __construct(TradeSetup                   $entry,
+                                Symbol                       $evaluationSymbol,
+                                array                        $config,
+                                public readonly OrderManager $order)
     {
         parent::__construct($entry, $evaluationSymbol, $config);
+    }
+
+    public function __destruct()
+    {
+        if ($this->status->getPosition() && !$this->status->isExited())
+        {
+            throw new \LogicException('TradeLoop can not be destroyed before the trade is exited');
+        }
     }
 
     protected function tryPositionEntry(\stdClass $candle, int $priceDate): void

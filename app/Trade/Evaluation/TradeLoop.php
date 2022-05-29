@@ -86,14 +86,6 @@ class TradeLoop
                 ->first(); //not closed
     }
 
-    public function __destruct()
-    {
-        if ($this->status->getPosition() && !$this->status->isExited())
-        {
-            throw new \LogicException('TradeLoop can not be destroyed before the trade is exited');
-        }
-    }
-
     public function setExitTrade(TradeSetup $exit): void
     {
         $this->assertExitDateGreaterThanEntryDate($this->entry->price_date, $exit->price_date);
