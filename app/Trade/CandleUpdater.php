@@ -86,7 +86,7 @@ class CandleUpdater
 
     public function bySymbol(Symbol $symbol, int $maxRunTime = 0): bool
     {
-        Log::execTimeStart($task = "Updating $symbol->symbol-$symbol->interval candles");
+        Log::execTimeStart($task = "Updating {$this->exchange::name()} $symbol->symbol-$symbol->interval candles");
         $startTime = \time();
         $id = $symbol->id;
 
