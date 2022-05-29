@@ -131,14 +131,11 @@ class SymbolRepository extends Repository
             throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
         }
 
-        $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
-
-        $candles = DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', $includeStart ? '>=' : '>', $startDate)
-            ->where('t', '<=', $endDate)
-            ->orderBy('t', 'ASC')
-            ->get();
+        $candles = $this->fetchCandlesBetween($symbol,
+            $startDate,
+            $endDate,
+            $interval,
+            $includeStart);
 
         if (!$candles->first())
         {
@@ -297,5 +294,21 @@ class SymbolRepository extends Repository
         /** @var Symbol $symbol */
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $this->findSymbols($exchange, $symbolName, $interval)->first();
+    }
+
+    public function fetchCandlesBetween(Symbol  $symbol,
+                                        int     $startDate,
+                                        int     $endDate,
+                                        ?string $interval = null,
+                                        bool    $includeStart = false): Collection
+    {
+        $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
+
+        return DB::table('candles')
+            ->where('symbol_id', $symbolId)
+            ->where('t', $includeStart ? '>=' : '>', $startDate)
+            ->where('t', '<=', $endDate)
+            ->orderBy('t', 'ASC')
+            ->get();
     }
 }
