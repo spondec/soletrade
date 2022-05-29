@@ -7,8 +7,10 @@ namespace App\Trade\Evaluation;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Calc;
+use App\Trade\Exception\PrintableException;
 use App\Trade\HasConfig;
 use App\Trade\Repository\SymbolRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -49,11 +51,6 @@ class TradeLoop
         $this->startDate = $this->firstCandle->t;
 
         $this->timeout = $this->config('timeout');
-
-        if (!$this->repo->fetchCandle($this->evaluationSymbol, $this->entry->timestamp))
-        {
-            throw new \InvalidArgumentException('Evaluation interval candles are not complete.');
-        }
     }
 
     protected function assertTradeSymbolMatchesEvaluationSymbol(): void
@@ -112,7 +109,6 @@ class TradeLoop
 
     public function run(): TradeStatus
     {
-        $candles = null;
         if ($this->hasExitTrade() && !isset($this->isExitRunCompleted))
         {
             $this->isExitRunCompleted = true;
@@ -120,14 +116,9 @@ class TradeLoop
             if ($lastCandle)
             {
                 $candles = $this->getCandlesBetween($lastCandle->t);
+                $this->runLoop($candles);
             }
-        }
-
-        if ($candles)
-        {
-            $this->runLoop($candles);
-        }
-        else
+        }else
         {
             $this->runToEnd();
         }
@@ -139,16 +130,30 @@ class TradeLoop
 
     protected function getCandlesBetween(int $endDate): Collection
     {
+        $symbol = $this->evaluationSymbol;
+        $candles = null;
+
         if ($this->lastRunDate)
         {
-            return $this->repo->assertCandlesBetween($this->evaluationSymbol,
+            return $this->repo->assertCandlesBetween($symbol,
                 $this->lastRunDate,
                 $endDate);
         }
-        return $this->repo->assertCandlesBetween($this->evaluationSymbol,
-            $this->firstCandle->t,
-            $endDate,
-            includeStart: true);
+
+        if ($endDate != $this->firstCandle->t)
+        {
+            $candles = $this->repo->fetchCandlesBetween($symbol,
+                $this->firstCandle->t,
+                $endDate,
+                includeStart: true);
+        }
+
+        if (!$candles?->first())
+        {
+            throw new PrintableException("Not enough price data found for $symbol->symbol-$symbol->interval.");
+        }
+
+        return $candles;
     }
 
     protected function runLoop(Collection $candles): void
