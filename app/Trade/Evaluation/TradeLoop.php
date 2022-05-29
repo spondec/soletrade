@@ -118,7 +118,8 @@ class TradeLoop
                 $candles = $this->getCandlesBetween($lastCandle->t);
                 $this->runLoop($candles);
             }
-        }else
+        }
+        else
         {
             $this->runToEnd();
         }
@@ -150,7 +151,8 @@ class TradeLoop
 
         if (!$candles?->first())
         {
-            throw new PrintableException("Not enough price data found for $symbol->symbol-$symbol->interval.");
+            throw new PrintableException("Not enough price data found for {$symbol->exchange()::name()}-$symbol->symbol-$symbol->interval. " .
+                "Please use a different interval or exchange.");
         }
 
         return $candles;
