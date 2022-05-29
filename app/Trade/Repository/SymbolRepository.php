@@ -126,11 +126,6 @@ class SymbolRepository extends Repository
                                          ?string $interval = null,
                                          bool    $includeStart = false): Collection
     {
-        if ($startDate >= $endDate)
-        {
-            throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
-        }
-
         $candles = $this->fetchCandlesBetween($symbol,
             $startDate,
             $endDate,
@@ -302,6 +297,11 @@ class SymbolRepository extends Repository
                                         ?string $interval = null,
                                         bool    $includeStart = false): Collection
     {
+        if ($startDate >= $endDate)
+        {
+            throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
+        }
+        
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         return DB::table('candles')
