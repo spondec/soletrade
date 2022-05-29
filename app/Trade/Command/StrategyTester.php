@@ -174,9 +174,17 @@ class StrategyTester extends TradeCommand
 
         if ($walkForward = ($this->ask('Do you want to run Walk Forward Analysis? (y|n)') === 'y'))
         {
+            $startDateString = $this->ask('Enter the walk forward period start date (DD-MM-YYYY): ');
+
+            if (!$startDateString)
+            {
+                $this->error('Invalid start date.');
+                exit(1);
+            }
+
             [$walkForwardStartDate, $walkForwardEndDate] = $this->assertDateRange(
-                $startDateString = $this->ask('Enter the start date (DD-MM-YYYY): '),
-                $this->ask('Enter the end date (DD-MM-YYYY) (optional): ')
+                $startDateString,
+                $this->ask('Enter the walk forward period end date (DD-MM-YYYY) (optional): ')
             );
 
             $optimizationEndDate = $tester->strategy->config('endDate');
