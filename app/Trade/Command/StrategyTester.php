@@ -208,7 +208,7 @@ class StrategyTester extends TradeCommand
 
         $symbol = $strategy->symbol();
         $this->updateSummaryTable('optSummary',
-            sprintf('%s %s Optimization Summary %s ~ %s',
+            sprintf('%s %s Optimization Summary (%s ~ %s)',
                 $strategy::name(),
                 "{$symbol->exchange()::name()} $symbol->symbol $symbol->interval",
                 $this->option('start'), $this->option('end')),
@@ -232,17 +232,17 @@ class StrategyTester extends TradeCommand
         $filtered = [];
         if ($summaries->count() > 10)
         {
-            //get the best 5
-            foreach ($summaries->slice(0, 5) as $summary)
+            //get the best 10
+            foreach ($summaries->slice(0, 10) as $summary)
             {
                 $filtered[] = $summary;
             }
 
-            //get the worst 5
-            foreach ($summaries->slice(-5, 5) as $summary)
-            {
-                $filtered[] = $summary;
-            }
+//            //get the worst 5
+//            foreach ($summaries->slice(-5, 5) as $summary)
+//            {
+//                $filtered[] = $summary;
+//            }
         }
         else
         {
