@@ -23,7 +23,7 @@
         (function ()
         {
             window.__MF = {};
-            window.__MF.appName = "{{ config('app.name', 'SoleTrade') }}";
+            window.__MF.appName = "{{ config('app.name', 'Soletrade') }}";
         })();
     </script>
 </head>

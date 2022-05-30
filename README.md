@@ -3,7 +3,7 @@
 <img src="https://github.com/spondec/soletrade/workflows/tests/badge.svg" alt="Build Status"></a>
 </p>
 
-## SoleTrade - Crypto trading tools for PHP community
+## Soletrade - Crypto trading tools for PHP community
 
 Features include:
 
