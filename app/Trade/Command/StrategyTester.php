@@ -13,7 +13,6 @@ use App\Trade\Strategy\Process\Summarizer;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Strategy\Tester;
 use App\Trade\Util;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Spatie\Fork\Fork;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -90,7 +89,7 @@ class StrategyTester extends TradeCommand
         }
         else
         {
-            $this->handleTest($tester);
+            $this->runTest($tester);
         }
 
         $this->updateElapsedTime();
@@ -175,7 +174,7 @@ class StrategyTester extends TradeCommand
 
         if ($walkForward = ($this->ask('Do you want to run Walk Forward Analysis? (y|n)') === 'y'))
         {
-            $startDateString = $this->ask('Enter the walk forward period start date (DD-MM-YYYY): ');
+            $startDateString = $this->ask('Enter the walk forward period start date (DD-MM-YYYY)');
 
             if (!$startDateString)
             {
@@ -185,7 +184,7 @@ class StrategyTester extends TradeCommand
 
             [$walkForwardStartDate, $walkForwardEndDate] = $this->assertDateRange(
                 $startDateString,
-                $this->ask('Enter the walk forward period end date (DD-MM-YYYY) (optional): ')
+                $this->ask('Enter the walk forward period end date (DD-MM-YYYY) (optional)')
             );
 
             $optimizationEndDate = $tester->strategy->config('endDate');
@@ -362,7 +361,7 @@ class StrategyTester extends TradeCommand
             $walkForwardSummaries->all());
     }
 
-    protected function handleTest(Tester $tester): void
+    protected function runTest(Tester $tester): void
     {
         $this->registerTesterEvents($tester);
         $trades = $tester->runStrategy();
