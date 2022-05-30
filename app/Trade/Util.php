@@ -4,9 +4,15 @@ namespace App\Trade;
 
 use App\Models\Symbol;
 use App\Trade\Collection\CandleCollection;
+use Carbon\Carbon;
 
 class Util
 {
+    public static function dateFormat(int $timestamp, string $format = 'Y-m-d'): string
+    {
+        return Carbon::createFromTimestampMs($timestamp)->format($format);
+    }
+
     public static function formatRoi(float $roi): string
     {
         $rounded = \round($roi, 2);
