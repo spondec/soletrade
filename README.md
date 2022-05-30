@@ -3,12 +3,13 @@
 <img src="https://github.com/spondec/soletrade/workflows/tests/badge.svg" alt="Build Status"></a>
 </p>
 
-## Soletrade - Crypto trading tools for PHP community
+## Soletrade — Algorithmic crypto trading platform for PHP
 
 Features include:
 
 * Minimalist GUI to review your back-test results in depth with charting.
 * Real-time bot to automate trading on an exchange.
+* Strategy optimization to find the best parameters along with Walk Forward Analysis.
 * A well-commented strategy template with additional helper options on creation to get started quickly.
 * Telegram Bot support for basic controls.
 
