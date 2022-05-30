@@ -15,6 +15,8 @@ Features include:
 
 ## Requirements
 
+**You don't need anything other than [Docker](https://www.docker.com/products/docker-desktop/). The listed requirements is for people who hate Docker.**
+
 * PHP 8.1+
 * PHP Trader Extension
 * PHP PCNTL Extension
