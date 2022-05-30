@@ -393,8 +393,8 @@ stop/target price has been reached if able to do so.
 Strategies are designed to be based on indicators. You can use no indicator and still be fine, but we are going to use
 them a lot in the following examples.
 
-We're going to build a basic strategy that longs when short-period-moving-average _crosses over_
-long-term-moving-average and vice versa.
+We're going to build a basic strategy that buys when short-period-moving-average crosses over long-term-moving-average
+and sells vice versa.
 It's the hello world of trading strategies.
 
 #### Crossing two moving averages
