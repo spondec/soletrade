@@ -6,9 +6,11 @@ namespace App\Trade\Evaluation;
 
 use App\Models\Symbol;
 use App\Models\TradeSetup;
-use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
+use App\Trade\Exception\PrintableException;
 use App\Trade\HasConfig;
+use App\Trade\Repository\SymbolRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -36,9 +38,9 @@ class TradeLoop
      */
     protected readonly bool $isExitRunCompleted;
 
-    public function __construct(public           readonly TradeSetup $entry,
-                                protected Symbol $evaluationSymbol,
-                                array            $config)
+    public function __construct(public readonly TradeSetup $entry,
+                                protected Symbol           $evaluationSymbol,
+                                array                      $config)
     {
         $this->mergeConfig($config);
         $this->assertTradeSymbolMatchesEvaluationSymbol();
@@ -49,11 +51,6 @@ class TradeLoop
         $this->startDate = $this->firstCandle->t;
 
         $this->timeout = $this->config('timeout');
-
-        if (!$this->repo->fetchCandle($this->evaluationSymbol, $this->entry->timestamp))
-        {
-            throw new \InvalidArgumentException('Evaluation interval candles are not complete.');
-        }
     }
 
     protected function assertTradeSymbolMatchesEvaluationSymbol(): void
@@ -86,14 +83,6 @@ class TradeLoop
                 ->first(); //not closed
     }
 
-    public function __destruct()
-    {
-        if ($this->status->getPosition() && !$this->status->isExited())
-        {
-            throw new \LogicException('TradeLoop can not be destroyed before the trade is exited');
-        }
-    }
-
     public function setExitTrade(TradeSetup $exit): void
     {
         $this->assertExitDateGreaterThanEntryDate($this->entry->price_date, $exit->price_date);
@@ -120,7 +109,6 @@ class TradeLoop
 
     public function run(): TradeStatus
     {
-        $candles = null;
         if ($this->hasExitTrade() && !isset($this->isExitRunCompleted))
         {
             $this->isExitRunCompleted = true;
@@ -128,12 +116,8 @@ class TradeLoop
             if ($lastCandle)
             {
                 $candles = $this->getCandlesBetween($lastCandle->t);
+                $this->runLoop($candles);
             }
-        }
-
-        if ($candles)
-        {
-            $this->runLoop($candles);
         }
         else
         {
@@ -147,16 +131,31 @@ class TradeLoop
 
     protected function getCandlesBetween(int $endDate): Collection
     {
+        $symbol = $this->evaluationSymbol;
+        $candles = null;
+
         if ($this->lastRunDate)
         {
-            return $this->repo->assertCandlesBetween($this->evaluationSymbol,
+            return $this->repo->assertCandlesBetween($symbol,
                 $this->lastRunDate,
                 $endDate);
         }
-        return $this->repo->assertCandlesBetween($this->evaluationSymbol,
-            $this->firstCandle->t,
-            $endDate,
-            includeStart: true);
+
+        if ($endDate != $this->firstCandle->t)
+        {
+            $candles = $this->repo->fetchCandlesBetween($symbol,
+                $this->firstCandle->t,
+                $endDate,
+                includeStart: true);
+        }
+
+        if (!$candles?->first())
+        {
+            throw new PrintableException("Not enough price data found for {$symbol->exchange()::name()}-$symbol->symbol-$symbol->interval. " .
+                "Please use a different interval or exchange.");
+        }
+
+        return $candles;
     }
 
     protected function runLoop(Collection $candles): void
@@ -227,6 +226,7 @@ class TradeLoop
         if (Calc::inRange($this->status->getEntryPrice()->get(), $candle->h, $candle->l))
         {
             $this->status->enterPosition($priceDate);
+            $this->tryPositionExit($this->getPosition(), $candle, $priceDate);
         }
     }
 
@@ -381,7 +381,7 @@ class TradeLoop
     {
         return [
             'closeOnExit' => true,
-            'timeout'     => 1440
+            'timeout'     => 0
         ];
     }
 

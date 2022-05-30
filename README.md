@@ -3,12 +3,13 @@
 <img src="https://github.com/spondec/soletrade/workflows/tests/badge.svg" alt="Build Status"></a>
 </p>
 
-## SoleTrade - Crypto trading tools for PHP community
+## Soletrade — Algorithmic crypto trading platform for PHP
 
 Features include:
 
 * Minimalist GUI to review your back-test results in depth with charting.
 * Real-time bot to automate trading on an exchange.
+* Strategy optimization to find the best parameters along with Walk Forward Analysis.
 * A well-commented strategy template with additional helper options on creation to get started quickly.
 * Telegram Bot support for basic controls.
 
@@ -29,13 +30,15 @@ Features include:
 ## Installation
 
 ### Docker
-Docker helps you to get started quickly without installing any dependencies on your computer other than Docker itself. 
+
+Docker helps you to get started quickly without installing any dependencies on your computer other than Docker itself.
+
 * Install Docker Desktop and make sure it's running and ready. Then open a terminal.
-   * If you're on Windows, make sure to activate WSL2 and open a WSL session:
+    * If you're on Windows, make sure to activate WSL2 and open a WSL session:
    ```bash
    wsl
    ```
-   * Enter the home directory: 
+    * Enter the home directory:
    ```bash
    cd ~ 
    ```
@@ -43,17 +46,22 @@ Docker helps you to get started quickly without installing any dependencies on y
    ```bash
    git clone https://github.com/spondec/soletrade.git 
    ```
-   * To run the rest of the commands, we must enter the root directory of the repository:
+    * To run the rest of the commands, we must enter the root directory of the repository:
    ```bash
    cd soletrade 
    ```
 * Install the composer dependencies with the following command. Just copy and paste it into your terminal:
+
 ```
 docker run --rm     -u "$(id -u):$(id -g)"     -v $(pwd):/var/www/html     -w /var/www/html     spondec/soletrade-composer:latest /bin/bash -c "composer install; php -r \"file_exists('.env') || copy('.env.sail.example', '.env');\"; php artisan key:generate"
 ```
-Now we're ready to build our Docker container. We're going to do that with Sail. From now on, any interaction with the app will go through our dear friend, Sail. Sail is just a proxy between your machine and Docker container, that's all. We'll pretty much prefix every command with `./vendor/bin/sail`. 
+
+Now we're ready to build our Docker container. We're going to do that with Sail. From now on, any interaction with the
+app will go through our dear friend, Sail. Sail is just a proxy between your machine and Docker container, that's all.
+We'll pretty much prefix every command with `./vendor/bin/sail`.
 
 You can create a bash alias for `sail` by running this command:
+
 ```bash
 alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'
 ```
@@ -83,13 +91,18 @@ sail npm run production
 ```
 
 * Now you're ready. You can go to localhost in your browser and use CLI.
-* To see available trade commands, run: 
+* To see available trade commands, run:
+
 ```bash
 sail artisan trade
 ```
-   #### Running commands on Docker
-We *must* prefix any commands to our app with `./vendor/bin/sail` or `sail`(if you've created the bash alias) when using Docker.
-So `php artisan some:command` becomes `./vendor/bin/sail artisan some:command` on Docker or `sail artisan some:command` if you aliased it to `sail`.
+
+#### Running commands on Docker
+
+We *must* prefix any commands to our app with `./vendor/bin/sail` or `sail`(if you've created the bash alias) when using
+Docker.
+So `php artisan some:command` becomes `./vendor/bin/sail artisan some:command` on Docker or `sail artisan some:command`
+if you aliased it to `sail`.
 
 ### Full
 
@@ -98,30 +111,39 @@ For full installation, after installing all the dependencies, run these commands
 ```bash
 git clone https://github.com/spondec/soletrade.git
 ```
+
 ```bash
 cd soletrade
 ```
+
 ```bash
 composer install --optimize-autoloader --no-dev
 ```
+
 ```bash
 php -r "file_exists('.env') || copy('.env.example', '.env');"
 ```
+
 ```bash
 php artisan key:generate
 ```
+
 ```bash
 php artisan migrate
 ```
+
 ```bash
 php artisan db:seed
 ```
+
 ```bash
 npm install
 ```
+
 ```bash
 npm run production
 ```
+
 ## Documentation
 
 ### Strategy
@@ -159,7 +181,8 @@ Most of the built-in indicators just calls one of the PHP Trader extension funct
 
 #### Signals
 
-A signal is a specific indicator state and if preferred, it becomes a required step to trigger your trade setup function. Required signals are defined in the signals array in the strategy.
+A signal is a specific indicator state and if preferred, it becomes a required step to trigger your trade setup
+function. Required signals are defined in the signals array in the strategy.
 
 #### Price Bindings
 
@@ -197,7 +220,8 @@ entire position in result of
 complex computation.
 There are built-in trade action classes, but you can also write your own.
 A trade action class only takes a Position object as an argument and only performs things on this object.
-app/Trade/Action/Handler is the core class of trade actions and you can invent your own just like in indicators by extending the handler.
+app/Trade/Action/Handler is the core class of trade actions and you can invent your own just like in indicators by
+extending the handler.
 
 ### Strategy Testing
 
@@ -234,7 +258,75 @@ ambiguous" and excluded from the trade summary which will have no effect on the 
 
 #### Optimization
 
-There are currently no optimization modules, but it is a necessary tool and is planned to be implemented in the future.
+You can optimize your strategy if you've filled the optimizableParameters() method in your strategy class. Testing a
+strategy is as simple as adding an --optimize parameter to the strategy test command.
+
+```bash
+$ php artisan trade:strategy-test MACross BTC/USDT 1d Binance --start=01-01-2019 --end=01-01-2021 --optimize
+
+Updating symbols... This may take a while for the first time, please be patient...
+Done.
+
+Parameters to be optimized: shortTermPeriod, longTermPeriod
+Total simulations: 81
+
+ Do you want to proceed? (y|n):
+ > y
+
+ Do you want to run Walk Forward Analysis? (y|n):
+ > y
+
+ Enter the walk forward period start date (DD-MM-YYYY):
+ > 02-01-2021
+
+ Enter the walk forward period end date (DD-MM-YYYY) (optional):
+ >
+
+Done.
+
+Elapsed time: 0:0:2:14
++----------+----------+-------------+--- MACross Binance BTC/USDT 1d Optimization Summary (01-01-2019 ~ 01-01-2021) ----------------------------------------+
+| ROI      | Avg. ROI | Avg. Profit | Avg. Loss | Reward/Risk | Success | Profit | Loss | Ambiguous | Failed | Parameters                             |
++----------+----------+-------------+-----------+-------------+---------+--------+------+-----------+--------+----------------------------------------+
+| 2565.14% | 14.66%   | 6.4%        | -1.72%    | 3.72        | 46.86%  | 82     | 93   | 105       | 2      | shortTermPeriod: 2 longTermPeriod: 3   |
+| 2296.11% | 18.98%   | 8.97%       | -1.85%    | 4.85        | 44.63%  | 54     | 67   | 64        | 0      | shortTermPeriod: 2 longTermPeriod: 4   |
+| 2038.9%  | 13.87%   | 6.67%       | -1.75%    | 3.81        | 48.3%   | 71     | 76   | 84        | 1      | shortTermPeriod: 3 longTermPeriod: 4   |
+| 1402.01% | 8.45%    | 3.57%       | -1.69%    | 2.11        | 64.46%  | 107    | 59   | 114       | 1      | shortTermPeriod: 3 longTermPeriod: 2   |
+| 1295.77% | 12.58%   | 8.73%       | -1.75%    | 4.99        | 44.66%  | 46     | 57   | 78        | 0      | shortTermPeriod: 6 longTermPeriod: 7   |
+| 1041.11% | 8.75%    | 8.28%       | -1.81%    | 4.57        | 41.18%  | 49     | 70   | 58        | 0      | shortTermPeriod: 5 longTermPeriod: 6   |
+| 1039.38% | 10.83%   | 9.87%       | -1.92%    | 5.14        | 41.67%  | 40     | 56   | 49        | 0      | shortTermPeriod: 2 longTermPeriod: 5   |
+| 821.88%  | 7.61%    | 7.98%       | -1.85%    | 4.31        | 42.59%  | 46     | 62   | 48        | 0      | shortTermPeriod: 3 longTermPeriod: 5   |
+| 788.16%  | 8.96%    | 7.99%       | -1.69%    | 4.73        | 47.73%  | 42     | 46   | 51        | 0      | shortTermPeriod: 9 longTermPeriod: 10  |
+| 783.3%   | 7.19%    | 6.84%       | -1.85%    | 3.7         | 47.71%  | 52     | 57   | 62        | 0      | shortTermPeriod: 7 longTermPeriod: 8   |
++----------+----------+-------------+-----------+-------------+---------+--------+------+-----------+--------+----------------------------------------+
++---------+----------+-------------+-----------+--- Walk Forward Period (2021-01-02 ~ 2022-05-30) -+--------+----------------------------------------+
+| ROI     | Avg. ROI | Avg. Profit | Avg. Loss | Reward/Risk | Success | Profit | Loss | Ambiguous | Failed | Parameters                             |
++---------+----------+-------------+-----------+-------------+---------+--------+------+-----------+--------+----------------------------------------+
+| 411.27% | 4.96%    | 6.51%       | -1.95%    | 3.34        | 48.19%  | 40     | 43   | 110       | 0      | shortTermPeriod: 2 longTermPeriod: 3   |
+| 445.26% | 7.95%    | 8.58%       | -1.95%    | 4.4         | 50%     | 28     | 28   | 83        | 0      | shortTermPeriod: 2 longTermPeriod: 4   |
+| 220.36% | 3.87%    | 6.75%       | -1.88%    | 3.59        | 47.37%  | 27     | 30   | 91        | 0      | shortTermPeriod: 3 longTermPeriod: 4   |
+| 696.72% | 7.26%    | 5.29%       | -1.91%    | 2.77        | 58.33%  | 56     | 40   | 97        | 0      | shortTermPeriod: 3 longTermPeriod: 2   |
+| 198.32% | 3.61%    | 6.53%       | -2%       | 3.27        | 49.09%  | 27     | 28   | 72        | 0      | shortTermPeriod: 6 longTermPeriod: 7   |
+| 59.64%  | 1.05%    | 5.6%        | -2%       | 2.8         | 38.6%   | 22     | 35   | 73        | 0      | shortTermPeriod: 5 longTermPeriod: 6   |
+| 355.03% | 6.96%    | 12.35%      | -1.89%    | 6.53        | 37.25%  | 19     | 32   | 68        | 0      | shortTermPeriod: 2 longTermPeriod: 5   |
+| 124.59% | 2.44%    | 8.12%       | -2%       | 4.06        | 37.25%  | 19     | 32   | 65        | 0      | shortTermPeriod: 3 longTermPeriod: 5   |
+| 411.77% | 9.15%    | 9.4%        | -2%       | 4.7         | 53.33%  | 24     | 21   | 52        | 0      | shortTermPeriod: 9 longTermPeriod: 10  |
+| 236.35% | 3.81%    | 7.52%       | -1.95%    | 3.86        | 43.55%  | 27     | 35   | 48        | 0      | shortTermPeriod: 7 longTermPeriod: 8   |
++---------+----------+-------------+-----------+-------------+---------+--------+------+-----------+--------+----------------------------------------+
+ 10/10 [============================] 100%
+```
+
+These are the used parameters in the optimization:
+
+```php
+public function optimizableParameters(): array
+{
+   return [
+      'shortTermPeriod' => new RangedSet(min: 2, max: 10, step: 1),
+      'longTermPeriod'  => new RangedSet(min: 2, max: 10, step: 1),
+   ];
+}
+```
 
 ### Live Trading
 
@@ -251,7 +343,7 @@ can use `php artisan trade:run` command:
 An example for trading 100 USD at 5x leverage would be:
 
 ```bash
-php artisan trade:run GoldenDeathCross FTX BTC/USDT 1h USDT 100 5
+php artisan trade:run MACross FTX BTC/USDT 1h USDT 100 5
 ```
 
 [Run this command on Docker](#running-commands-on-docker)
@@ -300,11 +392,11 @@ stop/target price has been reached if able to do so.
 ### Building a basic strategy
 
 Strategies are designed to be based on indicators. You can use no indicator and still be fine, but we are going to use
-them
-a lot in the following examples.
+them a lot in the following examples.
 
-We're going to build a basic strategy that longs when 50MA crosses over 200MA and shorts when 50MA crosses under 200MA.
-This is known as Golden/Death Cross.
+We're going to build a basic strategy that buys when short-period-moving-average crosses over long-term-moving-average
+and sells vice versa.
+It's the hello world of trading strategies.
 
 #### Crossing two moving averages
 
@@ -314,20 +406,21 @@ Combined is a special kind of indicator. It basically embeds an unlimited amount
 to use
 them as one.
 
-Run this command to create the strategy template:
+Run this command to create a strategy template named `MACross` which combines two moving averages in the Combined
+indicator and uses the Combined indicator as a primary signal that is sufficient on itself to trigger a trade setup.
 
 ```bash
-php artisan trade:strategy GoldenDeathCross --combined=MA,MA --signals=Combined
+php artisan trade:strategy MACross --combined=MA,MA --signals=Combined
 ```
+
 [Run this command on Docker](#running-commands-on-docker)
 
-Change every alias you see to something unique and explanatory. In this example we'll use `shortTerm` for 50MA and `longTerm` for 200MA as our aliases.
+Change every alias you see to something unique and explanatory. In this example we'll use `shortTerm` and `longTerm` for
+the indicators.
 
-If we want to look up the values of these moving averages at any point in signal function, we need to get it like
-on of these:
+If we want to look up the values of these moving averages at any point in signal function, we need to get it using the aliases:
 
 ```php
-//get 50-period moving average(aliased as shortTerm) 
 $value['shortTerm'];
 //or
 $indicator->current()['shortTerm'];
@@ -343,66 +436,65 @@ $value['divergence'];
 $value['signal'];
 ```
 
-But if we were to include MACD inside Combined, we would need to use its alias as well.
+But if we were to include MACD inside Combined, we would need to use its alias (let's just say 'MACD') as well.
 
 ```php
-$value['MACD-12-26-9']['macd'];
-$value['MACD-12-26-9']['divergence'];
-$value['MACD-12-26-9']['signal'];
+$value['MACD']['macd'];
+$value['MACD']['divergence'];
+$value['MACD']['signal'];
 ```
 
 In the setup function, you can also access indicators:
 
 ```php
-$macd = $this->indicators('MACD-12-26-9');
-$macdValue = $macd->current();
+$macd = $this->indicators('MACD');
+$macdVal = $macd->current();
 $macdValue['macd'];
 $macdValue['divergence'];
 $macdValue['signal'];
 ```
 
-Now we need to define the indicator configurations and write our signal logic inside the signal function. So our
-indicator
-the configuration will look like this:
+Now we need to define the indicator configurations and write our signal logic inside the signal function. 
+So our configuration should look like this:
 
 ```php
 protected function indicatorConfig(): array
 {
     return [
         [
-            'alias' => 'ma-cross',
-            'class' => Combined::class,
+            'alias'  => 'maCross',
+            'class'  => Combined::class,
             'config' => [
                 'indicators' => [
                     0 => [
-                        'alias' => 'short-term',
-                        'class' => MA::class,
+                        'alias'  => 'shortTerm',
+                        'class'  => MA::class,
                         'config' => [
-                            'timePeriod' => 50,
+                            'timePeriod' => $this->config('shortTermPeriod'),
                         ],
                     ],
                     1 => [
-                        'alias' => 'long-term',
-                        'class' => MA::class,
+                        'alias'  => 'longTerm',
+                        'class'  => MA::class,
                         'config' => [
-                            'timePeriod' => 200,
+                            'timePeriod' => $this->config('longTermPeriod'),
                         ],
                     ],
                 ],
             ],
             'signal' => function (Signal $signal, Combined $indicator, mixed $value): ?Signal {
 
-                if ($indicator->crossOver('short-term', 'long-term'))
+                if ($indicator->crossOver('shortTerm', 'longTerm'))
                 {
-                    $signal->name = 'Golden Cross';
+                    $signal->name = 'MA-CROSS-OVER';
                     $signal->side = Side::BUY;
 
                     return $signal;
                 }
 
-                if ($indicator->crossUnder('short-term', 'long-term'))
+                if ($indicator->crossUnder('shortTerm', 'longTerm'))
                 {
-                    $signal->name = 'Death Cross';
+                    $signal->name = 'MA-CROSS-UNDER';
                     $signal->side = Side::SELL;
 
                     return $signal;
@@ -415,55 +507,72 @@ protected function indicatorConfig(): array
 }
 ```
 
-And our trade configuration will look like this:
+Let's add the config parameters to the config array and define default values for them:
+
+```php
+protected array $config = [
+
+        //...
+
+        'shortTermPeriod' => 10,
+        'longTermPeriod'  => 20
+    ];
+```
+
+We can leave trade configuration mostly the same as before, 
+we don't need to do anything for simplicity's sake but there are useful things to do here mostly on risk management.
 
 ```php
 protected function tradeConfig(): array
 {
     return [
         'signals' => [
-            'ma-cross'
+            'maCross'
         ],
         'setup' => function (TradeSetup $trade, Candles $candles, Collection $signals): ?TradeSetup {
              
+            $trade->setStopPrice(ratio: 5/100); //sets the stop price accounting for 5% loss 
+            
             return $trade;
         }
     ];
 } 
 ```
 
-You see that we just return the $trade without any changes.
+You see that we just return the $trade without any changes other than setting a %5 stop loss.
 Normally, we would need to at least define a name and a side but since we did that in the signal function, we can just
-return the $trade here because we base our trades on signals in this example.
+return the $trade because we base our trades on signals in this strategy.
 $trade object will inherit the last signal's name and side by default. Of course, we could override that by setting it
-manually.
+manually...
 
 #### Testing the strategy
 
-Now let's test our strategy and see what happens.
+Now let's test the strategy and see what happens.
 
 ```bash
-php artisan trade:strategy-test GoldenDeathCross BTC/USDT 1h Binance
+php artisan trade:strategy-test MACross BTC/USDT 1d Binance
 ```
 
 [Run this command on Docker](#running-commands-on-docker)
+
 ```bash
-Running strategy...
-257 possible trades found.
-Evaluated 255 trades.
-Elapsed time: 0:0:1:10
-+---------------+---------+
-| ROI           | 255.81% |
-| Avg. ROI      | 1%      |
-| Avg. Profit   | 11.71%  |
-| Avg. Loss     | -4.72%  |
-| Reward/Risk   | 2.48    |
-| Success Ratio | 36.08%  |
-| Profit        | 92      |
-| Loss          | 163     |
-| Ambiguous     | 0       |
-| Failed        | 0       |
-+---------------+---------+
+85 possible trades found.
+Evaluated 83 trades.
+
+Elapsed time: 0:0:0:9
++-------------+----------+
+| ROI         | 2028.21% |
+| Avg. ROI    | 30.73%   |
+| Avg. Profit | 33.06%   |
+| Avg. Loss   | -4.53%   |
+| Reward/Risk | 7.3      |
+| Success     | 31.82%   |
+| Profit      | 21       |
+| Loss        | 45       |
+| Ambiguous   | 17       |
+| Failed      | 0        |
+| Parameters  |          |
++-------------+----------+
 ```
 
 It's done. Now you can create a new strategy from scratch and experiment with provided tools to see how it really works.
@@ -486,6 +595,7 @@ intervals to make sure both parties are in a consistent state.
 The software is provided as-is. No guarantees are made. Use at your own risk and discretion.
 
 ## Screenshots
+
 <img src="https://user-images.githubusercontent.com/19874501/167264486-d4bfbbd5-cdf4-492e-8e72-22b7eaad41fc.png" alt="Indicator Chart View"></a>
 <img src="https://user-images.githubusercontent.com/19874501/167264488-c1497620-556f-4ea7-b921-4646a1790672.png" alt="Strategy View"></a>
 <img src="https://user-images.githubusercontent.com/19874501/167264489-d0ca6b5d-38a5-4bbb-ba02-b1661018da74.png" alt="Strategy Chart View"></a>

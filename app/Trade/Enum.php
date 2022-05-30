@@ -20,6 +20,8 @@ final class Enum
      */
     public static function cases(string|\UnitEnum $class): array
     {
-        return \array_map(static fn(\UnitEnum $enum): string => static::case($enum), $class::cases());
+        return \array_map(static function (\UnitEnum $enum): string {
+            return static::case($enum);
+        }, $class::cases());
     }
 }

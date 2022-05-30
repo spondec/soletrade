@@ -7,9 +7,9 @@ use App\Models\Order;
 use App\Trade\Enum\OrderStatus;
 use App\Trade\Enum\OrderType;
 use App\Trade\Enum\Side;
+use App\Trade\Exchange\Account\TradeAsset;
+use App\Trade\Exchange\OrderManager;
 use App\Trade\Log;
-use App\Trade\OrderManager;
-use App\Trade\TradeAsset;
 use Illuminate\Support\Collection;
 
 class LivePosition extends Position
@@ -107,7 +107,7 @@ class LivePosition extends Position
         try
         {
             $this->manager->cancel($order);
-        } catch (\App\Exceptions\OrderFilledInCancelRequest $error)
+        } catch (\App\Trade\Exception\OrderFilledInCancelRequest $error)
         {
             //Order should be filled fully, fill listeners will handle the rest.
             //Do not resend the order.

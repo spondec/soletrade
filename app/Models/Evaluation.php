@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
@@ -12,11 +13,11 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property TradeSetup     entry
  * @property TradeSetup     exit
  * @property int            exit_id
- * @property string         evaluation_interval
+ * @property Symbol         symbol
+ * @property int            symbol_id
  * @property float          relative_roi
  * @property float          highest_roi
  * @property float          lowest_roi
- * @property float          lowest_to_highest_roi
  * @property float          used_size
  * @property float          entry_price
  * @property float          exit_price
@@ -45,7 +46,7 @@ class Evaluation extends Model
     protected $with = ['entry', 'exit'];
     protected array $unique = ['type', 'entry_id', 'exit_id'];
     protected $casts = [
-        'log'                 => 'array'
+        'log' => 'array'
     ];
 
     public function isExited(): bool
@@ -61,5 +62,10 @@ class Evaluation extends Model
     public function exit(): MorphTo
     {
         return $this->morphTo('exit', 'type');
+    }
+
+    public function symbol(): BelongsTo
+    {
+        return $this->belongsTo(Symbol::class);
     }
 }

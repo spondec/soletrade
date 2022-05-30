@@ -1,8 +1,8 @@
 <?php
 
+use App\Trade\Illuminate\Database\Schema\Blueprint;
+use App\Trade\Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Migrations\Migration;
-use App\Illuminate\Database\Schema\Blueprint;
-use App\Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     /**
@@ -17,11 +17,10 @@ return new class extends Migration {
             $table->string('type');
             $table->foreignId('entry_id')->constrained('trade_setups');
             $table->foreignId('exit_id')->nullable()->constrained('trade_setups');
-            $table->string('evaluation_interval', 3);
+            $table->foreignId('symbol_id')->constrained('symbols');
             $table->float('relative_roi')->nullable();
             $table->float('highest_roi')->nullable();
             $table->float('lowest_roi')->nullable();
-            $table->float('lowest_to_highest_roi')->nullable();
             $table->float('used_size')->default(0);
             $table->decimal('entry_price')->nullable();
             $table->decimal('avg_entry_price')->nullable();

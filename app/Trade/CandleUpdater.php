@@ -3,8 +3,8 @@
 namespace App\Trade;
 
 use App\Models\Symbol;
-use App\Repositories\SymbolRepository;
 use App\Trade\Exchange\Exchange;
+use App\Trade\Repository\SymbolRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -86,7 +86,7 @@ class CandleUpdater
 
     public function bySymbol(Symbol $symbol, int $maxRunTime = 0): bool
     {
-        Log::execTimeStart($task = "Updating $symbol->symbol-$symbol->interval candles");
+        Log::execTimeStart($task = "Updating {$this->exchange::name()} $symbol->symbol-$symbol->interval candles");
         $startTime = \time();
         $id = $symbol->id;
 

@@ -5,46 +5,39 @@ namespace App\Trade\Strategy;
 use App\Models\Summary;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
-use App\Repositories\SymbolRepository;
 use App\Trade\Collection\TradeCollection;
 use App\Trade\Evaluation\Evaluator;
 use App\Trade\Evaluation\Summarizer;
 use App\Trade\HasConfig;
-use App\Trade\Log;
+use App\Trade\HasInstanceEvents;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
-use JetBrains\PhpStorm\ArrayShape;
 
 class Tester
 {
+    use HasInstanceEvents;
     use HasConfig;
 
+    protected array $events = [
+        'strategy_pre_run',
+        'strategy_post_run',
+
+        'summary_updated',
+        'summary_finished',
+    ];
+
+    public readonly Strategy $strategy;
     protected array $config = [];
-
-    final protected function getDefaultConfig(): array
-    {
-        return [
-            'minCandles' => null,
-            'startDate'  => null,
-            'endDate'    => null
-        ];
-    }
-
-    protected Strategy $strategy;
-
     protected Evaluator $evaluator;
-    protected Summarizer $summarizer;
 
-    public function __construct(string $strategyClass, array $config = [])
+    public function __construct(string $strategyClass, Symbol $symbol, array $config = [])
     {
         $this->mergeConfig($config);
-        $this->strategy = $this->setupStrategy($strategyClass, $config);
+        $this->strategy = $this->newStrategy($strategyClass, $symbol, $config);
 
-        $this->evaluator = App::make(Evaluator::class, ['strategy' => $this->strategy]);
-        $this->summarizer = App::make(Summarizer::class, ['strategy' => $this->strategy]);
+        $this->evaluator = new Evaluator($this->strategy);
     }
 
-    protected function setupStrategy(string $class, array $config): Strategy
+    protected function newStrategy(string $class, Symbol $symbol, array $config): Strategy
     {
         if (!\is_subclass_of($class, Strategy::class))
         {
@@ -53,14 +46,16 @@ class Tester
 
         $config = array_merge_recursive_distinct($this->config, $config);
 
-        return new $class(config: $config);
+        return new $class(symbol: $symbol, config: $config);
     }
 
-    public function runStrategy(Symbol $symbol): TradeCollection
+    public function runStrategy(): TradeCollection
     {
-        Log::execTimeStart('runStrategy');
-        $trades = $this->strategy->run($symbol);
-        Log::execTimeFinish('runStrategy');
+        $this->fireEvent('strategy_pre_run', $this->strategy);
+
+        $trades = $this->strategy->run();
+
+        $this->fireEvent('strategy_post_run', $this->strategy, $trades);
 
         return $trades;
     }
@@ -68,22 +63,17 @@ class Tester
     public function summary(TradeCollection $trades, ?Collection &$evaluations = null): Summary
     {
         $evaluations = new Collection();
-        foreach ($this->evaluate($trades) as $evaluation)
+        foreach ($this->summarize($trades, $summary) as $evaluation)
         {
             $evaluations[] = $evaluation;
         }
 
-        return $this->summarizer->summarize($evaluations);
+        return $summary ?? new Summary();
     }
 
-    public function progress(TradeCollection $trades, Summary &$summary = null): \Generator
+    protected function newSummarizer(): Summarizer
     {
-        foreach ($this->evaluate($trades) as $evaluation)
-        {
-            $this->summarizer->addEvaluation($evaluation);
-            $summary = $this->summarizer->getSummary();
-            yield $evaluation;
-        }
+        return new Summarizer($this->strategy);
     }
 
     protected function evaluate(TradeCollection $trades): \Generator
@@ -129,5 +119,33 @@ class Tester
                 $first = $next;
             }
         }
+    }
+
+    public function summarize(TradeCollection $trades, Summary &$summary = null): \Generator
+    {
+        $summarizer = $this->newSummarizer();
+
+        $tradeCount = 0;
+        foreach ($this->evaluate($trades) as $evaluation)
+        {
+            $summarizer->addEvaluation($evaluation);
+            $summary = $summarizer->getSummary();
+
+            $tradeCount++;
+            $this->fireEvent('summary_updated', $summary, $tradeCount);
+
+            yield $evaluation;
+        }
+
+        $this->fireEvent('summary_finished', $summary ?? new Summary(), $tradeCount);
+    }
+
+    final protected function getDefaultConfig(): array
+    {
+        return [
+            'minCandles' => null,
+            'startDate'  => null,
+            'endDate'    => null
+        ];
     }
 }

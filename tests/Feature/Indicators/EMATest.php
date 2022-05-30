@@ -3,7 +3,7 @@
 namespace Tests\Feature\Indicators;
 
 use App\Indicators\EMA;
-use App\Repositories\SymbolRepository;
+use App\Trade\Repository\SymbolRepository;
 
 class EMATest extends IndicatorTestCase
 {

@@ -2,8 +2,8 @@
 
 namespace App\Trade\Process;
 
-use App\Repositories\ConfigRepository;
 use App\Trade\Log;
+use App\Trade\Repository\ConfigRepository;
 
 class RecoverableRequest extends Recoverable
 {

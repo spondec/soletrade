@@ -7,9 +7,9 @@
       <th>Side</th>
       <th>Entry</th>
       <th>Exit</th>
-      <th>Entry Signal</th>
+      <th>Entry Setup</th>
       <th>Entry Date</th>
-      <th>Exit Signal</th>
+      <th>Exit Setup</th>
       <th>Exit Date</th>
       <th>Entry Price</th>
       <th>Exit Price</th>
@@ -23,8 +23,8 @@
     <tbody>
 
     <tr v-for="trade in paginated" class="bg-opacity-50" v-bind:class="{
-        'bg-danger': trade.relative_roi < 0,
-        'bg-success': trade.relative_roi > 0,
+        'bg-danger': trade.relative_roi < 0 && !trade.is_ambiguous,
+        'bg-success': trade.relative_roi > 0 && !trade.is_ambiguous,
         'bg-warning' : !trade.is_entry_price_valid,
         'bg-info': trade.is_ambiguous
       }">

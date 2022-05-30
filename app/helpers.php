@@ -104,6 +104,11 @@ if (!function_exists('strategy_exists'))
 
 if (!function_exists('get_strategy_class'))
 {
+    /**
+     * @param string $strategyName
+     *
+     * @return class-string<\App\Trade\Strategy\Strategy>
+     */
     function get_strategy_class(string $strategyName): string
     {
         if (class_exists($class = STRATEGY_NAMESPACE . $strategyName))
@@ -117,6 +122,11 @@ if (!function_exists('get_strategy_class'))
 
 if (!function_exists('get_indicator_class'))
 {
+    /**
+     * @param string $indicatorName
+     *
+     * @return class-string<\App\Trade\Indicator\Indicator>
+     */
     function get_indicator_class(string $indicatorName): string
     {
         if (class_exists($class = INDICATOR_NAMESPACE . $indicatorName))

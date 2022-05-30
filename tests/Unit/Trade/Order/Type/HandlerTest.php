@@ -5,8 +5,8 @@ namespace Tests\Unit\Trade\Order\Type;
 use App\Models\Order;
 use App\Trade\Enum\OrderType;
 use App\Trade\Enum\Side;
+use App\Trade\Exchange\OrderManager;
 use App\Trade\Order\Type\Handler;
-use App\Trade\OrderManager;
 use Mockery as m;
 
 class HandlerTest extends HandlerTestCase

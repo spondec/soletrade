@@ -2,13 +2,13 @@
 
 namespace App\Trade\Exchange\FTX;
 
-use App\Exceptions\OrderFilledInCancelRequest;
-use App\Exceptions\OrderNotCanceledException;
 use App\Models\Fill;
 use App\Models\Order;
 use App\Trade\Enum;
 use App\Trade\Enum\OrderStatus;
 use App\Trade\Enum\OrderType;
+use App\Trade\Exception\OrderFilledInCancelRequest;
+use App\Trade\Exception\OrderNotCanceledException;
 use App\Trade\Exchange\Exchange;
 use App\Trade\Process\RecoverableRequest;
 use ccxt\InvalidOrder;

@@ -8,8 +8,8 @@ namespace App\Trade\Evaluation;
 
 use App\Models\Evaluation;
 use App\Models\TradeSetup;
-use App\Repositories\SymbolRepository;
 use App\Trade\Calc;
+use App\Trade\Repository\SymbolRepository;
 use App\Trade\Strategy\Strategy;
 use Illuminate\Support\Facades\App;
 
@@ -72,7 +72,7 @@ class Evaluator
         $e->entry_price = $status->getEntryPrice()->get();
         $e->stop_price = $status->getStopPrice()?->get();
         $e->target_price = $status->getTargetPrice()?->get();
-        $e->evaluation_interval = $this->strategy->config('evaluation.interval') ?? $this->strategy->symbol()->interval;
+        $e->symbol()->associate($this->strategy->evaluationSymbol());
 
         $log = [];
 
@@ -80,7 +80,7 @@ class Evaluator
         {
             $e->is_entry_price_valid = true;
             $e->entry_timestamp = $position->entryTime();
-            $e->is_ambiguous = $status->isAmbiguous();
+            $e->is_ambiguous = $status->isAmbiguous() || $position->entryTime() === $position->exitTime();
             $e->used_size = $position->getMaxUsedSize();
 
             if (!$e->is_ambiguous)
@@ -138,7 +138,7 @@ class Evaluator
     {
         $entryPivots = $this
             ->symbolRepo
-            ->assertLowestHighestCandle($e->entry->symbol_id,
+            ->assertLowestHighestCandle($e->symbol_id,
                 $e->entry->price_date,
                 $e->entry_timestamp);
 
@@ -147,7 +147,7 @@ class Evaluator
 
         $pivots = $this
             ->symbolRepo
-            ->assertLowestHighestCandle($e->entry->symbol_id,
+            ->assertLowestHighestCandle($e->symbol_id,
                 $e->entry_timestamp,
                 $e->exit_timestamp);
 

@@ -19,7 +19,7 @@ class OrderBook
 
         if (!$this->bids || !$this->asks)
         {
-            throw new \App\Exceptions\EmptyOrderBookException("Order book data is empty for $symbol.");
+            throw new \App\Trade\Exception\EmptyOrderBookException("Order book data is empty for $symbol.");
         }
 
         $this->assertPositiveSpread();

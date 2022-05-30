@@ -10,9 +10,13 @@ trait HasConfig
     private readonly bool $hasDefaultConfig;
     protected array $variableConfigKeys = [];
 
-    protected function mergeConfig(array &$config): void
+    public function mergeConfig(array &$config): void
     {
-        $this->hasDefaultConfig = \method_exists(static::class, 'getDefaultConfig');
+        if (!isset($this->hasDefaultConfig))
+        {
+            $this->hasDefaultConfig = \method_exists(static::class, 'getDefaultConfig');
+        }
+
         $this->assertPreRequisites();
 
         $this->buildDefaultConfig();

@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Evaluation;
 use App\Models\Symbol;
-use App\Repositories\ConfigRepository;
-use App\Repositories\SymbolRepository;
 use App\Trade\Exchange\Exchange;
 use App\Trade\HasName;
 use App\Trade\Log;
+use App\Trade\Repository\ConfigRepository;
+use App\Trade\Repository\SymbolRepository;
 use App\Trade\Strategy\Tester;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -103,12 +103,13 @@ class ChartController extends Controller
 
         if ($strategy)
         {
-            $tester = new Tester($strategy, [
+            $tester = new Tester($strategy, $symbol, [
                 'startDate' => $start,
                 'endDate'   => $end
             ]);
 
-            $trades = $tester->runStrategy($symbol);
+            $tester->strategy->updateSymbols();
+            $trades = $tester->runStrategy();
 
             Log::execTimeStart('Evaluating trades');
             /** @var Collection $evaluations */

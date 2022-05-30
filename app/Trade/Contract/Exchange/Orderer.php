@@ -2,10 +2,10 @@
 
 namespace App\Trade\Contract\Exchange;
 
-use App\Exceptions\OrderFailedException;
 use App\Models\Fill;
 use App\Models\Order;
 use App\Trade\Enum\Side;
+use App\Trade\Exception\OrderFailedException;
 
 interface Orderer
 {
@@ -20,8 +20,8 @@ interface Orderer
      * @param Order $order
      *
      * @return Order
-     * @throws \App\Exceptions\OrderNotCanceledException
-     * @throws \App\Exceptions\OrderFilledInCancelRequest
+     * @throws \App\Trade\Exception\OrderNotCanceledException
+     * @throws \App\Trade\Exception\OrderFilledInCancelRequest
      */
     public function cancel(Order $order): Order;
 

@@ -1,7 +1,7 @@
 <?php
 
-use App\Illuminate\Database\Schema\Blueprint;
-use App\Illuminate\Support\Facades\Schema;
+use App\Trade\Illuminate\Database\Schema\Blueprint;
+use App\Trade\Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration {
@@ -38,6 +38,6 @@ return new class extends Migration {
      */
     public function down()
     {
-        Schema::dropIfExists('positions');
+        Schema::dropIfExists('trades');
     }
 };

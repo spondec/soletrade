@@ -13,7 +13,7 @@ import * as VueRouter from "vue-router";
 const app = createApp({});
 
 import '../css/app.css'
-import Chart from "./pages/Chart";
+import PriceChart from "./pages/PriceChart";
 import Dashboard from "./pages/Dashboard";
 import ApiService from "./services/ApiService";
 import ErrorPage from "./pages/Error";
@@ -41,7 +41,7 @@ app.component('card-table', require('./components/CardTable.vue').default);
 
 const routes = [
     {path: '/', component: Dashboard},
-    {path: '/chart', component: Chart},
+    {path: '/chart', component: PriceChart},
     {path: '/error', component: ErrorPage},
 ];
 

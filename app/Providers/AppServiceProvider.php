@@ -2,12 +2,11 @@
 
 namespace App\Providers;
 
-use App\Illuminate\Database\Schema\Blueprint;
 use App\Models\Signal;
 use App\Models\TradeSetup;
-use App\Repositories\ConfigRepository;
-use App\Repositories\SymbolRepository;
-use App\Trade\Strategy\Tester;
+use App\Trade\Illuminate\Database\Schema\Blueprint;
+use App\Trade\Repository\ConfigRepository;
+use App\Trade\Repository\SymbolRepository;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;
@@ -27,7 +26,6 @@ class AppServiceProvider extends ServiceProvider
         }
         \ini_set('trader.real_precision', 10);
 
-        $this->app->singleton(Tester::class);
         $this->app->singleton(SymbolRepository::class);
         $this->app->singleton(ConfigRepository::class);
 

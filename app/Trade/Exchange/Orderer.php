@@ -2,12 +2,12 @@
 
 namespace App\Trade\Exchange;
 
-use App\Exceptions\FailedOrderFillException;
 use App\Models\Fill;
 use App\Models\Order;
 use App\Trade\Enum;
 use App\Trade\Enum\OrderType;
 use App\Trade\Enum\Side;
+use App\Trade\Exception\FailedOrderFillException;
 use Illuminate\Support\Collection;
 
 abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer

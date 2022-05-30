@@ -7,10 +7,10 @@ namespace App\Trade\Strategy;
 use App\Models\Signal;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
-use App\Repositories\SymbolRepository;
 use App\Trade\Candles;
 use App\Trade\Config\TradeConfig;
 use App\Trade\Enum\OrderType;
+use App\Trade\Repository\SymbolRepository;
 use Illuminate\Support\Collection;
 
 class TradeCreator
