@@ -13,6 +13,7 @@ use App\Trade\Strategy\Process\Summarizer;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Strategy\Tester;
 use App\Trade\Util;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Spatie\Fork\Fork;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -206,7 +207,13 @@ class StrategyTester extends TradeCommand
 
         $filtered = $this->filterOptimizedSummaries($summaries);
 
-        $this->updateSummaryTable('optSummary', $filtered->all());
+        $symbol = $strategy->symbol();
+        $this->updateSummaryTable('optSummary',
+            sprintf('%s %s Optimization Summary %s ~ %s',
+                $strategy::name(),
+                "{$symbol->exchange()::name()} $symbol->symbol $symbol->interval",
+                $this->option('start'), $this->option('end')),
+            $filtered->all());
 
         if ($walkForward)
         {
@@ -248,7 +255,7 @@ class StrategyTester extends TradeCommand
         return new SummaryCollection($filtered);
     }
 
-    protected function updateSummaryTable(string $tableName, array $summaries): void
+    protected function updateSummaryTable(string $tableName, string $title, array $summaries): void
     {
         $rows = [];
         foreach ($summaries as $k => $summary)
@@ -257,6 +264,7 @@ class StrategyTester extends TradeCommand
         }
 
         $this->getTable($tableName)
+            ->setHeaderTitle($title)
             ->setHeaders($this->getSummaryHeader())
             ->setRows($rows)
             ->render();
@@ -317,14 +325,14 @@ class StrategyTester extends TradeCommand
 
     protected function runWalkForwardAnalysis(Strategy          $strategy,
                                               int               $startDate,
-                                              int               $walkForwardEndDate,
+                                              int               $endDate,
                                               SummaryCollection $summaries,
                                               ProgressBar       $progressBar): void
     {
         $tester = $this->newRangedTester($strategy::class,
             $strategy->symbol(),
             $startDate,
-            $walkForwardEndDate);
+            $endDate);
 
         $summarizer = new Summarizer($tester,
             $summaries->pluck('parameters')->all()
@@ -347,7 +355,11 @@ class StrategyTester extends TradeCommand
             return array_search($summary->parameters, $parameters);
         });
 
-        $this->updateSummaryTable('walkForwardSummary', $walkForwardSummaries->all());
+        $this->updateSummaryTable('walkForwardSummary',
+            sprintf("Walk Forward Period (%s ~ %s)",
+                Util::dateFormat($startDate),
+                Util::dateFormat($endDate)),
+            $walkForwardSummaries->all());
     }
 
     protected function handleTest(Tester $tester): void
