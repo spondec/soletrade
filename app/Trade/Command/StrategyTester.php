@@ -29,7 +29,7 @@ class StrategyTester extends TradeCommand
      *
      * @var string
      */
-    protected $signature = 'trade:strategy-test {strategy} {symbol} {interval} {exchange} {--start=} {--end=} {--optimize}';
+    protected $signature = 'trade:strategy-test {strategy} {symbol} {interval} {exchange} {--start=} {--end=} {--optimize} {--skipUpdate}';
     /**
      * The console command description.
      *
@@ -81,7 +81,10 @@ class StrategyTester extends TradeCommand
 
         $strategy = $tester->strategy;
 
-        $this->updateSymbols($strategy);
+        if(!$options['skipUpdate'])
+        {
+            $this->updateSymbols($strategy);
+        }
 
         if ($options['optimize'])
         {
