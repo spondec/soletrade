@@ -63,7 +63,8 @@ class SymbolRepository extends Repository
             throw new \InvalidArgumentException('Start date can not be greater than or equal to the end date.');
         }
 
-        $query = DB::table('candles')
+        /** @noinspection PhpStrictTypeCheckingInspection */
+        $query = DB::table(DB::raw('candles USE INDEX(candles_symbol_id_t_unique)'))
             ->where('symbol_id', $symbolId)
             ->where('t', '>=', $startDate)
             ->where('t', '<=', $endDate);
@@ -301,7 +302,7 @@ class SymbolRepository extends Repository
         {
             throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
         }
-        
+
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         return DB::table('candles')
