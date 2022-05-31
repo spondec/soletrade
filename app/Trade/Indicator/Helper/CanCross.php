@@ -16,7 +16,7 @@ trait CanCross
      *
      * @return bool
      */
-    public function crossOver(string $x, string $y): bool
+    public function crossover(string $x, string $y): bool
     {
         $prev = $this->prev();
         $current = $this->current();
@@ -37,7 +37,7 @@ trait CanCross
      *
      * @return bool
      */
-    public function crossUnder(string $x, string $y): bool
+    public function crossunder(string $x, string $y): bool
     {
         $prev = $this->prev();
         $current = $this->current();
