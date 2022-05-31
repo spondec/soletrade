@@ -125,6 +125,11 @@ class TradeStatus
 
     public function runTradeActions(\stdClass $candle, int $priceDate): void
     {
+        if ($this->isExited())
+        {
+            return;
+        }
+        
         foreach ($this->actionHandlers as $key => $handler)
         {
             if ($action = $handler->run($candle, $priceDate))
