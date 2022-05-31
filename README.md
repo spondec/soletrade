@@ -533,7 +533,7 @@ protected function tradeConfig(): array
         ],
         'setup' => function (TradeSetup $trade, Candles $candles, Collection $signals): ?TradeSetup {
              
-            $trade->setStopPrice(ratio: 5/100); //sets the stop price accounting for 5% loss 
+            $trade->setStopPrice(ratio: 2/100); //sets the stop price accounting for 2% loss 
             
             return $trade;
         }
@@ -541,7 +541,7 @@ protected function tradeConfig(): array
 } 
 ```
 
-You see that we just return the $trade without any changes other than setting a %5 stop loss.
+You see that we just return the $trade without any changes other than setting a %2 stop loss.
 Normally, we would need to at least define a name and a side but since we did that in the signal function, we can just
 return the $trade because we base our trades on signals in this strategy.
 $trade object will inherit the last signal's name and side by default. Of course, we could override that by setting it
