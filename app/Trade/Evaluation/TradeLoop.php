@@ -205,12 +205,8 @@ class TradeLoop
                     break;
                 }
 
-                $isExited = $this->tryPositionExit($position, $candle, $priceDate);
-
-                if (!$isExited)
-                {
-                    $this->status->runTradeActions($candle, $priceDate);
-                }
+                $this->tryPositionExit($position, $candle, $priceDate);
+                $this->status->runTradeActions($candle, $priceDate);
             }
         }
 
@@ -266,11 +262,11 @@ class TradeLoop
         $position->stop($priceDate);
     }
 
-    protected function tryPositionExit(Position $position, \stdClass $candle, int $priceDate): bool
+    protected function tryPositionExit(Position $position, \stdClass $candle, int $priceDate): void
     {
         if ($this->status->isExited())
         {
-            return true;
+            return;
         }
 
         $stopped = $this->status->checkIsStopped($candle);
@@ -278,21 +274,17 @@ class TradeLoop
 
         if ((!$stopped && !$closed) || $this->status->isAmbiguous())
         {
-            return true;
+            return;
         }
 
         if ($stopped)
         {
             $position->stop($priceDate);
-            return true;
         }
         if ($closed)
         {
             $position->close($priceDate);
-            return true;
         }
-
-        return false;
     }
 
     protected function isLastCandle(\stdClass $candle): bool //TODO:: needs caching
