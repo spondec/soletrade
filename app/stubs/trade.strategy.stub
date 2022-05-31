@@ -57,7 +57,7 @@ final class {{ name }} extends Strategy
          * Trade commission ratio. This will be reflected on the final ROI when tested. Disabled by default.
          * Most exchanges charges between 0.0004(0.04%) and 0.001(0.1%).
          */
-        'feeRatio'   => 0.0000
+        'feeRatio'   => 0.0000,
 
         /**
          * You can add more config parameters below like the above and use them throughout this class.
@@ -79,7 +79,7 @@ final class {{ name }} extends Strategy
      *
      * return [
      *      'shortTermPeriod' => new RangedSet(min:2,max:20, step:1),
-     *      'longTermPeriod'  => new DefinedSet([2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]),
+     *      'longTermPeriod'  => new DefinedSet([2,3,5,8,13]),
      * ];
      *
      */
