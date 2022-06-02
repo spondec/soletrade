@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->decimal('v');
             $table->index(['symbol_id', 'l']);
             $table->index(['symbol_id', 'h']);
-            $table->unique(['symbol_id', 't']);
+            $table->unique(['t', 'symbol_id']);
         });
     }
 

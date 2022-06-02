@@ -64,7 +64,7 @@ class SymbolRepository extends Repository
         }
 
         /** @noinspection PhpStrictTypeCheckingInspection */
-        $query = DB::table(DB::raw('candles USE INDEX(candles_symbol_id_t_unique)'))
+        $query = DB::table(DB::raw('candles USE INDEX(candles_t_symbol_id_unique)'))
             ->where('symbol_id', $symbolId)
             ->where('t', '>=', $startDate)
             ->where('t', '<=', $endDate);
