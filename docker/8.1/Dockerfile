@@ -29,7 +29,7 @@ RUN apt-get update \
        php8.1-intl php8.1-readline \
        php8.1-ldap \
        php8.1-msgpack php8.1-igbinary php8.1-redis php8.1-swoole \
-       php8.1-memcached php8.1-pcov php8.1-xdebug php8.1-gmp \
+       php8.1-memcached php8.1-pcov php8.1-gmp \
     && pecl install trader \
     && php -r "readfile('https://getcomposer.org/installer');" | php -- --install-dir=/usr/bin/ --filename=composer \
     && curl -sL https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
@@ -46,6 +46,8 @@ RUN apt-get update \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN #apt-get update && apt-get install -y php8.1-xdebug
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.1
 
