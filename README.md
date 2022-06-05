@@ -15,7 +15,7 @@ Features include:
 
 ## Requirements
 
-**You don't need anything other than [Docker](https://www.docker.com/products/docker-desktop/). The listed requirements is for people who hate Docker.**
+**You don't need anything other than [Docker](https://www.docker.com/products/docker-desktop/). The listed requirements are for standalone installations.**
 
 * PHP 8.1+
 * PHP Trader Extension
@@ -106,9 +106,9 @@ Docker.
 So `php artisan some:command` becomes `./vendor/bin/sail artisan some:command` on Docker or `sail artisan some:command`
 if you aliased it to `sail`.
 
-### Full
+### Standalone
 
-For full installation, after installing all the dependencies, run these commands in order:
+For standalone installation, after installing all the dependencies, run these commands in order:
 
 ```bash
 git clone https://github.com/spondec/soletrade.git
