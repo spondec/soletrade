@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->decimal('c');
             $table->decimal('h');
             $table->decimal('l');
-            $table->decimal('v');
+            $table->decimal('v')->nullable();
             $table->index(['symbol_id', 'l']);
             $table->index(['symbol_id', 'h']);
             $table->unique(['t', 'symbol_id']);
