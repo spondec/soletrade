@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Trade\Enum\Side;
 use App\Trade\Order\Type\Limit;
 use Mockery\MockInterface;
+use Tests\Unit\Trade\Order\Type\HandlerTestCase;
 
 /**
  * @runTestsInSeparateProcesses

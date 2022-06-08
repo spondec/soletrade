@@ -31,7 +31,8 @@ class Price
     public function __construct(
         protected float $price,
         int             $timestamp
-    ) {
+    )
+    {
         $this->log = new ChangeLog($this->price, $timestamp);
     }
 

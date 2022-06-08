@@ -23,7 +23,8 @@ class SymbolRepository extends Repository
         Symbol     $symbol,
         Collection $candles,
         array      $indicators
-    ): void {
+    ): void
+    {
         foreach ($indicators as $class => $config) {
             if (!\is_array($config)) {
                 $class = $config;
@@ -85,7 +86,8 @@ class SymbolRepository extends Repository
         ?int    $limit,
         ?string $interval = null,
         bool    $includeStart = false
-    ): Collection {
+    ): Collection
+    {
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
         $candles = DB::table('candles')
@@ -122,7 +124,8 @@ class SymbolRepository extends Repository
         int     $endDate,
         ?string $interval = null,
         bool    $includeStart = false
-    ): Collection {
+    ): Collection
+    {
         $candles = $this->fetchCandlesBetween(
             $symbol,
             $startDate,
@@ -286,7 +289,8 @@ class SymbolRepository extends Repository
         int     $endDate,
         ?string $interval = null,
         bool    $includeStart = false
-    ): Collection {
+    ): Collection
+    {
         if ($startDate >= $endDate) {
             throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
         }

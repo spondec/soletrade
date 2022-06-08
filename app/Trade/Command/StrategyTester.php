@@ -113,7 +113,8 @@ class StrategyTester extends TradeCommand
         Symbol $symbol,
         ?int   $startDate,
         ?int   $endDate
-    ): Tester {
+    ): Tester
+    {
         return new Tester($strategyClass, $symbol, [
             'startDate' => $startDate,
             'endDate'   => $endDate,
@@ -321,7 +322,8 @@ class StrategyTester extends TradeCommand
         int               $endDate,
         SummaryCollection $summaries,
         ProgressBar       $progressBar
-    ): void {
+    ): void
+    {
         $tester = $this->newRangedTester(
             $strategy::class,
             $strategy->symbol(),

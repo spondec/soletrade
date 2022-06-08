@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Trade\Calc;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Collection;
@@ -26,7 +27,8 @@ class CandleFactory extends Factory
         protected ?float $priceLowerThan = null,
         protected ?float $priceHigherThan = null,
         protected ?int $lastTimestamp = null
-    ) {
+    )
+    {
         parent::__construct($count, $states, $has, $for, $afterMaking, $afterCreating, $connection);
     }
 

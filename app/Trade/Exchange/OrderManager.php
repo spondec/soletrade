@@ -51,7 +51,8 @@ class OrderManager
         protected Symbol     $symbol,
         public               readonly TradeAsset $tradeAsset,
         protected TradeSetup $trade
-    ) {
+    )
+    {
         $this->orders = new Collection();
     }
 
@@ -129,7 +130,8 @@ class OrderManager
         float $quantity,
         float $stopPrice,
         bool  $reduceOnly
-    ): Order {
+    ): Order
+    {
         return $this->new($this->order()
             ->stopMarket($side, $this->symbol->symbol, $quantity, $stopPrice, $reduceOnly));
     }
@@ -139,7 +141,8 @@ class OrderManager
         float $price,
         float $quantity,
         bool  $reduceOnly
-    ): Order {
+    ): Order
+    {
         return $this->new($this->order()
             ->limit($side, $this->symbol->symbol, $price, $quantity, $reduceOnly));
     }
@@ -150,7 +153,8 @@ class OrderManager
         float $price,
         float $quantity,
         bool  $reduceOnly
-    ): Order {
+    ): Order
+    {
         return $this->new($this->order()
             ->stopLimit($side, $this->symbol->symbol, $stopPrice, $price, $quantity, $reduceOnly));
     }

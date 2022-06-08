@@ -59,7 +59,8 @@ class TradeStatus
         ?float $price = null,
         string $positionClass = Position::class,
         ...$params
-    ): void {
+    ): void
+    {
         if ($this->position) {
             throw new \LogicException('Already in a position.');
         }

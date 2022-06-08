@@ -146,7 +146,8 @@ class LivePositionTest extends TestCase
         bool      $reduceOnly,
         ?array    &$fillCallbacks = null,
         int       $fillCount = 1
-    ): MockInterface|Order {
+    ): MockInterface|Order
+    {
         $order = m::mock('alias:' . Order::class);
 
         $order->side = $side;

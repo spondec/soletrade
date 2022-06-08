@@ -17,7 +17,8 @@ class Asset
         public        readonly string $name,
         private float $total,
         private float $available
-    ) {
+    )
+    {
     }
 
     public function total(): float

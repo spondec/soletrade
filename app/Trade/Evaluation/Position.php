@@ -45,7 +45,8 @@ class Position
         protected Price  $entry,
         protected ?Price $exit,
         protected ?Price $stop
-    ) {
+    )
+    {
         $this->remainingSize = Position::MAX_SIZE;
         $this->assertSize($this->size);
         $this->enter();

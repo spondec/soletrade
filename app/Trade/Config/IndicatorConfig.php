@@ -9,6 +9,7 @@ class IndicatorConfig extends Config
         public readonly string $class,
         public readonly array $config,
         public readonly ?\Closure $signal
-    ) {
+    )
+    {
     }
 }

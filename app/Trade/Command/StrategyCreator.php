@@ -97,7 +97,8 @@ class StrategyCreator extends TradeCommand
         string      $indicator,
         ?Collection $combined = null,
         array       $config = []
-    ): StrategyIndicatorStub {
+    ): StrategyIndicatorStub
+    {
         if (!indicator_exists($indicator)) {
             $this->error("Indicator $indicator does not exist.");
             exit(1);

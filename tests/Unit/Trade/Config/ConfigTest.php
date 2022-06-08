@@ -24,7 +24,8 @@ class ConfigTest extends TestCase
                 public readonly string $string,
                 public readonly \Closure $closure,
                 public readonly array $array
-            ) {
+            )
+            {
             }
         };
     }

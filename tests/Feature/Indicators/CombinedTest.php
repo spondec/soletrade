@@ -5,6 +5,7 @@ namespace Tests\Feature\Indicators;
 use App\Indicators\Combined;
 use App\Indicators\EMA;
 use App\Indicators\MA;
+use Tests\Feature\Indicators\IndicatorTestCase;
 
 class CombinedTest extends IndicatorTestCase
 {

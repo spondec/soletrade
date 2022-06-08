@@ -174,7 +174,8 @@ class TraderRunner extends TradeCommand
         string   $asset,
         float    $leverage,
         Exchange $exchange
-    ): void {
+    ): void
+    {
         $content = str("\n")
             ->append(" Running <info>{$strategy::name()}</info>")
             ->append(" on <info>$symbol->symbol $symbol->interval</info>")
@@ -252,7 +253,8 @@ class TraderRunner extends TradeCommand
         float        $allocAmount,
         mixed        $asset,
         float        $roi
-    ): void {
+    ): void
+    {
         $detailsTable
             ->setHeaders([
                 'Up Time',
@@ -280,7 +282,8 @@ class TraderRunner extends TradeCommand
         float                          $roi,
         TradeAsset                     $tradeAsset,
         string                         $asset
-    ): void {
+    ): void
+    {
         $positionTable->setHeaders([
             'Symbol',
             'Side',

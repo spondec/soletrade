@@ -11,7 +11,8 @@ class Recoverable
         public    readonly int $retryInSeconds,
         public    readonly int $retryLimit,
         public    readonly array $handle = []
-    ) {
+    )
+    {
         if (!$this->handle) {
             throw new \LogicException('No Throwable to handle.');
         }

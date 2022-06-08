@@ -32,7 +32,8 @@ abstract class HandlerTestCase extends TestCase
         Side                         &$side = null,
         OrderManager|m\MockInterface &$manager = null,
         array                        $config = []
-    ): Handler {
+    ): Handler
+    {
         $manager = m::mock(OrderManager::class);
 
         return new $class(side: $side = Side::SELL, manager: $manager, config: $config);

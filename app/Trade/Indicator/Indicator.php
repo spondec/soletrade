@@ -44,7 +44,8 @@ abstract class Indicator implements Binder
         protected Symbol         $symbol,
         private CandleCollection $candles,
         array                    $config = []
-    ) {
+    )
+    {
         $this->mergeConfig($config);
         $this->alias = $config['alias'] ?? static::name();
         $this->repo = App::make(SymbolRepository::class);

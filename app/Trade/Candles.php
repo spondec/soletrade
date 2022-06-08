@@ -18,7 +18,8 @@ class Candles
         protected \Iterator        $iterator,
         protected CandleCollection $candles,
         public                     readonly Symbol $symbol
-    ) {
+    )
+    {
     }
 
     public function candle(): object|null
