@@ -76,7 +76,7 @@ class TradeLoopTest extends TestCase
         $exitTime = $position->exitTime();
         $this->assertNotNull($exitTime);
         //account for evaluation interval?
-        $this->assertEquals($exit->price_date, $exitTime);
+        $this->assertEquals($candles->last()->t, $exitTime);
     }
 
     public function test_run_with_config_param_timeout(): void

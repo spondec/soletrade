@@ -331,9 +331,21 @@ class TradeLoop
             if ($this->hasExitTrade() && $this->isClosesOnExit())
             {
                 $candle = $this->getLastCandle();
-                $priceDate = $this->getPriceDate($candle, null);
 
-                $this->overrideTargetPrice($position, $candle, $priceDate);
+                if ($this->isLastCandle($candle))
+                {
+                    //for live
+                    $targetPrice = $candle->c;
+                    $priceDate = $this->getPriceDate($candle, null);
+                }
+                else
+                {
+                    //for back-testing
+                    $targetPrice = $candle->o;
+                    $priceDate = $candle->t;
+                }
+
+                $this->overrideTargetPrice($position, $targetPrice, $priceDate);
                 $this->tryPositionExit($position, $candle, $priceDate);
             }
 
@@ -406,15 +418,15 @@ class TradeLoop
         }
     }
 
-    protected function overrideTargetPrice(Position $position, \stdClass $candle, int $priceDate): void
+    protected function overrideTargetPrice(Position $position, float $price, int $priceDate): void
     {
         if ($target = $position->price('exit'))
         {
-            $target->set((float)$candle->c, $priceDate, 'Target price overridden.', true);
+            $target->set($price, $priceDate, 'Target price overridden.', true);
         }
         else
         {
-            $this->status->setExitPrice((float)$candle->c, $priceDate);
+            $this->status->setExitPrice($price, $priceDate);
         }
     }
 
