@@ -12,11 +12,9 @@ class MATest extends IndicatorTestCase
         $repo = new SymbolRepository();
         $symbol = $this->createCandles(100);
 
-        $repo->initIndicators(
-            $symbol,
+        $repo->initIndicators($symbol,
             $candles = $symbol->candles(100),
-            [MA::class => ['timePeriod' => 8]]
-        );
+            [MA::class => ['timePeriod' => 8]]);
 
         $sma = $symbol->indicator(MA::name());
         $this->assertIsFloat($sma->data()->first());

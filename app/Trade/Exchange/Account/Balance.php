@@ -18,19 +18,20 @@ class Balance implements \ArrayAccess
      * @param Exchange $exchange
      * @param Asset[]  $assets
      */
-    public function __construct(
-        protected Exchange $exchange,
-        array              $assets
-    )
+    public function __construct(protected Exchange $exchange,
+                                array              $assets)
     {
-        foreach ($assets as $k => $asset) {
+        foreach ($assets as $k => $asset)
+        {
             unset($assets[$k]);
 
-            if (!$asset instanceof Asset) {
+            if (!$asset instanceof Asset)
+            {
                 throw new \InvalidArgumentException('Invalid asset.');
             }
 
-            if ($asset->available() == 0 && $asset->total() == 0) {
+            if ($asset->available() == 0 && $asset->total() == 0)
+            {
                 continue;
             }
 
@@ -53,7 +54,8 @@ class Balance implements \ArrayAccess
     {
         $roe = [];
 
-        foreach ($prevBalance->assets as $asset) {
+        foreach ($prevBalance->assets as $asset)
+        {
             $total = $asset->total();
             $roe[$name = $asset->name] = $total / ($this->assets[$name]->total() - $total) * 100;
         }

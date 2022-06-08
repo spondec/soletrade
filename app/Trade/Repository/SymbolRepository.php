@@ -19,14 +19,14 @@ class SymbolRepository extends Repository
     /**
      * @param string[]|array[] $indicators
      */
-    public function initIndicators(
-        Symbol     $symbol,
-        Collection $candles,
-        array      $indicators
-    ): void
+    public function initIndicators(Symbol     $symbol,
+                                   Collection $candles,
+                                   array      $indicators): void
     {
-        foreach ($indicators as $class => $config) {
-            if (!\is_array($config)) {
+        foreach ($indicators as $class => $config)
+        {
+            if (!\is_array($config))
+            {
                 $class = $config;
                 $config = [];
             }
@@ -37,7 +37,8 @@ class SymbolRepository extends Repository
     public function mapCandles(array $candles, int $symbolId, CandleMap $map): array
     {
         $mapped = [];
-        foreach ($candles as $candle) {
+        foreach ($candles as $candle)
+        {
             $mapped[] = [
                 'symbol_id' => $symbolId,
                 't'         => $candle[$map->t],
@@ -57,7 +58,8 @@ class SymbolRepository extends Repository
     #[ArrayShape(['lowest' => \stdClass::class, 'highest' => \stdClass::class])]
     public function assertLowestHighestCandle(int $symbolId, int $startDate, int $endDate): array
     {
-        if ($startDate >= $endDate) {
+        if ($startDate >= $endDate)
+        {
             throw new \InvalidArgumentException('Start date can not be greater than or equal to the end date.');
         }
 
@@ -70,7 +72,8 @@ class SymbolRepository extends Repository
         $lowest = $query->orderBy('l', 'ASC')->first();
         $highest = $query->reorder('h', 'DESC')->first();
 
-        if (empty($highest) || empty($lowest)) {
+        if (empty($highest) || empty($lowest))
+        {
             throw new \LogicException('Lowest and/or highest candles was not found.');
         }
 
@@ -80,13 +83,11 @@ class SymbolRepository extends Repository
         ];
     }
 
-    public function assertCandlesLimit(
-        Symbol  $symbol,
-        int     $startDate,
-        ?int    $limit,
-        ?string $interval = null,
-        bool    $includeStart = false
-    ): Collection
+    public function assertCandlesLimit(Symbol  $symbol,
+                                       int     $startDate,
+                                       ?int    $limit,
+                                       ?string $interval = null,
+                                       bool    $includeStart = false): Collection
     {
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
@@ -95,13 +96,15 @@ class SymbolRepository extends Repository
             ->where('t', $includeStart ? '>=' : '>', $startDate)
             ->orderBy('t', 'ASC');
 
-        if ($limit) {
+        if ($limit)
+        {
             $candles->limit($limit);
         }
 
         $candles = $candles->get();
 
-        if (!$candles->first()) {
+        if (!$candles->first())
+        {
             throw new \UnexpectedValueException("$symbol->symbol-$interval candles was not found.");
         }
 
@@ -118,23 +121,20 @@ class SymbolRepository extends Repository
                 ->get('id')->first()->id;
     }
 
-    public function assertCandlesBetween(
-        Symbol  $symbol,
-        int     $startDate,
-        int     $endDate,
-        ?string $interval = null,
-        bool    $includeStart = false
-    ): Collection
+    public function assertCandlesBetween(Symbol  $symbol,
+                                         int     $startDate,
+                                         int     $endDate,
+                                         ?string $interval = null,
+                                         bool    $includeStart = false): Collection
     {
-        $candles = $this->fetchCandlesBetween(
-            $symbol,
+        $candles = $this->fetchCandlesBetween($symbol,
             $startDate,
             $endDate,
             $interval,
-            $includeStart
-        );
+            $includeStart);
 
-        if (!$candles->first()) {
+        if (!$candles->first())
+        {
             throw new \UnexpectedValueException("$symbol->symbol-$interval candles was not found.");
         }
 
@@ -156,11 +156,13 @@ class SymbolRepository extends Repository
 
     public function getPriceDate(int $openTime, int|null $nextOpenTime, Symbol $symbol): int
     {
-        if ($nextOpenTime) {
+        if ($nextOpenTime)
+        {
             return $nextOpenTime - 1000;
         }
 
-        if ($nextCandle = $this->fetchNextCandle($symbol->id, $openTime)) {
+        if ($nextCandle = $this->fetchNextCandle($symbol->id, $openTime))
+        {
             return $nextCandle->t - 1000;
         }
 
@@ -171,7 +173,8 @@ class SymbolRepository extends Repository
     {
         $id = \is_int($symbol) ? $symbol : $symbol->id;
 
-        if ($nextCandle = static::$nextCandleCache[$id][$timestamp] ?? null) {
+        if ($nextCandle = static::$nextCandleCache[$id][$timestamp] ?? null)
+        {
             return $nextCandle;
         }
 
@@ -182,7 +185,8 @@ class SymbolRepository extends Repository
             ->limit(100)
             ->get();
 
-        foreach ($candles as $k => $candle) {
+        foreach ($candles as $k => $candle)
+        {
             static::$nextCandleCache[$id][$candle->t] = $candles[$k + 1] ?? null;
         }
 
@@ -191,7 +195,8 @@ class SymbolRepository extends Repository
 
     public function assertNextCandle(Symbol|int $symbol, int $timestamp): \stdClass
     {
-        if (!$candle = $this->fetchNextCandle($symbol, $timestamp)) {
+        if (!$candle = $this->fetchNextCandle($symbol, $timestamp))
+        {
             throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed.");
         }
 
@@ -202,7 +207,8 @@ class SymbolRepository extends Repository
     {
         $inserts = [];
 
-        foreach ($symbols as $symbol) {
+        foreach ($symbols as $symbol)
+        {
             $inserts[] = [
                 'symbol'      => $symbol,
                 'exchange_id' => $exchangeId,
@@ -243,9 +249,12 @@ class SymbolRepository extends Repository
             ->where('exchange_id', \is_int($exchange) ? $exchange : $exchange::instance()->model()->id)
             ->whereRaw(DB::raw('BINARY `interval` = ?'), $interval);
 
-        if (\is_array($symbolName)) {
+        if (\is_array($symbolName))
+        {
             $query->whereIn('symbol', $symbolName);
-        } else {
+        }
+        else
+        {
             $query->where('symbol', $symbolName);
         }
 
@@ -269,7 +278,7 @@ class SymbolRepository extends Repository
 
     public function fetchSymbolFromExchange(Exchange $exchange, string $symbolName, string $interval)
     {
-        $filter = static fn (Symbol $symbol): bool => $symbol->symbol === $symbolName && $symbol->interval === $interval;
+        $filter = static fn(Symbol $symbol): bool => $symbol->symbol === $symbolName && $symbol->interval === $interval;
         return $exchange::instance()
             ->update()
             ->byInterval(interval: $interval, filter: $filter)
@@ -283,15 +292,14 @@ class SymbolRepository extends Repository
         return $this->findSymbols($exchange, $symbolName, $interval)->first();
     }
 
-    public function fetchCandlesBetween(
-        Symbol  $symbol,
-        int     $startDate,
-        int     $endDate,
-        ?string $interval = null,
-        bool    $includeStart = false
-    ): Collection
+    public function fetchCandlesBetween(Symbol  $symbol,
+                                        int     $startDate,
+                                        int     $endDate,
+                                        ?string $interval = null,
+                                        bool    $includeStart = false): Collection
     {
-        if ($startDate >= $endDate) {
+        if ($startDate >= $endDate)
+        {
             throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
         }
 

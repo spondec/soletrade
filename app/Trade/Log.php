@@ -30,14 +30,16 @@ final class Log
 
     public static function info(string|\Closure $message, mixed $expression = true): void
     {
-        if (self::canLog() && $expression) {
+        if (self::canLog() && $expression)
+        {
             Logger::info(ExecTimeMiddleware::getSessionPrefix() . ($message instanceof \Closure ? $message() : $message));
         }
     }
 
     public static function execTimeStart(string $taskName): void
     {
-        if (\in_array($taskName, self::$tasks)) {
+        if (\in_array($taskName, self::$tasks))
+        {
             throw new \LogicException("Task $taskName is already started.");
         }
 
@@ -47,17 +49,15 @@ final class Log
 
     public static function execTimeFinish(string $taskName): void
     {
-        if (!$time = \array_search($taskName, self::$tasks)) {
+        if (!$time = \array_search($taskName, self::$tasks))
+        {
             throw new \LogicException("$taskName is not started, therefore can not be finished.");
         }
 
         $execTime = \microtime(true) - (float)$time;
 
-        self::info(\sprintf(
-            'Finished in %s seconds: %s',
-            \round($execTime, 2),
-            self::$tasks[$time]
-        ));
+        self::info(\sprintf('Finished in %s seconds: %s',
+            \round($execTime, 2), self::$tasks[$time]));
 
         unset(self::$tasks[$time]);
     }

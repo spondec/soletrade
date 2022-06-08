@@ -10,7 +10,8 @@ class DefinedSet extends ParameterSet
 
     public function iterator(): \Iterator
     {
-        foreach ($this->values as $value) {
+        foreach ($this->values as $value)
+        {
             yield $value;
         }
     }

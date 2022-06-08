@@ -52,7 +52,7 @@ class StrategyCreator extends TradeCommand
             ->filter()
             ->map('trim')
             ->merge($signals)
-            ->filter(fn (string $i) => $i !== 'Combined')
+            ->filter(fn(string $i) => $i !== 'Combined')
             ->unique();
 
         $indicatorStubs = $this->getIndicatorStubs($indicators, $combined);
@@ -68,7 +68,8 @@ class StrategyCreator extends TradeCommand
             'combined'        => $combined,
         ]);
 
-        if ($newStrategy->isFileExists()) {
+        if ($newStrategy->isFileExists())
+        {
             $this->error("Strategy $name already exists.");
             return 1;
         }
@@ -83,23 +84,24 @@ class StrategyCreator extends TradeCommand
     {
         $indicatorStubs = new Collection();
 
-        if ($combined->first()) {
+        if ($combined->first())
+        {
             $indicatorStubs[] = $this->getIndicatorStub('Combined', $combined)->apply()->content;
         }
 
-        foreach ($indicators as $indicator) {
+        foreach ($indicators as $indicator)
+        {
             $indicatorStubs[] = $this->getIndicatorStub($indicator)->apply()->content;
         }
         return $indicatorStubs;
     }
 
-    protected function getIndicatorStub(
-        string      $indicator,
-        ?Collection $combined = null,
-        array       $config = []
-    ): StrategyIndicatorStub
+    protected function getIndicatorStub(string      $indicator,
+                                        ?Collection $combined = null,
+                                        array       $config = []): StrategyIndicatorStub
     {
-        if (!indicator_exists($indicator)) {
+        if (!indicator_exists($indicator))
+        {
             $this->error("Indicator $indicator does not exist.");
             exit(1);
         }
@@ -122,7 +124,8 @@ class StrategyCreator extends TradeCommand
     {
         $actionStubs = new Collection();
 
-        foreach ($actions as $action) {
+        foreach ($actions as $action)
+        {
             $actionStubs[] = $this->newTradeActionStub()
                 ->setParams([
                     'action' => $action

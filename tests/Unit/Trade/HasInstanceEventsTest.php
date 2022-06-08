@@ -64,7 +64,8 @@ class HasInstanceEventsTest extends TestCase
 
         $triggerEvents = ['event1', 'event2'];
 
-        foreach ($triggerEvents as $triggerEvent) {
+        foreach ($triggerEvents as $triggerEvent)
+        {
             $hasEvents->listen($triggerEvent, function () use (&$triggerEventCounter) {
                 $triggerEventCounter++;
             });
@@ -74,7 +75,8 @@ class HasInstanceEventsTest extends TestCase
             $triggeredEventCounter++;
         });
 
-        foreach ($triggerEvents as $triggerEvent) {
+        foreach ($triggerEvents as $triggerEvent)
+        {
             $hasEvents->fire($triggerEvent);
         }
 
@@ -87,7 +89,7 @@ class HasInstanceEventsTest extends TestCase
         $hasEvents = $this->getHasEventsObject();
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Listener already registered');
-        $hasEvents->listen('event1', fn () => true);
-        $hasEvents->listen('event1', fn () => true);
+        $hasEvents->listen('event1', fn() => true);
+        $hasEvents->listen('event1', fn() => true);
     }
 }

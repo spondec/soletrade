@@ -25,8 +25,10 @@ class ChangeLog implements Arrayable
 
         $last = \end($this->log);
 
-        if ($last !== $log) {
-            if ($last && $last['timestamp'] > $timestamp) {
+        if ($last !== $log)
+        {
+            if ($last && $last['timestamp'] > $timestamp)
+            {
                 throw new \LogicException('New change date must be greater than last change date.');
             }
 
@@ -52,7 +54,8 @@ class ChangeLog implements Arrayable
 
     public function toArray()
     {
-        foreach ($log = $this->log as $k => $item) {
+        foreach ($log = $this->log as $k => $item)
+        {
             $log[$k]['time'] = \date('Y-m-d H:i:s', (int)(as_ms($item['timestamp']) / 1000));
         }
 

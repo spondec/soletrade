@@ -43,14 +43,12 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         });
     }
 
-    protected function getTrader(
-        ?Strategy   &$strategy = null,
-        ?Exchange   &$exchange = null,
-        ?Symbol     &$symbol = null,
-        ?TradeAsset &$tradeAsset = null,
-        ?Runner     &$runner = null,
-        ?\App       &$app = null
-    ): Trader
+    protected function getTrader(?Strategy   &$strategy = null,
+                                 ?Exchange   &$exchange = null,
+                                 ?Symbol     &$symbol = null,
+                                 ?TradeAsset &$tradeAsset = null,
+                                 ?Runner     &$runner = null,
+                                 ?\App       &$app = null): Trader
     {
         $app = m::mock('overload:App');
         $app->shouldReceive('runningInConsole')->once()->andReturn(true);

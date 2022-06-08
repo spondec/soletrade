@@ -55,9 +55,12 @@ class Kernel extends ConsoleKernel
 
     protected function renderException($output, Throwable $e)
     {
-        if ($this->isPrintable($e)) {
+        if ($this->isPrintable($e))
+        {
             $this->printableExceptionSection->writeln('<fg=red>' . $e->getMessage() . '</>');
-        } else {
+        }
+        else
+        {
             parent::renderException($output, $e);
         }
     }

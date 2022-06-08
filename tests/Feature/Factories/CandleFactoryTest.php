@@ -29,7 +29,8 @@ class CandleFactoryTest extends TestCase
         $prev = $candles->shift();
         $iterator = $candles->getIterator();
 
-        while ($iterator->valid()) {
+        while ($iterator->valid())
+        {
             $this->assertEquals($interval * 1000, $iterator->current()->t - $prev->t);
 
             $prev = $iterator->current();
@@ -51,7 +52,8 @@ class CandleFactoryTest extends TestCase
             ->count(4)
             ->create();
 
-        foreach ($candles as $candle) {
+        foreach ($candles as $candle)
+        {
             $this->assertTrue(in_array((int)((string)$candle->c)[0], [8, 9]));
             $this->assertTrue(in_array((int)((string)$candle->o)[0], [8, 9]));
             $this->assertTrue(in_array((int)((string)$candle->h)[0], [8, 9]));

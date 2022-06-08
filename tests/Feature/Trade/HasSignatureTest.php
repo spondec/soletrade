@@ -21,9 +21,9 @@ class HasSignatureTest extends TestCase
     public function test_hash_callbacks_in_array()
     {
         $arr = [
-            fn ($a) => $a,
+            fn($a) => $a,
             [
-                'inner' => fn ($a) => $a,
+                'inner' => fn($a) => $a,
             ]
         ];
 
@@ -46,7 +46,7 @@ class HasSignatureTest extends TestCase
 
     public function test_register()
     {
-        $this->signature = $this->register(['range' => range(1, 10), fn ($a) => $a]);
+        $this->signature = $this->register(['range' => range(1, 10), fn($a) => $a]);
 
         $this->assertTrue($this->signature->exists);
         $this->assertIsString($this->signature->data[0]);

@@ -20,7 +20,7 @@ class HandlerTest extends HandlerTestCase
 
     public function test_order_type_mismatch_throws_exception(): void
     {
-        $handler = new class(Side::BUY, m::mock(OrderManager::class)) extends Handler {
+        $handler = new class (Side::BUY, m::mock(OrderManager::class)) extends Handler {
             public function getOrderType(): OrderType
             {
                 return OrderType::LIMIT;

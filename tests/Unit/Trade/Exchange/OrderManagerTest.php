@@ -36,11 +36,9 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
         $this->assertEquals([], $manager->sync($order));
     }
 
-    protected function getManager(
-        Exchange|MockInterface &$exchange = null,
-        Symbol|MockInterface   &$symbol = null,
-        Orderer|MockInterface  &$orderer = null
-    ): OrderManager
+    protected function getManager(Exchange|MockInterface &$exchange = null,
+                                  Symbol|MockInterface   &$symbol = null,
+                                  Orderer|MockInterface  &$orderer = null): OrderManager
     {
         $symbol = m::mock('alias:' . Symbol::class);
         $symbol->symbol = 'BTC/USDT';
@@ -94,13 +92,11 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
             ])
             ->andReturn($order);
 
-        $this->assertEquals($order, $manager->stopLimit(
-            Side::SELL,
+        $this->assertEquals($order, $manager->stopLimit(Side::SELL,
             102,
             100,
             1,
-            true
-        ));
+            true));
     }
 
     public function test_cancel(): void
@@ -150,11 +146,9 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
             ])
             ->andReturn($order);
 
-        $this->assertEquals($order, $manager->market(
-            Side::SELL,
+        $this->assertEquals($order, $manager->market(Side::SELL,
             1,
-            true
-        ));
+            true));
     }
 
     public function test_limit(): void
@@ -177,12 +171,10 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
             ])
             ->andReturn($order);
 
-        $this->assertEquals($order, $manager->limit(
-            Side::SELL,
+        $this->assertEquals($order, $manager->limit(Side::SELL,
             100,
             1,
-            true
-        ));
+            true));
     }
 
     public function test_stop_market(): void
@@ -205,12 +197,10 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
             ])
             ->andReturn($order);
 
-        $this->assertEquals($order, $manager->stopMarket(
-            Side::SELL,
+        $this->assertEquals($order, $manager->stopMarket(Side::SELL,
             1,
             100,
-            true
-        ));
+            true));
     }
 
     public function test_order_cancel_listener()

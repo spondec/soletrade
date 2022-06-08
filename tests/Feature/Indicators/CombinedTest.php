@@ -30,16 +30,14 @@ class CombinedTest extends IndicatorTestCase
 
         $data = $combined->data();
 
-        $this->assertEquals(
-            $ema->data()->all(),
+        $this->assertEquals($ema->data()->all(),
             array_combine(
                 $data->keys()->slice(-88, 88)->all(),
                 $data->pluck('ema_13')->filter()->all()
             )
         );
 
-        $this->assertEquals(
-            $sma->data()->all(),
+        $this->assertEquals($sma->data()->all(),
             array_combine(
                 $data->keys()->slice(0, 93)->all(),
                 $data->pluck('sma_8')->all()

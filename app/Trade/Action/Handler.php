@@ -35,8 +35,10 @@ abstract class Handler
 
     protected function assertRequired(): void
     {
-        foreach ($this->required as $key) {
-            if (!$this->config($key)) {
+        foreach ($this->required as $key)
+        {
+            if (!$this->config($key))
+            {
                 throw new \InvalidArgumentException('Required config key is missing: ' . $key);
             }
         }
@@ -44,12 +46,15 @@ abstract class Handler
 
     protected function setup(): void
     {
+
     }
 
     public function run(\stdClass $candle, int $priceDate): ?TradeAction
     {
-        if (!$this->isTaken && $this->performAction($candle, $priceDate)) {
-            if ($this->config('lock')) {
+        if (!$this->isTaken && $this->performAction($candle, $priceDate))
+        {
+            if ($this->config('lock'))
+            {
                 $this->applyLocks();
             }
 
@@ -74,6 +79,7 @@ abstract class Handler
 
     protected function applyLocks(): void
     {
+
     }
 
     protected function getDefaultConfig(): array
@@ -85,7 +91,8 @@ abstract class Handler
 
     protected function lockIfUnlocked(Price $price): void
     {
-        if (!$price->isLocked()) {
+        if (!$price->isLocked())
+        {
             $price->lock();
         }
     }

@@ -39,7 +39,8 @@ class Tester
 
     protected function newStrategy(string $class, Symbol $symbol, array $config): Strategy
     {
-        if (!\is_subclass_of($class, Strategy::class)) {
+        if (!\is_subclass_of($class, Strategy::class))
+        {
             throw new \InvalidArgumentException('Invalid strategy class: ' . $class);
         }
 
@@ -62,7 +63,8 @@ class Tester
     public function summary(TradeCollection $trades, ?Collection &$evaluations = null): Summary
     {
         $evaluations = new Collection();
-        foreach ($this->summarize($trades, $summary) as $evaluation) {
+        foreach ($this->summarize($trades, $summary) as $evaluation)
+        {
             $evaluations[] = $evaluation;
         }
 
@@ -78,27 +80,36 @@ class Tester
     {
         $evaluation = null;
 
-        if ($first = $trades->getFirstTrade()) {
+        if ($first = $trades->getFirstTrade())
+        {
             /** @var TradeSetup[] $pending */
             $pending = [];
 
-            while ($next = $trades->getNextTrade($first)) {
+            while ($next = $trades->getNextTrade($first))
+            {
                 $pending[] = $first;
 
-                if ($first->isBuy() !== $next->isBuy()) {
-                    foreach ($pending as $setup) {
+                if ($first->isBuy() !== $next->isBuy())
+                {
+                    foreach ($pending as $setup)
+                    {
                         $evaluate = false;
 
-                        if ($evaluation && $evaluation->isExited()) {
+                        if ($evaluation && $evaluation->isExited())
+                        {
                             $_evaluation = $this->evaluator->evaluate($setup, $next);
-                            if ($evaluation->exit_timestamp <= $_evaluation->entry_timestamp) {
+                            if ($evaluation->exit_timestamp <= $_evaluation->entry_timestamp)
+                            {
                                 yield $evaluation = $_evaluation;
                             }
-                        } else {
+                        }
+                        else
+                        {
                             $evaluate = true; //first evaluation or failed entry
                         }
 
-                        if ($evaluate) {
+                        if ($evaluate)
+                        {
                             yield $evaluation = $this->evaluator->evaluate($setup, $next);
                         }
                     }
@@ -115,7 +126,8 @@ class Tester
         $summarizer = $this->newSummarizer();
 
         $tradeCount = 0;
-        foreach ($this->evaluate($trades) as $evaluation) {
+        foreach ($this->evaluate($trades) as $evaluation)
+        {
             $summarizer->addEvaluation($evaluation);
             $summary = $summarizer->getSummary();
 

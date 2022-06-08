@@ -28,7 +28,8 @@ class SymbolRepositoryTest extends TestCase
             ->make();
 
         $i = 0;
-        foreach ($candles as $candle) {
+        foreach ($candles as $candle)
+        {
             $candles[0]->t = time() + $i++;
             $candle->save();
         }

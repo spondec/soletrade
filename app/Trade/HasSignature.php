@@ -19,7 +19,8 @@ trait HasSignature
         $json = \json_encode($hashed = $this->hashCallbacksInArray($data));
         $hash = $this->hash($json);
 
-        if ($signature = $this->signatureCache[$hash] ?? null) {
+        if ($signature = $this->signatureCache[$hash] ?? null)
+        {
             return $signature->get();
         }
 
@@ -29,7 +30,8 @@ trait HasSignature
             'data' => $hashed
         ]);
 
-        if ($collisions = $this->getKeyDiff($signature->data, $hashed)) {
+        if ($collisions = $this->getKeyDiff($signature->data, $hashed))
+        {
             throw new \LogicException("Hash collisions detected:\n" . \var_export($collisions, true));
         }
 
@@ -40,13 +42,19 @@ trait HasSignature
     private function getKeyDiff(array $array1, array $array2): array
     {
         $collisions = [];
-        foreach ($array1 as $key => $value) {
-            if (\is_array($value)) {
-                if ($c = $this->getKeyDiff($value, $array2[$key] ?? [])) {
+        foreach ($array1 as $key => $value)
+        {
+            if (\is_array($value))
+            {
+                if ($c = $this->getKeyDiff($value, $array2[$key] ?? []))
+                {
                     $collisions[$key] = $c;
                 }
-            } else {
-                if (!\array_key_exists($key, $array2) || $array2[$key] != $value) {
+            }
+            else
+            {
+                if (!\array_key_exists($key, $array2) || $array2[$key] != $value)
+                {
                     $collisions[] = $key;
                 }
             }
@@ -56,10 +64,14 @@ trait HasSignature
 
     protected function hashCallbacksInArray(array $array): array
     {
-        foreach ($array as &$item) {
-            if (\is_array($item)) {
+        foreach ($array as &$item)
+        {
+            if (\is_array($item))
+            {
                 $item = $this->hashCallbacksInArray($item);
-            } elseif ($item instanceof \Closure) {
+            }
+            else if ($item instanceof \Closure)
+            {
                 $item = ClosureHash::from($item);
             }
         }
@@ -69,7 +81,8 @@ trait HasSignature
 
     protected function hash(string|array $subject): string
     {
-        if (\is_array($subject)) {
+        if (\is_array($subject))
+        {
             $subject = \json_encode($this->hashCallbacksInArray($subject));
         }
         return \md5($subject);

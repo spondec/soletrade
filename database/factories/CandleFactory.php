@@ -14,20 +14,19 @@ class CandleFactory extends Factory
 {
     protected $model = \App\Models\Candle::class;
 
-    public function __construct(
-        $count = null,
-        ?Collection $states = null,
-        ?Collection $has = null,
-        ?Collection $for = null,
-        ?Collection $afterMaking = null,
-        ?Collection $afterCreating = null,
+    public function __construct($count = null,
+                                ?Collection $states = null,
+                                ?Collection $has = null,
+                                ?Collection $for = null,
+                                ?Collection $afterMaking = null,
+                                ?Collection $afterCreating = null,
         $connection = null,
-        protected ?int $interval = null,
-        protected ?Carbon $startDate = null,
-        protected ?float $priceLowerThan = null,
-        protected ?float $priceHigherThan = null,
-        protected ?int $lastTimestamp = null
-    )
+
+                                protected ?int $interval = null,
+                                protected ?Carbon $startDate = null,
+                                protected ?float $priceLowerThan = null,
+                                protected ?float $priceHigherThan = null,
+                                protected ?int $lastTimestamp = null)
     {
         parent::__construct($count, $states, $has, $for, $afterMaking, $afterCreating, $connection);
     }
@@ -40,7 +39,8 @@ class CandleFactory extends Factory
     public function definition(): array
     {
         $prices = [];
-        for ($i = 0; $i < 4; $i++) {
+        for ($i = 0; $i < 4; $i++)
+        {
             $prices[] = $this->randomPrice(2, 1, 100);
         }
 
@@ -74,7 +74,8 @@ class CandleFactory extends Factory
 
         $this->count = 0;
 
-        while ($startDate < $endDate) {
+        while ($startDate < $endDate)
+        {
             $startDate += $this->interval;
             $this->count++;
         }
@@ -111,16 +112,15 @@ class CandleFactory extends Factory
 
     protected function randomPrice(int $maxDecimals, float $min, float $max): float|int
     {
-        return $this->faker->randomFloat(
-            $maxDecimals,
+        return $this->faker->randomFloat($maxDecimals,
             $this->priceHigherThan ?? $min,
-            $this->priceLowerThan ?? $max
-        );
+            $this->priceLowerThan ?? $max);
     }
 
     protected function getNextTimestamp(): int
     {
-        if (!$this->lastTimestamp) {
+        if (!$this->lastTimestamp)
+        {
             $this->lastTimestamp = $this->startDate->getTimestampMs();
         }
         return $this->lastTimestamp += $this->interval;

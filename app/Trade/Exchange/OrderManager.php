@@ -30,9 +30,11 @@ class OrderManager
 
     public function syncAll(): void
     {
-        Log::info(fn () => 'Syncing all open orders');
-        foreach ($this->orders as $order) {
-            if ($order->isOpen()) {
+        Log::info(fn() => 'Syncing all open orders');
+        foreach ($this->orders as $order)
+        {
+            if ($order->isOpen())
+            {
                 $this->sync($order);
             }
         }
@@ -40,18 +42,17 @@ class OrderManager
 
     public function cancelAll(): void
     {
-        Log::info(fn () => 'Cancelling all orders');
-        foreach ($this->orders as $order) {
+        Log::info(fn() => 'Cancelling all orders');
+        foreach ($this->orders as $order)
+        {
             $this->cancel($order);
         }
     }
 
-    public function __construct(
-        protected Exchange   $exchange,
-        protected Symbol     $symbol,
-        public               readonly TradeAsset $tradeAsset,
-        protected TradeSetup $trade
-    )
+    public function __construct(protected Exchange   $exchange,
+                                protected Symbol     $symbol,
+                                public               readonly TradeAsset $tradeAsset,
+                                protected TradeSetup $trade)
     {
         $this->orders = new Collection();
     }
@@ -68,7 +69,7 @@ class OrderManager
      */
     public function sync(Order $order): array
     {
-        Log::info(fn () => "Syncing order #{$order->id}");
+        Log::info(fn() => "Syncing order #{$order->id}");
         return $this->order()->sync($order);
     }
 
@@ -87,12 +88,13 @@ class OrderManager
     public function cancel(Order $order): Order
     {
         $this->sync($order);
-        if (!$order->isOpen()) {
-            Log::info(fn () => "Order #{$order->id} is {$order->status->value} and can't be cancelled.");
+        if (!$order->isOpen())
+        {
+            Log::info(fn() => "Order #{$order->id} is {$order->status->value} and can't be cancelled.");
             return $order;
         }
 
-        Log::info(fn () => "Cancelling order {$order->id}");
+        Log::info(fn() => "Cancelling order {$order->id}");
         return $this->order()->cancel($order);
     }
 
@@ -104,7 +106,7 @@ class OrderManager
 
     protected function new(Order $order): Order
     {
-        Log::info(fn () => "New placed order {$order->id}");
+        Log::info(fn() => "New placed order {$order->id}");
         $this->registerOrderListeners($order);
 
         return $this->orders[] = $order;
@@ -113,47 +115,45 @@ class OrderManager
     protected function registerOrderListeners(Order $order): void
     {
         $order->onCancel(function (Order $order) {
-            if ($order->id == $this->stop?->id) {
+
+            if ($order->id == $this->stop?->id)
+            {
                 $this->stop = null;
             }
-            if ($order->id == $this->entry?->id) {
+            if ($order->id == $this->entry?->id)
+            {
                 $this->entry = null;
             }
-            if ($order->id == $this->exit?->id) {
+            if ($order->id == $this->exit?->id)
+            {
                 $this->exit = null;
             }
         });
     }
 
-    public function stopMarket(
-        Side  $side,
-        float $quantity,
-        float $stopPrice,
-        bool  $reduceOnly
-    ): Order
+    public function stopMarket(Side  $side,
+                               float $quantity,
+                               float $stopPrice,
+                               bool  $reduceOnly): Order
     {
         return $this->new($this->order()
             ->stopMarket($side, $this->symbol->symbol, $quantity, $stopPrice, $reduceOnly));
     }
 
-    public function limit(
-        Side  $side,
-        float $price,
-        float $quantity,
-        bool  $reduceOnly
-    ): Order
+    public function limit(Side  $side,
+                          float $price,
+                          float $quantity,
+                          bool  $reduceOnly): Order
     {
         return $this->new($this->order()
             ->limit($side, $this->symbol->symbol, $price, $quantity, $reduceOnly));
     }
 
-    public function stopLimit(
-        Side  $side,
-        float $stopPrice,
-        float $price,
-        float $quantity,
-        bool  $reduceOnly
-    ): Order
+    public function stopLimit(Side  $side,
+                              float $stopPrice,
+                              float $price,
+                              float $quantity,
+                              bool  $reduceOnly): Order
     {
         return $this->new($this->order()
             ->stopLimit($side, $this->symbol->symbol, $stopPrice, $price, $quantity, $reduceOnly));
@@ -161,18 +161,18 @@ class OrderManager
 
     public function handler(OrderType $orderType, Side $side): Handler
     {
-        return new (Handler::getClass($orderType))(
-            side: $side,
+        return new (Handler::getClass($orderType))(side: $side,
             manager: $this,
-            config: $this->trade->order_type_config[$orderType->value] ?? []
-        );
+            config: $this->trade->order_type_config[$orderType->value] ?? []);
     }
 
     public function __destruct()
     {
-        Log::info(fn () => 'Destroying manager');
-        foreach ($this->orders as $order) {
-            if (!$order->isOpen()) {
+        Log::info(fn() => 'Destroying manager');
+        foreach ($this->orders as $order)
+        {
+            if (!$order->isOpen())
+            {
                 $order->flushListeners();
             }
         }

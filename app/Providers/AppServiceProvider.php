@@ -20,7 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (!App::runningInConsole()) {
+        if (!App::runningInConsole())
+        {
             \set_time_limit(30);
         }
         \ini_set('trader.real_precision', 10);

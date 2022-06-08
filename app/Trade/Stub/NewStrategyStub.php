@@ -50,14 +50,15 @@ class NewStrategyStub extends Creator
 
         $params['action_stubs'] = $params['action_stubs']->implode("\n");
         $params['indicator_stubs'] = $params['indicator_stubs']->implode(",\n\t\t\t");
-        $params['signals'] = $params['signals']->map(fn (string $s) => "'$s'")->implode(', ');
+        $params['signals'] = $params['signals']->map(fn(string $s) => "'$s'")->implode(', ');
 
         return $params;
     }
 
     protected function modifyContent(string $content): string
     {
-        foreach ($this->params['combined'] as $indicator) {
+        foreach ($this->params['combined'] as $indicator)
+        {
             $content = \str_replace(
                 [
                     "'{{ {$indicator}_alias }}'",
@@ -66,8 +67,7 @@ class NewStrategyStub extends Creator
                 [
                     "'$indicator'", $indicator . "::class"
                 ],
-                $content
-            );
+                $content);
         }
 
         return $content;

@@ -13,55 +13,59 @@ use App\Trade\Log;
 
 class LiveTradeLoop extends TradeLoop
 {
-    public function __construct(
-        TradeSetup                   $entry,
-        Symbol                       $evaluationSymbol,
-        array                        $config,
-        public readonly OrderManager $order
-    )
+    public function __construct(TradeSetup                   $entry,
+                                Symbol                       $evaluationSymbol,
+                                array                        $config,
+                                public readonly OrderManager $order)
     {
         parent::__construct($entry, $evaluationSymbol, $config);
     }
 
     public function __destruct()
     {
-        if ($this->status->getPosition() && !$this->status->isExited()) {
+        if ($this->status->getPosition() && !$this->status->isExited())
+        {
             throw new \LogicException('TradeLoop can not be destroyed before the trade is exited');
         }
     }
 
     protected function tryPositionEntry(\stdClass $candle, int $priceDate): void
     {
-        if (!$this->order->entry) {
+        if (!$this->order->entry)
+        {
             $price = $this->status->getEntryPrice();
             $order = $this->sendEntryOrder($price);
 
             $price->lock();
 
             $order->onFill(function (Fill $fill) {
-                if ($this->status->isEntered()) {
+                if ($this->status->isEntered())
+                {
                     /** @var LivePosition $position */
                     $position = $this->getPosition();
                     $position->processEntryOrderFill($fill);
-                } else {
-                    $this->status->enterPosition(
-                        $fill->timestamp,
+                }
+                else
+                {
+                    $this->status->enterPosition($fill->timestamp,
                         $this->asset()->proportional($fill->quantity * $fill->price),
                         $fill->price,
                         LivePosition::class,
                         $this->order,
-                        $fill
-                    );
+                        $fill);
                 }
             });
-        } elseif (!$this->order->entry->isAllFilled()) {
+        }
+        else if (!$this->order->entry->isAllFilled())
+        {
             $this->order->sync($this->order->entry);
         }
     }
 
     protected function sendEntryOrder(Price $price): Order
     {
-        if ($this->order->entry) {
+        if ($this->order->entry)
+        {
             throw new \LogicException('Entry order already sent.');
         }
 
@@ -82,8 +86,10 @@ class LiveTradeLoop extends TradeLoop
     {
         $isEntryFilled = $this->order->entry->isAllFilled();
 
-        if (!$this->order->exit && $this->status->getTargetPrice()) {
-            if (!$isEntryFilled) {
+        if (!$this->order->exit && $this->status->getTargetPrice())
+        {
+            if (!$isEntryFilled)
+            {
                 Log::info("Entry order not filled fully, cannot send exit order.");
                 return;
             }
@@ -92,8 +98,10 @@ class LiveTradeLoop extends TradeLoop
             $this->live()->sendExitOrder(OrderType::LIMIT);
         }
 
-        if (!$this->order->stop && $this->status->getStopPrice()) {
-            if (!$isEntryFilled) {
+        if (!$this->order->stop && $this->status->getStopPrice())
+        {
+            if (!$isEntryFilled)
+            {
                 Log::info("Entry order not filled fully, cannot send stop order.");
                 return;
             }

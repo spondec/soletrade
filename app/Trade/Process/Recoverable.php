@@ -6,14 +6,13 @@ namespace App\Trade\Process;
 
 class Recoverable
 {
-    public function __construct(
-        protected readonly \Closure $process,
-        public    readonly int $retryInSeconds,
-        public    readonly int $retryLimit,
-        public    readonly array $handle = []
-    )
+    public function __construct(protected readonly \Closure $process,
+                                public    readonly int $retryInSeconds,
+                                public    readonly int $retryLimit,
+                                public    readonly array $handle = [])
     {
-        if (!$this->handle) {
+        if (!$this->handle)
+        {
             throw new \LogicException('No Throwable to handle.');
         }
     }
@@ -25,15 +24,19 @@ class Recoverable
 
     protected function try(int $retryInSeconds, int $retryLimit): mixed
     {
-        try {
+        try
+        {
             return ($this->process)();
-        } catch (\Throwable $e) {
-            if ($this->retryLimit > 0 && $this->isHandled($e)) {
+        } catch (\Throwable $e)
+        {
+            if ($this->retryLimit > 0 && $this->isHandled($e))
+            {
                 \sleep($this->retryInSeconds);
                 $this->handle($e);
 
                 $retryLimit--;
-                if ($retryLimit < 0) {
+                if ($retryLimit < 0)
+                {
                     throw $e;
                 }
                 return $this->try($retryInSeconds, $retryLimit);
@@ -45,8 +48,10 @@ class Recoverable
 
     private function isHandled(\Throwable $e): bool
     {
-        foreach ($this->handle as $throwable) {
-            if ($e::class === $throwable || \is_subclass_of($e, $throwable)) {
+        foreach ($this->handle as $throwable)
+        {
+            if ($e::class === $throwable || \is_subclass_of($e, $throwable))
+            {
                 return true;
             }
         }
@@ -56,5 +61,6 @@ class Recoverable
 
     protected function handle(\Throwable $e): void
     {
+
     }
 }

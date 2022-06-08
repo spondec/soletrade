@@ -20,7 +20,8 @@ class Summarizer extends Summarization
     {
         $jobs = [];
 
-        foreach ($this->configs as $config) {
+        foreach ($this->configs as $config)
+        {
             $jobs[] = $this->newStrategySummaryJob($this->tester, $config);
         }
 

@@ -85,12 +85,14 @@ class TradeSetup extends Model implements Bindable
 
     public function loadBindingPrice(?Price $price, string $column, int $timestamp): void
     {
-        if (!$price) {
+        if (!$price)
+        {
             return;
         }
 
         $binding = $this->bindings[$column] ?? null;
-        if ($binding && $entryPrice = $binding->getValue($timestamp)) {
+        if ($binding && $entryPrice = $binding->getValue($timestamp))
+        {
             $price->set($entryPrice, $timestamp, 'Binding: ' . $binding->name, true);
         }
     }
@@ -114,7 +116,8 @@ class TradeSetup extends Model implements Bindable
     {
         $result = parent::toArray();
 
-        if (!empty($result['price']) || !empty($result['target_price']) || !empty($result['stop_price'])) {
+        if (!empty($result['price']) || !empty($result['target_price']) || !empty($result['stop_price']))
+        {
             $result['price'] = \round((float)$result['price'], 2);
             $result['target_price'] = $result['target_price'] ? \round((float)$result['target_price'], 2) : null;
             $result['stop_price'] = $result['stop_price'] ? \round((float)$result['stop_price'], 2) : null;
@@ -135,7 +138,8 @@ class TradeSetup extends Model implements Bindable
 
     protected function assertPrice(): float
     {
-        if (!$price = $this->price) {
+        if (!$price = $this->price)
+        {
             throw new \UnexpectedValueException('Price is not set.');
         }
 
@@ -144,13 +148,15 @@ class TradeSetup extends Model implements Bindable
 
     public function setStopPrice(float $ratio, float $triggerPriceRatio = StopLimit::DEFAULT_TRIGGER_PRICE_RATIO): void
     {
-        if (!$ratio) {
+        if (!$ratio)
+        {
             throw new \LogicException('Invalid ratio.');
         }
 
         $price = $this->assertPrice();
 
-        if ($ratio <= $triggerPriceRatio) {
+        if ($ratio <= $triggerPriceRatio)
+        {
             throw new \LogicException('Trigger price ratio can not be less than or equal to the stop price percent.');
         }
 
@@ -163,7 +169,8 @@ class TradeSetup extends Model implements Bindable
 
     public function setTargetPrice(float $ratio): void
     {
-        if (!$ratio) {
+        if (!$ratio)
+        {
             throw new \LogicException('Invalid ratio.');
         }
 

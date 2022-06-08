@@ -10,6 +10,7 @@ class TradeAsset
 {
     public function __construct(public readonly AllocatedAsset $allocation)
     {
+
     }
 
     public function registerRoi(float $roi): void

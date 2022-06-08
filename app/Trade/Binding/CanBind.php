@@ -12,20 +12,19 @@ trait CanBind
 {
     private ?\WeakMap $bindings = null;
 
-    final public function bind(
-        Bindable&Model $model,
-        string         $column,
-        string|int     $bind,
-        ?\Closure      $callback = null,
-        ?int           $timestamp = null
-    ): Binding
+    final public function bind(Bindable&Model $model,
+                               string         $column,
+                               string|int     $bind,
+                               ?\Closure      $callback = null,
+                               ?int           $timestamp = null): Binding
     {
         $this->assertBindExists($bind);
 
         $value = $this->getBindValue($bind, $timestamp);
         $params = $this->getExtraBindCallbackParams($bind, $timestamp);
 
-        if ($callback) {
+        if ($callback)
+        {
             $value = $callback($value, ...$params);
         }
 
@@ -39,11 +38,15 @@ trait CanBind
 
     private function assertBindExists(string|int $bind): void
     {
-        if ($bindable = $this->getBindable()) {
-            if (!\in_array($bind, $bindable)) {
+        if ($bindable = $this->getBindable())
+        {
+            if (!\in_array($bind, $bindable))
+            {
                 throw new \InvalidArgumentException("$bind was not defined as a bindable.");
             }
-        } else {
+        }
+        else
+        {
             throw new \LogicException('No bindable are defined.');
         }
     }
@@ -65,11 +68,13 @@ trait CanBind
 
     private function setBinding(Bindable&Model $model, Binding $binding, ?\Closure $callback): void
     {
-        if (!$this->bindings) {
+        if (!$this->bindings)
+        {
             $this->bindings = new \WeakMap();
         }
 
-        if (!isset($this->bindings[$model])) {
+        if (!isset($this->bindings[$model]))
+        {
             $this->bindings[$model] = [];
         }
 
@@ -86,13 +91,16 @@ trait CanBind
 
     public function saveBindings(Bindable&Model $model): void
     {
-        if (!$model->exists) {
+        if (!$model->exists)
+        {
             throw new \LogicException('Model was not saved before binding.');
         }
 
-        if ($bindings = $this->getBindings($model)) {
+        if ($bindings = $this->getBindings($model))
+        {
             /** @var Binding $binding */
-            foreach ($bindings as $column => $item) {
+            foreach ($bindings as $column => $item)
+            {
                 $binding = $item['binding'];
                 $callback = $item['callback'];
 
@@ -114,7 +122,8 @@ trait CanBind
 
     public function replaceBindable(Bindable&Model $current, Bindable&Model $new): void
     {
-        if ($bindings = $this->bindings[$current] ?? false) {
+        if ($bindings = $this->bindings[$current] ?? false)
+        {
             unset($this->bindings[$current]);
             $this->bindings[$new] = $bindings;
         }

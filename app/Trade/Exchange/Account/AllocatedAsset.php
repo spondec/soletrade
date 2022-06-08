@@ -8,12 +8,10 @@ final class AllocatedAsset
 {
     protected float $amount;
 
-    public function __construct(
-        public       readonly Balance $balance,
-        public       readonly Asset $asset,
-        float        $amount,
-        public float $leverage = 1
-    )
+    public function __construct(public       readonly Balance $balance,
+                                public       readonly Asset $asset,
+                                float        $amount,
+                                public float $leverage = 1)
     {
         $this->allocate($amount);
     }
@@ -22,7 +20,8 @@ final class AllocatedAsset
     {
         $this->balance->update();
 
-        if ($this->asset->available() < $amount) {
+        if ($this->asset->available() < $amount)
+        {
             throw new \LogicException('Allocated asset amount exceeds available amount.');
         }
 
@@ -39,14 +38,16 @@ final class AllocatedAsset
 
     private function assertGreaterThanZero(float $value): void
     {
-        if ($value <= 0) {
+        if ($value <= 0)
+        {
             throw new \LogicException('Argument $value must be greater than zero.');
         }
     }
 
     private function assertLessThanMaxPositionSize(float $proportionalSize): void
     {
-        if ($proportionalSize > Position::MAX_SIZE) {
+        if ($proportionalSize > Position::MAX_SIZE)
+        {
             throw new \LogicException('Proportional size exceeds the maximum proportional position size.');
         }
     }
@@ -61,7 +62,8 @@ final class AllocatedAsset
 
     private function assertLessThanAllocation(float $size): void
     {
-        if ($size > $this->amount) {
+        if ($size > $this->amount)
+        {
             throw new \LogicException('Argument $size exceeds the allocated asset amount.');
         }
     }

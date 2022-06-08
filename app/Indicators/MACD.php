@@ -19,17 +19,13 @@ final class MACD extends Indicator
     protected function calculate(CandleCollection $candles): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        $macd = \trader_macd(
-            $candles->closes(),
-            $this->config['fastPeriod'],
-            $this->config['slowPeriod'],
-            $this->config['signalPeriod']
-        );
+        $macd = \trader_macd($candles->closes(),
+                             $this->config['fastPeriod'],
+                             $this->config['slowPeriod'],
+                             $this->config['signalPeriod']);
 
-        if (!$macd) {
-            return [];
-        }
-        return \array_map(static fn ($v, $k) => [
+        if (!$macd) return [];
+        return \array_map(static fn($v, $k) => [
             'macd'       => $v,
             'signal'     => $macd[1][$k],
             'divergence' => $macd[2][$k]

@@ -16,6 +16,7 @@ class CandleCollection extends Collection
     }
 
     #[Pure] public function highs(): array
+
     {
         return \array_column($this->all(), 'h');
     }
@@ -32,36 +33,41 @@ class CandleCollection extends Collection
 
     public function previousCandles(int $amount, int $startIndex): static
     {
-        if ($amount > $startIndex) {
+        if ($amount > $startIndex)
+        {
             throw new \InvalidArgumentException('Not enough candles exist.');
         }
 
         $candles = [];
-        for ($i = 1; $i <= $amount; $i++) {
+        for ($i = 1; $i <= $amount; $i++)
+        {
             $candles[] = $this->items[$startIndex - $i];
         }
         return new static(\array_reverse($candles, false));
     }
 
-    public function findPrevNextCandle(
-        int        $timestamp,
-        ?\stdClass &$prev = null,
-        ?\stdClass &$next = null,
-        ?int       &$prevKey = null,
-        ?int       &$nextKey = null
-    ): void
+    public function findPrevNextCandle(int        $timestamp,
+                                       ?\stdClass &$prev = null,
+                                       ?\stdClass &$next = null,
+                                       ?int       &$prevKey = null,
+                                       ?int       &$nextKey = null): void
     {
         /**
          * @var int       $key
          * @var \stdClass $candle
          */
-        foreach ($this->items as $key => $candle) {
-            if (!$prev) {
-                if ($candle->t > $timestamp) {
+        foreach ($this->items as $key => $candle)
+        {
+            if (!$prev)
+            {
+                if ($candle->t > $timestamp)
+                {
                     $prev = $_prev ?? null;
                     $prevKey = $_prevKey ?? null;
                 }
-            } elseif ($candle->t > $prev->t) {
+            }
+            else if ($candle->t > $prev->t)
+            {
                 $next = $candle;
                 $nextKey = $key;
                 break;

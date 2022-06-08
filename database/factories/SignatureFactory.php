@@ -29,7 +29,7 @@ class SignatureFactory extends Factory
 
     public function data(array $data)
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'data' => $data,
             'hash' => $this->hash($data)
         ]);

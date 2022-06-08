@@ -40,11 +40,9 @@ abstract class Indicator implements Binder
 
     public string $alias;
 
-    public function __construct(
-        protected Symbol         $symbol,
-        private CandleCollection $candles,
-        array                    $config = []
-    )
+    public function __construct(protected Symbol         $symbol,
+                                private CandleCollection $candles,
+                                array                    $config = [])
     {
         $this->mergeConfig($config);
         $this->alias = $config['alias'] ?? static::name();
@@ -60,16 +58,20 @@ abstract class Indicator implements Binder
 
         $this->setup();
 
-        if ($count = $candles->count()) {
+        if ($count = $candles->count())
+        {
             $data = $this->calculate($this->candles);
             $this->gap = $count - \count($data);
 
-            if ($this->gap < 0) {
+            if ($this->gap < 0)
+            {
                 throw new \LogicException(static::name() . ' data count cannot exceed the candle count.');
             }
 
             $this->data = new Collection($this->combineTimestamps($data));
-        } else {
+        }
+        else
+        {
             $this->data = new Collection();
         }
     }
@@ -80,13 +82,15 @@ abstract class Indicator implements Binder
 
     protected function setup(): void
     {
+
     }
 
     abstract protected function calculate(CandleCollection $candles): array;
 
     #[Pure] protected function combineTimestamps(?array $data): array
     {
-        if (!$data) {
+        if (!$data)
+        {
             return [];
         }
 
@@ -97,7 +101,8 @@ abstract class Indicator implements Binder
 
     final public function getBindValue(int|string $bind, ?int $timestamp = null): mixed
     {
-        if ($timestamp) {
+        if ($timestamp)
+        {
             return $this->getBind($bind, $this->getEqualOrClosestValue($timestamp));
         }
 
@@ -112,7 +117,8 @@ abstract class Indicator implements Binder
     public function getBindable(): array
     {
         $value = $this->data()->first();
-        if (\is_array($value)) {
+        if (\is_array($value))
+        {
             return \array_keys($value);
         }
         return [static::name()];
@@ -120,7 +126,8 @@ abstract class Indicator implements Binder
 
     protected function getBind(int|string $bind, mixed $value): mixed
     {
-        if (\is_array($value)) {
+        if (\is_array($value))
+        {
             return $value[$bind];
         }
 
@@ -129,12 +136,15 @@ abstract class Indicator implements Binder
 
     protected function getEqualOrClosestValue(int $timestamp)
     {
-        if ($value = $this->getData($timestamp)) {
+        if ($value = $this->getData($timestamp))
+        {
             return $value;
         }
 
-        foreach ($this->data as $t => $value) {
-            if ($t > $timestamp) {
+        foreach ($this->data as $t => $value)
+        {
+            if ($t > $timestamp)
+            {
                 return $_prev;
             }
             $_prev = $value;
@@ -178,9 +188,12 @@ abstract class Indicator implements Binder
      */
     public function candle(int $offset = 0, int $timestamp = null): \stdClass
     {
-        if ($timestamp) {
-            foreach ($this->candles as $candle) {
-                if ($candle->t == $timestamp) {
+        if ($timestamp)
+        {
+            foreach ($this->candles as $candle)
+            {
+                if ($candle->t == $timestamp)
+                {
                     return $candle;
                 }
             }
@@ -220,27 +233,31 @@ abstract class Indicator implements Binder
         $unconfirmed = [];
         $lastCandle = $this->repo->fetchLastCandle($this->symbol);
 
-        if ($signalCallback) {
+        if ($signalCallback)
+        {
             $this->verifySignalCallback($signalCallback);
             $signalSignature = $this->getSignalCallbackSignature($signalCallback);
             $signal = $this->setupSignal($signalSignature);
         }
 
         $iterator = $this->data->getIterator();
-        while ($iterator->valid()) {
+        while ($iterator->valid())
+        {
             $value = $iterator->current();
             $this->index++;
             $this->current = $openTime = $key = $iterator->key();
             $iterator->next();
             $nextOpenTime = $iterator->key();
 
-            if ($signalCallback) {
+            if ($signalCallback)
+            {
                 /** @var Signal|null $newSignal */
                 $newSignal = $signalCallback(signal: $signal, indicator: $this, value: $value);
 
                 $priceDate = $this->repo->getPriceDate($openTime, $nextOpenTime, $this->symbol);
 
-                if ($newSignal) {
+                if ($newSignal)
+                {
                     $newSignal->price ??= $this->candle()->c;
                     $newSignal->timestamp = $openTime;
                     $newSignal->price_date = $priceDate;
@@ -270,7 +287,8 @@ abstract class Indicator implements Binder
         if (!($returnType = $reflection->getReturnType()) ||
             !$returnType instanceof \ReflectionNamedType ||
             !$returnType->allowsNull() ||
-            $returnType->getName() !== $type) {
+            $returnType->getName() !== $type)
+        {
             throw new \InvalidArgumentException("Signal callback must have a return type of $type and be nullable.");
         }
     }

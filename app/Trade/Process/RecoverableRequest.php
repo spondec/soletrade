@@ -12,12 +12,10 @@ class RecoverableRequest extends Recoverable
         parent::__construct($process, $retryInSeconds, $retryLimit, $handle);
     }
 
-    public static function new(
-        \Closure $request,
-        ?int     $retryInSeconds = null,
-        ?int     $retryLimit = null,
-        array    $handle = []
-    ): static
+    public static function new(\Closure $request,
+                               ?int     $retryInSeconds = null,
+                               ?int     $retryLimit = null,
+                               array    $handle = []): static
     {
         $config = \App::make(ConfigRepository::class)->options['recoverableRequest'];
 

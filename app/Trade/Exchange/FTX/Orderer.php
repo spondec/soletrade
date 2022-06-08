@@ -33,15 +33,19 @@ class Orderer extends \App\Trade\Exchange\Orderer
     {
         $parsedType = $this->parseOrderType($order->type);
 
-        try {
+        try
+        {
             $response = $this->isConditional($order)
                 ? $this->sendConditionalOrderCancelRequest($order, $parsedType)
                 : $this->sendOrderCancelRequest($order);
-        } catch (InvalidOrder $e) {
-            if (\str_contains($e->getMessage(), 'Order already closed')) {
+        } catch (InvalidOrder $e)
+        {
+            if (\str_contains($e->getMessage(), 'Order already closed'))
+            {
                 $this->sync($order); //to register fills
 
-                if ($order->filled) {
+                if ($order->filled)
+                {
                     throw new OrderFilledInCancelRequest($e->getMessage());
                 }
             }
@@ -49,11 +53,13 @@ class Orderer extends \App\Trade\Exchange\Orderer
             throw $e;
         }
 
-        if ($response === 'Order cancelled') {
+        if ($response === 'Order cancelled')
+        {
             return $this->executeOrderUpdate($order);
         }
 
-        if ($response === 'Order queued for cancellation') {
+        if ($response === 'Order queued for cancellation')
+        {
             return $this->handleOrderQueuedForCancellation($order);
         }
 
@@ -84,14 +90,14 @@ class Orderer extends \App\Trade\Exchange\Orderer
     private function sendConditionalOrderCancelRequest(Order $order, string $parsedType): string
     {
         return RecoverableRequest::new(
-            fn () => $this->api->cancel_order($order->exchange_order_id, params: ['type' => $parsedType])
+            fn() => $this->api->cancel_order($order->exchange_order_id, params: ['type' => $parsedType])
         )->run();
     }
 
     private function sendOrderCancelRequest(Order $order): string
     {
         return RecoverableRequest::new(
-            fn () => $this->api->cancel_order($order->exchange_order_id)
+            fn() => $this->api->cancel_order($order->exchange_order_id)
         )->run();
     }
 
@@ -99,7 +105,8 @@ class Orderer extends \App\Trade\Exchange\Orderer
     {
         $parsedType = $this->parseOrderType($order->type);
 
-        if ($this->isConditional($order)) {
+        if ($this->isConditional($order))
+        {
             return $this->sendConditionalOrderUpdateRequest($order, $parsedType);
         }
 
@@ -111,7 +118,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
         $this->assertConditional($order);
 
         $conditionals = RecoverableRequest::new(
-            fn () => $this->api->fetch_orders($order->symbol, params: ['type' => $parsedType])
+            fn() => $this->api->fetch_orders($order->symbol, params: ['type' => $parsedType])
         )->run();
 
         $responses = \array_filter($conditionals, static function (array $conditional) use ($order) {
@@ -123,18 +130,21 @@ class Orderer extends \App\Trade\Exchange\Orderer
 
     protected function assertConditional(Order $order): void
     {
-        if (!$this->isConditional($order)) {
+        if (!$this->isConditional($order))
+        {
             throw new \LogicException('$order expected to be conditional. Order ID: ' . $order->id);
         }
     }
 
     protected function assertSingleOrder(array $responses, Order $order): array
     {
-        if (!$responses) {
+        if (!$responses)
+        {
             throw new \LogicException('Order not found for ID: ' . $order->id);
         }
 
-        if (\count($responses) > 1) {
+        if (\count($responses) > 1)
+        {
             throw new \LogicException('Multiple orders found for order ID: ' . $order->id);
         }
 
@@ -144,7 +154,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
     private function sendOrderUpdateRequest(Order $order, string $parsedType): array
     {
         return RecoverableRequest::new(
-            fn () => $this->api->fetch_order($order->exchange_order_id, params: ['type' => $parsedType])
+            fn() => $this->api->fetch_order($order->exchange_order_id, params: ['type' => $parsedType])
         )->run();
     }
 
@@ -160,10 +170,12 @@ class Orderer extends \App\Trade\Exchange\Orderer
     private function handleOrderQueuedForCancellation(Order $order): array
     {
         return RecoverableRequest::new(function () use ($order) {
+
             $response = $this->executeOrderUpdate($order);
             $this->processOrderDetails($order, $response);
 
-            if ($order->isOpen()) {
+            if ($order->isOpen())
+            {
                 throw new OrderNotCanceledException("Order queued for cancellation but unable to cancel. Order ID: " . $order->id);
             }
 
@@ -196,12 +208,17 @@ class Orderer extends \App\Trade\Exchange\Orderer
     {
         $map = $this->orderStatusMap();
 
-        foreach ($map as $enum => $value) {
-            if (\is_array($value)) {
-                if (\in_array($status, $value)) {
+        foreach ($map as $enum => $value)
+        {
+            if (\is_array($value))
+            {
+                if (\in_array($status, $value))
+                {
                     return OrderStatus::from($enum);
                 }
-            } elseif ($value == $status) {
+            }
+            else if ($value == $status)
+            {
                 return OrderStatus::from($enum);
             }
         }
@@ -227,8 +244,7 @@ class Orderer extends \App\Trade\Exchange\Orderer
     private function sendNewOrderRequest(Order $order): array
     {
         return RecoverableRequest::new(
-            fn () => $this->api->create_order(
-                $order->symbol,
+            fn() => $this->api->create_order($order->symbol,
                 $this->parseOrderType($order->type),
                 \strtolower(Enum::case($order->side)),
                 $order->quantity,
@@ -252,7 +268,8 @@ class Orderer extends \App\Trade\Exchange\Orderer
     {
         $this->assertConditional($order);
 
-        if ($order->type === OrderType::STOP_LIMIT) {
+        if ($order->type === OrderType::STOP_LIMIT)
+        {
             return $response['info']['status'] === 'triggered';
         }
 
@@ -263,12 +280,14 @@ class Orderer extends \App\Trade\Exchange\Orderer
     {
         $fills = [];
 
-        if ($this->isConditional($order) && $order->exists) {
-            if (!$this->isOrderConditionFulfilled($order, $response)) {
+        if ($this->isConditional($order) && $order->exists)
+        {
+            if (!$this->isOrderConditionFulfilled($order, $response))
+            {
                 return [];
             }
             $orders = RecoverableRequest::new(
-                fn () => $this->api->fetch_orders($order->symbol)
+                fn() => $this->api->fetch_orders($order->symbol)
             )->run();
 
             $responses = $this->filterConditionalOrderMatch($order, $orders);
@@ -276,13 +295,14 @@ class Orderer extends \App\Trade\Exchange\Orderer
         }
 
         $trades = RecoverableRequest::new(
-            fn () => $this->api->fetch_order_trades($match['id'] ?? $order->exchange_order_id)
+            fn() => $this->api->fetch_order_trades($match['id'] ?? $order->exchange_order_id)
         )->run();
 
         $order->logResponse('fills', $trades);
 
         $filled = 0;
-        foreach ($trades as $fill) {
+        foreach ($trades as $fill)
+        {
             $fills[] = $new = new Fill();
 
             $new->timestamp = $fill['timestamp'];
@@ -299,36 +319,44 @@ class Orderer extends \App\Trade\Exchange\Orderer
 
     private function filterConditionalOrderMatch(Order $order, array $orders): array
     {
-        if (!$orderResponses = $order->responses) {
+        if (!$orderResponses = $order->responses)
+        {
             throw new \LogicException('No order response found. Order ID: ' . $order->id);
         }
 
         $conditionalResponse = $orderResponses['update'] ?? $orderResponses['new'] ?? null;
 
-        if (!$conditionalResponse) {
+        if (!$conditionalResponse)
+        {
             throw new \LogicException('No conditional response found. Order ID: ' . $order->id);
         }
 
         $conditionalResponse = \end($conditionalResponse);
 
         return \array_filter($orders, static function (array $orderResponse) use ($conditionalResponse) {
-            if ($orderResponse['timestamp'] < $conditionalResponse['timestamp']) {
+
+            if ($orderResponse['timestamp'] < $conditionalResponse['timestamp'])
+            {
                 return false;
             }
 
-            if ($orderResponse['side'] != $conditionalResponse['side']) {
+            if ($orderResponse['side'] != $conditionalResponse['side'])
+            {
                 return false;
             }
 
-            if ($orderResponse['amount'] != $conditionalResponse['amount']) {
+            if ($orderResponse['amount'] != $conditionalResponse['amount'])
+            {
                 return false;
             }
 
-            if ($orderResponse['info']['reduceOnly'] != $conditionalResponse['info']['reduceOnly']) {
+            if ($orderResponse['info']['reduceOnly'] != $conditionalResponse['info']['reduceOnly'])
+            {
                 return false;
             }
 
-            if ($orderResponse['type'] != $conditionalResponse['info']['orderType']) {
+            if ($orderResponse['type'] != $conditionalResponse['info']['orderType'])
+            {
                 return false;
             }
 

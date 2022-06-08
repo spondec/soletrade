@@ -20,7 +20,7 @@ class OrderTest extends TestCase
         $order->save();
         $fill = $this->makeFills($order, 1)->first();
 
-        $order->onFill(fn () => $this->assertTrue(true));
+        $order->onFill(fn() => $this->assertTrue(true));
         $fill->save();
         $this->assertEquals(1, $this->getCount());
     }
@@ -43,7 +43,8 @@ class OrderTest extends TestCase
      */
     protected function makeFills(Order $order, int $count): Collection
     {
-        if (!$order->exists) {
+        if (!$order->exists)
+        {
             throw new \LogicException('Order must be saved before filling.');
         }
 
@@ -58,7 +59,8 @@ class OrderTest extends TestCase
         $order->save();
         $fills = $this->makeFills($order, 3);
 
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 3; $i++)
+        {
             $fills[$i]->quantity = $i + 1;
             $fills[$i]->save();
         }
@@ -77,7 +79,8 @@ class OrderTest extends TestCase
         $order->save();
         $fills = $this->makeFills($order, 3);
 
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 3; $i++)
+        {
             $fills[$i]->quantity = $i + 1;
             $fills[$i]->price = $i + 1;
             $fills[$i]->save();
@@ -92,7 +95,7 @@ class OrderTest extends TestCase
         $order->save();
 
         $model = $this->makeFills($order, 3)
-            ->each(fn (Fill $fill) => $fill->save())
+            ->each(fn(Fill $fill) => $fill->save())
             ->only(['id']);
 
         $db = $order->rawFills()
@@ -137,7 +140,7 @@ class OrderTest extends TestCase
         $order = $this->makeOrder();
         $order->save();
         $fills = $this->makeFills($order, 3)
-            ->each(fn (Fill $fill) => $fill->save())
+            ->each(fn(Fill $fill) => $fill->save())
             ->only(['id']);
 
         $this->assertEquals($fills->all(), $order->fills()->get()->only(['id'])->all());
@@ -148,7 +151,7 @@ class OrderTest extends TestCase
         $order = $this->makeOrder();
         $order->save();
 
-        $order->onCancel(fn () => $this->assertTrue(true));
+        $order->onCancel(fn() => $this->assertTrue(true));
         $order->status = OrderStatus::CANCELED;
         $order->save();
     }

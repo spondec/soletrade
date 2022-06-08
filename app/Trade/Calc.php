@@ -20,7 +20,8 @@ class Calc
     {
         $roi = ($exitPrice - $entryPrice) * 100 / $entryPrice;
 
-        if (!$isBuy) {
+        if (!$isBuy)
+        {
             $roi *= -1;
         }
 

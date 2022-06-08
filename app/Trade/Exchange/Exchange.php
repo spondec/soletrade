@@ -36,7 +36,8 @@ abstract class Exchange
         /** @var ConfigRepository $repo */
         $repo = App::make(ConfigRepository::class);
 
-        if (!$this->config = $repo->exchangeConfig(static::name())) {
+        if (!$this->config = $repo->exchangeConfig(static::name()))
+        {
             throw new \InvalidArgumentException('Invalid config for ' . static::name());
         }
 
@@ -63,7 +64,8 @@ abstract class Exchange
 
     public static function instance(): static
     {
-        if (!$instance = static::$instances[static::class] ?? null) {
+        if (!$instance = static::$instances[static::class] ?? null)
+        {
             return static::$instances[static::class] = new static();
         }
 
@@ -87,7 +89,8 @@ abstract class Exchange
      */
     public static function from(string $nameOrClass): Exchange
     {
-        if (\class_exists($nameOrClass)) {
+        if (\class_exists($nameOrClass))
+        {
             return $nameOrClass::instance();
         }
 

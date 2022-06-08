@@ -21,8 +21,7 @@ class PositionTest extends TestCase
 
     protected function getPosition(Side $side, float $size, float $entry, float $exit = 0, float $stop = 0): Position
     {
-        return new Position(
-            $side,
+        return new Position($side,
             $size,
             time(),
             new Price($entry, time()),

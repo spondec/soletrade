@@ -17,11 +17,13 @@ class Util
     {
         $rounded = \round($roi, 2);
 
-        if ($roi > 0) {
+        if ($roi > 0)
+        {
             return "<fg=green>$rounded%</>";
         }
 
-        if ($roi < 0) {
+        if ($roi < 0)
+        {
             return "<fg=red>$rounded%</>";
         }
 
@@ -35,10 +37,10 @@ class Util
 
     public static function varExport(mixed $expression): string
     {
-        $export = \var_export($expression, true);
+        $export = \var_export($expression, TRUE);
         $export = \preg_replace("/^([ ]*)(.*)/m", '$1$1$2', $export);
         $array = \preg_split("/\r\n|\n|\r/", $export);
-        $array = \preg_replace(["/\s*array\s\($/", "/\)(,)?$/", "/\s=>\s$/"], [null, ']$1', ' => ['], $array);
+        $array = \preg_replace(["/\s*array\s\($/", "/\)(,)?$/", "/\s=>\s$/"], [NULL, ']$1', ' => ['], $array);
         $export = \implode(PHP_EOL, \array_filter(["["] + $array));
         return $export;
     }
