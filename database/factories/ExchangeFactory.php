@@ -18,7 +18,7 @@ class ExchangeFactory extends Factory
     {
         return [
             'class' => static::class,
-            'name'  => $this->faker->word,
+            'name' => $this->faker->word,
         ];
     }
 }

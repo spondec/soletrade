@@ -6,11 +6,9 @@ enum Side: string
 {
     case BUY = 'BUY';
     case SELL = 'SELL';
-
     public function opposite(): Side
     {
-        return match ($this)
-        {
+        return match ($this) {
             static::BUY => static::SELL,
             static::SELL => static::BUY
         };

@@ -16,9 +16,9 @@ class ExchangeController extends Controller
     public function index(): Collection
     {
         return collect($this->configRepo->exchanges)
-            ->map(fn(string|Exchange $e) => $e::instance())
-            ->filter(fn(Exchange $e) => $e->hasApiAccess())
-            ->map(fn(Exchange $e) => $e->info());
+            ->map(fn (string|Exchange $e) => $e::instance())
+            ->filter(fn (Exchange $e) => $e->hasApiAccess())
+            ->map(fn (Exchange $e) => $e->info());
     }
 
     /**
@@ -26,8 +26,7 @@ class ExchangeController extends Controller
      */
     public function symbols(string $exchange): array
     {
-        if (\in_array($exchange, $this->configRepo->exchanges))
-        {
+        if (\in_array($exchange, $this->configRepo->exchanges)) {
             return $exchange::instance()->fetch()->symbols();
         }
 
@@ -38,28 +37,26 @@ class ExchangeController extends Controller
     {
         $balances = [];
 
-        foreach ($this->configRepo->exchanges as $exchange)
-        {
+        foreach ($this->configRepo->exchanges as $exchange) {
             /** @var Exchange $exchange */
             $exchange = $exchange::instance();
 
-            if (!$exchange->hasApiAccess())
-            {
+            if (!$exchange->hasApiAccess()) {
                 continue;
             }
 
-            foreach ($exchange->fetch()->balance()->assets as $assetName => $asset)
-            {
+            foreach ($exchange->fetch()->balance()->assets as $assetName => $asset) {
                 $balances[] = [
-                    'name'      => $assetName,
-                    'exchange'  => $exchange::name(),
+                    'name' => $assetName,
+                    'exchange' => $exchange::name(),
                     'available' => $asset->available(),
-                    'total'     => $asset->total(),
+                    'total' => $asset->total(),
                 ];
             }
         }
         $names = \array_column($balances, 'name');
         \array_multisort($names, SORT_ASC, $balances);
+
         return $balances;
     }
 }

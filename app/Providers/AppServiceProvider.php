@@ -20,8 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (!App::runningInConsole())
-        {
+        if (!App::runningInConsole()) {
             \set_time_limit(30);
         }
         \ini_set('trader.real_precision', 10);
@@ -47,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Relation::enforceMorphMap([
-            'signal'      => Signal::class,
+            'signal' => Signal::class,
             'trade_setup' => TradeSetup::class,
         ]);
     }

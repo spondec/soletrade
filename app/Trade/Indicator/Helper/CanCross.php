@@ -11,18 +11,15 @@ trait CanCross
     /**
      * Return true if x crosses over y.
      *
-     * @param string $x One of the values calculated by the indicator.
-     * @param string $y One of the values calculated by the indicator.
-     *
-     * @return bool
+     * @param string $x one of the values calculated by the indicator
+     * @param string $y one of the values calculated by the indicator
      */
     public function crossover(string $x, string $y): bool
     {
         $prev = $this->prev();
         $current = $this->current();
 
-        if (empty($prev[$x]) || empty($prev[$y]) || empty($current[$x]) || empty($current[$y]))
-        {
+        if (empty($prev[$x]) || empty($prev[$y]) || empty($current[$x]) || empty($current[$y])) {
             return false;
         }
 
@@ -32,18 +29,15 @@ trait CanCross
     /**
      * Return true if x crosses under y.
      *
-     * @param string $x One of the values calculated by the indicator.
-     * @param string $y One of the values calculated by the indicator.
-     *
-     * @return bool
+     * @param string $x one of the values calculated by the indicator
+     * @param string $y one of the values calculated by the indicator
      */
     public function crossunder(string $x, string $y): bool
     {
         $prev = $this->prev();
         $current = $this->current();
 
-        if (empty($prev[$x]) || empty($prev[$y]) || empty($current[$x]) || empty($current[$y]))
-        {
+        if (empty($prev[$x]) || empty($prev[$y]) || empty($current[$x]) || empty($current[$y])) {
             return false;
         }
 

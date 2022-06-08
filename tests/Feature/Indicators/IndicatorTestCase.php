@@ -18,7 +18,7 @@ abstract class IndicatorTestCase extends TestCase
             ->count($count)
             ->create();
 
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        /* @noinspection PhpIncompatibleReturnTypeInspection */
         return Symbol::query()->firstOrFail();
     }
 }

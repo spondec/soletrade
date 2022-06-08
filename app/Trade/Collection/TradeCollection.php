@@ -14,13 +14,12 @@ class TradeCollection extends Collection
     use HasConfig;
 
     protected array $config = [
-        'oppositeOnly'  => false,
+        'oppositeOnly' => false,
         'permanentOnly' => false,
     ];
 
     /**
      * @param TradeSetup[] $items
-     * @param array        $config
      *
      * @throws \Exception
      */
@@ -42,8 +41,7 @@ class TradeCollection extends Collection
      */
     public function mergeTrades(TradeCollection $trades): static
     {
-        foreach ($trades as $timestamp => $trade)
-        {
+        foreach ($trades as $timestamp => $trade) {
             $this->items[$timestamp] = $trade;
         }
 
@@ -54,10 +52,8 @@ class TradeCollection extends Collection
 
     public function cleanUpBefore(TradeSetup $trade): void
     {
-        foreach ($this->items as $t => $_trade)
-        {
-            if ($_trade->id == $trade->id)
-            {
+        foreach ($this->items as $t => $_trade) {
+            if ($_trade->id == $trade->id) {
                 return;
             }
 
@@ -72,10 +68,10 @@ class TradeCollection extends Collection
 
     public function getNextTrade(TradeSetup $trade): ?TradeSetup
     {
-        if ($this->config('oppositeOnly'))
-        {
+        if ($this->config('oppositeOnly')) {
             return $this->findNextOppositeTrade($trade);
         }
+
         return $this->findNextTrade($trade);
     }
 
@@ -83,10 +79,8 @@ class TradeCollection extends Collection
     {
         $isBuy = $trade->isBuy();
 
-        while ($next = $this->findNextTrade($next ?? $trade))
-        {
-            if ($next->isBuy() !== $isBuy)
-            {
+        while ($next = $this->findNextTrade($next ?? $trade)) {
+            if ($next->isBuy() !== $isBuy) {
                 return $next;
             }
         }
@@ -99,11 +93,10 @@ class TradeCollection extends Collection
         $timestamp = $trade->timestamp;
         $iterator = $this->getIterator();
 
-        while ($iterator->valid())
-        {
-            if ($iterator->key() == $timestamp)
-            {
+        while ($iterator->valid()) {
+            if ($iterator->key() == $timestamp) {
                 $iterator->next();
+
                 return $iterator->current();
             }
 
@@ -116,36 +109,32 @@ class TradeCollection extends Collection
     /**
      * @param TradeSetup[] $items
      *
-     * @return array
      * @throws \Exception
      */
     protected function keyByTimestamp(array $items): array
     {
         $keyed = [];
-        foreach ($items as $trade)
-        {
+        foreach ($items as $trade) {
             $t = $trade->timestamp;
-            if (isset($keyed[$t]))
-            {
+            if (isset($keyed[$t])) {
                 throw new \Exception('Duplicate trade timestamp.');
             }
 
             $keyed[$t] = $trade;
         }
+
         return $keyed;
     }
 
     /**
-     * @param array $items
-     *
      * @return TradeSetup[]|array
      */
     protected function filterByConfig(array $items): array
     {
-        if ($this->config('permanentOnly'))
-        {
-            $items = \array_filter($items, fn(TradeSetup $trade) => $trade->is_permanent);
+        if ($this->config('permanentOnly')) {
+            $items = \array_filter($items, fn (TradeSetup $trade) => $trade->is_permanent);
         }
+
         return $items;
     }
 }

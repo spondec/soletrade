@@ -21,19 +21,19 @@ class OrderFactory extends Factory
     public function definition()
     {
         return [
-            'exchange_id'       => 1,
-            'reduce_only'       => false,
-            'status'            => $this->faker->randomElement(Enum::cases(OrderStatus::class)),
-            'symbol'            => $this->faker->randomElement(['BTC/USDT', 'ETH/USDT']),
-            'type'              => $this->faker->randomElement(Enum::cases(OrderType::class)),
-            'side'              => $this->faker->randomElement(Enum::cases(Side::class)),
-            'quantity'          => $this->faker->randomFloat(2, 0.01, 100),
-            'filled'            => $this->faker->randomFloat(2, 0.01, 100),
-            'price'             => $this->faker->randomFloat(2, 0.01, 100),
-            'stop_price'        => null,
-            'commission'        => $this->faker->randomFloat(2, 0.01, 100),
-            'commission_asset'  => 'USDT',
-            'exchange_order_id' => $this->faker->uuid
+            'exchange_id' => 1,
+            'reduce_only' => false,
+            'status' => $this->faker->randomElement(Enum::cases(OrderStatus::class)),
+            'symbol' => $this->faker->randomElement(['BTC/USDT', 'ETH/USDT']),
+            'type' => $this->faker->randomElement(Enum::cases(OrderType::class)),
+            'side' => $this->faker->randomElement(Enum::cases(Side::class)),
+            'quantity' => $this->faker->randomFloat(2, 0.01, 100),
+            'filled' => $this->faker->randomFloat(2, 0.01, 100),
+            'price' => $this->faker->randomFloat(2, 0.01, 100),
+            'stop_price' => null,
+            'commission' => $this->faker->randomFloat(2, 0.01, 100),
+            'commission_asset' => 'USDT',
+            'exchange_order_id' => $this->faker->uuid,
         ];
     }
 }

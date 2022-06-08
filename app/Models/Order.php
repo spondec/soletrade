@@ -45,22 +45,22 @@ class Order extends Model
     /**
      * @var \Closure[][]
      */
-    static protected array $fillListeners = [];
+    protected static array $fillListeners = [];
     /**
      * @var Fill[][]
      */
-    static protected array $fills = [];
+    protected static array $fills = [];
     /**
      * @var \Closure[][]
      */
-    static protected array $cancelListeners = [];
+    protected static array $cancelListeners = [];
 
     protected $table = 'orders';
     protected $casts = [
         'responses' => 'array',
-        'type'      => OrderType::class,
-        'side'      => Side::class,
-        'status'    => OrderStatus::class,
+        'type' => OrderType::class,
+        'side' => Side::class,
+        'status' => OrderStatus::class,
     ];
 
     protected $attributes = [
@@ -72,8 +72,7 @@ class Order extends Model
         parent::booted();
 
         static::saved(static function (self $order) {
-            if ($order->status === OrderStatus::CANCELED)
-            {
+            if (OrderStatus::CANCELED === $order->status) {
                 static::handleCancel($order);
             }
         });
@@ -81,16 +80,14 @@ class Order extends Model
 
     protected static function handleCancel(Order $order): void
     {
-        foreach (static::$cancelListeners[$order->id] ?? [] as $cancelListener)
-        {
+        foreach (static::$cancelListeners[$order->id] ?? [] as $cancelListener) {
             $cancelListener($order);
         }
     }
 
     public function onCancel(\Closure $callback): void
     {
-        if (!$this->exists)
-        {
+        if (!$this->exists) {
             throw new \LogicException('Cannot attach listener to non-existing order.');
         }
 
@@ -104,12 +101,11 @@ class Order extends Model
 
     public function flushListeners(): void
     {
-        if ($this->isOpen())
-        {
+        if ($this->isOpen()) {
             throw new \LogicException('Cannot flush listeners for an open order.');
         }
 
-        Log::info('Flushing listeners for order #' . $this->id);
+        Log::info('Flushing listeners for order #'.$this->id);
         unset(static::$fillListeners[$this->id]);
         unset(static::$fills[$this->id]);
         unset(static::$cancelListeners[$this->id]);
@@ -118,18 +114,18 @@ class Order extends Model
     public static function validationRules(): array
     {
         return [
-            'exchange_id'      => 'required|integer|exists:exchanges,id',
-            'symbol'           => 'required|string|max:50',
-            'reduce_only'      => 'boolean',
-            'quantity'         => 'required|numeric|gt:0',
-            'filled'           => 'numeric',
-            'price'            => 'nullable|numeric|gt:0',
-            'commission'       => 'nullable|numeric|gt:0',
+            'exchange_id' => 'required|integer|exists:exchanges,id',
+            'symbol' => 'required|string|max:50',
+            'reduce_only' => 'boolean',
+            'quantity' => 'required|numeric|gt:0',
+            'filled' => 'numeric',
+            'price' => 'nullable|numeric|gt:0',
+            'commission' => 'nullable|numeric|gt:0',
             'commission_asset' => 'nullable|string|max:50',
-            'stop_price'       => 'nullable|numeric',
-            'type'             => [new Enum(OrderType::class)],
-            'side'             => [new Enum(Side::class)],
-            'status'           => [new Enum(OrderStatus::class)]
+            'stop_price' => 'nullable|numeric',
+            'type' => [new Enum(OrderType::class)],
+            'side' => [new Enum(Side::class)],
+            'status' => [new Enum(OrderStatus::class)],
         ];
     }
 
@@ -137,13 +133,12 @@ class Order extends Model
     {
         static::$fills[$fill->order_id][$fill->id] = $fill;
 
-        foreach (static::$fillListeners[$fill->order_id] ?? [] as $callback)
-        {
+        foreach (static::$fillListeners[$fill->order_id] ?? [] as $callback) {
             $callback($fill);
         }
 
-        Log::info(\count(static::$fills[$fill->order_id]) . ' fills for order ' . $fill->order_id);
-        Log::info(\count(static::$fills) . ' total fills');
+        Log::info(\count(static::$fills[$fill->order_id]).' fills for order '.$fill->order_id);
+        Log::info(\count(static::$fills).' total fills');
     }
 
     public function isAllFilled(): bool
@@ -153,8 +148,7 @@ class Order extends Model
 
     public function rawFills(): Builder
     {
-        if (!$this->exists)
-        {
+        if (!$this->exists) {
             throw new \LogicException('Order is not saved.');
         }
 
@@ -169,7 +163,7 @@ class Order extends Model
 
     public function avgFillPrice(): float
     {
-        return (float)$this
+        return (float) $this
             ->rawFills()
             ->selectRaw('SUM(quantity * price) / SUM(quantity) as avgPrice')
             ->first()
@@ -180,8 +174,7 @@ class Order extends Model
     {
         $responses = $this->responses ?? [];
 
-        if (!isset($responses[$key]) || \end($responses[$key]) != $data)
-        {
+        if (!isset($responses[$key]) || \end($responses[$key]) != $data) {
             $responses[$key][] = $data;
         }
 
@@ -197,14 +190,13 @@ class Order extends Model
     {
         static::$fillListeners[$this->id][] = $callback;
 
-        foreach (static::$fills[$this->id] ?? [] as $fill)
-        {
-            //run the listener if it registered not before but after the fill, so they won't be missed
-            //happens with immediate order fills
+        foreach (static::$fills[$this->id] ?? [] as $fill) {
+            // run the listener if it registered not before but after the fill, so they won't be missed
+            // happens with immediate order fills
             $callback($fill);
         }
 
-        Log::info(\count(static::$fillListeners[$this->id]) . ' fill listeners registered for order ' . $this->id);
-        Log::info(\count(static::$fillListeners) . ' total fill listeners registered');
+        Log::info(\count(static::$fillListeners[$this->id]).' fill listeners registered for order '.$this->id);
+        Log::info(\count(static::$fillListeners).' total fill listeners registered');
     }
 }

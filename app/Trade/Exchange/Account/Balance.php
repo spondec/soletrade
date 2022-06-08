@@ -19,19 +19,16 @@ class Balance implements \ArrayAccess
      * @param Asset[]  $assets
      */
     public function __construct(protected Exchange $exchange,
-                                array              $assets)
+                                array $assets)
     {
-        foreach ($assets as $k => $asset)
-        {
+        foreach ($assets as $k => $asset) {
             unset($assets[$k]);
 
-            if (!$asset instanceof Asset)
-            {
+            if (!$asset instanceof Asset) {
                 throw new \InvalidArgumentException('Invalid asset.');
             }
 
-            if ($asset->available() == 0 && $asset->total() == 0)
-            {
+            if (0 == $asset->available() && 0 == $asset->total()) {
                 continue;
             }
 
@@ -45,23 +42,24 @@ class Balance implements \ArrayAccess
     {
         $update = $this->exchange->fetch()->balance();
 
-        //asset update should be handled in this event
+        // asset update should be handled in this event
         $this->fireEvent('update', $update);
+
         return $this;
     }
 
-    #[Pure] public function calculateRoi(Balance $prevBalance): array
-    {
-        $roe = [];
+    #[Pure]
+ public function calculateRoi(Balance $prevBalance): array
+ {
+     $roe = [];
 
-        foreach ($prevBalance->assets as $asset)
-        {
-            $total = $asset->total();
-            $roe[$name = $asset->name] = $total / ($this->assets[$name]->total() - $total) * 100;
-        }
+     foreach ($prevBalance->assets as $asset) {
+         $total = $asset->total();
+         $roe[$name = $asset->name] = $total / ($this->assets[$name]->total() - $total) * 100;
+     }
 
-        return $roe;
-    }
+     return $roe;
+ }
 
     public function offsetExists(mixed $offset): bool
     {

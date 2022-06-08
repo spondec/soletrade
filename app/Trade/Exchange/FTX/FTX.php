@@ -12,12 +12,12 @@ class FTX extends Exchange implements HasLeverage
     protected function setup(): void
     {
         $this->api = new \ccxt\ftx([
-            'apiKey'  => $this->apiKey,
-            'secret'  => $this->secretKey,
+            'apiKey' => $this->apiKey,
+            'secret' => $this->secretKey,
             'headers' => [
                 'FTX-SUBACCOUNT' => $this->config['subaccount']
                     ?? throw new \LogicException('Missing FTX sub account.'),
-            ]
+            ],
         ]);
 
         $this->fetch = new Fetcher($this, $this->api);

@@ -42,9 +42,9 @@ class ConfigRepository extends Repository
         $this->symbols = $this->getSymbols();
     }
 
-    #[ArrayShape(['class'     => "string",
-                  'apiKey'    => "string",
-                  'secretKey' => "string"])]
+    #[ArrayShape(['class' => 'string',
+                  'apiKey' => 'string',
+                  'secretKey' => 'string', ])]
     public function exchangeConfig(string $exchangeName): array
     {
         return $this->config['exchanges'][$exchangeName];
@@ -56,7 +56,7 @@ class ConfigRepository extends Repository
             ->whereIn('class', $this->exchanges)
             ->get()
             ->keyBy('name')
-            ->map(static fn(Exchange $exchange) => DB::table('symbols')
+            ->map(static fn (Exchange $exchange) => DB::table('symbols')
                 ->distinct()
                 ->where('exchange_id', $exchange->id)
                 ->get('symbol')
@@ -67,6 +67,6 @@ class ConfigRepository extends Repository
 
     protected function getExchanges(): array
     {
-        return \array_map(static fn(array $details) => $details['class'], $this->config['exchanges']) ?? [];
+        return \array_map(static fn (array $details) => $details['class'], $this->config['exchanges']) ?? [];
     }
 }

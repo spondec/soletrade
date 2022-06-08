@@ -26,6 +26,7 @@ class StrategyCreator extends TradeCommand
      * Execute the console command.
      *
      * @return int
+     *
      * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
      */
     public function handle(\App\Trade\Stub\NewStrategyStub $newStrategy)
@@ -52,25 +53,25 @@ class StrategyCreator extends TradeCommand
             ->filter()
             ->map('trim')
             ->merge($signals)
-            ->filter(fn(string $i) => $i !== 'Combined')
+            ->filter(fn (string $i) => 'Combined' !== $i)
             ->unique();
 
         $indicatorStubs = $this->getIndicatorStubs($indicators, $combined);
         $actionStubs = $this->getActionStubs($actions);
 
         $newStrategy->setParams([
-            'name'            => $name,
-            'signals'         => $signals,
+            'name' => $name,
+            'signals' => $signals,
             'indicator_stubs' => $indicatorStubs,
-            'indicators'      => $indicators,
-            'actions'         => $actions,
-            'action_stubs'    => $actionStubs,
-            'combined'        => $combined,
+            'indicators' => $indicators,
+            'actions' => $actions,
+            'action_stubs' => $actionStubs,
+            'combined' => $combined,
         ]);
 
-        if ($newStrategy->isFileExists())
-        {
+        if ($newStrategy->isFileExists()) {
             $this->error("Strategy $name already exists.");
+
             return 1;
         }
 
@@ -84,24 +85,22 @@ class StrategyCreator extends TradeCommand
     {
         $indicatorStubs = new Collection();
 
-        if ($combined->first())
-        {
+        if ($combined->first()) {
             $indicatorStubs[] = $this->getIndicatorStub('Combined', $combined)->apply()->content;
         }
 
-        foreach ($indicators as $indicator)
-        {
+        foreach ($indicators as $indicator) {
             $indicatorStubs[] = $this->getIndicatorStub($indicator)->apply()->content;
         }
+
         return $indicatorStubs;
     }
 
-    protected function getIndicatorStub(string      $indicator,
+    protected function getIndicatorStub(string $indicator,
                                         ?Collection $combined = null,
-                                        array       $config = []): StrategyIndicatorStub
+                                        array $config = []): StrategyIndicatorStub
     {
-        if (!indicator_exists($indicator))
-        {
+        if (!indicator_exists($indicator)) {
             $this->error("Indicator $indicator does not exist.");
             exit(1);
         }
@@ -109,9 +108,9 @@ class StrategyCreator extends TradeCommand
         return $this->newStrategyIndicatorStub()
             ->setParams([
                 'indicator' => $indicator,
-                'alias'     => "'$indicator'",
-                'config'    => $config,
-                'combined'  => $combined
+                'alias' => "'$indicator'",
+                'config' => $config,
+                'combined' => $combined,
             ]);
     }
 
@@ -124,15 +123,15 @@ class StrategyCreator extends TradeCommand
     {
         $actionStubs = new Collection();
 
-        foreach ($actions as $action)
-        {
+        foreach ($actions as $action) {
             $actionStubs[] = $this->newTradeActionStub()
                 ->setParams([
-                    'action' => $action
+                    'action' => $action,
                 ])
                 ->apply()
                 ->content;
         }
+
         return $actionStubs;
     }
 

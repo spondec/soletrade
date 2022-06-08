@@ -22,8 +22,6 @@ abstract class Fetcher
 
     /**
      * @param Asset[] $assets
-     *
-     * @return Balance
      */
     protected function newBalance(array $assets): Balance
     {
@@ -31,9 +29,6 @@ abstract class Fetcher
     }
 
     /**
-     * @param string $symbol
-     *
-     * @return OrderBook
      * @throws \App\Trade\Exception\EmptyOrderBookException
      */
     public function orderBook(string $symbol): OrderBook
@@ -82,13 +77,10 @@ abstract class Fetcher
 
     /**
      * Get ROI relative to the initial balance since the exchange was instantiated.
-     *
-     * @return array|null
      */
     public function roi(): ?array
     {
-        if (!$this->prevBalance)
-        {
+        if (!$this->prevBalance) {
             return null;
         }
 
@@ -97,8 +89,7 @@ abstract class Fetcher
 
     protected function registerBalanceListeners(Balance $balance): void
     {
-        foreach ($balance->assets as $asset)
-        {
+        foreach ($balance->assets as $asset) {
             $balance->listen('update',
                 \Closure::bind(function (Balance $current, Balance $updated) use ($asset) {
                     $updatedAsset = $updated[$this->name];
@@ -111,8 +102,6 @@ abstract class Fetcher
 
     /**
      * Fetch the latest account balance from the exchange.
-     *
-     * @return Balance
      */
     public function balance(): Balance
     {
@@ -120,8 +109,7 @@ abstract class Fetcher
 
         $this->registerBalanceListeners($balance);
 
-        if (!$this->prevBalance)
-        {
+        if (!$this->prevBalance) {
             $this->prevBalance = $balance;
         }
 

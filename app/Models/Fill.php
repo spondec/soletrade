@@ -16,8 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float  price
  * @property string commission_asset
  * @property float  commission
- *
  * @property Order  order
+ *
  * @method static FillFactory factory($count = null, $state = [])
  */
 class Fill extends Model

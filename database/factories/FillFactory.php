@@ -17,12 +17,12 @@ class FillFactory extends Factory
     public function definition()
     {
         return [
-            'timestamp'        => $this->faker->dateTimeBetween('-1 year', 'now')->getTimestamp() * 1000,
-            'quantity'         => $size = $this->faker->randomFloat(2, 0.01, 100),
-            'price'            => $price = $this->faker->randomFloat(2, 0.01, 100),
+            'timestamp' => $this->faker->dateTimeBetween('-1 year', 'now')->getTimestamp() * 1000,
+            'quantity' => $size = $this->faker->randomFloat(2, 0.01, 100),
+            'price' => $price = $this->faker->randomFloat(2, 0.01, 100),
             'commission_asset' => 'USDT',
-            'commission'       => $price * $size * 0.001,
-            'trade_id'         => $this->faker->randomNumber(),
+            'commission' => $price * $size * 0.001,
+            'trade_id' => $this->faker->randomNumber(),
         ];
     }
 }

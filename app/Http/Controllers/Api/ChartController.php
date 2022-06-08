@@ -17,11 +17,10 @@ use Illuminate\Support\Collection;
 
 class ChartController extends Controller
 {
-    public function __construct(protected Request          $request,
+    public function __construct(protected Request $request,
                                 protected SymbolRepository $symbolRepo,
                                 protected ConfigRepository $config)
     {
-
     }
 
     public function index(Request $request): array
@@ -30,8 +29,7 @@ class ChartController extends Controller
         $exchange = $this->getKeyByValue('exchange', $this->mapByName($this->config->exchanges, true));
         $interval = $request->get('interval');
 
-        if ($exchange && $symbol && $interval)
-        {
+        if ($exchange && $symbol && $interval) {
             return $this->candles(
                 exchange: $exchange,
                 symbolName: $symbol,
@@ -44,19 +42,19 @@ class ChartController extends Controller
 
         return [
             'strategies' => \array_keys(get_strategies()),
-            'exchanges'  => $this->mapByName($this->config->exchanges),
-            'symbols'    => $this->config->symbols,
+            'exchanges' => $this->mapByName($this->config->exchanges),
+            'symbols' => $this->config->symbols,
             'indicators' => \array_keys(get_indicators()),
-            'intervals'  => $this->symbolRepo->fetchIntervals()
+            'intervals' => $this->symbolRepo->fetchIntervals(),
         ];
     }
 
     protected function getKeyByValue(string $name, array $items): ?string
     {
-        if ($param = $this->request->get($name))
-        {
+        if ($param = $this->request->get($name)) {
             return \array_search($param, $items);
         }
+
         return null;
     }
 
@@ -66,14 +64,10 @@ class ChartController extends Controller
     protected function mapByName(array $classes, bool $classAsKey = false): array
     {
         $mapped = [];
-        foreach ($classes as $class)
-        {
-            if ($classAsKey)
-            {
+        foreach ($classes as $class) {
+            if ($classAsKey) {
                 $mapped[$class] = $class::name();
-            }
-            else
-            {
+            } else {
                 $mapped[] = $class::name();
             }
         }
@@ -82,30 +76,27 @@ class ChartController extends Controller
     }
 
     public function candles(string|Exchange $exchange,
-                            string          $symbolName,
-                            string          $interval,
-                            array           $indicators,
-                            string          $strategy = null,
-                            ?array          $range = null,
-                            ?int            $limit = null): array
+                            string $symbolName,
+                            string $interval,
+                            array $indicators,
+                            string $strategy = null,
+                            ?array $range = null,
+                            ?int $limit = null): array
     {
-
         $start = $range ? as_ms(Carbon::parse($range['start'])->getTimestamp()) : null;
         $end = $range ? as_ms(Carbon::parse($range['end'])->getTimestamp()) : null;
 
         $symbol = $this->getSymbol($exchange, $symbolName, $interval);
         abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
 
-        if ($symbol->last_update <= $end)
-        {
+        if ($symbol->last_update <= $end) {
             $symbol->exchange()->update()->bySymbol($symbol);
         }
 
-        if ($strategy)
-        {
+        if ($strategy) {
             $tester = new Tester($strategy, $symbol, [
                 'startDate' => $start,
-                'endDate'   => $end
+                'endDate' => $end,
             ]);
 
             $tester->strategy->updateSymbols();
@@ -120,10 +111,10 @@ class ChartController extends Controller
                 ...$symbol->toArray(),
                 'strategy' => [
                     'trades' => [
-                        'summary'     => $summary,
-                        'evaluations' => $evaluations->map(fn(Evaluation $evaluation) => $evaluation->fresh())
-                    ]
-                ]
+                        'summary' => $summary,
+                        'evaluations' => $evaluations->map(fn (Evaluation $evaluation) => $evaluation->fresh()),
+                    ],
+                ],
             ];
         }
 
@@ -143,6 +134,7 @@ class ChartController extends Controller
     {
         $indicators = get_indicators();
         $indicatorConfig = \json_decode($request->get('indicatorConfig', '{}'), true);
+
         return collect($request->get('indicators', []))
             ->mapWithKeys(function (string $name) use ($indicators, $indicatorConfig) {
                 return [$indicators[$name] => $indicatorConfig[$name] ?? []];

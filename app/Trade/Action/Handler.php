@@ -15,8 +15,6 @@ abstract class Handler
 
     /**
      * Return the available configuration for stubs.
-     *
-     * @return array
      */
     abstract public static function getStubConfig(): array;
 
@@ -35,32 +33,28 @@ abstract class Handler
 
     protected function assertRequired(): void
     {
-        foreach ($this->required as $key)
-        {
-            if (!$this->config($key))
-            {
-                throw new \InvalidArgumentException('Required config key is missing: ' . $key);
+        foreach ($this->required as $key) {
+            if (!$this->config($key)) {
+                throw new \InvalidArgumentException('Required config key is missing: '.$key);
             }
         }
     }
 
     protected function setup(): void
     {
-
     }
 
     public function run(\stdClass $candle, int $priceDate): ?TradeAction
     {
-        if (!$this->isTaken && $this->performAction($candle, $priceDate))
-        {
-            if ($this->config('lock'))
-            {
+        if (!$this->isTaken && $this->performAction($candle, $priceDate)) {
+            if ($this->config('lock')) {
                 $this->applyLocks();
             }
 
             $this->isTaken = true;
             $this->action->is_taken = true;
             $this->action->timestamp = $priceDate;
+
             return $this->action;
         }
 
@@ -69,36 +63,29 @@ abstract class Handler
 
     /**
      * Return true if the action is taken.
-     *
-     * @param \stdClass $candle
-     * @param int       $priceDate
-     *
-     * @return bool
      */
     abstract protected function performAction(\stdClass $candle, int $priceDate): bool;
 
     protected function applyLocks(): void
     {
-
     }
 
     protected function getDefaultConfig(): array
     {
         return [
-            'lock' => true
+            'lock' => true,
         ];
     }
 
     protected function lockIfUnlocked(Price $price): void
     {
-        if (!$price->isLocked())
-        {
+        if (!$price->isLocked()) {
             $price->lock();
         }
     }
 
     protected function prepareReason(string $reason): string
     {
-        return 'Trade action "' . static::name() . '" is taken: ' . $reason;
+        return 'Trade action "'.static::name().'" is taken: '.$reason;
     }
 }

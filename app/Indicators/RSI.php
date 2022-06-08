@@ -11,7 +11,7 @@ final class RSI extends Indicator
 
     protected function calculate(CandleCollection $candles): array
     {
-        /** @noinspection PhpUndefinedFunctionInspection */
+        /* @noinspection PhpUndefinedFunctionInspection */
         return ($rsi = \trader_rsi($candles->closes(), $this->config['timePeriod'])) ? $rsi : [];
     }
 }

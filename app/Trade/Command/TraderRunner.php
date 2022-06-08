@@ -45,27 +45,25 @@ class TraderRunner extends TradeCommand
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
         $start = \time();
         $args = $this->arguments();
 
-        if (!\is_numeric($args['amount']))
-        {
+        if (!\is_numeric($args['amount'])) {
             $this->error('Amount must be numeric.');
+
             return 1;
         }
 
         $asset = $args['asset'];
-        $amount = (float)$args['amount'];
-        $leverage = (float)$args['leverage'];
+        $amount = (float) $args['amount'];
+        $leverage = (float) $args['leverage'];
 
-        if ($leverage < 1)
-        {
+        if ($leverage < 1) {
             $this->error('Leverage can not be less than 1.');
+
             return 1;
         }
 
@@ -88,18 +86,15 @@ class TraderRunner extends TradeCommand
         $telegramLastUpdate = \time();
         $lastPrint = 0;
 
-        while (true)
-        {
-            if (\time() >= $telegramLastUpdate + $telegramUpdateFreq)
-            {
+        while (true) {
+            if (\time() >= $telegramLastUpdate + $telegramUpdateFreq) {
                 $telegramLastUpdate = \time();
                 $this->handleTelegramUpdates($bot, $trader);
             }
 
             $status = $trader->run();
 
-            if (\time() - $lastPrint >= 1)
-            {
+            if (\time() - $lastPrint >= 1) {
                 $position = $status?->getPosition();
 
                 $this->section->clear();
@@ -114,8 +109,7 @@ class TraderRunner extends TradeCommand
                     $asset,
                     $balanceRoi);
 
-                if ($position && $position->isOpen())
-                {
+                if ($position && $position->isOpen()) {
                     $roi = $position->roi($trader->symbol->lastCandle()->c) * $leverage;
                     $this->renderPositionTable($positionTable,
                         $args['symbol'],
@@ -138,8 +132,7 @@ class TraderRunner extends TradeCommand
         $asset = $args['asset'];
         $leverage = $args['leverage'] ?? null;
 
-        if (!strategy_exists($args['strategy']))
-        {
+        if (!strategy_exists($args['strategy'])) {
             $this->error('Strategy not found.');
             exit(1);
         }
@@ -147,8 +140,7 @@ class TraderRunner extends TradeCommand
         $exchange = Exchange::from($args['exchange']);
         $symbol = $this->symbolRepo->fetchSymbol($exchange, $args['symbol'], $args['interval']);
 
-        if (!$symbol)
-        {
+        if (!$symbol) {
             throw new \UnexpectedValueException("Symbol '{$args['symbol']}' not found");
         }
 
@@ -164,8 +156,7 @@ class TraderRunner extends TradeCommand
         $tradeAsset = new TradeAsset($allocation);
         $trader = new Trader($strategy, $exchange, $symbol, $tradeAsset);
 
-        if ($leverage)
-        {
+        if ($leverage) {
             $trader->setLeverage($leverage);
         }
 
@@ -173,10 +164,10 @@ class TraderRunner extends TradeCommand
     }
 
     protected function renderHeader(Strategy $strategy,
-                                    Symbol   $symbol,
-                                    float    $amount,
-                                    string   $asset,
-                                    float    $leverage,
+                                    Symbol $symbol,
+                                    float $amount,
+                                    string $asset,
+                                    float $leverage,
                                     Exchange $exchange): void
     {
         $content = str("\n")
@@ -192,20 +183,19 @@ class TraderRunner extends TradeCommand
     protected function getTelegramBot(): Bot
     {
         $c = config('trade.telegram');
+
         return new Bot($c['token'], $c['name'], $c['password']);
     }
 
     protected function handleTelegramUpdates(Bot $bot, Trader $trader): void
     {
         /** @var Update $update */
-        foreach ($bot->updates() as $update)
-        {
+        foreach ($bot->updates() as $update) {
             $message = $update->getMessage() ?? $update->getEditedMessage();
             $text = $message->getText();
             $id = $message->getChat()->getId();
 
-            switch ($text)
-            {
+            switch ($text) {
                 case '/start':
                     $trader->setStatus(TraderStatus::AWAITING_TRADE);
                     $bot->sendMessage($trader->getStatus()->value, $id);
@@ -229,32 +219,29 @@ class TraderRunner extends TradeCommand
                     break;
 
                 case '/memory_peak':
-                    $bot->sendMessage((int)(\memory_get_peak_usage(true) / 1024 / 1024) . 'MB', $id);
+                    $bot->sendMessage((int) (\memory_get_peak_usage(true) / 1024 / 1024).'MB', $id);
                     break;
 
                 case '/errors':
-                    if ($errors = Log::getErrors())
-                    {
+                    if ($errors = Log::getErrors()) {
                         $bot->sendMessage(
                             \implode("\n",
-                                \array_map(static fn(\Throwable $e) => $e->getMessage(),
+                                \array_map(static fn (\Throwable $e) => $e->getMessage(),
                                     $errors)), $id
                         );
-                    }
-                    else
-                    {
+                    } else {
                         $bot->sendMessage('No errors.', $id);
                     }
             }
         }
     }
 
-    protected function renderDetailsTable(Table        $detailsTable,
-                                          int          $start,
+    protected function renderDetailsTable(Table $detailsTable,
+                                          int $start,
                                           TraderStatus $status,
-                                          float        $allocAmount,
-                                          mixed        $asset,
-                                          float        $roi): void
+                                          float $allocAmount,
+                                          mixed $asset,
+                                          float $roi): void
     {
         $detailsTable
             ->setHeaders([
@@ -263,7 +250,7 @@ class TraderRunner extends TradeCommand
                 'Errors',
                 'Status',
                 'Balance',
-                'ROI'
+                'ROI',
             ])->setRows([
                 [
                     elapsed_time($start),
@@ -271,17 +258,17 @@ class TraderRunner extends TradeCommand
                     \count(Log::getErrors()),
                     $status->value,
                     "$allocAmount $asset",
-                    Util::formatRoi($roi)
-                ]
+                    Util::formatRoi($roi),
+                ],
             ])->render();
     }
 
-    protected function renderPositionTable(Table                          $positionTable,
-                                           string                         $symbol,
+    protected function renderPositionTable(Table $positionTable,
+                                           string $symbol,
                                            \App\Trade\Evaluation\Position $position,
-                                           float                          $roi,
-                                           TradeAsset                     $tradeAsset,
-                                           string                         $asset): void
+                                           float $roi,
+                                           TradeAsset $tradeAsset,
+                                           string $asset): void
     {
         $positionTable->setHeaders([
             'Symbol',
@@ -289,18 +276,18 @@ class TraderRunner extends TradeCommand
             'ROI',
             'Leverage',
             'Amount',
-            'Entry Price'
+            'Entry Price',
         ]);
-        /** @noinspection NullPointerExceptionInspection */
+        /* @noinspection NullPointerExceptionInspection */
         $positionTable->setRows([
             [
                 $symbol,
                 $position->side->value,
                 Util::formatRoi($roi),
-                $tradeAsset->allocation->leverage . 'x',
-                $tradeAsset->real($position->getUsedSize()) . " $asset",
-                $position->price('entry')->get()
-            ]
+                $tradeAsset->allocation->leverage.'x',
+                $tradeAsset->real($position->getUsedSize())." $asset",
+                $position->price('entry')->get(),
+            ],
         ]);
         $positionTable->render();
     }

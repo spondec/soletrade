@@ -20,7 +20,7 @@ class CandleUpdater
      */
     protected array $symbols;
 
-    static bool $isShutdownCallbackRegistered = false;
+    public static bool $isShutdownCallbackRegistered = false;
 
     public function __construct(protected Exchange $exchange)
     {
@@ -32,10 +32,9 @@ class CandleUpdater
         $this->map = $fetch->candleMap();
         $this->limit = $fetch->getMaxCandlesPerRequest();
 
-        if (!static::$isShutdownCallbackRegistered)
-        {
+        if (!static::$isShutdownCallbackRegistered) {
             on_shutdown(static function () {
-                //shutdowns may interrupt unlock query
+                // shutdowns may interrupt unlock query
                 DB::unprepared('UNLOCK TABLES');
             });
             static::$isShutdownCallbackRegistered = true;
@@ -43,10 +42,6 @@ class CandleUpdater
     }
 
     /**
-     * @param string        $interval
-     * @param int           $maxRunTime
-     * @param \Closure|null $filter
-     *
      * @return Collection<Symbol>|null
      */
     public function byInterval(string $interval, int $maxRunTime = 0, ?\Closure $filter = null): ?Collection
@@ -55,25 +50,20 @@ class CandleUpdater
 
         $symbols = $this->indexSymbols($interval);
 
-        if ($filter)
-        {
+        if ($filter) {
             $symbols = $symbols->filter($filter)->values();
         }
 
-        if (!$symbols->first())
-        {
+        if (!$symbols->first()) {
             throw new \LogicException('No symbol was given.');
         }
 
-        foreach ($symbols as $key => $symbol)
-        {
+        foreach ($symbols as $key => $symbol) {
             $remaining = $maxRunTime - (\time() - $startTime);
 
             if (($maxRunTime > 0 && $remaining <= 0) ||
-                !$this->bySymbol($symbol, $maxRunTime > 0 ? $remaining : 0))
-            {
-                if (($length = $key - 1) < 1) //nothing to return if the length is non-positive
-                {
+                !$this->bySymbol($symbol, $maxRunTime > 0 ? $remaining : 0)) {
+                if (($length = $key - 1) < 1) { // nothing to return if the length is non-positive
                     return null;
                 }
 
@@ -90,10 +80,8 @@ class CandleUpdater
         $startTime = \time();
         $id = $symbol->id;
 
-        try
-        {
-            do
-            {
+        try {
+            do {
                 DB::unprepared('LOCK TABLES candles WRITE, symbols WRITE');
                 $currentCandles = $this->symbolRepo->fetchLatestCandles($symbol, 'DESC', 2);
                 $currentLastCandle = $currentCandles->shift();
@@ -108,10 +96,8 @@ class CandleUpdater
 
                 $break = \count($latestCandles) <= 1;
 
-                if (isset($latestCandles[0]) && $currentLastCandle)
-                {
-                    if ($latestCandles[0][$this->map->t] != $currentLastCandle->t)
-                    {
+                if (isset($latestCandles[0]) && $currentLastCandle) {
+                    if ($latestCandles[0][$this->map->t] != $currentLastCandle->t) {
                         throw new \LogicException("Candle corruption detected! Symbol ID: $id");
                     }
 
@@ -119,22 +105,19 @@ class CandleUpdater
                     unset($inserts[0]);
                 }
 
-                if ($inserts)
-                {
+                if ($inserts) {
                     DB::table('candles')->insert($inserts);
                 }
 
                 $symbol->save();
 
-                if ($maxRunTime > 0 && \time() - $startTime >= $maxRunTime)
-                {
+                if ($maxRunTime > 0 && \time() - $startTime >= $maxRunTime) {
                     return false;
                 }
-
             } while (!$break);
+
             return true;
-        } finally
-        {
+        } finally {
             DB::unprepared('UNLOCK TABLES');
             Log::execTimeFinish($task);
         }
@@ -143,8 +126,7 @@ class CandleUpdater
     public function bulkIndexSymbols(array $intervals): Collection
     {
         $symbols = [];
-        foreach ($intervals as $interval)
-        {
+        foreach ($intervals as $interval) {
             $symbols[$interval] = $this->indexSymbols($interval);
         }
 

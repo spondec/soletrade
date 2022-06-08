@@ -38,10 +38,10 @@ class Position
 
     protected float $exitPrice;
 
-    public function __construct(public           readonly Side $side,
-                                protected float  $size,
-                                protected int    $entryTime,
-                                protected Price  $entry,
+    public function __construct(public readonly Side $side,
+                                protected float $size,
+                                protected int $entryTime,
+                                protected Price $entry,
                                 protected ?Price $exit,
                                 protected ?Price $stop)
     {
@@ -52,29 +52,24 @@ class Position
 
     protected function assertSize(float $size): void
     {
-        if ($size > Position::MAX_SIZE)
-        {
-            throw new \InvalidArgumentException('Maximum position size is limited to ' . Position::MAX_SIZE);
+        if ($size > Position::MAX_SIZE) {
+            throw new \InvalidArgumentException('Maximum position size is limited to '.Position::MAX_SIZE);
         }
     }
 
     protected function newTransaction(bool $increase, float $price, float $size, int $timestamp, string $reason): void
     {
-        if ($increase)
-        {
+        if ($increase) {
             $this->assertNotGreaterThanRemaining($size);
             $this->maxUsedSize += $size;
             $this->remainingSize -= $size;
             $this->amount += $size / $price;
-        }
-        else
-        {
+        } else {
             $this->assertNotGreaterThanUsedSize($size);
 
             $reduce = $this->amount / $this->getUsedSize() * $size;
             $pnl = $reduce * $price - $reduce * $this->getBreakEvenPrice();
-            if (!$this->isBuy())
-            {
+            if (!$this->isBuy()) {
                 $pnl *= -1;
             }
             $this->pnl += $pnl;
@@ -83,31 +78,26 @@ class Position
         }
 
         $data = [
-            'increase'    => $increase,
-            'price'       => $price,
-            'size'        => $size,
-            'system_time' => \microtime(true), //for uniqueness
+            'increase' => $increase,
+            'price' => $price,
+            'size' => $size,
+            'system_time' => \microtime(true), // for uniqueness
         ];
 
-        if (isset($this->transactionLog))
-        {
+        if (isset($this->transactionLog)) {
             $this->transactionLog->new($data, $timestamp, $reason);
-        }
-        else
-        {
+        } else {
             $this->transactionLog = new ChangeLog($data, $timestamp, $reason);
         }
 
-        if (!$this->amount && $this->isOpen())
-        {
+        if (!$this->amount && $this->isOpen()) {
             throw new \LogicException('Position is open but no asset left. Exit trades must be performed with stop() or close().');
         }
     }
 
     protected function assertNotGreaterThanRemaining(float $size): void
     {
-        if ($size > $this->remainingSize)
-        {
+        if ($size > $this->remainingSize) {
             throw new \LogicException('The requested size is bigger than the remaining size.');
         }
     }
@@ -127,10 +117,10 @@ class Position
 
         $differ = ($breakEvenPrice * $breakEvenRoi / 100);
 
-        if ($this->isBuy())
-        {
+        if ($this->isBuy()) {
             return $breakEvenPrice + $differ;
         }
+
         return $breakEvenPrice - $differ;
     }
 
@@ -146,8 +136,7 @@ class Position
 
     public function addStopPrice(Price $price): void
     {
-        if ($this->stop)
-        {
+        if ($this->stop) {
             throw new \LogicException('Stop price is already set.');
         }
 
@@ -156,8 +145,7 @@ class Position
 
     public function addExitPrice(Price $price): void
     {
-        if ($this->exit)
-        {
+        if ($this->exit) {
             throw new \LogicException('Exit price is already set.');
         }
 
@@ -184,10 +172,9 @@ class Position
         return $this->isClosed;
     }
 
-    public function close(int $exitTime): void //TODO:: rename to exit
+    public function close(int $exitTime): void // TODO:: rename to exit
     {
-        if ($this->isClosed)
-        {
+        if ($this->isClosed) {
             throw new \LogicException('Attempted to close an already closed position.');
         }
 
@@ -208,8 +195,7 @@ class Position
 
     protected function lockIfUnlocked(Price $price): void
     {
-        if (!$price->isLocked())
-        {
+        if (!$price->isLocked()) {
             $price->lock();
         }
     }
@@ -224,29 +210,25 @@ class Position
     {
         $this->assertCanRecalculateRoi();
 
-        if ($this->isBuy())
-        {
+        if ($this->isBuy()) {
             return $this->calcLongRoi($lastPrice, $this->getUsedSize(), $this->maxUsedSize);
         }
+
         return $this->calcShortRoi($lastPrice, $this->getUsedSize(), $this->maxUsedSize);
     }
 
     protected function assertCanRecalculateRoi(): void
     {
-        if (!$this->isOpen())
-        {
+        if (!$this->isOpen()) {
             throw new \LogicException('ROI for a closed position can not be recalculated.');
         }
     }
 
     protected function calcLongRoi(float $exitPrice, float $usedSize, float $maxUsedSize): float
     {
-        if ($exitPrice == 0)
-        {
+        if (0 == $exitPrice) {
             $pnl = $this->pnl - $usedSize;
-        }
-        else
-        {
+        } else {
             $pnl = $this->amount * $exitPrice - $usedSize + $this->pnl;
         }
 
@@ -256,14 +238,12 @@ class Position
     protected function calcShortRoi(float $exitPrice, float $usedSize, float $maxUsedSize): float
     {
         $size = $this->pnl + $usedSize;
-        if ($exitPrice == 0)
-        {
+        if (0 == $exitPrice) {
             $pnl = $size;
-        }
-        else
-        {
+        } else {
             $pnl = $size - $this->amount * $exitPrice;
         }
+
         return $pnl / $maxUsedSize * 100;
     }
 
@@ -273,8 +253,7 @@ class Position
 
         $usedSize = $this->getUsedSize();
 
-        if ($this->isBuy())
-        {
+        if ($this->isBuy()) {
             return $this->calcLongRoi($lastPrice, $usedSize, self::MAX_SIZE);
         }
 
@@ -283,8 +262,7 @@ class Position
 
     public function stop(int $exitTime): void
     {
-        if ($this->isStopped)
-        {
+        if ($this->isStopped) {
             throw new \LogicException('Attempted to stop an already stopped position.');
         }
 
@@ -364,8 +342,7 @@ class Position
 
     protected function assertNotGreaterThanUsedSize(float $size): void
     {
-        if ($size > $this->getUsedSize())
-        {
+        if ($size > $this->getUsedSize()) {
             throw new \LogicException('Reduce size can not be greater than used size.');
         }
     }
@@ -379,11 +356,6 @@ class Position
             'Position stop.');
     }
 
-    /**
-     * @param int $exitTime
-     *
-     * @return void
-     */
     protected function insertExitTransaction(int $exitTime): void
     {
         $this->newTransaction(false,

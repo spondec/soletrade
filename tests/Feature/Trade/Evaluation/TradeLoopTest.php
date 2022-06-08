@@ -42,19 +42,19 @@ class TradeLoopTest extends TestCase
 
         /** @var TradeSetup $entry */
         $entry = $tradeFactory->create([
-            'side'       => 'SELL',
-            'price'      => 2,
-            'timestamp'  => $candles[2]->t,
-            'price_date' => $candles[3]->t - 1000
+            'side' => 'SELL',
+            'price' => 2,
+            'timestamp' => $candles[2]->t,
+            'price_date' => $candles[3]->t - 1000,
         ]);
 
         $popped = $candles->pop();
         /** @var TradeSetup $exit */
         $exit = $tradeFactory->create([
-            'side'       => 'BUY',
-            'price'      => 1,
-            'timestamp'  => $candles->last()->t,
-            'price_date' => $popped->t - 1000
+            'side' => 'BUY',
+            'price' => 1,
+            'timestamp' => $candles->last()->t,
+            'price_date' => $popped->t - 1000,
         ]);
 
         $candles->last()->update([
@@ -75,7 +75,7 @@ class TradeLoopTest extends TestCase
 
         $exitTime = $position->exitTime();
         $this->assertNotNull($exitTime);
-        //account for evaluation interval?
+        // account for evaluation interval?
         $this->assertEquals($candles->last()->t, $exitTime);
     }
 
@@ -103,10 +103,10 @@ class TradeLoopTest extends TestCase
             ->for($symbol)
             ->for(Signature::factory()->create())
             ->create([
-                'side'       => 'SELL',
-                'price'      => 2,
-                'timestamp'  => $candles[2]->t,
-                'price_date' => $candles[3]->t - 1000
+                'side' => 'SELL',
+                'price' => 2,
+                'timestamp' => $candles[2]->t,
+                'price_date' => $candles[3]->t - 1000,
             ]);
 
         $loop = new TradeLoop($entry, $entry->symbol, ['timeout' => 60 * 3]);
@@ -121,7 +121,7 @@ class TradeLoopTest extends TestCase
         $exitTime = $position->exitTime();
 
         $this->assertNotNull($exitTime);
-        //account for evaluation interval?
+        // account for evaluation interval?
         $this->assertEquals($entryTime + (3600 * 3 * 1000), $exitTime);
     }
 }

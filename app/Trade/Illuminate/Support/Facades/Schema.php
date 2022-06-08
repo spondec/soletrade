@@ -11,8 +11,6 @@ class Schema extends \Illuminate\Support\Facades\Schema
      * Get a schema builder instance for a connection.
      *
      * @param string|null $name
-     *
-     * @return Builder
      */
     public static function connection($name): Builder
     {
@@ -21,6 +19,7 @@ class Schema extends \Illuminate\Support\Facades\Schema
         $builder->blueprintResolver(static function ($table, $callback) {
             return new Blueprint($table, $callback);
         });
+
         return $builder;
     }
 }

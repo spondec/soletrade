@@ -32,8 +32,7 @@ class TradeCreator
     {
         $this->signals = new Collection();
         $this->signalIndicatorAliases = $config->getSignalIndicatorAliases();
-        if ($this->requiredSignalCount = \count($this->signalIndicatorAliases))
-        {
+        if ($this->requiredSignalCount = \count($this->signalIndicatorAliases)) {
             $this->signalOrderMap = $this->getSignalOrderMap();
             $this->signalOrder = $this->getSignalOrder($this->signalOrderMap);
             $this->firstSignalClass = $this->nextRequiredSignalAlias = \array_key_first($this->signalOrderMap);
@@ -46,8 +45,7 @@ class TradeCreator
         $signalMap = [];
         $iterator = new \ArrayIterator($this->signalIndicatorAliases);
 
-        while ($iterator->valid())
-        {
+        while ($iterator->valid()) {
             $current = $iterator->current();
             $iterator->next();
             $next = $iterator->current();
@@ -69,8 +67,7 @@ class TradeCreator
 
     public function save(): TradeSetup
     {
-        if (!$this->trade)
-        {
+        if (!$this->trade) {
             throw new \LogicException('Trade has not been set.');
         }
 
@@ -78,18 +75,16 @@ class TradeCreator
         $tradeSetup = $this->trade->updateUniqueOrCreate();
         $tradeSetup->actions()->delete();
 
-        if ($this->actions)
-        {
-            foreach ($this->actions as $class => $config)
-            {
-                $tradeSetup->actions()->create(['class'  => $class,
-                                                'config' => $config]);
+        if ($this->actions) {
+            foreach ($this->actions as $class => $config) {
+                $tradeSetup->actions()->create(['class' => $class,
+                                                'config' => $config, ]);
             }
         }
 
         $tradeSetup->signals()
             ->sync($this->signals
-                ->map(static fn(Signal $signal): int => $signal->id));
+                ->map(static fn (Signal $signal): int => $signal->id));
         $this->finalize();
 
         return $tradeSetup;
@@ -97,8 +92,7 @@ class TradeCreator
 
     protected function finalize(): void
     {
-        if ($this->requiredSignalCount)
-        {
+        if ($this->requiredSignalCount) {
             $this->signals = new Collection();
             $this->nextRequiredSignalAlias = $this->firstSignalClass;
         }
@@ -107,31 +101,24 @@ class TradeCreator
     }
 
     /**
-     * @param Candles  $candles
      * @param Signal[] $signals
-     *
-     * @return TradeSetup|null
      */
     public function findTradeWithSignals(Candles $candles, array $signals): ?TradeSetup
     {
-        if (!$signals)
-        {
+        if (!$signals) {
             throw new \LogicException('$signals must not be empty.');
         }
 
         $this->sortByRequiredOrder($signals);
 
-        foreach ($signals as $signal)
-        {
-            if (!$this->isRequiredNextSignal($signal) || !$this->verifySignal($signal))
-            {
+        foreach ($signals as $signal) {
+            if (!$this->isRequiredNextSignal($signal) || !$this->verifySignal($signal)) {
                 return null;
             }
 
             $this->handleNewRequiredSignal($signal);
 
-            if ($this->areRequirementsComplete())
-            {
+            if ($this->areRequirementsComplete()) {
                 return $this->runCallback($candles);
             }
         }
@@ -154,15 +141,13 @@ class TradeCreator
         // multiple signals must be on the same side
         // signals must be in chronological order
         $lastSignal = $this->getLastSignal();
-        if ($lastSignal && ($signal->timestamp < $lastSignal->timestamp || $lastSignal->side !== $signal->side))
-        {
+        if ($lastSignal && ($signal->timestamp < $lastSignal->timestamp || $lastSignal->side !== $signal->side)) {
             return false;
         }
 
         // signals must pass the name condition if defined in the config
         $names = $this->config->signals[$signal->indicator->alias] ?? null;
-        if ($names && !\in_array($signal->name, $names))
-        {
+        if ($names && !\in_array($signal->name, $names)) {
             return false;
         }
 
@@ -193,22 +178,19 @@ class TradeCreator
 
         $setup->entry_order_type = OrderType::MARKET;
 
-        if ($this->config->withSignals)
-        {
+        if ($this->config->withSignals) {
             /** @var Signal $lastSignal */
             $lastSignal = $this->getLastSignal();
 
             $setup->name = $this->signals
-                ->map(static fn(Signal $signal): string => $signal->name)
+                ->map(static fn (Signal $signal): string => $signal->name)
                 ->implode('|');
             $setup->side = $lastSignal->side;
             $setup->timestamp = $lastSignal->timestamp;
             $setup->price = $lastSignal->price;
             $setup->price_date = $lastSignal->price_date;
             $setup->signal_count = $this->signals->count();
-        }
-        else
-        {
+        } else {
             $setup->price = $candle->c;
             $setup->timestamp = $candle->t;
             $setup->price_date = $this->repo->getPriceDate($candle->t, null, $candles->symbol);
@@ -219,8 +201,7 @@ class TradeCreator
 
     protected function runCallback(Candles $candles): ?TradeSetup
     {
-        if (!$candle = $candles->candle())
-        {
+        if (!$candle = $candles->candle()) {
             return null;
         }
 
@@ -231,13 +212,10 @@ class TradeCreator
 
     /**
      * @param Signal[] $signals
-     *
-     * @return void
      */
     protected function sortByRequiredOrder(array &$signals): void
     {
-        if (\count($signals) <= 1)
-        {
+        if (\count($signals) <= 1) {
             return;
         }
         \uasort($signals, function (Signal $a, Signal $b): int {
@@ -249,12 +227,10 @@ class TradeCreator
     {
         $order = [];
 
-        foreach ($signalOrderMap as $first => $next)
-        {
+        foreach ($signalOrderMap as $first => $next) {
             $order[] = $first;
 
-            if ($next)
-            {
+            if ($next) {
                 $order[] = $next;
             }
         }

@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Trade\Calc;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Collection;
@@ -33,14 +32,11 @@ class CandleFactory extends Factory
 
     /**
      * Define the model's default state.
-     *
-     * @return array
      */
     public function definition(): array
     {
         $prices = [];
-        for ($i = 0; $i < 4; $i++)
-        {
+        for ($i = 0; $i < 4; ++$i) {
             $prices[] = $this->randomPrice(2, 1, 100);
         }
 
@@ -59,8 +55,6 @@ class CandleFactory extends Factory
     }
 
     /**
-     * @param int $startDate
-     * @param int $endDate
      * @param int $interval in seconds
      *
      * @return $this
@@ -74,21 +68,21 @@ class CandleFactory extends Factory
 
         $this->count = 0;
 
-        while ($startDate < $endDate)
-        {
+        while ($startDate < $endDate) {
             $startDate += $this->interval;
-            $this->count++;
+            ++$this->count;
         }
+
         return $this;
     }
 
     protected function newInstance(array $arguments = [])
     {
-        //TODO:: dirty
-        //When laravel min php requirement bumps to 8.1,
-        //PR to remove the need of this via using
-        //the array unpacking with string keys feature
-        //at parent::newInstance()
+        // TODO:: dirty
+        // When laravel min php requirement bumps to 8.1,
+        // PR to remove the need of this via using
+        // the array unpacking with string keys feature
+        // at parent::newInstance()
         $arguments['interval'] = $this->interval;
         $arguments['startDate'] = $this->startDate;
         $arguments['priceLowerThan'] = $this->priceLowerThan;
@@ -101,12 +95,14 @@ class CandleFactory extends Factory
     public function priceLowerThan(float $price): static
     {
         $this->priceLowerThan = $price - $price * 0.001;
+
         return $this;
     }
 
     public function priceHigherThan(float $price): static
     {
         $this->priceHigherThan = $price + $price * 0.001;
+
         return $this;
     }
 
@@ -119,10 +115,10 @@ class CandleFactory extends Factory
 
     protected function getNextTimestamp(): int
     {
-        if (!$this->lastTimestamp)
-        {
+        if (!$this->lastTimestamp) {
             $this->lastTimestamp = $this->startDate->getTimestampMs();
         }
+
         return $this->lastTimestamp += $this->interval;
     }
 }

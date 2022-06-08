@@ -35,7 +35,7 @@ class PositionTest extends TestCase
         $pos = $this->getPosition(Side::BUY, 1, 1, 2, 0.5);
         $pos->stop(time());
         $this->expectExceptionMessage('ROI for a closed position can not be recalculated');
-        /** @noinspection PhpExpressionResultUnusedInspection */
+        /* @noinspection PhpExpressionResultUnusedInspection */
         $pos->roi(0.9);
     }
 
@@ -151,7 +151,7 @@ class PositionTest extends TestCase
         $pos = $this->getPosition(Side::BUY, 1, 1);
 
         $this->expectWarning();
-        /** @noinspection PhpExpressionResultUnusedInspection */
+        /* @noinspection PhpExpressionResultUnusedInspection */
         $pos->price('invalid');
     }
 

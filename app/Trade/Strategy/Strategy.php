@@ -66,13 +66,11 @@ abstract class Strategy
 
         $indicatorConfig = $this->indicatorConfig();
 
-        if ($duplicate = Util::getDuplicates(\array_column($indicatorConfig, 'alias')))
-        {
-            throw new \LogicException('Duplicate indicator aliases: ' . \implode(', ', $duplicate));
+        if ($duplicate = Util::getDuplicates(\array_column($indicatorConfig, 'alias'))) {
+            throw new \LogicException('Duplicate indicator aliases: '.\implode(', ', $duplicate));
         }
 
-        foreach ($indicatorConfig as &$c)
-        {
+        foreach ($indicatorConfig as &$c) {
             $c['config'] = $c['config'] ?? [];
             $c['signal'] = $c['signal'] ?? null;
             $config[$c['alias']] = IndicatorConfig::fromArray($c);
@@ -96,13 +94,13 @@ abstract class Strategy
     protected function getTradeConfigSignature(array $config): Signature
     {
         return $this->register([
-            'strategy'        => [
-                'signature' => $this->signature->hash
+            'strategy' => [
+                'signature' => $this->signature->hash,
             ],
-            'trade_setup'     => $config,
+            'trade_setup' => $config,
             'indicator_setup' => \array_map(
-                static fn(IndicatorConfig $i): array => $i->toArray(),
-                $this->indicatorConfig)
+                static fn (IndicatorConfig $i): array => $i->toArray(),
+                $this->indicatorConfig),
         ]);
     }
 
@@ -111,8 +109,7 @@ abstract class Strategy
         $exchange = $this->symbol->exchange();
         $symbolName = $this->symbol->symbol;
 
-        if (!$evaluationInterval = $this->config('evaluation.interval'))
-        {
+        if (!$evaluationInterval = $this->config('evaluation.interval')) {
             return $this->symbol;
         }
 
@@ -132,13 +129,11 @@ abstract class Strategy
 
     public function newAction(TradeSetup $trade, string $actionClass, array $config): void
     {
-        if (!\is_subclass_of($actionClass, Handler::class))
-        {
-            throw new \InvalidArgumentException('Invalid trade action class: ' . $actionClass);
+        if (!\is_subclass_of($actionClass, Handler::class)) {
+            throw new \InvalidArgumentException('Invalid trade action class: '.$actionClass);
         }
 
-        if (!isset($this->actions[$trade]))
-        {
+        if (!isset($this->actions[$trade])) {
             $this->actions[$trade] = new Collection();
         }
 
@@ -149,8 +144,7 @@ abstract class Strategy
     {
         $this->symbol->updateCandles();
 
-        if ($this->evaluationSymbol->interval != $this->symbol->interval)
-        {
+        if ($this->evaluationSymbol->interval != $this->symbol->interval) {
             $this->evaluationSymbol->updateCandles();
         }
     }
@@ -167,6 +161,7 @@ abstract class Strategy
             $this->tradeConfig,
             collect($this->indicatorConfig),
             $this->indicators);
+
         return $finder->findTrades();
     }
 
@@ -181,8 +176,7 @@ abstract class Strategy
     {
         $this->initHelperIndicators($this->symbol, $this->candles);
 
-        foreach ($this->indicatorConfig as $c)
-        {
+        foreach ($this->indicatorConfig as $c) {
             /** @var Indicator $indicator */
             $indicator = new $c->class(symbol: $this->symbol,
                 candles: $this->candles,
@@ -197,8 +191,7 @@ abstract class Strategy
     protected function initHelperIndicators(Symbol $symbol, Collection $candles): void
     {
         $helpers = [];
-        foreach ($this->helperIndicators() as $class => $config)
-        {
+        foreach ($this->helperIndicators() as $class => $config) {
             /** @var Symbol $helperSymbol */
             $helperSymbol = Symbol::query()
                 ->where('exchange_id', $symbol->exchange_id)
@@ -215,8 +208,7 @@ abstract class Strategy
 
             /** @var Indicator $helperIndicator */
             $helperIndicator = new $class(symbol: $helperSymbol, candles: $helperCandles, config: $config);
-            if ($helperIndicator->symbol() === $symbol)
-            {
+            if ($helperIndicator->symbol() === $symbol) {
                 $symbol->addIndicator($helperIndicator);
             }
             $helpers[$class] = $helperIndicator;
@@ -253,51 +245,51 @@ abstract class Strategy
     final protected function getDefaultConfig(): array
     {
         return [
-            'startDate'  => null,
-            'endDate'    => null,
+            'startDate' => null,
+            'endDate' => null,
 
-            /**
+            /*
              * The amount of candles to run the strategy.
              * If the strategy requires less than the default,
              * this can be set to a lower value so that the strategy runs faster.
              */
             'minCandles' => 1000,
 
-            'trades'     => [
-                /**
+            'trades' => [
+                /*
                  * When true, multiple trades to the same direction will be disregarded.
                  */
-                'oppositeOnly'  => true,
-                /**
+                'oppositeOnly' => true,
+                /*
                  * When true, waits for the next candle to open before trading.
                  */
                 'permanentOnly' => true,
             ],
             'evaluation' => [
-                'loop'     => [
-                    /**
+                'loop' => [
+                    /*
                      * Maximum trade duration in minutes, 0 to disable.
                      * Exceeding trades will be stopped at close price.
                      */
-                    'timeout'     => 0,
-                    /**
+                    'timeout' => 0,
+                    /*
                      * When true, an opposite side setup will be used as an exit trade.
                      * When false, exit trades will be through the target price.
                      */
                     'closeOnExit' => true,
                 ],
-                /**
+                /*
                  * If set, trades will be evaluated at this interval. E.g. 15m, 5m, 1m.
                  * Provides more accurate evaluation at the cost of performance.
                  * Lowest intervals can really slow down the strategy testing.
                  */
-                'interval' => null
+                'interval' => null,
             ],
-            /**
+            /*
              * Trade commission ratio. This will be reflected on the final ROI when tested. Disabled by default.
              * Most exchanges charges between 0.0004(0.04%) and 0.001(0.1%).
              */
-            'feeRatio'   => 0.0000
+            'feeRatio' => 0.0000,
         ];
     }
 
@@ -311,13 +303,11 @@ abstract class Strategy
 
     protected function validate(): void
     {
-        foreach ($this->optimizableParameters() as $name => $parameter)
-        {
-            //this will throw an exception if the parameter is invalid
+        foreach ($this->optimizableParameters() as $name => $parameter) {
+            // this will throw an exception if the parameter is invalid
             $this->config($name);
 
-            if (!$parameter instanceof ParameterSet)
-            {
+            if (!$parameter instanceof ParameterSet) {
                 throw new \UnexpectedValueException("$name is not a ParameterSet.");
             }
         }

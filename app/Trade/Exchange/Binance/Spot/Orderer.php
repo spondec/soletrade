@@ -47,16 +47,12 @@ class Orderer extends \App\Trade\Exchange\Orderer
     }
 
     /**
-     * @param Order $order
-     * @param array $response
-     *
      * @return Fill[]
      */
     protected function processOrderFills(Order $order, array $response): array
     {
         $fills = [];
-        foreach ($response['fills'] ?? [] as $fill)
-        {
+        foreach ($response['fills'] ?? [] as $fill) {
             $fills[] = $new = new Fill();
 
             $new->price = $fill['price'];

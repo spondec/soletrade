@@ -34,18 +34,17 @@ class Bot
 
     protected function authenticate(string $password, int $chatId): bool
     {
-        if ($this->isAuthenticated($chatId))
-        {
+        if ($this->isAuthenticated($chatId)) {
             return true;
         }
 
-        if (\trim($password) === '/password ' . \trim($this->password))
-        {
+        if (\trim($password) === '/password '.\trim($this->password)) {
             $this->authenticatedChatIds[] = $chatId;
+
             return true;
         }
 
-        Log::info('Authentication failed for Chat ID: ' . $chatId);
+        Log::info('Authentication failed for Chat ID: '.$chatId);
 
         return false;
     }
@@ -57,15 +56,14 @@ class Bot
 
     public function sendMessage(string $message, int $chatId): ServerResponse
     {
-        if (!$this->isAuthenticated($chatId))
-        {
-            //should not happen because we are filtering out unauthenticated messages
+        if (!$this->isAuthenticated($chatId)) {
+            // should not happen because we are filtering out unauthenticated messages
             throw new \LogicException('Attempt to send message to unauthenticated chat.');
         }
 
         return Request::sendMessage([
             'chat_id' => $chatId,
-            'text'    => $message,
+            'text' => $message,
         ]);
     }
 }

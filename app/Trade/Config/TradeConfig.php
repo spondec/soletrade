@@ -21,10 +21,10 @@ class TradeConfig extends Config
     public function getSignalIndicatorAliases(): array
     {
         $indicators = [];
-        foreach ($this->signals as $key => $indicator)
-        {
+        foreach ($this->signals as $key => $indicator) {
             $indicators[] = \is_array($indicator) ? $key : $indicator;
         }
+
         return $indicators;
     }
 }

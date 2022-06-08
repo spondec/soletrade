@@ -46,12 +46,12 @@ class Evaluation extends Model
     protected $with = ['entry', 'exit'];
     protected array $unique = ['type', 'entry_id', 'exit_id'];
     protected $casts = [
-        'log' => 'array'
+        'log' => 'array',
     ];
 
     public function isExited(): bool
     {
-        return (bool)$this->exit_timestamp;
+        return (bool) $this->exit_timestamp;
     }
 
     public function entry(): MorphTo

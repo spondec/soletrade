@@ -21,13 +21,14 @@ class TradeCollectionTest extends TestCase
         $this->assertEquals($trade, $tradeCollection->getFirstTrade());
     }
 
-    protected function newTrade(): m\MockInterface&TradeSetup
+    protected function newTrade(): m\MockInterface & TradeSetup
     {
         static $id = 0;
         static $timestamp = 1651419409000;
-        $trade = m::mock('alias:' . TradeSetup::class);
+        $trade = m::mock('alias:'.TradeSetup::class);
         $trade->id = ++$id;
         $trade->timestamp = ++$timestamp;
+
         return $trade;
     }
 

@@ -27,4 +27,3 @@ class ATRTest extends IndicatorTestCase
         $this->assertEquals($candles->last()->t, $atr->data()->keys()->last());
     }
 }
-

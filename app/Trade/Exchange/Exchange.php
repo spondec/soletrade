@@ -36,9 +36,8 @@ abstract class Exchange
         /** @var ConfigRepository $repo */
         $repo = App::make(ConfigRepository::class);
 
-        if (!$this->config = $repo->exchangeConfig(static::name()))
-        {
-            throw new \InvalidArgumentException('Invalid config for ' . static::name());
+        if (!$this->config = $repo->exchangeConfig(static::name())) {
+            throw new \InvalidArgumentException('Invalid config for '.static::name());
         }
 
         $this->apiKey = $this->config['apiKey'] ?? null;
@@ -54,18 +53,17 @@ abstract class Exchange
 
     private function register(): void
     {
-        /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
+        /* @noinspection PhpFieldAssignmentTypeMismatchInspection */
         $this->exchange = ExchangeModel::query()
             ->firstOrCreate(['class' => static::class], [
                 'class' => static::class,
-                'name'  => static::name(),
+                'name' => static::name(),
             ]);
     }
 
     public static function instance(): static
     {
-        if (!$instance = static::$instances[static::class] ?? null)
-        {
+        if (!$instance = static::$instances[static::class] ?? null) {
             return static::$instances[static::class] = new static();
         }
 
@@ -84,13 +82,10 @@ abstract class Exchange
 
     /**
      * @param class-string<Exchange>\string $nameOrClass
-     *
-     * @return Exchange
      */
     public static function from(string $nameOrClass): Exchange
     {
-        if (\class_exists($nameOrClass))
-        {
+        if (\class_exists($nameOrClass)) {
             return $nameOrClass::instance();
         }
 
@@ -108,7 +103,7 @@ abstract class Exchange
     public function info(): array
     {
         return [
-            'name' => static::name()
+            'name' => static::name(),
         ];
     }
 
