@@ -121,7 +121,7 @@ final class Fib extends Indicator
 
     protected function getBindPrice(mixed $bind): float
     {
-        return $this->current()[$bind];
+        return $this->value()[$bind];
     }
 
     protected function setup(): void

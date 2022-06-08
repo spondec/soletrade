@@ -12,6 +12,6 @@ final class EMA extends Indicator
     protected function calculate(CandleCollection $candles): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        return ($ema = \trader_ema($candles->closes(), $this->config['timePeriod'])) ? $ema : [];
+        return \trader_ema($candles->closes(), $this->config['timePeriod']) ?: [];
     }
 }
