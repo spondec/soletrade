@@ -19,19 +19,16 @@ class ClosureHash
      */
     public static function from(\Closure $closure): string
     {
-        if (!static::$hashes)
-        {
+        if (!static::$hashes) {
             static::$hashes = new \WeakMap();
         }
 
-        if (!isset(static::$hashes[$closure]))
-        {
+        if (!isset(static::$hashes[$closure])) {
             $ref = new \ReflectionFunction($closure);
             $file = new \SplFileObject($ref->getFileName());
             $file->seek($ref->getStartLine() - 1);
             $content = '';
-            while ($file->key() < $ref->getEndLine())
-            {
+            while ($file->key() < $ref->getEndLine()) {
                 $content .= $file->current();
                 $file->next();
             }

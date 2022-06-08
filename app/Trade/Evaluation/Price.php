@@ -28,8 +28,10 @@ class Price
     ];
     protected ChangeLog $log;
 
-    public function __construct(protected float $price,
-                                int             $timestamp)
+    public function __construct(
+        protected float $price,
+        int             $timestamp
+    )
     {
         $this->log = new ChangeLog($this->price, $timestamp);
     }
@@ -46,8 +48,7 @@ class Price
 
     public function unlock(): void
     {
-        if ($this->lockedBy !== $this->getCaller())
-        {
+        if ($this->lockedBy !== $this->getCaller()) {
             throw new \LogicException('Unlocking class must be the same as locking class.');
         }
         $this->isLocked = false;
@@ -69,13 +70,11 @@ class Price
 
     public function set(float $price, int $timestamp, string $reason, bool $force = false): void
     {
-        if (!$force)
-        {
+        if (!$force) {
             $this->assertUnlocked();
         }
 
-        if ($price == $this->price)
-        {
+        if ($price == $this->price) {
             return;
         }
 
@@ -95,8 +94,7 @@ class Price
 
     protected function assertUnlocked(): void
     {
-        if ($this->isLocked)
-        {
+        if ($this->isLocked) {
             throw new \LogicException("Attempted to set a locked price.");
         }
     }
@@ -108,10 +106,8 @@ class Price
 
     protected function assertModifier(string $modifier): void
     {
-        foreach (static::$modifiers as $class)
-        {
-            if ($modifier === $class || \is_subclass_of($modifier, $class))
-            {
+        foreach (static::$modifiers as $class) {
+            if ($modifier === $class || \is_subclass_of($modifier, $class)) {
                 return;
             }
         }

@@ -62,8 +62,7 @@ class StrategyTester extends TradeCommand
         $this->startTime = \time();
         $this->processes = config('trade.options.concurrentProcesses');
 
-        if (self::$isDebug = config('app.debug'))
-        {
+        if (self::$isDebug = config('app.debug')) {
             DB::enableQueryLog();
         }
 
@@ -72,33 +71,30 @@ class StrategyTester extends TradeCommand
 
         [$startDate, $endDate] = $this->assertDateRange($options['start'] ?? '01-01-1970', $options['end']);
 
-        $tester = $this->newRangedTester($strategyClass,
+        $tester = $this->newRangedTester(
+            $strategyClass,
             $symbol,
             $startDate,
-            $endDate);
+            $endDate
+        );
 
         $this->initSections();
 
         $strategy = $tester->strategy;
 
-        if(!$options['skipUpdate'])
-        {
+        if (!$options['skipUpdate']) {
             $this->updateSymbols($strategy);
         }
 
-        if ($options['optimize'])
-        {
+        if ($options['optimize']) {
             $this->runOptimizer($strategy, $tester, $args);
-        }
-        else
-        {
+        } else {
             $this->runTest($tester);
         }
 
         $this->updateElapsedTime();
 
-        if (self::$isDebug)
-        {
+        if (self::$isDebug) {
             $this->sections['memUsage']->overwrite("\nMemory usage: " . Util::memoryUsage());
             $log = DB::getQueryLog();
             $time = \array_sum(\array_column($log, 'time')) / 1000;
@@ -112,10 +108,12 @@ class StrategyTester extends TradeCommand
         return 0;
     }
 
-    protected function newRangedTester(string $strategyClass,
-                                       Symbol $symbol,
-                                       ?int   $startDate,
-                                       ?int   $endDate): Tester
+    protected function newRangedTester(
+        string $strategyClass,
+        Symbol $symbol,
+        ?int   $startDate,
+        ?int   $endDate
+    ): Tester
     {
         return new Tester($strategyClass, $symbol, [
             'startDate' => $startDate,
@@ -153,8 +151,7 @@ class StrategyTester extends TradeCommand
 
     protected function runOptimizer(Strategy $strategy, Tester $tester, array $args): void
     {
-        if (!$parameters = $strategy->optimizableParameters())
-        {
+        if (!$parameters = $strategy->optimizableParameters()) {
             $this->error("Strategy {$args['strategy']} doesn't have any optimizable parameters.");
             exit(1);
         }
@@ -169,18 +166,15 @@ class StrategyTester extends TradeCommand
             . implode(', ', array_keys($parameters)) .
             "\nTotal simulations: <fg=red>$optimizer->total</>");
 
-        if ($this->ask("Do you want to proceed? (y|n)") !== 'y')
-        {
+        if ($this->ask("Do you want to proceed? (y|n)") !== 'y') {
             $this->info("Aborted.");
             exit(1);
         }
 
-        if ($walkForward = ($this->ask('Do you want to run Walk Forward Analysis? (y|n)') === 'y'))
-        {
+        if ($walkForward = ($this->ask('Do you want to run Walk Forward Analysis? (y|n)') === 'y')) {
             $startDateString = $this->ask('Enter the walk forward period start date (DD-MM-YYYY)');
 
-            if (!$startDateString)
-            {
+            if (!$startDateString) {
                 $this->error('Invalid start date.');
                 exit(1);
             }
@@ -193,8 +187,7 @@ class StrategyTester extends TradeCommand
             $optimizationEndDate = $tester->strategy->config('endDate');
 
             if (($walkForwardStartDate < $optimizationEndDate) &&
-                $startDateString !== $this->option('end'))
-            {
+                $startDateString !== $this->option('end')) {
                 $this->error("Walk Forward Analysis can't start before the end date of the optimization.");
                 exit(1);
             }
@@ -210,20 +203,26 @@ class StrategyTester extends TradeCommand
         $filtered = $this->filterOptimizedSummaries($summaries);
 
         $symbol = $strategy->symbol();
-        $this->updateSummaryTable('optSummary',
-            sprintf('%s %s Optimization Summary (%s ~ %s)',
+        $this->updateSummaryTable(
+            'optSummary',
+            sprintf(
+                '%s %s Optimization Summary (%s ~ %s)',
                 $strategy::name(),
                 "{$symbol->exchange()::name()} $symbol->symbol $symbol->interval",
-                $this->option('start'), $this->option('end')),
-            $filtered->all());
+                $this->option('start'),
+                $this->option('end')
+            ),
+            $filtered->all()
+        );
 
-        if ($walkForward)
-        {
-            $this->runWalkForwardAnalysis($strategy,
+        if ($walkForward) {
+            $this->runWalkForwardAnalysis(
+                $strategy,
                 $walkForwardStartDate,
                 $walkForwardEndDate,
                 $filtered,
-                $progressBar);
+                $progressBar
+            );
         }
 
         $this->sections['possibleTrades']->clear();
@@ -233,11 +232,9 @@ class StrategyTester extends TradeCommand
     protected function filterOptimizedSummaries(SummaryCollection $summaries): SummaryCollection
     {
         $filtered = [];
-        if ($summaries->count() > 10)
-        {
+        if ($summaries->count() > 10) {
             //get the best 10
-            foreach ($summaries->slice(0, 10) as $summary)
-            {
+            foreach ($summaries->slice(0, 10) as $summary) {
                 $filtered[] = $summary;
             }
 
@@ -246,11 +243,8 @@ class StrategyTester extends TradeCommand
 //            {
 //                $filtered[] = $summary;
 //            }
-        }
-        else
-        {
-            foreach ($summaries as $summary)
-            {
+        } else {
+            foreach ($summaries as $summary) {
                 $filtered[] = $summary;
             }
         }
@@ -260,8 +254,7 @@ class StrategyTester extends TradeCommand
     protected function updateSummaryTable(string $tableName, string $title, array $summaries): void
     {
         $rows = [];
-        foreach ($summaries as $k => $summary)
-        {
+        foreach ($summaries as $k => $summary) {
             $rows[$k] = $this->getSummaryRow($summary);
         }
 
@@ -276,10 +269,8 @@ class StrategyTester extends TradeCommand
     {
         $params = '';
 
-        foreach ($summary->parameters as $name => $value)
-        {
-            if (is_array($value))
-            {
+        foreach ($summary->parameters as $name => $value) {
+            if (is_array($value)) {
                 $value = Util::varExport($value);
             }
             $params .= "$name: $value ";
@@ -325,18 +316,23 @@ class StrategyTester extends TradeCommand
         ];
     }
 
-    protected function runWalkForwardAnalysis(Strategy          $strategy,
-                                              int               $startDate,
-                                              int               $endDate,
-                                              SummaryCollection $summaries,
-                                              ProgressBar       $progressBar): void
+    protected function runWalkForwardAnalysis(
+        Strategy          $strategy,
+        int               $startDate,
+        int               $endDate,
+        SummaryCollection $summaries,
+        ProgressBar       $progressBar
+    ): void
     {
-        $tester = $this->newRangedTester($strategy::class,
+        $tester = $this->newRangedTester(
+            $strategy::class,
             $strategy->symbol(),
             $startDate,
-            $endDate);
+            $endDate
+        );
 
-        $summarizer = new Summarizer($tester,
+        $summarizer = new Summarizer(
+            $tester,
             $summaries->pluck('parameters')->all()
         );
         $summarizer->setParallelProcesses($this->processes);
@@ -357,11 +353,15 @@ class StrategyTester extends TradeCommand
             return array_search($summary->parameters, $parameters);
         });
 
-        $this->updateSummaryTable('walkForwardSummary',
-            sprintf("Walk Forward Period (%s ~ %s)",
+        $this->updateSummaryTable(
+            'walkForwardSummary',
+            sprintf(
+                "Walk Forward Period (%s ~ %s)",
                 Util::dateFormat($startDate),
-                Util::dateFormat($endDate)),
-            $walkForwardSummaries->all());
+                Util::dateFormat($endDate)
+            ),
+            $walkForwardSummaries->all()
+        );
     }
 
     protected function runTest(Tester $tester): void
@@ -377,16 +377,20 @@ class StrategyTester extends TradeCommand
             $this->sections['state']->overwrite("<info>Running strategy...</info>\n");
         });
 
-        $tester->listen('strategy_post_run', function (Tester          $strategyTester,
-                                                       Strategy        $strategy,
-                                                       TradeCollection $trades) {
+        $tester->listen('strategy_post_run', function (
+            Tester          $strategyTester,
+            Strategy        $strategy,
+            TradeCollection $trades
+        ) {
             $this->sections['possibleTrades']->overwrite("{$trades->count()} possible trades found.");
             $this->sections['state']->overwrite("<info>Evaluating trades...</info>\n");
         });
 
-        $tester->listen('summary_updated', function (Tester  $strategyTester,
-                                                     Summary $summary,
-                                                     int     $tradeCount) {
+        $tester->listen('summary_updated', function (
+            Tester  $strategyTester,
+            Summary $summary,
+            int     $tradeCount
+        ) {
             $this->sections['evalTable']->clear();
 
             $this->sections['evaluatedTrades']->overwrite("Evaluated $tradeCount trades.\n");
@@ -398,11 +402,12 @@ class StrategyTester extends TradeCommand
                 ->render();
         });
 
-        $tester->listen('summary_finished', function (Tester  $strategyTester,
-                                                      Summary $summary,
-                                                      int     $tradeCount) {
-            if (!$tradeCount)
-            {
+        $tester->listen('summary_finished', function (
+            Tester  $strategyTester,
+            Summary $summary,
+            int     $tradeCount
+        ) {
+            if (!$tradeCount) {
                 $this->sections['evaluatedTrades']->overwrite("No evaluations.\n");
             }
         });

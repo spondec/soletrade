@@ -20,8 +20,7 @@ abstract class Process
 
     public function setParallelProcesses(int $amount = 8): void
     {
-        if ($amount < 1)
-        {
+        if ($amount < 1) {
             throw new \InvalidArgumentException('Processes must be at least 1.');
         }
 
@@ -36,8 +35,7 @@ abstract class Process
 
         $fork = $this->newFork($callback);
 
-        foreach (array_chunk($jobs, $this->processes) as $chunk)
-        {
+        foreach (array_chunk($jobs, $this->processes) as $chunk) {
             array_push($results, ...$fork->run(...$chunk));
         }
 
@@ -53,8 +51,7 @@ abstract class Process
     {
         $fork = $this->setupFork(Fork::new());
 
-        if ($callback)
-        {
+        if ($callback) {
             $callback($fork);
         }
 

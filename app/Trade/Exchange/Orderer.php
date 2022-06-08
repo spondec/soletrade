@@ -14,7 +14,6 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
 {
     public function __construct(protected Exchange $exchange)
     {
-
     }
 
     /**
@@ -41,23 +40,19 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
 
         $fills = new Collection($this->processOrderFills($order, $response));
 
-        if ($filled = $order->filled)
-        {
-            if (!$fills->count())
-            {
+        if ($filled = $order->filled) {
+            if (!$fills->count()) {
                 throw new FailedOrderFillException('Failed to process order fills.');
             }
 
-            if ($filled != $fills->sum('quantity'))
-            {
+            if ($filled != $fills->sum('quantity')) {
                 throw new FailedOrderFillException('Filled quantity does not match.');
             }
         }
 
         $order->logResponse($responseType, $response);
 
-        if (!$order->save())
-        {
+        if (!$order->save()) {
             throw new \UnexpectedValueException('Failed to save order.');
         }
 
@@ -93,18 +88,15 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
     {
         $order = new Order();
 
-        if ($side !== null)
-        {
+        if ($side !== null) {
             $order->side = Enum::case($side);
         }
 
-        if ($symbol !== null)
-        {
+        if ($symbol !== null) {
             $order->symbol = $symbol;
         }
 
-        if ($reduceOnly !== null)
-        {
+        if ($reduceOnly !== null) {
             $order->reduce_only = $reduceOnly;
         }
 

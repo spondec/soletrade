@@ -44,17 +44,18 @@ class Evaluator
 
     protected function assertEntryExitTime(Evaluation $evaluation): void
     {
-        if ($evaluation->exit->timestamp <= $evaluation->entry->timestamp)
-        {
+        if ($evaluation->exit->timestamp <= $evaluation->entry->timestamp) {
             throw new \LogicException('Exit date must not be newer than or equal to entry trade.');
         }
     }
 
     protected function newLoop(TradeSetup $entry): TradeLoop
     {
-        return new TradeLoop($entry,
+        return new TradeLoop(
+            $entry,
             $this->strategy->evaluationSymbol(),
-            $this->strategy->config('evaluation.loop'));
+            $this->strategy->config('evaluation.loop')
+        );
     }
 
     protected function realize(Evaluation $evaluation): void
@@ -76,15 +77,13 @@ class Evaluator
 
         $log = [];
 
-        if ($position = $status->getPosition())
-        {
+        if ($position = $status->getPosition()) {
             $e->is_entry_price_valid = true;
             $e->entry_timestamp = $position->entryTime();
             $e->is_ambiguous = $status->isAmbiguous() || $position->entryTime() === $position->exitTime();
             $e->used_size = $position->getMaxUsedSize();
 
-            if (!$e->is_ambiguous)
-            {
+            if (!$e->is_ambiguous) {
                 $this->fillClosedPositionFields($position, $e);
                 $this->fillPivots($e);
                 $this->fillHighLowRoi($e);
@@ -98,9 +97,7 @@ class Evaluator
                 ],
                 'transactions'  => $position->transactionLog()->toArray()
             ];
-        }
-        else
-        {
+        } else {
             $e->entry_timestamp = null;
             $e->highest_entry_price = null;
             $e->lowest_entry_price = null;
@@ -118,8 +115,7 @@ class Evaluator
 
     protected function fillHighLowRoi(Evaluation $evaluation): void
     {
-        if (!$evaluation->is_entry_price_valid || $evaluation->is_ambiguous)
-        {
+        if (!$evaluation->is_entry_price_valid || $evaluation->is_ambiguous) {
             return;
         }
 
@@ -138,18 +134,22 @@ class Evaluator
     {
         $entryPivots = $this
             ->symbolRepo
-            ->assertLowestHighestCandle($e->symbol_id,
+            ->assertLowestHighestCandle(
+                $e->symbol_id,
                 $e->entry->price_date,
-                $e->entry_timestamp);
+                $e->entry_timestamp
+            );
 
         $e->highest_entry_price = $entryPivots['highest']->h;
         $e->lowest_entry_price = $entryPivots['lowest']->l;
 
         $pivots = $this
             ->symbolRepo
-            ->assertLowestHighestCandle($e->symbol_id,
+            ->assertLowestHighestCandle(
+                $e->symbol_id,
                 $e->entry_timestamp,
-                $e->exit_timestamp);
+                $e->exit_timestamp
+            );
 
         $e->highest_price = $pivots['highest']->h;
         $e->lowest_price = $pivots['lowest']->l;

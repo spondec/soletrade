@@ -56,7 +56,7 @@ class ConfigRepository extends Repository
             ->whereIn('class', $this->exchanges)
             ->get()
             ->keyBy('name')
-            ->map(static fn(Exchange $exchange) => DB::table('symbols')
+            ->map(static fn (Exchange $exchange) => DB::table('symbols')
                 ->distinct()
                 ->where('exchange_id', $exchange->id)
                 ->get('symbol')
@@ -67,6 +67,6 @@ class ConfigRepository extends Repository
 
     protected function getExchanges(): array
     {
-        return \array_map(static fn(array $details) => $details['class'], $this->config['exchanges']) ?? [];
+        return \array_map(static fn (array $details) => $details['class'], $this->config['exchanges']) ?? [];
     }
 }
