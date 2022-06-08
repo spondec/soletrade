@@ -8,15 +8,17 @@ use App\Trade\Collection\CandleCollection;
 /**
  * DO NOT USE \Iterator::current() IN THIS CLASS
  * CURRENT ITEM MIGHT BE OVERRIDDEN!!!
- * USE $this->candles[\Iterator::key()] INSTEAD
+ * USE $this->candles[\Iterator::key()] INSTEAD.
  *
  * @see CandleCollection::overrideCandle()
  */
 class Candles
 {
-    public function __construct(protected \Iterator        $iterator,
-                                protected CandleCollection $candles,
-                                public                     readonly Symbol $symbol)
+    public function __construct(
+        protected \Iterator $iterator,
+        protected CandleCollection $candles,
+        public                     readonly Symbol $symbol
+    )
     {
     }
 
@@ -38,6 +40,7 @@ class Candles
         {
             return null;
         }
+
         return \array_slice($this->candles->all(), $offset, $period);
     }
 

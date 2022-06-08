@@ -13,7 +13,7 @@ namespace App\Models;
 class TradeAction extends Model
 {
     protected $casts = [
-        'config' => 'array'
+        'config' => 'array',
     ];
     protected $guarded = ['id'];
 }

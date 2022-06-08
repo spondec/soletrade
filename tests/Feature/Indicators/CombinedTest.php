@@ -5,7 +5,6 @@ namespace Tests\Feature\Indicators;
 use App\Indicators\Combined;
 use App\Indicators\EMA;
 use App\Indicators\MA;
-use Tests\Feature\Indicators\IndicatorTestCase;
 
 class CombinedTest extends IndicatorTestCase
 {
@@ -16,13 +15,13 @@ class CombinedTest extends IndicatorTestCase
             'indicators.sma_8'  => [
                 'alias'  => 'sma_8',
                 'class'  => MA::class,
-                'config' => ['timePeriod' => 8]
+                'config' => ['timePeriod' => 8],
             ],
             'indicators.ema_13' => [
                 'alias'  => 'ema_13',
                 'class'  => EMA::class,
-                'config' => ['timePeriod' => 13]
-            ]
+                'config' => ['timePeriod' => 13],
+            ],
         ]);
 
         $sma = new MA($symbol, $symbol->candles(100), ['timePeriod' => 8]);
@@ -30,14 +29,16 @@ class CombinedTest extends IndicatorTestCase
 
         $data = $combined->data();
 
-        $this->assertEquals($ema->data()->all(),
+        $this->assertEquals(
+            $ema->data()->all(),
             array_combine(
                 $data->keys()->slice(-88, 88)->all(),
                 $data->pluck('ema_13')->filter()->all()
             )
         );
 
-        $this->assertEquals($sma->data()->all(),
+        $this->assertEquals(
+            $sma->data()->all(),
             array_combine(
                 $data->keys()->slice(0, 93)->all(),
                 $data->pluck('sma_8')->all()

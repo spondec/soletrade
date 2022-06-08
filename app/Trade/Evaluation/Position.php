@@ -38,12 +38,14 @@ class Position
 
     protected float $exitPrice;
 
-    public function __construct(public           readonly Side $side,
-                                protected float  $size,
-                                protected int    $entryTime,
-                                protected Price  $entry,
-                                protected ?Price $exit,
-                                protected ?Price $stop)
+    public function __construct(
+        public           readonly Side $side,
+        protected float $size,
+        protected int $entryTime,
+        protected Price $entry,
+        protected ?Price $exit,
+        protected ?Price $stop
+    )
     {
         $this->remainingSize = Position::MAX_SIZE;
         $this->assertSize($this->size);
@@ -131,6 +133,7 @@ class Position
         {
             return $breakEvenPrice + $differ;
         }
+
         return $breakEvenPrice - $differ;
     }
 
@@ -228,6 +231,7 @@ class Position
         {
             return $this->calcLongRoi($lastPrice, $this->getUsedSize(), $this->maxUsedSize);
         }
+
         return $this->calcShortRoi($lastPrice, $this->getUsedSize(), $this->maxUsedSize);
     }
 
@@ -264,6 +268,7 @@ class Position
         {
             $pnl = $size - $this->amount * $exitPrice;
         }
+
         return $pnl / $maxUsedSize * 100;
     }
 
@@ -355,11 +360,13 @@ class Position
 
     protected function enter(): void
     {
-        $this->newTransaction(true,
+        $this->newTransaction(
+            true,
             $this->entry->get(),
             $this->size,
             $this->entryTime,
-            'Position entry.');
+            'Position entry.'
+        );
     }
 
     protected function assertNotGreaterThanUsedSize(float $size): void
@@ -372,11 +379,13 @@ class Position
 
     protected function insertStopTransaction(int $exitTime): void
     {
-        $this->newTransaction(false,
+        $this->newTransaction(
+            false,
             $this->exitPrice,
             $this->getUsedSize(),
             $exitTime,
-            'Position stop.');
+            'Position stop.'
+        );
     }
 
     /**
@@ -386,10 +395,12 @@ class Position
      */
     protected function insertExitTransaction(int $exitTime): void
     {
-        $this->newTransaction(false,
+        $this->newTransaction(
+            false,
             $this->exitPrice,
             $this->getUsedSize(),
             $exitTime,
-            'Position exit.');
+            'Position exit.'
+        );
     }
 }

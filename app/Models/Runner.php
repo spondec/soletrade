@@ -25,12 +25,14 @@ class Runner extends Model
     public function setExpiry(int $seconds): static
     {
         $this->expire_date = \time() + $seconds;
+
         return $this;
     }
 
     public function lengthenExpiry(int $seconds): static
     {
         $this->expire_date += $seconds;
+
         return $this;
     }
 

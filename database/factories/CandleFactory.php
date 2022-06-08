@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Trade\Calc;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Collection;
@@ -14,19 +13,20 @@ class CandleFactory extends Factory
 {
     protected $model = \App\Models\Candle::class;
 
-    public function __construct($count = null,
-                                ?Collection $states = null,
-                                ?Collection $has = null,
-                                ?Collection $for = null,
-                                ?Collection $afterMaking = null,
-                                ?Collection $afterCreating = null,
+    public function __construct(
+        $count = null,
+        ?Collection $states = null,
+        ?Collection $has = null,
+        ?Collection $for = null,
+        ?Collection $afterMaking = null,
+        ?Collection $afterCreating = null,
         $connection = null,
-
-                                protected ?int $interval = null,
-                                protected ?Carbon $startDate = null,
-                                protected ?float $priceLowerThan = null,
-                                protected ?float $priceHigherThan = null,
-                                protected ?int $lastTimestamp = null)
+        protected ?int $interval = null,
+        protected ?Carbon $startDate = null,
+        protected ?float $priceLowerThan = null,
+        protected ?float $priceHigherThan = null,
+        protected ?int $lastTimestamp = null
+    )
     {
         parent::__construct($count, $states, $has, $for, $afterMaking, $afterCreating, $connection);
     }
@@ -61,7 +61,7 @@ class CandleFactory extends Factory
     /**
      * @param int $startDate
      * @param int $endDate
-     * @param int $interval in seconds
+     * @param int $interval  in seconds
      *
      * @return $this
      */
@@ -79,6 +79,7 @@ class CandleFactory extends Factory
             $startDate += $this->interval;
             $this->count++;
         }
+
         return $this;
     }
 
@@ -101,20 +102,24 @@ class CandleFactory extends Factory
     public function priceLowerThan(float $price): static
     {
         $this->priceLowerThan = $price - $price * 0.001;
+
         return $this;
     }
 
     public function priceHigherThan(float $price): static
     {
         $this->priceHigherThan = $price + $price * 0.001;
+
         return $this;
     }
 
     protected function randomPrice(int $maxDecimals, float $min, float $max): float|int
     {
-        return $this->faker->randomFloat($maxDecimals,
+        return $this->faker->randomFloat(
+            $maxDecimals,
             $this->priceHigherThan ?? $min,
-            $this->priceLowerThan ?? $max);
+            $this->priceLowerThan ?? $max
+        );
     }
 
     protected function getNextTimestamp(): int
@@ -123,6 +128,7 @@ class CandleFactory extends Factory
         {
             $this->lastTimestamp = $this->startDate->getTimestampMs();
         }
+
         return $this->lastTimestamp += $this->interval;
     }
 }

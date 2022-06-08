@@ -4,7 +4,8 @@ use App\Trade\Illuminate\Database\Schema\Blueprint;
 use App\Trade\Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class() extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -12,7 +13,8 @@ return new class extends Migration {
      */
     public function up()
     {
-        Schema::create('evaluations', function (Blueprint $table) {
+        Schema::create('evaluations', function (Blueprint $table)
+        {
             $table->id();
             $table->string('type');
             $table->foreignId('entry_id')->constrained('trade_setups');

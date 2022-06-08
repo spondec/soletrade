@@ -17,7 +17,7 @@ class FTX extends Exchange implements HasLeverage
             'headers' => [
                 'FTX-SUBACCOUNT' => $this->config['subaccount']
                     ?? throw new \LogicException('Missing FTX sub account.'),
-            ]
+            ],
         ]);
 
         $this->fetch = new Fetcher($this, $this->api);

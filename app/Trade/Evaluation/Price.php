@@ -24,12 +24,14 @@ class Price
         Handler::class,
         Position::class,
         Bindable::class,
-        TradeLoop::class
+        TradeLoop::class,
     ];
     protected ChangeLog $log;
 
-    public function __construct(protected float $price,
-                                int             $timestamp)
+    public function __construct(
+        protected float $price,
+        int $timestamp
+    )
     {
         $this->log = new ChangeLog($this->price, $timestamp);
     }
@@ -81,7 +83,7 @@ class Price
 
         $this->fireEvent('changed', [
             'from' => $this->price,
-            'to'   => $price
+            'to'   => $price,
         ]);
 
         $this->price = $price;
@@ -97,14 +99,15 @@ class Price
     {
         if ($this->isLocked)
         {
-            throw new \LogicException("Attempted to set a locked price.");
+            throw new \LogicException('Attempted to set a locked price.');
         }
     }
 
-    #[Pure] public function log(): ChangeLog
-    {
-        return $this->log;
-    }
+    #[Pure]
+ public function log(): ChangeLog
+ {
+     return $this->log;
+ }
 
     protected function assertModifier(string $modifier): void
     {

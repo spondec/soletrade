@@ -108,7 +108,7 @@ abstract class Exchange
     public function info(): array
     {
         return [
-            'name' => static::name()
+            'name' => static::name(),
         ];
     }
 

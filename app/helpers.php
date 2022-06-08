@@ -1,9 +1,9 @@
 <?php
 
-const INDICATOR_DIR = "app/Indicators/";
+const INDICATOR_DIR = 'app/Indicators/';
 const INDICATOR_NAMESPACE = "\App\Indicators\\";
 
-const STRATEGY_DIR = "app/Strategies/";
+const STRATEGY_DIR = 'app/Strategies/';
 const STRATEGY_NAMESPACE = "\App\Strategies\\";
 
 if (!function_exists('array_merge_recursive_distinct'))
@@ -35,10 +35,12 @@ if (!function_exists('array_merge_recursive_distinct'))
 
 if (!function_exists('recoverable'))
 {
-    function recoverable(Closure $request,
-                         ?int    $retryInSeconds = null,
-                         ?int    $retryLimit = null,
-                         array   $handle = []): \App\Trade\Process\RecoverableRequest
+    function recoverable(
+        Closure $request,
+        ?int $retryInSeconds = null,
+        ?int $retryLimit = null,
+        array $handle = []
+    ): \App\Trade\Process\RecoverableRequest
     {
         return \App\Trade\Process\RecoverableRequest::new($request, $retryInSeconds, $retryLimit, $handle);
     }
@@ -59,7 +61,8 @@ if (!function_exists('on_shutdown'))
             }
         }
 
-        register_shutdown_function($callbacks[] = static function () use ($callback, &$executed) {
+        register_shutdown_function($callbacks[] = static function () use ($callback, &$executed)
+        {
             if (isset($executed[$callback]))
             {
                 return;
@@ -68,7 +71,8 @@ if (!function_exists('on_shutdown'))
             $callback();
         });
 
-        pcntl_signal(SIGINT, static function () use (&$callbacks) {
+        pcntl_signal(SIGINT, static function () use (&$callbacks)
+        {
             foreach ($callbacks as $callback)
             {
                 $callback();
@@ -82,7 +86,7 @@ if (!function_exists('millitime'))
 {
     function millitime(): int
     {
-        return (int)(microtime(true) * 1000);
+        return (int) (microtime(true) * 1000);
     }
 }
 
@@ -133,6 +137,7 @@ if (!function_exists('get_indicator_class'))
         {
             return $class;
         }
+
         throw new RuntimeException("Indicator $indicatorName not found");
     }
 }
@@ -189,12 +194,12 @@ if (!function_exists('as_ms'))
 {
     function as_ms(int $timestamp): int
     {
-        if (strlen((string)$timestamp) === 13)
+        if (strlen((string) $timestamp) === 13)
         {
             return $timestamp;
         }
 
-        if (strlen((string)$timestamp) === 10)
+        if (strlen((string) $timestamp) === 10)
         {
             return $timestamp * 1000;
         }
@@ -207,7 +212,7 @@ if (!function_exists('elapsed_time'))
 {
     function elapsed_time(int $startTime): string
     {
-        $start = (int)(as_ms($startTime) / 1000);
+        $start = (int) (as_ms($startTime) / 1000);
         $time = time();
         if ($start > $time)
         {
@@ -217,9 +222,9 @@ if (!function_exists('elapsed_time'))
         $elapsed = $time - $start;
 
         $seconds = $elapsed % 60;
-        $minutes = (int)($elapsed / 60) % 60;
-        $hours = (int)($elapsed / 60 / 60) % 60 % 24;
-        $days = (int)($elapsed / 60 / 60 / 24);
+        $minutes = (int) ($elapsed / 60) % 60;
+        $hours = (int) ($elapsed / 60 / 60) % 60 % 24;
+        $days = (int) ($elapsed / 60 / 60 / 24);
 
         return "$days:$hours:$minutes:$seconds";
     }

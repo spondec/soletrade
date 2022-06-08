@@ -28,7 +28,7 @@ class NewStrategyStub extends Creator
             'indicators',
             'actions',
             'action_stubs',
-            'use'
+            'use',
         ];
     }
 
@@ -50,7 +50,7 @@ class NewStrategyStub extends Creator
 
         $params['action_stubs'] = $params['action_stubs']->implode("\n");
         $params['indicator_stubs'] = $params['indicator_stubs']->implode(",\n\t\t\t");
-        $params['signals'] = $params['signals']->map(fn(string $s) => "'$s'")->implode(', ');
+        $params['signals'] = $params['signals']->map(fn (string $s) => "'$s'")->implode(', ');
 
         return $params;
     }
@@ -62,12 +62,13 @@ class NewStrategyStub extends Creator
             $content = \str_replace(
                 [
                     "'{{ {$indicator}_alias }}'",
-                    "'{{ {$indicator}_class }}'"
+                    "'{{ {$indicator}_class }}'",
                 ],
                 [
-                    "'$indicator'", $indicator . "::class"
+                    "'$indicator'", $indicator . '::class',
                 ],
-                $content);
+                $content
+            );
         }
 
         return $content;

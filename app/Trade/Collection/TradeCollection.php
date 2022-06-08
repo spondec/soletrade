@@ -76,6 +76,7 @@ class TradeCollection extends Collection
         {
             return $this->findNextOppositeTrade($trade);
         }
+
         return $this->findNextTrade($trade);
     }
 
@@ -104,6 +105,7 @@ class TradeCollection extends Collection
             if ($iterator->key() == $timestamp)
             {
                 $iterator->next();
+
                 return $iterator->current();
             }
 
@@ -116,8 +118,9 @@ class TradeCollection extends Collection
     /**
      * @param TradeSetup[] $items
      *
-     * @return array
      * @throws \Exception
+     *
+     * @return array
      */
     protected function keyByTimestamp(array $items): array
     {
@@ -132,6 +135,7 @@ class TradeCollection extends Collection
 
             $keyed[$t] = $trade;
         }
+
         return $keyed;
     }
 
@@ -144,8 +148,9 @@ class TradeCollection extends Collection
     {
         if ($this->config('permanentOnly'))
         {
-            $items = \array_filter($items, fn(TradeSetup $trade) => $trade->is_permanent);
+            $items = \array_filter($items, fn (TradeSetup $trade) => $trade->is_permanent);
         }
+
         return $items;
     }
 }

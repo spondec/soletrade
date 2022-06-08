@@ -35,10 +35,12 @@ abstract class Handler
         return '\App\Trade\Order\Type\\' . str(Enum::case($orderType))->lower()->studly();
     }
 
-    public function order(OrderType $orderType,
-                          float     $quantity,
-                          float     $price,
-                          bool      $reduceOnly): Order
+    public function order(
+        OrderType $orderType,
+        float $quantity,
+        float $price,
+        bool $reduceOnly
+    ): Order
     {
         if ($orderType !== $this->getOrderType())
         {
@@ -50,9 +52,11 @@ abstract class Handler
 
     abstract public function getOrderType(): OrderType;
 
-    abstract protected function handle(float $quantity,
-                                       float $price,
-                                       bool  $reduceOnly): Order;
+    abstract protected function handle(
+        float $quantity,
+        float $price,
+        bool $reduceOnly
+    ): Order;
 
     protected function getSide(bool $reduceOnly): Side
     {

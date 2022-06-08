@@ -30,9 +30,9 @@ class TradeStatusTest extends TestCase
         $action = Mockery::mock('alias:' . TradeAction::class);
         $action->config = [
             'target'         => [
-                'roi' => 10
+                'roi' => 10,
             ],
-            'new_stop_price' => 1
+            'new_stop_price' => 1,
         ];
         $action->is_taken = false;
         $action->class = MoveStop::class;
@@ -48,10 +48,10 @@ class TradeStatusTest extends TestCase
             'l' => 0.9,
             'o' => 1,
             'c' => 1.2,
-            't' => time() + 1
+            't' => time() + 1,
         ];
 
-        $status->runTradeActions((object)$candle, $candle['t']);
+        $status->runTradeActions((object) $candle, $candle['t']);
         $this->assertEquals(1, $status->getStopPrice()->get());
     }
 
@@ -79,6 +79,7 @@ class TradeStatusTest extends TestCase
         $setup->target_price = $targetPrice;
         $setup->stop_price = $stopPrice;
         $setup->price_date = time();
+
         return $setup;
     }
 
@@ -102,12 +103,12 @@ class TradeStatusTest extends TestCase
         $candle = [
             'h' => 1.9,
             'l' => 0.6,
-            't' => time()
+            't' => time(),
         ];
         $status->enterPosition(time());
-        $this->assertNotTrue($status->checkIsStopped((object)$candle));
+        $this->assertNotTrue($status->checkIsStopped((object) $candle));
         $candle['l'] = 0.5;
-        $this->assertTrue($status->checkIsStopped((object)$candle));
+        $this->assertTrue($status->checkIsStopped((object) $candle));
         $this->assertNotTrue($status->isAmbiguous());
     }
 
@@ -118,11 +119,11 @@ class TradeStatusTest extends TestCase
         $candle = [
             'h' => 2,
             'l' => 0.5,
-            't' => time()
+            't' => time(),
         ];
         $status->enterPosition(time());
-        $this->assertTrue($status->checkIsStopped((object)$candle));
-        $this->assertTrue($status->checkIsClosed((object)$candle));
+        $this->assertTrue($status->checkIsStopped((object) $candle));
+        $this->assertTrue($status->checkIsClosed((object) $candle));
         $this->assertTrue($status->isExited());
         $this->assertTrue($status->isAmbiguous());
     }
@@ -165,10 +166,10 @@ class TradeStatusTest extends TestCase
         $candle = [
             'h' => 1.9,
             'l' => 1,
-            't' => time()
+            't' => time(),
         ];
         $this->expectExceptionMessage('Position has not been initialized');
-        $this->assertNotTrue($status->checkIsClosed((object)$candle));
+        $this->assertNotTrue($status->checkIsClosed((object) $candle));
     }
 
     public function test_check_is_stopped_with_no_position(): void
@@ -179,11 +180,11 @@ class TradeStatusTest extends TestCase
         $candle = [
             'h' => 1.9,
             'l' => 1,
-            't' => time()
+            't' => time(),
         ];
 
         $this->expectExceptionMessage('Position has not been initialized');
-        $this->assertNotTrue($status->checkIsStopped((object)$candle));
+        $this->assertNotTrue($status->checkIsStopped((object) $candle));
     }
 
     public function test_check_is_closed(): void
@@ -194,13 +195,13 @@ class TradeStatusTest extends TestCase
         $candle = [
             'h' => 1.9,
             'l' => 1,
-            't' => time()
+            't' => time(),
         ];
 
         $status->enterPosition(time());
-        $this->assertNotTrue($status->checkIsClosed((object)$candle));
+        $this->assertNotTrue($status->checkIsClosed((object) $candle));
         $candle['h'] = 2;
-        $this->assertTrue($status->checkIsClosed((object)$candle));
+        $this->assertTrue($status->checkIsClosed((object) $candle));
         $this->assertNotTrue($status->isAmbiguous());
     }
 }

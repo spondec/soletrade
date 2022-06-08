@@ -13,10 +13,12 @@ use App\Trade\Log;
 
 class LiveTradeLoop extends TradeLoop
 {
-    public function __construct(TradeSetup                   $entry,
-                                Symbol                       $evaluationSymbol,
-                                array                        $config,
-                                public readonly OrderManager $order)
+    public function __construct(
+        TradeSetup $entry,
+        Symbol $evaluationSymbol,
+        array $config,
+        public readonly OrderManager $order
+    )
     {
         parent::__construct($entry, $evaluationSymbol, $config);
     }
@@ -38,7 +40,8 @@ class LiveTradeLoop extends TradeLoop
 
             $price->lock();
 
-            $order->onFill(function (Fill $fill) {
+            $order->onFill(function (Fill $fill)
+            {
                 if ($this->status->isEntered())
                 {
                     /** @var LivePosition $position */
@@ -47,16 +50,18 @@ class LiveTradeLoop extends TradeLoop
                 }
                 else
                 {
-                    $this->status->enterPosition($fill->timestamp,
+                    $this->status->enterPosition(
+                        $fill->timestamp,
                         $this->asset()->proportional($fill->quantity * $fill->price),
                         $fill->price,
                         LivePosition::class,
                         $this->order,
-                        $fill);
+                        $fill
+                    );
                 }
             });
         }
-        else if (!$this->order->entry->isAllFilled())
+        elseif (!$this->order->entry->isAllFilled())
         {
             $this->order->sync($this->order->entry);
         }
@@ -90,7 +95,8 @@ class LiveTradeLoop extends TradeLoop
         {
             if (!$isEntryFilled)
             {
-                Log::info("Entry order not filled fully, cannot send exit order.");
+                Log::info('Entry order not filled fully, cannot send exit order.');
+
                 return;
             }
 
@@ -102,7 +108,8 @@ class LiveTradeLoop extends TradeLoop
         {
             if (!$isEntryFilled)
             {
-                Log::info("Entry order not filled fully, cannot send stop order.");
+                Log::info('Entry order not filled fully, cannot send stop order.');
+
                 return;
             }
 

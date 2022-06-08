@@ -17,11 +17,12 @@ use Illuminate\Support\Collection;
 
 class ChartController extends Controller
 {
-    public function __construct(protected Request          $request,
-                                protected SymbolRepository $symbolRepo,
-                                protected ConfigRepository $config)
+    public function __construct(
+        protected Request $request,
+        protected SymbolRepository $symbolRepo,
+        protected ConfigRepository $config
+    )
     {
-
     }
 
     public function index(Request $request): array
@@ -39,7 +40,8 @@ class ChartController extends Controller
                 indicators: $this->getSelectedIndicators($request),
                 strategy: $this->getKeyByValue('strategy', $this->mapByName($this->config->strategies, true)),
                 range: \json_decode($request->get('range'), true),
-                limit: $request->get('limit'));
+                limit: $request->get('limit')
+            );
         }
 
         return [
@@ -47,7 +49,7 @@ class ChartController extends Controller
             'exchanges'  => $this->mapByName($this->config->exchanges),
             'symbols'    => $this->config->symbols,
             'indicators' => \array_keys(get_indicators()),
-            'intervals'  => $this->symbolRepo->fetchIntervals()
+            'intervals'  => $this->symbolRepo->fetchIntervals(),
         ];
     }
 
@@ -57,6 +59,7 @@ class ChartController extends Controller
         {
             return \array_search($param, $items);
         }
+
         return null;
     }
 
@@ -81,15 +84,16 @@ class ChartController extends Controller
         return $mapped;
     }
 
-    public function candles(string|Exchange $exchange,
-                            string          $symbolName,
-                            string          $interval,
-                            array           $indicators,
-                            string          $strategy = null,
-                            ?array          $range = null,
-                            ?int            $limit = null): array
+    public function candles(
+        string|Exchange $exchange,
+        string $symbolName,
+        string $interval,
+        array $indicators,
+        string $strategy = null,
+        ?array $range = null,
+        ?int $limit = null
+    ): array
     {
-
         $start = $range ? as_ms(Carbon::parse($range['start'])->getTimestamp()) : null;
         $end = $range ? as_ms(Carbon::parse($range['end'])->getTimestamp()) : null;
 
@@ -105,7 +109,7 @@ class ChartController extends Controller
         {
             $tester = new Tester($strategy, $symbol, [
                 'startDate' => $start,
-                'endDate'   => $end
+                'endDate'   => $end,
             ]);
 
             $tester->strategy->updateSymbols();
@@ -121,9 +125,9 @@ class ChartController extends Controller
                 'strategy' => [
                     'trades' => [
                         'summary'     => $summary,
-                        'evaluations' => $evaluations->map(fn(Evaluation $evaluation) => $evaluation->fresh())
-                    ]
-                ]
+                        'evaluations' => $evaluations->map(fn (Evaluation $evaluation) => $evaluation->fresh()),
+                    ],
+                ],
             ];
         }
 
@@ -143,8 +147,10 @@ class ChartController extends Controller
     {
         $indicators = get_indicators();
         $indicatorConfig = \json_decode($request->get('indicatorConfig', '{}'), true);
+
         return collect($request->get('indicators', []))
-            ->mapWithKeys(function (string $name) use ($indicators, $indicatorConfig) {
+            ->mapWithKeys(function (string $name) use ($indicators, $indicatorConfig)
+            {
                 return [$indicators[$name] => $indicatorConfig[$name] ?? []];
             })->all();
     }

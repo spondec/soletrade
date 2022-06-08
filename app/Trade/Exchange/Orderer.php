@@ -14,7 +14,6 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
 {
     public function __construct(protected Exchange $exchange)
     {
-
     }
 
     /**
@@ -25,6 +24,7 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
     public function sync(Order $order): array
     {
         $response = $this->executeOrderUpdate($order);
+
         return $this->handleOrderResponse($order, $response, 'sync');
     }
 
@@ -61,8 +61,10 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
             throw new \UnexpectedValueException('Failed to save order.');
         }
 
-        return $fills->map(static function (Fill $fill) use ($order) {
+        return $fills->map(static function (Fill $fill) use ($order)
+        {
             $fill->order()->associate($order);
+
             return $fill->firstUniqueOrCreate();
         })->all();
     }

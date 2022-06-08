@@ -34,9 +34,9 @@ abstract class Creator
     {
         $fileName = $this->getFileName();
         $destination = $this->getDestinationDir();
-        
+
         $this->files->ensureDirectoryExists($destination);
-        
+
         if (!$destination || !$fileName)
         {
             throw new \LogicException('Destination directory or filename was not set.');
@@ -74,6 +74,7 @@ abstract class Creator
 
         $this->assertNoPlaceholderExists($content);
         $this->content = $this->modifyContent($content);
+
         return $this;
     }
 
@@ -90,6 +91,7 @@ abstract class Creator
         {
             $content = \str_replace($this->wrapPlaceholder($placeHolder), $replacements[$placeHolder], $content);
         }
+
         return $content;
     }
 

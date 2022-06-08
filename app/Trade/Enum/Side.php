@@ -11,7 +11,7 @@ enum Side: string
     {
         return match ($this)
         {
-            static::BUY => static::SELL,
+            static::BUY  => static::SELL,
             static::SELL => static::BUY
         };
     }

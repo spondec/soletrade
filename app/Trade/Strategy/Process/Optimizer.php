@@ -21,7 +21,9 @@ class Optimizer extends Summarization
     {
         $this->combinator = new CartesianProduct(
             array_map(
-                static fn(ParameterSet $paramSet) => $paramSet->values(), $this->parameters)
+                static fn (ParameterSet $paramSet) => $paramSet->values(),
+                $this->parameters
+            )
         );
 
         parent::__construct();
@@ -48,6 +50,6 @@ class Optimizer extends Summarization
     {
         return parent::handleJobResults($results)
             ->filter()
-            ->sort(fn($a, $b) => $a['roi'] < $b['roi']); //sort by ROI desc;
+            ->sort(fn ($a, $b) => $a['roi'] < $b['roi']); //sort by ROI desc;
     }
 }

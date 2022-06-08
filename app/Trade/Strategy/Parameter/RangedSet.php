@@ -4,9 +4,11 @@ namespace App\Trade\Strategy\Parameter;
 
 class RangedSet extends ParameterSet
 {
-    public function __construct(public readonly int|float $min,
-                                public readonly int|float $max,
-                                public readonly int|float $step)
+    public function __construct(
+        public readonly int|float $min,
+        public readonly int|float $max,
+        public readonly int|float $step
+    )
     {
         if ($min > $max)
         {
@@ -61,6 +63,6 @@ class RangedSet extends ParameterSet
 
     public function count(): int
     {
-        return (int)(($this->max - $this->min) / $this->step);
+        return (int) (($this->max - $this->min) / $this->step);
     }
 }

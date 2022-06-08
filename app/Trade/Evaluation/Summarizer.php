@@ -57,9 +57,9 @@ class Summarizer
 
     public function addEvaluation(Evaluation $evaluation): void
     {
-        $isEntryValid = (bool)$evaluation->is_entry_price_valid;
-        $isAmbiguous = (bool)$evaluation->is_ambiguous;
-        $relativeRoi = (float)$evaluation->relative_roi;
+        $isEntryValid = (bool) $evaluation->is_entry_price_valid;
+        $isAmbiguous = (bool) $evaluation->is_ambiguous;
+        $relativeRoi = (float) $evaluation->relative_roi;
 
         if ($isEntryValid && !$isAmbiguous && $relativeRoi)
         {
@@ -78,12 +78,12 @@ class Summarizer
             {
                 $this->profitRoi[] = $relativeRoi;
             }
-            else if ($relativeRoi < 0)
+            elseif ($relativeRoi < 0)
             {
                 $this->lossRoi[] = $relativeRoi;
             }
-            $this->highestRoi[] = (float)$evaluation->highest_roi;
-            $this->lowestRoi[] = (float)$evaluation->lowest_roi;
+            $this->highestRoi[] = (float) $evaluation->highest_roi;
+            $this->lowestRoi[] = (float) $evaluation->lowest_roi;
         }
 
         $this->updateCounters($isAmbiguous, $isEntryValid, $relativeRoi);
@@ -119,15 +119,15 @@ class Summarizer
         {
             $this->summary->ambiguous++;
         }
-        else if (!$isEntryValid)
+        elseif (!$isEntryValid)
         {
             $this->summary->failed++;
         }
-        else if ($roi < 0)
+        elseif ($roi < 0)
         {
             $this->summary->loss++;
         }
-        else if ($roi > 0)
+        elseif ($roi > 0)
         {
             $this->summary->profit++;
         }

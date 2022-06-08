@@ -8,7 +8,7 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
 {
     protected array $unique = [];
 
-    public final function validate(?array &$errors = null)
+    final public function validate(?array &$errors = null)
     {
         $errors = Validator::make($this->toArray(), static::validationRules())
             ->errors()
@@ -36,6 +36,7 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
                 ->where($this->uniqueAttributesToArray())
                 ->first();
         }
+
         return null;
     }
 
@@ -61,7 +62,7 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
     {
         parent::booted();
 
-        static::saving(static fn(self $model) => $model->validate());
+        static::saving(static fn (self $model) => $model->validate());
     }
 
     public function uniqueAttributesToArray(): array

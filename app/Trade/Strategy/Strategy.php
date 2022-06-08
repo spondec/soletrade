@@ -97,12 +97,13 @@ abstract class Strategy
     {
         return $this->register([
             'strategy'        => [
-                'signature' => $this->signature->hash
+                'signature' => $this->signature->hash,
             ],
             'trade_setup'     => $config,
             'indicator_setup' => \array_map(
-                static fn(IndicatorConfig $i): array => $i->toArray(),
-                $this->indicatorConfig)
+                static fn (IndicatorConfig $i): array => $i->toArray(),
+                $this->indicatorConfig
+            ),
         ]);
     }
 
@@ -162,19 +163,24 @@ abstract class Strategy
         $this->populateCandles();
         $this->initIndicators();
 
-        $finder = new TradeFinder($this,
+        $finder = new TradeFinder(
+            $this,
             $this->candles,
             $this->tradeConfig,
             collect($this->indicatorConfig),
-            $this->indicators);
+            $this->indicators
+        );
+
         return $finder->findTrades();
     }
 
     protected function populateCandles(): void
     {
-        $this->candles = $this->symbol->candles(limit: $this->config['minCandles'],
+        $this->candles = $this->symbol->candles(
+            limit: $this->config['minCandles'],
             start: $this->config['startDate'],
-            end: $this->config['endDate']);
+            end: $this->config['endDate']
+        );
     }
 
     protected function initIndicators(): void
@@ -184,9 +190,11 @@ abstract class Strategy
         foreach ($this->indicatorConfig as $c)
         {
             /** @var Indicator $indicator */
-            $indicator = new $c->class(symbol: $this->symbol,
+            $indicator = new $c->class(
+                symbol: $this->symbol,
                 candles: $this->candles,
-                config: $c->config);
+                config: $c->config
+            );
 
             $this->indicators[$c->alias] = $indicator;
             $indicator->alias = $c->alias;
@@ -291,13 +299,13 @@ abstract class Strategy
                  * Provides more accurate evaluation at the cost of performance.
                  * Lowest intervals can really slow down the strategy testing.
                  */
-                'interval' => null
+                'interval' => null,
             ],
             /**
              * Trade commission ratio. This will be reflected on the final ROI when tested. Disabled by default.
              * Most exchanges charges between 0.0004(0.04%) and 0.001(0.1%).
              */
-            'feeRatio'   => 0.0000
+            'feeRatio'   => 0.0000,
         ];
     }
 

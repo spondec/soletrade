@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float   exit_price
  * @property float   roi
  * @property float   relative_roi
- *
  * @property Order[] orders
  */
 class Trade extends Model
@@ -48,7 +47,7 @@ class Trade extends Model
             throw new \InvalidArgumentException('Can not create a model from an open position.');
         }
 
-        $model = new static;
+        $model = new static();
 
         $model->side = $position->side;
         $model->is_stopped = $position->isStopped();
@@ -69,7 +68,8 @@ class Trade extends Model
             $model->exit()->associate($loop->exit);
         }
 
-        \DB::transaction(function () use ($position, $model) {
+        \DB::transaction(function () use ($position, $model)
+        {
             $model->save();
             foreach ($position->getOrders() as $order)
             {
