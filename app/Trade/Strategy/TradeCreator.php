@@ -83,13 +83,13 @@ class TradeCreator
             foreach ($this->actions as $class => $config)
             {
                 $tradeSetup->actions()->create(['class'  => $class,
-                                                'config' => $config]);
+                    'config'                             => $config, ]);
             }
         }
 
         $tradeSetup->signals()
             ->sync($this->signals
-                ->map(static fn(Signal $signal): int => $signal->id));
+                ->map(static fn (Signal $signal): int => $signal->id));
         $this->finalize();
 
         return $tradeSetup;
@@ -199,7 +199,7 @@ class TradeCreator
             $lastSignal = $this->getLastSignal();
 
             $setup->name = $this->signals
-                ->map(static fn(Signal $signal): string => $signal->name)
+                ->map(static fn (Signal $signal): string => $signal->name)
                 ->implode('|');
             $setup->side = $lastSignal->side;
             $setup->timestamp = $lastSignal->timestamp;
@@ -240,7 +240,8 @@ class TradeCreator
         {
             return;
         }
-        \uasort($signals, function (Signal $a, Signal $b): int {
+        \uasort($signals, function (Signal $a, Signal $b): int
+        {
             return $this->signalOrder[$a->indicator->alias] <=> $this->signalOrder[$b->indicator->alias];
         });
     }

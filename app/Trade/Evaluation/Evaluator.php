@@ -1,4 +1,5 @@
 <?php
+
 /** @noinspection UnnecessaryCastingInspection */
 /** @noinspection PhpCastIsUnnecessaryInspection */
 
@@ -52,9 +53,11 @@ class Evaluator
 
     protected function newLoop(TradeSetup $entry): TradeLoop
     {
-        return new TradeLoop($entry,
+        return new TradeLoop(
+            $entry,
             $this->strategy->evaluationSymbol(),
-            $this->strategy->config('evaluation.loop'));
+            $this->strategy->config('evaluation.loop')
+        );
     }
 
     protected function realize(Evaluation $evaluation): void
@@ -94,9 +97,9 @@ class Evaluator
                 'price_history' => [
                     'entry' => $status->getEntryPrice()->log()->toArray(),
                     'exit'  => $status->getTargetPrice()?->log()?->toArray() ?? [],
-                    'stop'  => $status->getStopPrice()?->log()?->toArray() ?? []
+                    'stop'  => $status->getStopPrice()?->log()?->toArray() ?? [],
                 ],
-                'transactions'  => $position->transactionLog()->toArray()
+                'transactions'  => $position->transactionLog()->toArray(),
             ];
         }
         else
@@ -123,13 +126,13 @@ class Evaluator
             return;
         }
 
-        $entryPrice = (float)$evaluation->entry_price;
+        $entryPrice = (float) $evaluation->entry_price;
         $isBuy = $evaluation->entry->isBuy();
 
-        $evaluation->highest_roi = Calc::roi($isBuy, $entryPrice, (float)($isBuy
+        $evaluation->highest_roi = Calc::roi($isBuy, $entryPrice, (float) ($isBuy
             ? $evaluation->highest_price
             : $evaluation->lowest_price));
-        $evaluation->lowest_roi = Calc::roi($isBuy, $entryPrice, (float)(!$isBuy
+        $evaluation->lowest_roi = Calc::roi($isBuy, $entryPrice, (float) (!$isBuy
             ? $evaluation->highest_price
             : $evaluation->lowest_price));
     }
@@ -138,18 +141,22 @@ class Evaluator
     {
         $entryPivots = $this
             ->symbolRepo
-            ->assertLowestHighestCandle($e->symbol_id,
+            ->assertLowestHighestCandle(
+                $e->symbol_id,
                 $e->entry->price_date,
-                $e->entry_timestamp);
+                $e->entry_timestamp
+            );
 
         $e->highest_entry_price = $entryPivots['highest']->h;
         $e->lowest_entry_price = $entryPivots['lowest']->l;
 
         $pivots = $this
             ->symbolRepo
-            ->assertLowestHighestCandle($e->symbol_id,
+            ->assertLowestHighestCandle(
+                $e->symbol_id,
                 $e->entry_timestamp,
-                $e->exit_timestamp);
+                $e->exit_timestamp
+            );
 
         $e->highest_price = $pivots['highest']->h;
         $e->lowest_price = $pivots['lowest']->l;

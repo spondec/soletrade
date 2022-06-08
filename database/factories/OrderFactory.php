@@ -33,7 +33,7 @@ class OrderFactory extends Factory
             'stop_price'        => null,
             'commission'        => $this->faker->randomFloat(2, 0.01, 100),
             'commission_asset'  => 'USDT',
-            'exchange_order_id' => $this->faker->uuid
+            'exchange_order_id' => $this->faker->uuid,
         ];
     }
 }

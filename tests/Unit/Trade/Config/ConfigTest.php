@@ -19,10 +19,13 @@ class ConfigTest extends TestCase
 
     protected function getConfig(): Config
     {
-        return new class('foo', fn(): bool => true, range(1, 10)) extends Config {
-            public function __construct(public readonly string $string,
-                                        public readonly \Closure $closure,
-                                        public readonly array $array)
+        return new class('foo', fn (): bool => true, range(1, 10)) extends Config
+        {
+            public function __construct(
+                public readonly string $string,
+                public readonly \Closure $closure,
+                public readonly array $array
+            )
             {
             }
         };
@@ -33,11 +36,13 @@ class ConfigTest extends TestCase
         /** @var Config $class */
         $class = get_class($this->getConfig());
 
-        $this->assertInstanceOf(Config::class,
+        $this->assertInstanceOf(
+            Config::class,
             $class::fromArray([
                 'string'  => 'foo',
-                'closure' => fn(): bool => true,
-                'array'   => []
-            ]));
+                'closure' => fn (): bool => true,
+                'array'   => [],
+            ])
+        );
     }
 }

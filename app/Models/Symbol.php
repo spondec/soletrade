@@ -22,7 +22,8 @@ use Illuminate\Support\Facades\DB;
  */
 class Symbol extends Model
 {
-    use HasExchange, HasFactory;
+    use HasExchange;
+    use HasFactory;
 
     protected $table = 'symbols';
 
@@ -37,11 +38,11 @@ class Symbol extends Model
             'end'        => $this->end,
             'limit'      => $this->limit,
             'candles'    => $this->exists ? $this->candles?->toArray() ?? [] : [],
-            'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
-                    'name'        => $i::name(),
-                    'data'        => $i->raw($i->data()),
-                    'config'      => $i->config(),
-                ])?->toArray() ?? []
+            'indicators' => $this->indicators?->map(static fn (Indicator $i) => [
+                'name'        => $i::name(),
+                'data'        => $i->raw($i->data()),
+                'config'      => $i->config(),
+            ])?->toArray() ?? [],
         ]);
     }
 
@@ -75,6 +76,7 @@ class Symbol extends Model
         }
 
         $candles = $query->get();
+
         return $this->candles = new CandleCollection($order === 'DESC' ? $candles->reverse()->values() : $candles);
     }
 
@@ -82,7 +84,7 @@ class Symbol extends Model
     {
         if ($indicator->symbol() !== $this)
         {
-            throw new \InvalidArgumentException("Indicator must be attached to the same symbol.");
+            throw new \InvalidArgumentException('Indicator must be attached to the same symbol.');
         }
 
         if (!$this->indicators)

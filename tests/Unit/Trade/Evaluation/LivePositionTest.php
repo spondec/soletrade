@@ -56,7 +56,8 @@ class LivePositionTest extends TestCase
         $manager->tradeAsset
             ->shouldReceive('proportional')
             ->zeroOrMoreTimes()
-            ->andReturnUsing(function (float $size) {
+            ->andReturnUsing(function (float $size)
+            {
                 return $size;
             });
 
@@ -138,13 +139,15 @@ class LivePositionTest extends TestCase
         return $quantity;
     }
 
-    protected function getOrder(Side      $side,
-                                OrderType $type,
-                                int       $price,
-                                float     $quantity,
-                                bool      $reduceOnly,
-                                ?array    &$fillCallbacks = null,
-                                int       $fillCount = 1): MockInterface|Order
+    protected function getOrder(
+        Side $side,
+        OrderType $type,
+        int $price,
+        float $quantity,
+        bool $reduceOnly,
+        ?array &$fillCallbacks = null,
+        int $fillCount = 1
+    ): MockInterface|Order
     {
         $order = m::mock('alias:' . Order::class);
 
@@ -156,7 +159,8 @@ class LivePositionTest extends TestCase
 
         $order->shouldReceive('onFill')
             ->times($fillCount)
-            ->andReturnUsing(function (\Closure $callback) use (&$fillCallbacks) {
+            ->andReturnUsing(function (\Closure $callback) use (&$fillCallbacks)
+            {
                 $fillCallbacks[] = $callback;
             });
 
@@ -233,13 +237,15 @@ class LivePositionTest extends TestCase
 
         $quantity = 0.5;
 
-        $order = $this->getOrder($pos->side->opposite(),
+        $order = $this->getOrder(
+            $pos->side->opposite(),
             $pos->stopOrderType,
             $price,
             $quantity,
             true,
             $fillCallbacks,
-            2);
+            2
+        );
 
         $order->shouldReceive('isAllFilled')->once()->andReturn(true);
         $order->shouldReceive('avgFillPrice')->once()->andReturn($price);
@@ -277,13 +283,15 @@ class LivePositionTest extends TestCase
 
         $quantity = 0.5;
 
-        $order = $this->getOrder($pos->side->opposite(),
+        $order = $this->getOrder(
+            $pos->side->opposite(),
             $pos->exitOrderType,
             $price,
             $quantity,
             true,
             $fillCallbacks,
-            2);
+            2
+        );
 
         $order->shouldReceive('isAllFilled')->once()->andReturn(true);
         $order->shouldReceive('avgFillPrice')->once()->andReturn($price);

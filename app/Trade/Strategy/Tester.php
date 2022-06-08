@@ -145,7 +145,7 @@ class Tester
         return [
             'minCandles' => null,
             'startDate'  => null,
-            'endDate'    => null
+            'endDate'    => null,
         ];
     }
 }

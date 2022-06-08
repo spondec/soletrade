@@ -29,8 +29,8 @@ trait HasConfig
         {
             $keys = \explode('.', $key);
 
-            if (isset($keys[1])) //has multiple dimensions
-            {
+            if (isset($keys[1]))
+            { //has multiple dimensions
                 foreach ($keys as $k)
                 {
                     if (!isset($ref))
@@ -42,7 +42,7 @@ trait HasConfig
                         $ref = &$ref[$k];
                     }
 
-                    $ref = $ref ?? [];//redundant?
+                    $ref = $ref ?? []; //redundant?
                 }
 
                 $ref = $value;

@@ -10,10 +10,10 @@ class MoveStop extends Handler
     protected array $config = [
         'target'         => [
             'price' => null,
-            'roi'   => null
+            'roi'   => null,
         ],
         'new_stop_price' => null,
-        'lock'           => true
+        'lock'           => true,
     ];
 
     protected array $required = [
@@ -31,7 +31,8 @@ class MoveStop extends Handler
         {
             throw new \UnexpectedValueException(
                 'Both target price and target ROI have been defined. 
-                Only one target definition is allowed.');
+                Only one target definition is allowed.'
+            );
         }
     }
 
@@ -57,7 +58,7 @@ class MoveStop extends Handler
                 $this->position->stop($priceDate);
             }
         }
-        else if ($candle->c >= $stopPrice)
+        elseif ($candle->c >= $stopPrice)
         {
             $this->setStop($candle->c, $priceDate, 'The stop price was missed. Stopping at close price.');
             $this->position->stop($priceDate);
@@ -86,18 +87,19 @@ class MoveStop extends Handler
                 {
                     $this->setStop($newStop, $priceDate, "Move stop to $newStop if the price is higher than or equal to $targetPrice");
                     $this->stopIfShould($candle, $priceDate);
+
                     return true;
                 }
             }
-            else
-                if ($candle->l <= $targetPrice)
-                {
-                    $this->setStop($newStop, $priceDate, "Move stop to $newStop if the price is lower than or equal to $targetPrice");
-                    $this->stopIfShould($candle, $priceDate);
-                    return true;
-                }
+            elseif ($candle->l <= $targetPrice)
+            {
+                $this->setStop($newStop, $priceDate, "Move stop to $newStop if the price is lower than or equal to $targetPrice");
+                $this->stopIfShould($candle, $priceDate);
+
+                return true;
+            }
         }
-        else if ($targetRoi = $this->config('target.roi'))
+        elseif ($targetRoi = $this->config('target.roi'))
         {
             if ($this->position->isBuy())
             {
@@ -105,16 +107,17 @@ class MoveStop extends Handler
                 {
                     $this->setStop($newStop, $priceDate, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
                     $this->stopIfShould($candle, $priceDate);
+
                     return true;
                 }
             }
-            else
-                if ($this->position->roi($candle->l) >= $targetRoi)
-                {
-                    $this->setStop($newStop, $priceDate, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
-                    $this->stopIfShould($candle, $priceDate);
-                    return true;
-                }
+            elseif ($this->position->roi($candle->l) >= $targetRoi)
+            {
+                $this->setStop($newStop, $priceDate, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
+                $this->stopIfShould($candle, $priceDate);
+
+                return true;
+            }
         }
 
         return false;
@@ -125,10 +128,10 @@ class MoveStop extends Handler
         return [
             'target'         => [
                 'price' => null,
-                'roi'   => null
+                'roi'   => null,
             ],
             'new_stop_price' => null,
-            'lock'           => true
+            'lock'           => true,
         ];
     }
 }

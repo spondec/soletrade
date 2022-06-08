@@ -20,7 +20,7 @@ class CandleUpdater
      */
     protected array $symbols;
 
-    static bool $isShutdownCallbackRegistered = false;
+    public static bool $isShutdownCallbackRegistered = false;
 
     public function __construct(protected Exchange $exchange)
     {
@@ -34,7 +34,8 @@ class CandleUpdater
 
         if (!static::$isShutdownCallbackRegistered)
         {
-            on_shutdown(static function () {
+            on_shutdown(static function ()
+            {
                 //shutdowns may interrupt unlock query
                 DB::unprepared('UNLOCK TABLES');
             });
@@ -72,8 +73,8 @@ class CandleUpdater
             if (($maxRunTime > 0 && $remaining <= 0) ||
                 !$this->bySymbol($symbol, $maxRunTime > 0 ? $remaining : 0))
             {
-                if (($length = $key - 1) < 1) //nothing to return if the length is non-positive
-                {
+                if (($length = $key - 1) < 1)
+                { //nothing to return if the length is non-positive
                     return null;
                 }
 
@@ -100,10 +101,12 @@ class CandleUpdater
                 $start = $currentCandles->first()->t ?? 0;
 
                 $symbol->last_update = \time() * 1000;
-                $latestCandles = $this->exchange->fetch()->candles($symbol->symbol,
+                $latestCandles = $this->exchange->fetch()->candles(
+                    $symbol->symbol,
                     $symbol->interval,
                     $start,
-                    $this->limit);
+                    $this->limit
+                );
                 $inserts = $this->symbolRepo->mapCandles($latestCandles, $id, $this->map);
 
                 $break = \count($latestCandles) <= 1;
@@ -130,10 +133,12 @@ class CandleUpdater
                 {
                     return false;
                 }
+            }
+            while (!$break);
 
-            } while (!$break);
             return true;
-        } finally
+        }
+        finally
         {
             DB::unprepared('UNLOCK TABLES');
             Log::execTimeFinish($task);
@@ -153,12 +158,16 @@ class CandleUpdater
 
     public function indexSymbols(string $interval): Collection
     {
-        $this->symbolRepo->insertIgnoreSymbols($this->symbols,
+        $this->symbolRepo->insertIgnoreSymbols(
+            $this->symbols,
             $id = $this->exchange->model()->id,
-            $interval);
+            $interval
+        );
 
-        return $this->symbolRepo->fetchSymbols($this->symbols,
+        return $this->symbolRepo->fetchSymbols(
+            $this->symbols,
             $interval,
-            $id);
+            $id
+        );
     }
 }

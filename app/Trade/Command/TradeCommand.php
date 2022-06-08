@@ -47,11 +47,12 @@ abstract class TradeCommand extends Command
                     ->setTime(23, 59, 59)
                     ->getTimestamp() * 1000
                 : null;
-        } catch (InvalidFormatException $e)
+        }
+        catch (InvalidFormatException $e)
         {
             $this->error($e->getMessage());
-            $this->error("Invalid date format.");
-            $this->error("Use format d-m-Y as in 19-11-2021.");
+            $this->error('Invalid date format.');
+            $this->error('Use format d-m-Y as in 19-11-2021.');
             exit(1);
         }
 
@@ -70,9 +71,11 @@ abstract class TradeCommand extends Command
 
     protected function assertSymbol(SymbolRepository $repo, array $args): Symbol
     {
-        $symbol = $repo->fetchSymbol(Exchange::from($args['exchange']),
+        $symbol = $repo->fetchSymbol(
+            Exchange::from($args['exchange']),
             $args['symbol'],
-            $args['interval']);
+            $args['interval']
+        );
 
         if (!$symbol)
         {
@@ -87,6 +90,7 @@ abstract class TradeCommand extends Command
     {
         /** @var ConsoleOutput $output */
         $output = $this->output->getOutput();
+
         return $output->section();
     }
 }

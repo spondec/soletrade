@@ -6,10 +6,12 @@ namespace App\Trade\Process;
 
 class Recoverable
 {
-    public function __construct(protected readonly \Closure $process,
-                                public    readonly int $retryInSeconds,
-                                public    readonly int $retryLimit,
-                                public    readonly array $handle = [])
+    public function __construct(
+        protected readonly \Closure $process,
+        public    readonly int $retryInSeconds,
+        public    readonly int $retryLimit,
+        public    readonly array $handle = []
+    )
     {
         if (!$this->handle)
         {
@@ -27,7 +29,8 @@ class Recoverable
         try
         {
             return ($this->process)();
-        } catch (\Throwable $e)
+        }
+        catch (\Throwable $e)
         {
             if ($this->retryLimit > 0 && $this->isHandled($e))
             {
@@ -39,6 +42,7 @@ class Recoverable
                 {
                     throw $e;
                 }
+
                 return $this->try($retryInSeconds, $retryLimit);
             }
 
@@ -61,6 +65,5 @@ class Recoverable
 
     protected function handle(\Throwable $e): void
     {
-
     }
 }

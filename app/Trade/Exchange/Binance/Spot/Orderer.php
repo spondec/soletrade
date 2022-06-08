@@ -34,11 +34,14 @@ class Orderer extends \App\Trade\Exchange\Orderer
 
     protected function executeNewOrder(Order $order): array
     {
-        return $this->api->create_order($order->symbol,
+        return $this->api->create_order(
+            $order->symbol,
             $order->type,
             $order->side,
             $order->quantity,
-            $order->price, ['stopPrice' => $order->stop_price]);
+            $order->price,
+            ['stopPrice' => $order->stop_price]
+        );
     }
 
     protected function executeOrderUpdate(Order $order): array

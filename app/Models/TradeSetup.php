@@ -22,7 +22,6 @@ use Illuminate\Validation\Rules\Enum;
  * @property Symbol                                                 symbol
  * @property Signature                                              signature
  * @property TradeAction[]|\Illuminate\Database\Eloquent\Collection actions
- *
  * @property int                                                    id
  * @property int                                                    symbol_id
  * @property int                                                    signature_id
@@ -54,7 +53,7 @@ class TradeSetup extends Model implements Bindable
             'name'       => 'required|string|max:255',
             'price_date' => 'gte:timestamp',
             'price'      => 'required|numeric',
-            'side'       => ['required', new Enum(Side::class)]
+            'side'       => ['required', new Enum(Side::class)],
         ];
     }
 
@@ -118,9 +117,9 @@ class TradeSetup extends Model implements Bindable
 
         if (!empty($result['price']) || !empty($result['target_price']) || !empty($result['stop_price']))
         {
-            $result['price'] = \round((float)$result['price'], 2);
-            $result['target_price'] = $result['target_price'] ? \round((float)$result['target_price'], 2) : null;
-            $result['stop_price'] = $result['stop_price'] ? \round((float)$result['stop_price'], 2) : null;
+            $result['price'] = \round((float) $result['price'], 2);
+            $result['target_price'] = $result['target_price'] ? \round((float) $result['target_price'], 2) : null;
+            $result['stop_price'] = $result['stop_price'] ? \round((float) $result['stop_price'], 2) : null;
         }
 
         return $result;

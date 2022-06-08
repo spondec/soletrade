@@ -46,7 +46,6 @@ abstract class Handler
 
     protected function setup(): void
     {
-
     }
 
     public function run(\stdClass $candle, int $priceDate): ?TradeAction
@@ -61,6 +60,7 @@ abstract class Handler
             $this->isTaken = true;
             $this->action->is_taken = true;
             $this->action->timestamp = $priceDate;
+
             return $this->action;
         }
 
@@ -79,13 +79,12 @@ abstract class Handler
 
     protected function applyLocks(): void
     {
-
     }
 
     protected function getDefaultConfig(): array
     {
         return [
-            'lock' => true
+            'lock' => true,
         ];
     }
 

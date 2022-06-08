@@ -11,9 +11,11 @@ class OrderBook
      * @param float[] $bids
      * @param float[] $asks
      */
-    public function __construct(protected string $symbol,
-                                protected array  $bids,
-                                protected array  $asks)
+    public function __construct(
+        protected string $symbol,
+        protected array $bids,
+        protected array $asks
+    )
     {
         $this->initTime = \microtime(true);
 
@@ -53,7 +55,7 @@ class OrderBook
         return \min($this->asks);
     }
 
-    protected final function avg(array $values): float
+    final protected function avg(array $values): float
     {
         return \array_sum($values) / \count($values);
     }

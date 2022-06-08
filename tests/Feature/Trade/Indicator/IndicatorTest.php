@@ -3,7 +3,6 @@
 namespace Tests\Feature\Trade\Indicator;
 
 use App\Indicators\MA;
-use App\Trade\Indicator\Indicator;
 use Tests\Feature\Indicators\IndicatorTestCase;
 
 class IndicatorTest extends IndicatorTestCase

@@ -12,11 +12,13 @@ trait CanBind
 {
     private ?\WeakMap $bindings = null;
 
-    final public function bind(Bindable&Model $model,
-                               string         $column,
-                               string|int     $bind,
-                               ?\Closure      $callback = null,
-                               ?int           $timestamp = null): Binding
+    final public function bind(
+        Bindable & Model $model,
+        string $column,
+        string|int $bind,
+        ?\Closure $callback = null,
+        ?int $timestamp = null
+    ): Binding
     {
         $this->assertBindExists($bind);
 
@@ -51,7 +53,7 @@ trait CanBind
         }
     }
 
-    private function setupBinding(Bindable&Model $model, string $column, string|int $bind): Binding
+    private function setupBinding(Bindable & Model $model, string $column, string|int $bind): Binding
     {
         $binding = $this->getBinding($model, $column) ?? new Binding();
         $binding->column = $column;
@@ -61,12 +63,12 @@ trait CanBind
         return $binding;
     }
 
-    private function getBinding(Bindable&Model $model, string $column): ?Binding
+    private function getBinding(Bindable & Model $model, string $column): ?Binding
     {
         return $this->bindings[$model][$column]['binding'] ?? null;
     }
 
-    private function setBinding(Bindable&Model $model, Binding $binding, ?\Closure $callback): void
+    private function setBinding(Bindable & Model $model, Binding $binding, ?\Closure $callback): void
     {
         if (!$this->bindings)
         {
@@ -89,7 +91,7 @@ trait CanBind
         return \in_array($bind, $this->getBindable());
     }
 
-    public function saveBindings(Bindable&Model $model): void
+    public function saveBindings(Bindable & Model $model): void
     {
         if (!$model->exists)
         {
@@ -115,12 +117,12 @@ trait CanBind
     /**
      * @return Binding[]|array
      */
-    private function getBindings(Bindable&Model $model): ?array
+    private function getBindings(Bindable & Model $model): ?array
     {
         return $this->bindings[$model] ?? null;
     }
 
-    public function replaceBindable(Bindable&Model $current, Bindable&Model $new): void
+    public function replaceBindable(Bindable & Model $current, Bindable & Model $new): void
     {
         if ($bindings = $this->bindings[$current] ?? false)
         {

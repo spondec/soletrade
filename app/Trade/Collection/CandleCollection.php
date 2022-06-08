@@ -10,26 +10,29 @@ class CandleCollection extends Collection
 {
     protected array $overrides = [];
 
-    #[Pure] public function closes(): array
-    {
-        return \array_column($this->all(), 'c');
-    }
+    #[Pure]
+ public function closes(): array
+ {
+     return \array_column($this->all(), 'c');
+ }
 
-    #[Pure] public function highs(): array
+    #[Pure]
+ public function highs(): array
+ {
+     return \array_column($this->all(), 'h');
+ }
 
-    {
-        return \array_column($this->all(), 'h');
-    }
+    #[Pure]
+ public function lows(): array
+ {
+     return \array_column($this->all(), 'l');
+ }
 
-    #[Pure] public function lows(): array
-    {
-        return \array_column($this->all(), 'l');
-    }
-
-    #[Pure] public function timestamps(): array
-    {
-        return \array_column($this->all(), 't');
-    }
+    #[Pure]
+ public function timestamps(): array
+ {
+     return \array_column($this->all(), 't');
+ }
 
     public function previousCandles(int $amount, int $startIndex): static
     {
@@ -43,14 +46,17 @@ class CandleCollection extends Collection
         {
             $candles[] = $this->items[$startIndex - $i];
         }
+
         return new static(\array_reverse($candles, false));
     }
 
-    public function findPrevNextCandle(int        $timestamp,
-                                       ?\stdClass &$prev = null,
-                                       ?\stdClass &$next = null,
-                                       ?int       &$prevKey = null,
-                                       ?int       &$nextKey = null): void
+    public function findPrevNextCandle(
+        int $timestamp,
+        ?\stdClass &$prev = null,
+        ?\stdClass &$next = null,
+        ?int &$prevKey = null,
+        ?int &$nextKey = null
+    ): void
     {
         /**
          * @var int       $key
@@ -66,7 +72,7 @@ class CandleCollection extends Collection
                     $prevKey = $_prevKey ?? null;
                 }
             }
-            else if ($candle->t > $prev->t)
+            elseif ($candle->t > $prev->t)
             {
                 $next = $candle;
                 $nextKey = $key;

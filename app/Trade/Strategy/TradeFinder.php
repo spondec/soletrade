@@ -36,22 +36,26 @@ class TradeFinder
      * @param IndicatorConfig[] $indicatorConfig
      * @param Indicator[]       $indicators
      */
-    public function __construct(protected Strategy         $strategy,
-                                protected CandleCollection $candles,
-                                protected TradeConfig      $tradeConfig,
-                                protected Collection       $indicatorConfig,
-                                protected Collection       $indicators)
+    public function __construct(
+        protected Strategy $strategy,
+        protected CandleCollection $candles,
+        protected TradeConfig $tradeConfig,
+        protected Collection $indicatorConfig,
+        protected Collection $indicators
+    )
     {
         $this->candleIterator = $this->candles->getIterator();
         $this->_candles = new Candles($this->candleIterator, $this->candles, $this->strategy->symbol());
         $this->creator = new TradeCreator($this->tradeConfig);
         $this->symbolRepo = App::make(SymbolRepository::class);
 
-        $this->indicators = $this->indicators->filter(fn(Indicator $i): bool => $i->hasData());
+        $this->indicators = $this->indicators->filter(fn (Indicator $i): bool => $i->hasData());
         $this->indicatorGenerators = $this->getIndicatorGenerators();
         $this->initGenerators($this->indicatorGenerators);
 
-        $this->hasNextCandle = \Closure::bind(function (): bool {
+        $this->hasNextCandle = \Closure::bind(
+            function (): bool
+        {
             return isset($this->candles[$this->iterator->key() + 1]);
         },
             $this->_candles,
@@ -65,11 +69,12 @@ class TradeFinder
     private function getIndicatorGenerators(): Collection
     {
         return $this->indicators->mapWithKeys(
-            function (Indicator $indicator, string $alias) {
+            function (Indicator $indicator, string $alias)
+            {
                 return [
                     $alias => $indicator->scan(\in_array($alias, $this->tradeConfig->signals)
                         ? $this->indicatorConfig[$alias]->signal
-                        : null)
+                        : null),
                 ];
             }
         );
@@ -104,7 +109,8 @@ class TradeFinder
             {
                 if ($signals = $this->extractSignals($results))
                 {
-                    $this->runUnderCandle($key, $indicator->candle(), function () use (&$signals) {
+                    $this->runUnderCandle($key, $indicator->candle(), function () use (&$signals)
+                    {
                         if ($trade = $this->creator->findTradeWithSignals($this->_candles, $signals))
                         {
                             $this->saveTrade($trade);
@@ -114,7 +120,8 @@ class TradeFinder
             }
             else
             {
-                $this->runUnderCandle($key, $candle, function () {
+                $this->runUnderCandle($key, $candle, function ()
+                {
                     if ($trade = $this->creator->findTrade($this->_candles))
                     {
                         $this->saveTrade($trade);
@@ -149,7 +156,7 @@ class TradeFinder
                     }
                 }
             }
-            else if ($indicatorCandle->t == $candle->t)
+            elseif ($indicatorCandle->t == $candle->t)
             {
                 $results[] = $generator->current();
             }
@@ -159,7 +166,7 @@ class TradeFinder
             }
         }
 
-        \uasort($results, fn(array $a, array $b): int => $a['price_date'] <=> $b['price_date']);
+        \uasort($results, fn (array $a, array $b): int => $a['price_date'] <=> $b['price_date']);
 
         return $results;
     }
@@ -167,10 +174,12 @@ class TradeFinder
     protected function runUnderCandle(int $key, \stdClass $candle, \Closure $closure): void
     {
         $this->candles->overrideCandle($key, $candle);
+
         try
         {
             $closure();
-        } finally
+        }
+        finally
         {
             $this->candles->forgetOverride($key);
         }
@@ -207,6 +216,7 @@ class TradeFinder
                 $signals[] = $signal;
             }
         }
+
         return $signals;
     }
 }

@@ -45,15 +45,15 @@ class Order extends Model
     /**
      * @var \Closure[][]
      */
-    static protected array $fillListeners = [];
+    protected static array $fillListeners = [];
     /**
      * @var Fill[][]
      */
-    static protected array $fills = [];
+    protected static array $fills = [];
     /**
      * @var \Closure[][]
      */
-    static protected array $cancelListeners = [];
+    protected static array $cancelListeners = [];
 
     protected $table = 'orders';
     protected $casts = [
@@ -71,7 +71,8 @@ class Order extends Model
     {
         parent::booted();
 
-        static::saved(static function (self $order) {
+        static::saved(static function (self $order)
+        {
             if ($order->status === OrderStatus::CANCELED)
             {
                 static::handleCancel($order);
@@ -129,7 +130,7 @@ class Order extends Model
             'stop_price'       => 'nullable|numeric',
             'type'             => [new Enum(OrderType::class)],
             'side'             => [new Enum(Side::class)],
-            'status'           => [new Enum(OrderStatus::class)]
+            'status'           => [new Enum(OrderStatus::class)],
         ];
     }
 
@@ -169,7 +170,7 @@ class Order extends Model
 
     public function avgFillPrice(): float
     {
-        return (float)$this
+        return (float) $this
             ->rawFills()
             ->selectRaw('SUM(quantity * price) / SUM(quantity) as avgPrice')
             ->first()

@@ -29,21 +29,24 @@ class ExecTimeMiddleware
     public function handle(Request $request, Closure $next)
     {
         Log::info(static::getSessionPrefix() . 'Started...');
+
         return $next($request);
     }
 
     public static function getSessionPrefix(): string
     {
-        return static::$sessionId ? "[SESSION-" . static::$sessionId . "] " : '';
+        return static::$sessionId ? '[SESSION-' . static::$sessionId . '] ' : '';
     }
 
     public function terminate()
     {
         if (\defined('LARAVEL_START'))
         {
-            Log::info(\sprintf("%sExecution time: %s seconds.",
+            Log::info(\sprintf(
+                '%sExecution time: %s seconds.',
                 static::getSessionPrefix(),
-                \round(\microtime(true) - LARAVEL_START, 2)));
+                \round(\microtime(true) - LARAVEL_START, 2)
+            ));
         }
     }
 }

@@ -19,7 +19,7 @@ class FetcherTest extends TestCase
 
         $updatedBalance = new Balance($exchangeMock, [
             new Asset('BTC', 9, 5),
-            new Asset('ETH', 8, 4)
+            new Asset('ETH', 8, 4),
         ]);
 
         $exchangeMock
@@ -54,7 +54,8 @@ class FetcherTest extends TestCase
 
     protected function getFetcher(Exchange $exchange): Fetcher
     {
-        return new class($exchange) extends Fetcher {
+        return new class($exchange) extends Fetcher
+        {
             protected function fetchOrderBook(string $symbol): OrderBook
             {
                 // TODO: Implement fetchOrderBook() method.
@@ -89,7 +90,7 @@ class FetcherTest extends TestCase
             {
                 return $this->newBalance([
                     $this->newAsset('BTC', 10, 10),
-                    $this->newAsset('ETH', 10, 10)
+                    $this->newAsset('ETH', 10, 10),
                 ]);
             }
         };

@@ -16,9 +16,9 @@ class ExchangeController extends Controller
     public function index(): Collection
     {
         return collect($this->configRepo->exchanges)
-            ->map(fn(string|Exchange $e) => $e::instance())
-            ->filter(fn(Exchange $e) => $e->hasApiAccess())
-            ->map(fn(Exchange $e) => $e->info());
+            ->map(fn (string|Exchange $e) => $e::instance())
+            ->filter(fn (Exchange $e) => $e->hasApiAccess())
+            ->map(fn (Exchange $e) => $e->info());
     }
 
     /**
@@ -60,6 +60,7 @@ class ExchangeController extends Controller
         }
         $names = \array_column($balances, 'name');
         \array_multisort($names, SORT_ASC, $balances);
+
         return $balances;
     }
 }

@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 /**
  * @property Bindable                   bindable
  * @property Signature                  signature
- *
  * @property int                        id
  * @property string                     bindable_type
  * @property int                        bindable_id
@@ -18,7 +17,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string                     class
  * @property string                     column
  * @property string                     name
- *
  * @property \Illuminate\Support\Carbon created_at
  * @property \Illuminate\Support\Carbon updated_at
  */
@@ -50,6 +48,7 @@ class Binding extends Model
     {
         $value = $this->binder->getBindValue($name = $this->name, $timestamp);
         $callbackParams = $this->binder->getExtraBindCallbackParams($name, $timestamp);
+
         return $this->callback ? ($this->callback)($value, ...$callbackParams) : $value;
     }
 }

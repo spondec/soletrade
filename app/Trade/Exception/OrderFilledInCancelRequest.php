@@ -7,5 +7,4 @@ namespace App\Trade\Exception;
  */
 class OrderFilledInCancelRequest extends ExchangeError
 {
-
 }

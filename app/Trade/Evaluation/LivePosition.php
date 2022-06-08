@@ -23,14 +23,16 @@ class LivePosition extends Position
     protected float $ownedQuantity = 0;
     protected float $entryPrice;
 
-    public function __construct(Side                   $side,
-                                float                  $size,
-                                int                    $entryTime,
-                                Price                  $entry,
-                                ?Price                 $exit,
-                                ?Price                 $stop,
-                                protected OrderManager $manager,
-                                Fill                   $fill)
+    public function __construct(
+        Side $side,
+        float $size,
+        int $entryTime,
+        Price $entry,
+        ?Price $exit,
+        ?Price $stop,
+        protected OrderManager $manager,
+        Fill $fill
+    )
     {
         $this->entryPrice = $entry->get();
 
@@ -46,12 +48,14 @@ class LivePosition extends Position
 
         $this->ownedQuantity += $fill->quantity;
 
-        parent::__construct($side,
+        parent::__construct(
+            $side,
             $size,
             $entryTime,
             $entry,
             $exit,
-            $stop);
+            $stop
+        );
         $this->registerPriceChangeListeners();
     }
 
@@ -74,7 +78,8 @@ class LivePosition extends Position
 
     protected function registerExitPriceListeners(): void
     {
-        $this->exit?->listen('changed', function (Price $price) {
+        $this->exit?->listen('changed', function (Price $price)
+        {
             if ($this->manager->exit)
             {
                 $this->resendExitOrder();
@@ -107,13 +112,16 @@ class LivePosition extends Position
         try
         {
             $this->manager->cancel($order);
-        } catch (\App\Trade\Exception\OrderFilledInCancelRequest $error)
+        }
+        catch (\App\Trade\Exception\OrderFilledInCancelRequest $error)
         {
             //Order should be filled fully, fill listeners will handle the rest.
             //Do not resend the order.
             $this->assertOrderFilledFully($order);
+
             return false;
-        } finally
+        }
+        finally
         {
             if ($error)
             {
@@ -142,7 +150,8 @@ class LivePosition extends Position
 
         $order = $this->sendDecreaseOrder($orderType, $this->getUsedSize(), $price, 'Exit order fill.');
 
-        $order->onFill(function (Fill $fill) use ($order) {
+        $order->onFill(function (Fill $fill) use ($order)
+        {
             if ($order->isAllFilled())
             {
                 /** @var Price $exitPrice */
@@ -183,11 +192,14 @@ class LivePosition extends Position
 
         $order = $this->order($orderType, $quantity, $price, true);
 
-        $order->onFill(function (Fill $fill) use ($reason) {
-            parent::decreaseSize($this->proportional($fill->quantity * $this->getBreakEvenPrice()),
+        $order->onFill(function (Fill $fill) use ($reason)
+        {
+            parent::decreaseSize(
+                $this->proportional($fill->quantity * $this->getBreakEvenPrice()),
                 $fill->price,
                 $fill->timestamp,
-                $reason);
+                $reason
+            );
 
             $this->ownedQuantity -= $fill->quantity;
         });
@@ -195,10 +207,12 @@ class LivePosition extends Position
         return $order;
     }
 
-    protected function order(OrderType $orderType,
-                             float     $quantity,
-                             float     $price,
-                             bool      $reduceOnly): Order
+    protected function order(
+        OrderType $orderType,
+        float $quantity,
+        float $price,
+        bool $reduceOnly
+    ): Order
     {
         return $this->manager
             ->handler($orderType, $this->side)
@@ -224,7 +238,8 @@ class LivePosition extends Position
 
     protected function registerStopPriceListeners(): void
     {
-        $this->stop?->listen('changed', function (Price $price) {
+        $this->stop?->listen('changed', function (Price $price)
+        {
             if ($this->manager->stop)
             {
                 $this->resendStopOrder();
@@ -257,12 +272,15 @@ class LivePosition extends Position
 
         $price = $this->stop?->get() ?? throw new \LogicException('Stop price not set.');
 
-        $order = $this->sendDecreaseOrder($orderType,
+        $order = $this->sendDecreaseOrder(
+            $orderType,
             $this->getUsedSize(),
             $price,
-            'Stop order fill.');
+            'Stop order fill.'
+        );
 
-        $order->onFill(function (Fill $fill) use ($order) {
+        $order->onFill(function (Fill $fill) use ($order)
+        {
             if ($order->isAllFilled())
             {
                 /** @var Price $stopPrice */
@@ -324,10 +342,12 @@ class LivePosition extends Position
 
     public function processEntryOrderFill(Fill $fill): void
     {
-        parent::increaseSize($this->proportional($fill->quantity * ($this->entryPrice = $this->getBreakEvenPrice())),
+        parent::increaseSize(
+            $this->proportional($fill->quantity * ($this->entryPrice = $this->getBreakEvenPrice())),
             $fill->price,
             $fill->timestamp,
-            'Entry order fill.');
+            'Entry order fill.'
+        );
 
         $this->ownedQuantity += $fill->quantity;
     }
@@ -345,11 +365,14 @@ class LivePosition extends Position
 
         $order = $this->order($orderType, $quantity, $price, false);
 
-        $order->onFill(function (Fill $fill) use ($reason) {
-            parent::increaseSize($this->proportional($fill->quantity * $this->getBreakEvenPrice()),
+        $order->onFill(function (Fill $fill) use ($reason)
+        {
+            parent::increaseSize(
+                $this->proportional($fill->quantity * $this->getBreakEvenPrice()),
                 $fill->price,
                 $fill->timestamp,
-                $reason);
+                $reason
+            );
 
             $this->ownedQuantity += $fill->quantity;
         });
@@ -374,12 +397,14 @@ class LivePosition extends Position
         try
         {
             parent::newTransaction($increase, $price, $size, $timestamp, $reason);
-        } catch (\LogicException $e)
+        }
+        catch (\LogicException $e)
         {
             if (\str_contains($e->getMessage(), 'Position is open but no asset left'))
             {
                 return;
             }
+
             throw $e;
         }
     }

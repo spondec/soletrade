@@ -19,9 +19,10 @@ interface Orderer
     /**
      * @param Order $order
      *
-     * @return Order
      * @throws \App\Trade\Exception\OrderNotCanceledException
      * @throws \App\Trade\Exception\OrderFilledInCancelRequest
+     *
+     * @return Order
      */
     public function cancel(Order $order): Order;
 
@@ -31,13 +32,16 @@ interface Orderer
      * @param float  $quantity
      * @param bool   $reduceOnly
      *
-     * @return Order
      * @throws OrderFailedException
+     *
+     * @return Order
      */
-    public function market(Side   $side,
-                           string $symbol,
-                           float  $quantity,
-                           bool   $reduceOnly): Order;
+    public function market(
+        Side $side,
+        string $symbol,
+        float $quantity,
+        bool $reduceOnly
+    ): Order;
 
     /**
      * @param Side   $side
@@ -46,14 +50,17 @@ interface Orderer
      * @param float  $stopPrice
      * @param bool   $reduceOnly
      *
-     * @return Order
      * @throws OrderFailedException
+     *
+     * @return Order
      */
-    public function stopMarket(Side   $side,
-                               string $symbol,
-                               float  $quantity,
-                               float  $stopPrice,
-                               bool   $reduceOnly): Order;
+    public function stopMarket(
+        Side $side,
+        string $symbol,
+        float $quantity,
+        float $stopPrice,
+        bool $reduceOnly
+    ): Order;
 
     /**
      * @param Side   $side
@@ -62,14 +69,17 @@ interface Orderer
      * @param float  $quantity
      * @param bool   $reduceOnly
      *
-     * @return Order
      * @throws OrderFailedException
+     *
+     * @return Order
      */
-    public function limit(Side   $side,
-                          string $symbol,
-                          float  $price,
-                          float  $quantity,
-                          bool   $reduceOnly): Order;
+    public function limit(
+        Side $side,
+        string $symbol,
+        float $price,
+        float $quantity,
+        bool $reduceOnly
+    ): Order;
 
     /**
      * @param Side   $side
@@ -79,13 +89,16 @@ interface Orderer
      * @param float  $quantity
      * @param bool   $reduceOnly
      *
-     * @return Order
      * @throws OrderFailedException
+     *
+     * @return Order
      */
-    public function stopLimit(Side   $side,
-                              string $symbol,
-                              float  $stopPrice,
-                              float  $price,
-                              float  $quantity,
-                              bool   $reduceOnly): Order;
+    public function stopLimit(
+        Side $side,
+        string $symbol,
+        float $stopPrice,
+        float $price,
+        float $quantity,
+        bool $reduceOnly
+    ): Order;
 }

@@ -8,10 +8,12 @@ final class AllocatedAsset
 {
     protected float $amount;
 
-    public function __construct(public       readonly Balance $balance,
-                                public       readonly Asset $asset,
-                                float        $amount,
-                                public float $leverage = 1)
+    public function __construct(
+        public       readonly Balance $balance,
+        public       readonly Asset $asset,
+        float $amount,
+        public float $leverage = 1
+    )
     {
         $this->allocate($amount);
     }

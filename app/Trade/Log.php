@@ -43,7 +43,7 @@ final class Log
             throw new \LogicException("Task $taskName is already started.");
         }
 
-        self::$tasks[(string)\microtime(true)] = $taskName;
+        self::$tasks[(string) \microtime(true)] = $taskName;
         self::info(\sprintf('Started: %s', $taskName));
     }
 
@@ -54,10 +54,13 @@ final class Log
             throw new \LogicException("$taskName is not started, therefore can not be finished.");
         }
 
-        $execTime = \microtime(true) - (float)$time;
+        $execTime = \microtime(true) - (float) $time;
 
-        self::info(\sprintf('Finished in %s seconds: %s',
-            \round($execTime, 2), self::$tasks[$time]));
+        self::info(\sprintf(
+            'Finished in %s seconds: %s',
+            \round($execTime, 2),
+            self::$tasks[$time]
+        ));
 
         unset(self::$tasks[$time]);
     }

@@ -19,9 +19,11 @@ class SymbolRepository extends Repository
     /**
      * @param string[]|array[] $indicators
      */
-    public function initIndicators(Symbol     $symbol,
-                                   Collection $candles,
-                                   array      $indicators): void
+    public function initIndicators(
+        Symbol $symbol,
+        Collection $candles,
+        array $indicators
+    ): void
     {
         foreach ($indicators as $class => $config)
         {
@@ -49,6 +51,7 @@ class SymbolRepository extends Repository
                 'v'         => $candle[$map->v],
             ];
         }
+
         return $mapped;
     }
 
@@ -79,15 +82,17 @@ class SymbolRepository extends Repository
 
         return [
             'highest' => $highest,
-            'lowest'  => $lowest
+            'lowest'  => $lowest,
         ];
     }
 
-    public function assertCandlesLimit(Symbol  $symbol,
-                                       int     $startDate,
-                                       ?int    $limit,
-                                       ?string $interval = null,
-                                       bool    $includeStart = false): Collection
+    public function assertCandlesLimit(
+        Symbol $symbol,
+        int $startDate,
+        ?int $limit,
+        ?string $interval = null,
+        bool $includeStart = false
+    ): Collection
     {
         $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
 
@@ -121,17 +126,21 @@ class SymbolRepository extends Repository
                 ->get('id')->first()->id;
     }
 
-    public function assertCandlesBetween(Symbol  $symbol,
-                                         int     $startDate,
-                                         int     $endDate,
-                                         ?string $interval = null,
-                                         bool    $includeStart = false): Collection
+    public function assertCandlesBetween(
+        Symbol $symbol,
+        int $startDate,
+        int $endDate,
+        ?string $interval = null,
+        bool $includeStart = false
+    ): Collection
     {
-        $candles = $this->fetchCandlesBetween($symbol,
+        $candles = $this->fetchCandlesBetween(
+            $symbol,
             $startDate,
             $endDate,
             $interval,
-            $includeStart);
+            $includeStart
+        );
 
         if (!$candles->first())
         {
@@ -212,7 +221,7 @@ class SymbolRepository extends Repository
             $inserts[] = [
                 'symbol'      => $symbol,
                 'exchange_id' => $exchangeId,
-                'interval'    => $interval
+                'interval'    => $interval,
             ];
         }
 
@@ -278,7 +287,8 @@ class SymbolRepository extends Repository
 
     public function fetchSymbolFromExchange(Exchange $exchange, string $symbolName, string $interval)
     {
-        $filter = static fn(Symbol $symbol): bool => $symbol->symbol === $symbolName && $symbol->interval === $interval;
+        $filter = static fn (Symbol $symbol): bool => $symbol->symbol === $symbolName && $symbol->interval === $interval;
+
         return $exchange::instance()
             ->update()
             ->byInterval(interval: $interval, filter: $filter)
@@ -292,11 +302,13 @@ class SymbolRepository extends Repository
         return $this->findSymbols($exchange, $symbolName, $interval)->first();
     }
 
-    public function fetchCandlesBetween(Symbol  $symbol,
-                                        int     $startDate,
-                                        int     $endDate,
-                                        ?string $interval = null,
-                                        bool    $includeStart = false): Collection
+    public function fetchCandlesBetween(
+        Symbol $symbol,
+        int $startDate,
+        int $endDate,
+        ?string $interval = null,
+        bool $includeStart = false
+    ): Collection
     {
         if ($startDate >= $endDate)
         {
