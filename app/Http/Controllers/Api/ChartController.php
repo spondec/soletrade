@@ -21,7 +21,6 @@ class ChartController extends Controller
                                 protected SymbolRepository $symbolRepo,
                                 protected ConfigRepository $config)
     {
-
     }
 
     public function index(Request $request): array
@@ -89,7 +88,6 @@ class ChartController extends Controller
                             ?array          $range = null,
                             ?int            $limit = null): array
     {
-
         $start = $range ? as_ms(Carbon::parse($range['start'])->getTimestamp()) : null;
         $end = $range ? as_ms(Carbon::parse($range['end'])->getTimestamp()) : null;
 
@@ -144,7 +142,8 @@ class ChartController extends Controller
         $indicators = get_indicators();
         $indicatorConfig = \json_decode($request->get('indicatorConfig', '{}'), true);
         return collect($request->get('indicators', []))
-            ->mapWithKeys(function (string $name) use ($indicators, $indicatorConfig) {
+            ->mapWithKeys(function (string $name) use ($indicators, $indicatorConfig)
+            {
                 return [$indicators[$name] => $indicatorConfig[$name] ?? []];
             })->all();
     }

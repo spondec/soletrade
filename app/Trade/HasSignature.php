@@ -70,9 +70,12 @@ trait HasSignature
             {
                 $item = $this->hashCallbacksInArray($item);
             }
-            else if ($item instanceof \Closure)
+            else
             {
-                $item = ClosureHash::from($item);
+                if ($item instanceof \Closure)
+                {
+                    $item = ClosureHash::from($item);
+                }
             }
         }
 

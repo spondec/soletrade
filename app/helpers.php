@@ -59,7 +59,8 @@ if (!function_exists('on_shutdown'))
             }
         }
 
-        register_shutdown_function($callbacks[] = static function () use ($callback, &$executed) {
+        register_shutdown_function($callbacks[] = static function () use ($callback, &$executed)
+        {
             if (isset($executed[$callback]))
             {
                 return;
@@ -68,7 +69,8 @@ if (!function_exists('on_shutdown'))
             $callback();
         });
 
-        pcntl_signal(SIGINT, static function () use (&$callbacks) {
+        pcntl_signal(SIGINT, static function () use (&$callbacks)
+        {
             foreach ($callbacks as $callback)
             {
                 $callback();

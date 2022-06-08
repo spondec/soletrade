@@ -240,7 +240,8 @@ class TradeCreator
         {
             return;
         }
-        \uasort($signals, function (Signal $a, Signal $b): int {
+        \uasort($signals, function (Signal $a, Signal $b): int
+        {
             return $this->signalOrder[$a->indicator->alias] <=> $this->signalOrder[$b->indicator->alias];
         });
     }

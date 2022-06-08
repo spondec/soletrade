@@ -86,10 +86,12 @@ class TradeStatus
 
     protected function registerPositionListeners(): void
     {
-        $this->position->listen(eventName: 'close', onEvent: function () {
+        $this->position->listen(eventName: 'close', onEvent: function ()
+        {
             $this->isExited = $this->isClosed = true;
         });
-        $this->position->listen(eventName: 'stop', onEvent: function () {
+        $this->position->listen(eventName: 'stop', onEvent: function ()
+        {
             $this->isExited = $this->isStopped = true;
         });
     }

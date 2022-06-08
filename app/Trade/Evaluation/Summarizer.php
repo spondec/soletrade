@@ -78,9 +78,12 @@ class Summarizer
             {
                 $this->profitRoi[] = $relativeRoi;
             }
-            else if ($relativeRoi < 0)
+            else
             {
-                $this->lossRoi[] = $relativeRoi;
+                if ($relativeRoi < 0)
+                {
+                    $this->lossRoi[] = $relativeRoi;
+                }
             }
             $this->highestRoi[] = (float)$evaluation->highest_roi;
             $this->lowestRoi[] = (float)$evaluation->lowest_roi;
@@ -119,17 +122,26 @@ class Summarizer
         {
             $this->summary->ambiguous++;
         }
-        else if (!$isEntryValid)
+        else
         {
-            $this->summary->failed++;
-        }
-        else if ($roi < 0)
-        {
-            $this->summary->loss++;
-        }
-        else if ($roi > 0)
-        {
-            $this->summary->profit++;
+            if (!$isEntryValid)
+            {
+                $this->summary->failed++;
+            }
+            else
+            {
+                if ($roi < 0)
+                {
+                    $this->summary->loss++;
+                }
+                else
+                {
+                    if ($roi > 0)
+                    {
+                        $this->summary->profit++;
+                    }
+                }
+            }
         }
     }
 

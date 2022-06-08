@@ -81,7 +81,7 @@ class StrategyTester extends TradeCommand
 
         $strategy = $tester->strategy;
 
-        if(!$options['skipUpdate'])
+        if (!$options['skipUpdate'])
         {
             $this->updateSymbols($strategy);
         }
@@ -201,8 +201,10 @@ class StrategyTester extends TradeCommand
         }
 
         $progressBar->start($optimizer->total);
-        $summaries = $optimizer->run(callback: function (Fork $fork) use ($progressBar) {
-            $fork->after(parent: function () use ($progressBar) {
+        $summaries = $optimizer->run(callback: function (Fork $fork) use ($progressBar)
+        {
+            $fork->after(parent: function () use ($progressBar)
+            {
                 $progressBar->advance();
             });
         });
@@ -344,8 +346,10 @@ class StrategyTester extends TradeCommand
         $progressBar->setMaxSteps($summarizer->total);
         $progressBar->setProgress(0);
 
-        $walkForwardSummaries = $summarizer->run(callback: function (Fork $fork) use ($progressBar) {
-            $fork->after(parent: function () use ($progressBar) {
+        $walkForwardSummaries = $summarizer->run(callback: function (Fork $fork) use ($progressBar)
+        {
+            $fork->after(parent: function () use ($progressBar)
+            {
                 $progressBar->advance();
             });
         });
@@ -353,7 +357,8 @@ class StrategyTester extends TradeCommand
         $parameters = $summaries->pluck('parameters')->values()->all();
 
         //sort by parameter order
-        $walkForwardSummaries = $walkForwardSummaries->sortBy(function ($summary) use ($parameters) {
+        $walkForwardSummaries = $walkForwardSummaries->sortBy(function ($summary) use ($parameters)
+        {
             return array_search($summary->parameters, $parameters);
         });
 
@@ -373,20 +378,23 @@ class StrategyTester extends TradeCommand
 
     protected function registerTesterEvents(Tester $tester): void
     {
-        $tester->listen('strategy_pre_run', function () {
+        $tester->listen('strategy_pre_run', function ()
+        {
             $this->sections['state']->overwrite("<info>Running strategy...</info>\n");
         });
 
         $tester->listen('strategy_post_run', function (Tester          $strategyTester,
                                                        Strategy        $strategy,
-                                                       TradeCollection $trades) {
+                                                       TradeCollection $trades)
+        {
             $this->sections['possibleTrades']->overwrite("{$trades->count()} possible trades found.");
             $this->sections['state']->overwrite("<info>Evaluating trades...</info>\n");
         });
 
         $tester->listen('summary_updated', function (Tester  $strategyTester,
                                                      Summary $summary,
-                                                     int     $tradeCount) {
+                                                     int     $tradeCount)
+        {
             $this->sections['evalTable']->clear();
 
             $this->sections['evaluatedTrades']->overwrite("Evaluated $tradeCount trades.\n");
@@ -400,7 +408,8 @@ class StrategyTester extends TradeCommand
 
         $tester->listen('summary_finished', function (Tester  $strategyTester,
                                                       Summary $summary,
-                                                      int     $tradeCount) {
+                                                      int     $tradeCount)
+        {
             if (!$tradeCount)
             {
                 $this->sections['evaluatedTrades']->overwrite("No evaluations.\n");

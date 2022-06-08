@@ -36,7 +36,8 @@ class Fill extends Model
     {
         parent::booted();
 
-        static::created(function (Fill $fill) {
+        static::created(function (Fill $fill)
+        {
             Order::newFill($fill);
         });
     }

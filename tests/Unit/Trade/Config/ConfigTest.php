@@ -19,7 +19,8 @@ class ConfigTest extends TestCase
 
     protected function getConfig(): Config
     {
-        return new class('foo', fn(): bool => true, range(1, 10)) extends Config {
+        return new class('foo', fn(): bool => true, range(1, 10)) extends Config
+        {
             public function __construct(public readonly string $string,
                                         public readonly \Closure $closure,
                                         public readonly array $array)

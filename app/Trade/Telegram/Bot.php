@@ -25,7 +25,8 @@ class Bot
         $response = $this->telegram->handleGetUpdates();
 
         return \array_filter($response->getResult(),
-            function (Update $update) {
+            function (Update $update)
+            {
                 $message = $update->getMessage() ?? $update->getEditedMessage();
 
                 return $this->authenticate($message->getText(), $message->getChat()->getId());

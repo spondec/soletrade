@@ -47,7 +47,8 @@ abstract class TradeCommand extends Command
                     ->setTime(23, 59, 59)
                     ->getTimestamp() * 1000
                 : null;
-        } catch (InvalidFormatException $e)
+        }
+        catch (InvalidFormatException $e)
         {
             $this->error($e->getMessage());
             $this->error("Invalid date format.");

@@ -62,7 +62,8 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
 
         $order->shouldReceive('onCancel')
             ->zeroOrMoreTimes()
-            ->andReturnUsing(function (\Closure $callback) use (&$cancelListener) {
+            ->andReturnUsing(function (\Closure $callback) use (&$cancelListener)
+            {
                 $cancelListener = $callback;
             });
         $order->shouldReceive('flushListeners');

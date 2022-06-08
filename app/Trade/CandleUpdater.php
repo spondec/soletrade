@@ -34,7 +34,8 @@ class CandleUpdater
 
         if (!static::$isShutdownCallbackRegistered)
         {
-            on_shutdown(static function () {
+            on_shutdown(static function ()
+            {
                 //shutdowns may interrupt unlock query
                 DB::unprepared('UNLOCK TABLES');
             });
@@ -72,8 +73,8 @@ class CandleUpdater
             if (($maxRunTime > 0 && $remaining <= 0) ||
                 !$this->bySymbol($symbol, $maxRunTime > 0 ? $remaining : 0))
             {
-                if (($length = $key - 1) < 1) //nothing to return if the length is non-positive
-                {
+                if (($length = $key - 1) < 1)
+                { //nothing to return if the length is non-positive
                     return null;
                 }
 
@@ -130,10 +131,11 @@ class CandleUpdater
                 {
                     return false;
                 }
-
-            } while (!$break);
+            }
+            while (!$break);
             return true;
-        } finally
+        }
+        finally
         {
             DB::unprepared('UNLOCK TABLES');
             Log::execTimeFinish($task);

@@ -57,10 +57,13 @@ class MoveStop extends Handler
                 $this->position->stop($priceDate);
             }
         }
-        else if ($candle->c >= $stopPrice)
+        else
         {
-            $this->setStop($candle->c, $priceDate, 'The stop price was missed. Stopping at close price.');
-            $this->position->stop($priceDate);
+            if ($candle->c >= $stopPrice)
+            {
+                $this->setStop($candle->c, $priceDate, 'The stop price was missed. Stopping at close price.');
+                $this->position->stop($priceDate);
+            }
         }
     }
 
@@ -90,31 +93,38 @@ class MoveStop extends Handler
                 }
             }
             else
+            {
                 if ($candle->l <= $targetPrice)
                 {
                     $this->setStop($newStop, $priceDate, "Move stop to $newStop if the price is lower than or equal to $targetPrice");
                     $this->stopIfShould($candle, $priceDate);
                     return true;
                 }
+            }
         }
-        else if ($targetRoi = $this->config('target.roi'))
+        else
         {
-            if ($this->position->isBuy())
+            if ($targetRoi = $this->config('target.roi'))
             {
-                if ($this->position->roi($candle->h) >= $targetRoi)
+                if ($this->position->isBuy())
                 {
-                    $this->setStop($newStop, $priceDate, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
-                    $this->stopIfShould($candle, $priceDate);
-                    return true;
+                    if ($this->position->roi($candle->h) >= $targetRoi)
+                    {
+                        $this->setStop($newStop, $priceDate, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
+                        $this->stopIfShould($candle, $priceDate);
+                        return true;
+                    }
+                }
+                else
+                {
+                    if ($this->position->roi($candle->l) >= $targetRoi)
+                    {
+                        $this->setStop($newStop, $priceDate, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
+                        $this->stopIfShould($candle, $priceDate);
+                        return true;
+                    }
                 }
             }
-            else
-                if ($this->position->roi($candle->l) >= $targetRoi)
-                {
-                    $this->setStop($newStop, $priceDate, "Move stop to $newStop if the ROI is higher than or equal to %$targetRoi");
-                    $this->stopIfShould($candle, $priceDate);
-                    return true;
-                }
         }
 
         return false;

@@ -54,7 +54,8 @@ class FetcherTest extends TestCase
 
     protected function getFetcher(Exchange $exchange): Fetcher
     {
-        return new class($exchange) extends Fetcher {
+        return new class($exchange) extends Fetcher
+        {
             protected function fetchOrderBook(string $symbol): OrderBook
             {
                 // TODO: Implement fetchOrderBook() method.

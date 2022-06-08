@@ -71,7 +71,8 @@ class Order extends Model
     {
         parent::booted();
 
-        static::saved(static function (self $order) {
+        static::saved(static function (self $order)
+        {
             if ($order->status === OrderStatus::CANCELED)
             {
                 static::handleCancel($order);

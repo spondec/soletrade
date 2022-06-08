@@ -101,19 +101,25 @@ class Trader
             {
                 $this->initNewLoop($lastTrade);
             }
-            else if ($lastTrade->id == $this->trades->getNextTrade($this->loop->entry)?->id)
+            else
             {
-                Log::info(fn() => 'New trade detected. #' . $lastTrade->id);
-                if (!$this->loop->status()->isEntered())
+                if ($lastTrade->id == $this->trades->getNextTrade($this->loop->entry)?->id)
                 {
-                    Log::info(fn() => "Entry failed, ending loop. #{$lastTrade->id}");
-                    $this->endLoop();
-                    $this->initNewLoop($lastTrade);
-                }
-                else if (!$this->loop->hasExitTrade() && $this->loop->entry->isBuy() != $lastTrade->isBuy())
-                {
-                    Log::info(fn() => "Setting exit trade #{$lastTrade->id}");
-                    $this->loop->setExitTrade($lastTrade);
+                    Log::info(fn() => 'New trade detected. #' . $lastTrade->id);
+                    if (!$this->loop->status()->isEntered())
+                    {
+                        Log::info(fn() => "Entry failed, ending loop. #{$lastTrade->id}");
+                        $this->endLoop();
+                        $this->initNewLoop($lastTrade);
+                    }
+                    else
+                    {
+                        if (!$this->loop->hasExitTrade() && $this->loop->entry->isBuy() != $lastTrade->isBuy())
+                        {
+                            Log::info(fn() => "Setting exit trade #{$lastTrade->id}");
+                            $this->loop->setExitTrade($lastTrade);
+                        }
+                    }
                 }
             }
         }
@@ -140,7 +146,8 @@ class Trader
         $status = $this->loop->status();
         $this->setStatus(TraderStatus::AWAITING_ENTRY);
 
-        $status->listen('positionEntry', function (TradeStatus $status) {
+        $status->listen('positionEntry', function (TradeStatus $status)
+        {
             /** @noinspection NullPointerExceptionInspection */
             $status->getPosition()->listen('exit', $this->onPositionExit(...));
             $this->setStatus(TraderStatus::IN_POSITION);
@@ -174,14 +181,13 @@ class Trader
             }
             $position->stop(\time());
 
-            RecoverableRequest::new(function () use ($position) {
-
+            RecoverableRequest::new(function () use ($position)
+            {
                 $this->loop->order->syncAll();
                 if ($position->isOpen())
                 {
                     throw new PositionExitFailed('Failed to stop position.');
                 }
-
             }, handle: [PositionExitFailed::class])->run();
         }
 
@@ -219,13 +225,15 @@ class Trader
             try
             {
                 $this->endLoop();
-            } catch (\Throwable $e)
+            }
+            catch (\Throwable $e)
             {
                 //on shutdown, the error won't get logged
                 //so make sure to log it here
                 Log::error($e);
                 throw $e;
-            } finally
+            }
+            finally
             {
                 $this->runner->delete();
             }

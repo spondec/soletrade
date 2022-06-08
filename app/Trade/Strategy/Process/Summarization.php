@@ -21,8 +21,8 @@ abstract class Summarization extends Process
         $strategy = clone $tester->strategy;
         $tester = clone $tester;
 
-        return static function () use ($config, $strategy, $tester) {
-
+        return static function () use ($config, $strategy, $tester)
+        {
             $strategy->mergeConfig($config);
             $trades = $strategy->run();
             $summary = $tester->summary($trades);

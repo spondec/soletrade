@@ -185,28 +185,31 @@ class TradeLoop
                 $priceDate = $this->getPriceDate($candle, $nextCandle);
                 $this->tryPositionEntry($candle, $priceDate);
             }
-            else if (!$this->status->isExited())
+            else
             {
-                if ($stop)
+                if (!$this->status->isExited())
                 {
-                    $this->loadBinding($stop, 'stop_price', $candle);
-                }
-                if ($exit)
-                {
-                    $this->loadBinding($exit, 'target_price', $candle);
-                }
+                    if ($stop)
+                    {
+                        $this->loadBinding($stop, 'stop_price', $candle);
+                    }
+                    if ($exit)
+                    {
+                        $this->loadBinding($exit, 'target_price', $candle);
+                    }
 
-                $priceDate = $this->getPriceDate($candle, $nextCandle);
-                $position = $position ?? $this->getPosition();
+                    $priceDate = $this->getPriceDate($candle, $nextCandle);
+                    $position = $position ?? $this->getPosition();
 
-                if ($this->timeout && $this->hasPositionTimedOut($priceDate))
-                {
-                    $this->stopPositionAtClosePrice($position, $candle, 'Trade timed out. Stopping.');
-                    break;
+                    if ($this->timeout && $this->hasPositionTimedOut($priceDate))
+                    {
+                        $this->stopPositionAtClosePrice($position, $candle, 'Trade timed out. Stopping.');
+                        break;
+                    }
+
+                    $this->tryPositionExit($position, $candle, $priceDate);
+                    $this->status->runTradeActions($candle, $priceDate);
                 }
-
-                $this->tryPositionExit($position, $candle, $priceDate);
-                $this->status->runTradeActions($candle, $priceDate);
             }
         }
 
@@ -306,8 +309,8 @@ class TradeLoop
         {
             $this->runLoop($candles);
 
-            if (!isset($candles[1])) //prevent infinite loop on the last candle
-            {
+            if (!isset($candles[1]))
+            { //prevent infinite loop on the last candle
                 break;
             }
         }

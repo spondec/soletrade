@@ -69,7 +69,8 @@ class Trade extends Model
             $model->exit()->associate($loop->exit);
         }
 
-        \DB::transaction(function () use ($position, $model) {
+        \DB::transaction(function () use ($position, $model)
+        {
             $model->save();
             foreach ($position->getOrders() as $order)
             {

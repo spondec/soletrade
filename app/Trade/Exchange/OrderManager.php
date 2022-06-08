@@ -114,8 +114,8 @@ class OrderManager
 
     protected function registerOrderListeners(Order $order): void
     {
-        $order->onCancel(function (Order $order) {
-
+        $order->onCancel(function (Order $order)
+        {
             if ($order->id == $this->stop?->id)
             {
                 $this->stop = null;

@@ -38,7 +38,8 @@ class LiveTradeLoop extends TradeLoop
 
             $price->lock();
 
-            $order->onFill(function (Fill $fill) {
+            $order->onFill(function (Fill $fill)
+            {
                 if ($this->status->isEntered())
                 {
                     /** @var LivePosition $position */
@@ -56,9 +57,12 @@ class LiveTradeLoop extends TradeLoop
                 }
             });
         }
-        else if (!$this->order->entry->isAllFilled())
+        else
         {
-            $this->order->sync($this->order->entry);
+            if (!$this->order->entry->isAllFilled())
+            {
+                $this->order->sync($this->order->entry);
+            }
         }
     }
 

@@ -16,7 +16,6 @@ class CandleCollection extends Collection
     }
 
     #[Pure] public function highs(): array
-
     {
         return \array_column($this->all(), 'h');
     }
@@ -66,11 +65,14 @@ class CandleCollection extends Collection
                     $prevKey = $_prevKey ?? null;
                 }
             }
-            else if ($candle->t > $prev->t)
+            else
             {
-                $next = $candle;
-                $nextKey = $key;
-                break;
+                if ($candle->t > $prev->t)
+                {
+                    $next = $candle;
+                    $nextKey = $key;
+                    break;
+                }
             }
 
             $_prev = $candle;

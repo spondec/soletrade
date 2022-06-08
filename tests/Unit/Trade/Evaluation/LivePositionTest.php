@@ -56,7 +56,8 @@ class LivePositionTest extends TestCase
         $manager->tradeAsset
             ->shouldReceive('proportional')
             ->zeroOrMoreTimes()
-            ->andReturnUsing(function (float $size) {
+            ->andReturnUsing(function (float $size)
+            {
                 return $size;
             });
 
@@ -156,7 +157,8 @@ class LivePositionTest extends TestCase
 
         $order->shouldReceive('onFill')
             ->times($fillCount)
-            ->andReturnUsing(function (\Closure $callback) use (&$fillCallbacks) {
+            ->andReturnUsing(function (\Closure $callback) use (&$fillCallbacks)
+            {
                 $fillCallbacks[] = $callback;
             });
 

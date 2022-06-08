@@ -82,7 +82,6 @@ abstract class Indicator implements Binder
 
     protected function setup(): void
     {
-
     }
 
     abstract protected function calculate(CandleCollection $candles): array;

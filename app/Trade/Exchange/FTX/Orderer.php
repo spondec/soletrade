@@ -38,7 +38,8 @@ class Orderer extends \App\Trade\Exchange\Orderer
             $response = $this->isConditional($order)
                 ? $this->sendConditionalOrderCancelRequest($order, $parsedType)
                 : $this->sendOrderCancelRequest($order);
-        } catch (InvalidOrder $e)
+        }
+        catch (InvalidOrder $e)
         {
             if (\str_contains($e->getMessage(), 'Order already closed'))
             {
@@ -121,7 +122,8 @@ class Orderer extends \App\Trade\Exchange\Orderer
             fn() => $this->api->fetch_orders($order->symbol, params: ['type' => $parsedType])
         )->run();
 
-        $responses = \array_filter($conditionals, static function (array $conditional) use ($order) {
+        $responses = \array_filter($conditionals, static function (array $conditional) use ($order)
+        {
             return $conditional['id'] == $order->exchange_order_id;
         });
 
@@ -169,8 +171,8 @@ class Orderer extends \App\Trade\Exchange\Orderer
      */
     private function handleOrderQueuedForCancellation(Order $order): array
     {
-        return RecoverableRequest::new(function () use ($order) {
-
+        return RecoverableRequest::new(function () use ($order)
+        {
             $response = $this->executeOrderUpdate($order);
             $this->processOrderDetails($order, $response);
 
@@ -217,9 +219,12 @@ class Orderer extends \App\Trade\Exchange\Orderer
                     return OrderStatus::from($enum);
                 }
             }
-            else if ($value == $status)
+            else
             {
-                return OrderStatus::from($enum);
+                if ($value == $status)
+                {
+                    return OrderStatus::from($enum);
+                }
             }
         }
 
@@ -333,8 +338,8 @@ class Orderer extends \App\Trade\Exchange\Orderer
 
         $conditionalResponse = \end($conditionalResponse);
 
-        return \array_filter($orders, static function (array $orderResponse) use ($conditionalResponse) {
-
+        return \array_filter($orders, static function (array $orderResponse) use ($conditionalResponse)
+        {
             if ($orderResponse['timestamp'] < $conditionalResponse['timestamp'])
             {
                 return false;

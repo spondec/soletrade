@@ -38,7 +38,8 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
 
     protected function bypassOnShutdown(): void
     {
-        register_shutdown_function(static function () {
+        register_shutdown_function(static function ()
+        {
             exit;
         });
     }
@@ -118,7 +119,8 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $strategy->shouldReceive('evaluationSymbol')->once()->andReturn($symbol);
         $strategy->shouldReceive('config')->once()->with('evaluation.loop');
 
-        \Closure::bind(function () use ($trade) {
+        \Closure::bind(function () use ($trade)
+        {
             return $this->runner->start_date = $trade->price_date - 1;
         }, $trader, $trader)();
 
@@ -177,7 +179,8 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $loop->shouldReceive('setExitTrade')->once()->with($exit);
         $loop->shouldReceive('hasExitTrade')->once()->andReturn(true);
 
-        \Closure::bind(function () use ($entry, $loop) {
+        \Closure::bind(function () use ($entry, $loop)
+        {
             $this->runner->start_date = $entry->price_date - 1;
             $this->loop = $loop;
             /** @noinspection PhpReadonlyPropertyWrittenOutsideDeclarationScopeInspection */
@@ -195,7 +198,8 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $trader = $this->getTrader(symbol: $symbol, runner: $runner, app: $app);
         $trader->setStatus(TraderStatus::AWAITING_TRADE);
 
-        \Closure::bind(function () {
+        \Closure::bind(function ()
+        {
             $this->loop = m::mock('alias:' . LiveTradeLoop::class);
             /** @noinspection PhpReadonlyPropertyWrittenOutsideDeclarationScopeInspection */
             $this->loop->order = m::mock('alias:' . OrderManager::class);
