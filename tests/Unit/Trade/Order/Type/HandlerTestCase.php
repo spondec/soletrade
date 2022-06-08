@@ -27,10 +27,10 @@ abstract class HandlerTestCase extends TestCase
         $this->assertInstanceOf(Order::class, $order);
     }
 
-    protected function getHandler(string                       $class,
-                                  Side                         &$side = null,
+    protected function getHandler(string $class,
+                                  Side &$side = null,
                                   OrderManager|m\MockInterface &$manager = null,
-                                  array                        $config = []): Handler
+                                  array $config = []): Handler
     {
         $manager = m::mock(OrderManager::class);
 

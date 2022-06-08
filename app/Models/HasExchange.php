@@ -23,12 +23,12 @@ trait HasExchange
         $exchange = ExchangeModel::query()->findOrFail($id);
         $class = $exchange->class;
 
-        if (!\class_exists($class))
+        if (! \class_exists($class))
         {
             throw new \LogicException("Class '$class' does not exist.");
         }
 
-        if (!\is_subclass_of($class, Exchange::class))
+        if (! \is_subclass_of($class, Exchange::class))
         {
             throw new \LogicException("Class '$class' is not a subclass of '" . Exchange::class . "'");
         }

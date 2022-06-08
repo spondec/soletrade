@@ -17,11 +17,10 @@ use Illuminate\Support\Collection;
 
 class ChartController extends Controller
 {
-    public function __construct(protected Request          $request,
+    public function __construct(protected Request $request,
                                 protected SymbolRepository $symbolRepo,
                                 protected ConfigRepository $config)
     {
-
     }
 
     public function index(Request $request): array
@@ -47,7 +46,7 @@ class ChartController extends Controller
             'exchanges'  => $this->mapByName($this->config->exchanges),
             'symbols'    => $this->config->symbols,
             'indicators' => \array_keys(get_indicators()),
-            'intervals'  => $this->symbolRepo->fetchIntervals()
+            'intervals'  => $this->symbolRepo->fetchIntervals(),
         ];
     }
 
@@ -57,11 +56,12 @@ class ChartController extends Controller
         {
             return \array_search($param, $items);
         }
+
         return null;
     }
 
     /**
-     * @param HasName[]|string[] $classes
+     * @param  HasName[]|string[]  $classes
      */
     protected function mapByName(array $classes, bool $classAsKey = false): array
     {
@@ -82,19 +82,18 @@ class ChartController extends Controller
     }
 
     public function candles(string|Exchange $exchange,
-                            string          $symbolName,
-                            string          $interval,
-                            array           $indicators,
-                            string          $strategy = null,
-                            ?array          $range = null,
-                            ?int            $limit = null): array
+                            string $symbolName,
+                            string $interval,
+                            array $indicators,
+                            string $strategy = null,
+                            ?array $range = null,
+                            ?int $limit = null): array
     {
-
         $start = $range ? as_ms(Carbon::parse($range['start'])->getTimestamp()) : null;
         $end = $range ? as_ms(Carbon::parse($range['end'])->getTimestamp()) : null;
 
         $symbol = $this->getSymbol($exchange, $symbolName, $interval);
-        abort_if(!$symbol, 404, "Symbol $symbolName was not found.");
+        abort_if(! $symbol, 404, "Symbol $symbolName was not found.");
 
         if ($symbol->last_update <= $end)
         {
@@ -105,7 +104,7 @@ class ChartController extends Controller
         {
             $tester = new Tester($strategy, $symbol, [
                 'startDate' => $start,
-                'endDate'   => $end
+                'endDate'   => $end,
             ]);
 
             $tester->strategy->updateSymbols();
@@ -121,9 +120,9 @@ class ChartController extends Controller
                 'strategy' => [
                     'trades' => [
                         'summary'     => $summary,
-                        'evaluations' => $evaluations->map(fn(Evaluation $evaluation) => $evaluation->fresh())
-                    ]
-                ]
+                        'evaluations' => $evaluations->map(fn (Evaluation $evaluation) => $evaluation->fresh()),
+                    ],
+                ],
             ];
         }
 
@@ -143,8 +142,10 @@ class ChartController extends Controller
     {
         $indicators = get_indicators();
         $indicatorConfig = \json_decode($request->get('indicatorConfig', '{}'), true);
+
         return collect($request->get('indicators', []))
-            ->mapWithKeys(function (string $name) use ($indicators, $indicatorConfig) {
+            ->mapWithKeys(function (string $name) use ($indicators, $indicatorConfig)
+            {
                 return [$indicators[$name] => $indicatorConfig[$name] ?? []];
             })->all();
     }

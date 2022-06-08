@@ -14,14 +14,14 @@ class Optimizer extends Summarization
     protected CartesianProduct $combinator;
 
     /**
-     * @param Tester         $tester
-     * @param ParameterSet[] $parameters
+     * @param  Tester  $tester
+     * @param  ParameterSet[]  $parameters
      */
     public function __construct(protected Tester $tester, public readonly array $parameters)
     {
         $this->combinator = new CartesianProduct(
             array_map(
-                static fn(ParameterSet $paramSet) => $paramSet->values(), $this->parameters)
+                static fn (ParameterSet $paramSet) => $paramSet->values(), $this->parameters)
         );
 
         parent::__construct();
@@ -48,6 +48,6 @@ class Optimizer extends Summarization
     {
         return parent::handleJobResults($results)
             ->filter()
-            ->sort(fn($a, $b) => $a['roi'] < $b['roi']); //sort by ROI desc;
+            ->sort(fn ($a, $b) => $a['roi'] < $b['roi']); //sort by ROI desc;
     }
 }

@@ -38,17 +38,18 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
 
     protected function bypassOnShutdown(): void
     {
-        register_shutdown_function(static function () {
+        register_shutdown_function(static function ()
+        {
             exit;
         });
     }
 
-    protected function getTrader(?Strategy   &$strategy = null,
-                                 ?Exchange   &$exchange = null,
-                                 ?Symbol     &$symbol = null,
+    protected function getTrader(?Strategy &$strategy = null,
+                                 ?Exchange &$exchange = null,
+                                 ?Symbol &$symbol = null,
                                  ?TradeAsset &$tradeAsset = null,
-                                 ?Runner     &$runner = null,
-                                 ?\App       &$app = null): Trader
+                                 ?Runner &$runner = null,
+                                 ?\App &$app = null): Trader
     {
         $app = m::mock('overload:App');
         $app->shouldReceive('runningInConsole')->once()->andReturn(true);
@@ -87,16 +88,15 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $trader->setLeverage(10);
     }
 
-    protected function expectRecoverableRequest(m\MockInterface&\App $app, array $handle = [\Throwable::class]): void
+    protected function expectRecoverableRequest(m\MockInterface & \App $app, array $handle = [\Throwable::class]): void
     {
         $configRepo = m::mock('alias:' . ConfigRepository::class);
         $configRepo->options = [
-            'recoverableRequest' =>
-                [
-                    'retryInSeconds' => 1,
-                    'retryLimit'     => 1,
-                    'handle'         => $handle
-                ]
+            'recoverableRequest' => [
+                'retryInSeconds' => 1,
+                'retryLimit'     => 1,
+                'handle'         => $handle,
+            ],
         ];
         $app->shouldReceive('make')->with(ConfigRepository::class)->andReturn($configRepo);
     }
@@ -118,7 +118,8 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $strategy->shouldReceive('evaluationSymbol')->once()->andReturn($symbol);
         $strategy->shouldReceive('config')->once()->with('evaluation.loop');
 
-        \Closure::bind(function () use ($trade) {
+        \Closure::bind(function () use ($trade)
+        {
             return $this->runner->start_date = $trade->price_date - 1;
         }, $trader, $trader)();
 
@@ -138,14 +139,14 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
     }
 
     /**
-     * @param Strategy&m\MockInterface $strategy
-     * @param                          $symbol
-     * @param TradeSetup[]             $trades
-     *
+     * @param  Strategy&m\MockInterface  $strategy
+     * @param  $symbol
+     * @param  TradeSetup[]  $trades
      * @return void
+     *
      * @throws \Exception
      */
-    protected function expectStrategyRun(m\MockInterface&Strategy $strategy, $symbol, array $trades): void
+    protected function expectStrategyRun(m\MockInterface & Strategy $strategy, $symbol, array $trades): void
     {
         $strategy->shouldReceive('run')
             ->once()
@@ -177,7 +178,8 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $loop->shouldReceive('setExitTrade')->once()->with($exit);
         $loop->shouldReceive('hasExitTrade')->once()->andReturn(true);
 
-        \Closure::bind(function () use ($entry, $loop) {
+        \Closure::bind(function () use ($entry, $loop)
+        {
             $this->runner->start_date = $entry->price_date - 1;
             $this->loop = $loop;
             /** @noinspection PhpReadonlyPropertyWrittenOutsideDeclarationScopeInspection */
@@ -195,7 +197,8 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $trader = $this->getTrader(symbol: $symbol, runner: $runner, app: $app);
         $trader->setStatus(TraderStatus::AWAITING_TRADE);
 
-        \Closure::bind(function () {
+        \Closure::bind(function ()
+        {
             $this->loop = m::mock('alias:' . LiveTradeLoop::class);
             /** @noinspection PhpReadonlyPropertyWrittenOutsideDeclarationScopeInspection */
             $this->loop->order = m::mock('alias:' . OrderManager::class);
@@ -217,13 +220,14 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         $trader->setStatus(TraderStatus::STOPPED);
     }
 
-    protected function newTrade(): TradeSetup&m\MockInterface
+    protected function newTrade(): TradeSetup & m\MockInterface
     {
         static $timestamp = 1651421085000;
         static $id = 0;
         $trade = m::mock('alias:' . TradeSetup::class);
         $trade->timestamp = ++$timestamp;
         $trade->id = ++$id;
+
         return $trade;
     }
 }

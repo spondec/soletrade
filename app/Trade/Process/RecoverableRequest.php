@@ -13,9 +13,9 @@ class RecoverableRequest extends Recoverable
     }
 
     public static function new(\Closure $request,
-                               ?int     $retryInSeconds = null,
-                               ?int     $retryLimit = null,
-                               array    $handle = []): static
+                               ?int $retryInSeconds = null,
+                               ?int $retryLimit = null,
+                               array $handle = []): static
     {
         $config = \App::make(ConfigRepository::class)->options['recoverableRequest'];
 

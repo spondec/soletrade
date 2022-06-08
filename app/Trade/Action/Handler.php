@@ -37,7 +37,7 @@ abstract class Handler
     {
         foreach ($this->required as $key)
         {
-            if (!$this->config($key))
+            if (! $this->config($key))
             {
                 throw new \InvalidArgumentException('Required config key is missing: ' . $key);
             }
@@ -46,12 +46,11 @@ abstract class Handler
 
     protected function setup(): void
     {
-
     }
 
     public function run(\stdClass $candle, int $priceDate): ?TradeAction
     {
-        if (!$this->isTaken && $this->performAction($candle, $priceDate))
+        if (! $this->isTaken && $this->performAction($candle, $priceDate))
         {
             if ($this->config('lock'))
             {
@@ -61,6 +60,7 @@ abstract class Handler
             $this->isTaken = true;
             $this->action->is_taken = true;
             $this->action->timestamp = $priceDate;
+
             return $this->action;
         }
 
@@ -70,28 +70,26 @@ abstract class Handler
     /**
      * Return true if the action is taken.
      *
-     * @param \stdClass $candle
-     * @param int       $priceDate
-     *
+     * @param  \stdClass  $candle
+     * @param  int  $priceDate
      * @return bool
      */
     abstract protected function performAction(\stdClass $candle, int $priceDate): bool;
 
     protected function applyLocks(): void
     {
-
     }
 
     protected function getDefaultConfig(): array
     {
         return [
-            'lock' => true
+            'lock' => true,
         ];
     }
 
     protected function lockIfUnlocked(Price $price): void
     {
-        if (!$price->isLocked())
+        if (! $price->isLocked())
         {
             $price->lock();
         }

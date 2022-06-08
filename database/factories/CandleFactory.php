@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Trade\Calc;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Collection;
@@ -59,10 +58,9 @@ class CandleFactory extends Factory
     }
 
     /**
-     * @param int $startDate
-     * @param int $endDate
-     * @param int $interval in seconds
-     *
+     * @param  int  $startDate
+     * @param  int  $endDate
+     * @param  int  $interval  in seconds
      * @return $this
      */
     public function fillBetween(int $startDate, int $endDate, int $interval): static
@@ -79,6 +77,7 @@ class CandleFactory extends Factory
             $startDate += $this->interval;
             $this->count++;
         }
+
         return $this;
     }
 
@@ -101,12 +100,14 @@ class CandleFactory extends Factory
     public function priceLowerThan(float $price): static
     {
         $this->priceLowerThan = $price - $price * 0.001;
+
         return $this;
     }
 
     public function priceHigherThan(float $price): static
     {
         $this->priceHigherThan = $price + $price * 0.001;
+
         return $this;
     }
 
@@ -119,10 +120,11 @@ class CandleFactory extends Factory
 
     protected function getNextTimestamp(): int
     {
-        if (!$this->lastTimestamp)
+        if (! $this->lastTimestamp)
         {
             $this->lastTimestamp = $this->startDate->getTimestampMs();
         }
+
         return $this->lastTimestamp += $this->interval;
     }
 }

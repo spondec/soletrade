@@ -4,8 +4,8 @@ namespace Tests\Unit\Trade\Collection;
 
 use App\Models\TradeSetup;
 use App\Trade\Collection\TradeCollection;
-use PHPUnit\Framework\TestCase;
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @runTestsInSeparateProcesses
@@ -21,13 +21,14 @@ class TradeCollectionTest extends TestCase
         $this->assertEquals($trade, $tradeCollection->getFirstTrade());
     }
 
-    protected function newTrade(): m\MockInterface&TradeSetup
+    protected function newTrade(): m\MockInterface & TradeSetup
     {
         static $id = 0;
         static $timestamp = 1651419409000;
         $trade = m::mock('alias:' . TradeSetup::class);
         $trade->id = ++$id;
         $trade->timestamp = ++$timestamp;
+
         return $trade;
     }
 

@@ -11,9 +11,8 @@ trait CanCross
     /**
      * Return true if x crosses over y.
      *
-     * @param string $x One of the values calculated by the indicator.
-     * @param string $y One of the values calculated by the indicator.
-     *
+     * @param  string  $x  One of the values calculated by the indicator.
+     * @param  string  $y  One of the values calculated by the indicator.
      * @return bool
      */
     public function crossover(string $x, string $y): bool
@@ -32,9 +31,8 @@ trait CanCross
     /**
      * Return true if x crosses under y.
      *
-     * @param string $x One of the values calculated by the indicator.
-     * @param string $y One of the values calculated by the indicator.
-     *
+     * @param  string  $x  One of the values calculated by the indicator.
+     * @param  string  $y  One of the values calculated by the indicator.
      * @return bool
      */
     public function crossunder(string $x, string $y): bool

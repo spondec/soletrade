@@ -6,12 +6,11 @@ use App\Trade\Indicator\Indicator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-/** COLUMNS
+/** COLUMNS.
  *
  * @property Symbol    symbol
  * @property Signature signature
  * @property Signature indicator
- *
  * @property int       id
  * @property int       indicator_id
  * @property int       symbol_id
@@ -24,7 +23,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property array     info
  * @property mixed     created_at
  * @property mixed     updated_at
- *
  */
 class Signal extends Model
 {
@@ -48,7 +46,7 @@ class Signal extends Model
     protected array $unique = ['symbol_id', 'indicator_id', 'signature_id', 'timestamp'];
 
     protected $casts = [
-        'info' => 'array'
+        'info' => 'array',
     ];
 
     public function tradeSetup(): BelongsToMany

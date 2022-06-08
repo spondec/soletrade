@@ -47,9 +47,8 @@ class Orderer extends \App\Trade\Exchange\Orderer
     }
 
     /**
-     * @param Order $order
-     * @param array $response
-     *
+     * @param  Order  $order
+     * @param  array  $response
      * @return Fill[]
      */
     protected function processOrderFills(Order $order, array $response): array

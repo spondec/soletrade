@@ -34,15 +34,15 @@ abstract class Creator
     {
         $fileName = $this->getFileName();
         $destination = $this->getDestinationDir();
-        
+
         $this->files->ensureDirectoryExists($destination);
-        
-        if (!$destination || !$fileName)
+
+        if (! $destination || ! $fileName)
         {
             throw new \LogicException('Destination directory or filename was not set.');
         }
 
-        if (!$this->files->exists($this->stubPath))
+        if (! $this->files->exists($this->stubPath))
         {
             throw new FileNotFoundException("Stub file not found at $this->stubPath.");
         }
@@ -74,6 +74,7 @@ abstract class Creator
 
         $this->assertNoPlaceholderExists($content);
         $this->content = $this->modifyContent($content);
+
         return $this;
     }
 
@@ -90,6 +91,7 @@ abstract class Creator
         {
             $content = \str_replace($this->wrapPlaceholder($placeHolder), $replacements[$placeHolder], $content);
         }
+
         return $content;
     }
 

@@ -8,16 +8,16 @@ class OrderBook
     public float $timeout;
 
     /**
-     * @param float[] $bids
-     * @param float[] $asks
+     * @param  float[]  $bids
+     * @param  float[]  $asks
      */
     public function __construct(protected string $symbol,
-                                protected array  $bids,
-                                protected array  $asks)
+                                protected array $bids,
+                                protected array $asks)
     {
         $this->initTime = \microtime(true);
 
-        if (!$this->bids || !$this->asks)
+        if (! $this->bids || ! $this->asks)
         {
             throw new \App\Trade\Exception\EmptyOrderBookException("Order book data is empty for $symbol.");
         }
@@ -53,7 +53,7 @@ class OrderBook
         return \min($this->asks);
     }
 
-    protected final function avg(array $values): float
+    final protected function avg(array $values): float
     {
         return \array_sum($values) / \count($values);
     }

@@ -61,6 +61,6 @@ class RangedSet extends ParameterSet
 
     public function count(): int
     {
-        return (int)(($this->max - $this->min) / $this->step);
+        return (int) (($this->max - $this->min) / $this->step);
     }
 }

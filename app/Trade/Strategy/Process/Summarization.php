@@ -13,7 +13,7 @@ abstract class Summarization extends Process
     protected function setupFork(Fork $fork): Fork
     {
         return $fork
-            ->before(fn() => DB::connection('mysql')->reconnect());
+            ->before(fn () => DB::connection('mysql')->reconnect());
     }
 
     protected function newStrategySummaryJob(Tester $tester, array $config): \Closure
@@ -21,8 +21,8 @@ abstract class Summarization extends Process
         $strategy = clone $tester->strategy;
         $tester = clone $tester;
 
-        return static function () use ($config, $strategy, $tester) {
-
+        return static function () use ($config, $strategy, $tester)
+        {
             $strategy->mergeConfig($config);
             $trades = $strategy->run();
             $summary = $tester->summary($trades);
@@ -34,7 +34,7 @@ abstract class Summarization extends Process
 
     protected function handleJobResults(array $results): SummaryCollection
     {
-        return (new SummaryCollection($results));
+        return new SummaryCollection($results);
     }
 
     public function run(?\Closure $callback = null): SummaryCollection

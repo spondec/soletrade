@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (!App::runningInConsole())
+        if (! App::runningInConsole())
         {
             \set_time_limit(30);
         }
@@ -29,9 +29,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SymbolRepository::class);
         $this->app->singleton(ConfigRepository::class);
 
-        $this->app->bind('db.schema', static function ($app) {
+        $this->app->bind('db.schema', static function ($app)
+        {
             $builder = $app['db']->connection()->getSchemaBuilder();
-            $builder->blueprintResolver(static function ($table, $callback) {
+            $builder->blueprintResolver(static function ($table, $callback)
+            {
                 return new Blueprint($table, $callback);
             });
 

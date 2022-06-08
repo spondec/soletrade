@@ -11,7 +11,7 @@ class Recoverable
                                 public    readonly int $retryLimit,
                                 public    readonly array $handle = [])
     {
-        if (!$this->handle)
+        if (! $this->handle)
         {
             throw new \LogicException('No Throwable to handle.');
         }
@@ -27,7 +27,8 @@ class Recoverable
         try
         {
             return ($this->process)();
-        } catch (\Throwable $e)
+        }
+        catch (\Throwable $e)
         {
             if ($this->retryLimit > 0 && $this->isHandled($e))
             {
@@ -39,6 +40,7 @@ class Recoverable
                 {
                     throw $e;
                 }
+
                 return $this->try($retryInSeconds, $retryLimit);
             }
 
@@ -61,6 +63,5 @@ class Recoverable
 
     protected function handle(\Throwable $e): void
     {
-
     }
 }

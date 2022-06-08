@@ -56,7 +56,8 @@ class LivePositionTest extends TestCase
         $manager->tradeAsset
             ->shouldReceive('proportional')
             ->zeroOrMoreTimes()
-            ->andReturnUsing(function (float $size) {
+            ->andReturnUsing(function (float $size)
+            {
                 return $size;
             });
 
@@ -138,13 +139,13 @@ class LivePositionTest extends TestCase
         return $quantity;
     }
 
-    protected function getOrder(Side      $side,
+    protected function getOrder(Side $side,
                                 OrderType $type,
-                                int       $price,
-                                float     $quantity,
-                                bool      $reduceOnly,
-                                ?array    &$fillCallbacks = null,
-                                int       $fillCount = 1): MockInterface|Order
+                                int $price,
+                                float $quantity,
+                                bool $reduceOnly,
+                                ?array &$fillCallbacks = null,
+                                int $fillCount = 1): MockInterface|Order
     {
         $order = m::mock('alias:' . Order::class);
 
@@ -156,7 +157,8 @@ class LivePositionTest extends TestCase
 
         $order->shouldReceive('onFill')
             ->times($fillCount)
-            ->andReturnUsing(function (\Closure $callback) use (&$fillCallbacks) {
+            ->andReturnUsing(function (\Closure $callback) use (&$fillCallbacks)
+            {
                 $fillCallbacks[] = $callback;
             });
 

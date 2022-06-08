@@ -12,12 +12,12 @@ class ChangeLogTest extends TestCase
         $first = [
             'value'     => 100,
             'timestamp' => $time = time() * 1000,
-            'reason'    => 'Created'
+            'reason'    => 'Created',
         ];
         $next = [
             'value'     => 200,
             'timestamp' => $time + 1000,
-            'reason'    => 'change'
+            'reason'    => 'change',
         ];
 
         $changeLog = new ChangeLog(...$first);

@@ -25,11 +25,11 @@ final class Combined extends Indicator
          *              'class' => \App\Indicators\EMA::class,
          *              'config' => ['timeFrame' => 20]
          *       ]
-         * ]
+         * ].
          */
         'indicators' => [
 
-        ]
+        ],
     ];
     protected array $variableConfigKeys = ['indicators'];
 

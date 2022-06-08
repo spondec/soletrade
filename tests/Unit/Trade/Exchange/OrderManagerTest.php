@@ -37,8 +37,8 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
     }
 
     protected function getManager(Exchange|MockInterface &$exchange = null,
-                                  Symbol|MockInterface   &$symbol = null,
-                                  Orderer|MockInterface  &$orderer = null): OrderManager
+                                  Symbol|MockInterface &$symbol = null,
+                                  Orderer|MockInterface &$orderer = null): OrderManager
     {
         $symbol = m::mock('alias:' . Symbol::class);
         $symbol->symbol = 'BTC/USDT';
@@ -62,7 +62,8 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
 
         $order->shouldReceive('onCancel')
             ->zeroOrMoreTimes()
-            ->andReturnUsing(function (\Closure $callback) use (&$cancelListener) {
+            ->andReturnUsing(function (\Closure $callback) use (&$cancelListener)
+            {
                 $cancelListener = $callback;
             });
         $order->shouldReceive('flushListeners');
@@ -88,7 +89,7 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
                 102,
                 100,
                 1,
-                true
+                true,
             ])
             ->andReturn($order);
 
@@ -123,7 +124,6 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
             ->with($order)
             ->andReturn($order);
 
-
         $this->assertEquals($order, $manager->cancel($order));
     }
 
@@ -142,7 +142,7 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
                 Side::SELL,
                 $symbol->symbol,
                 1,
-                true
+                true,
             ])
             ->andReturn($order);
 
@@ -167,7 +167,7 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
                 $symbol->symbol,
                 100,
                 1,
-                true
+                true,
             ])
             ->andReturn($order);
 
@@ -193,7 +193,7 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
                 $symbol->symbol,
                 1,
                 100,
-                true
+                true,
             ])
             ->andReturn($order);
 
@@ -218,7 +218,7 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
                 Side::SELL,
                 $symbol->symbol,
                 1,
-                true
+                true,
             ])
             ->andReturn($order);
 

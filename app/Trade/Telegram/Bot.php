@@ -25,7 +25,8 @@ class Bot
         $response = $this->telegram->handleGetUpdates();
 
         return \array_filter($response->getResult(),
-            function (Update $update) {
+            function (Update $update)
+            {
                 $message = $update->getMessage() ?? $update->getEditedMessage();
 
                 return $this->authenticate($message->getText(), $message->getChat()->getId());
@@ -42,6 +43,7 @@ class Bot
         if (\trim($password) === '/password ' . \trim($this->password))
         {
             $this->authenticatedChatIds[] = $chatId;
+
             return true;
         }
 
@@ -52,12 +54,12 @@ class Bot
 
     protected function isAuthenticated(int $chatId): bool
     {
-        return !$this->password || \in_array($chatId, $this->authenticatedChatIds);
+        return ! $this->password || \in_array($chatId, $this->authenticatedChatIds);
     }
 
     public function sendMessage(string $message, int $chatId): ServerResponse
     {
-        if (!$this->isAuthenticated($chatId))
+        if (! $this->isAuthenticated($chatId))
         {
             //should not happen because we are filtering out unauthenticated messages
             throw new \LogicException('Attempt to send message to unauthenticated chat.');

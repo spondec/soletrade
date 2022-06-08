@@ -27,7 +27,7 @@ trait HasSignature
         /** @var Signature $signature */
         $signature = Signature::query()->firstOrCreate(['hash' => $hash], [
             'hash' => $hash,
-            'data' => $hashed
+            'data' => $hashed,
         ]);
 
         if ($collisions = $this->getKeyDiff($signature->data, $hashed))
@@ -36,6 +36,7 @@ trait HasSignature
         }
 
         $this->signatureCache[$hash] = \WeakReference::create($signature);
+
         return $signature;
     }
 
@@ -53,12 +54,13 @@ trait HasSignature
             }
             else
             {
-                if (!\array_key_exists($key, $array2) || $array2[$key] != $value)
+                if (! \array_key_exists($key, $array2) || $array2[$key] != $value)
                 {
                     $collisions[] = $key;
                 }
             }
         }
+
         return $collisions;
     }
 
@@ -70,7 +72,7 @@ trait HasSignature
             {
                 $item = $this->hashCallbacksInArray($item);
             }
-            else if ($item instanceof \Closure)
+            elseif ($item instanceof \Closure)
             {
                 $item = ClosureHash::from($item);
             }
@@ -85,6 +87,7 @@ trait HasSignature
         {
             $subject = \json_encode($this->hashCallbacksInArray($subject));
         }
+
         return \md5($subject);
     }
 

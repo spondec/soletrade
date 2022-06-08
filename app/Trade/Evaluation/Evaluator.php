@@ -1,4 +1,5 @@
 <?php
+
 /** @noinspection UnnecessaryCastingInspection */
 /** @noinspection PhpCastIsUnnecessaryInspection */
 
@@ -83,7 +84,7 @@ class Evaluator
             $e->is_ambiguous = $status->isAmbiguous() || $position->entryTime() === $position->exitTime();
             $e->used_size = $position->getMaxUsedSize();
 
-            if (!$e->is_ambiguous)
+            if (! $e->is_ambiguous)
             {
                 $this->fillClosedPositionFields($position, $e);
                 $this->fillPivots($e);
@@ -94,9 +95,9 @@ class Evaluator
                 'price_history' => [
                     'entry' => $status->getEntryPrice()->log()->toArray(),
                     'exit'  => $status->getTargetPrice()?->log()?->toArray() ?? [],
-                    'stop'  => $status->getStopPrice()?->log()?->toArray() ?? []
+                    'stop'  => $status->getStopPrice()?->log()?->toArray() ?? [],
                 ],
-                'transactions'  => $position->transactionLog()->toArray()
+                'transactions'  => $position->transactionLog()->toArray(),
             ];
         }
         else
@@ -118,18 +119,18 @@ class Evaluator
 
     protected function fillHighLowRoi(Evaluation $evaluation): void
     {
-        if (!$evaluation->is_entry_price_valid || $evaluation->is_ambiguous)
+        if (! $evaluation->is_entry_price_valid || $evaluation->is_ambiguous)
         {
             return;
         }
 
-        $entryPrice = (float)$evaluation->entry_price;
+        $entryPrice = (float) $evaluation->entry_price;
         $isBuy = $evaluation->entry->isBuy();
 
-        $evaluation->highest_roi = Calc::roi($isBuy, $entryPrice, (float)($isBuy
+        $evaluation->highest_roi = Calc::roi($isBuy, $entryPrice, (float) ($isBuy
             ? $evaluation->highest_price
             : $evaluation->lowest_price));
-        $evaluation->lowest_roi = Calc::roi($isBuy, $entryPrice, (float)(!$isBuy
+        $evaluation->lowest_roi = Calc::roi($isBuy, $entryPrice, (float) (! $isBuy
             ? $evaluation->highest_price
             : $evaluation->lowest_price));
     }

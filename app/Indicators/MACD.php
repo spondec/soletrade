@@ -24,11 +24,15 @@ final class MACD extends Indicator
                              $this->config['slowPeriod'],
                              $this->config['signalPeriod']);
 
-        if (!$macd) return [];
-        return \array_map(static fn($v, $k) => [
+        if (! $macd)
+        {
+            return [];
+        }
+
+        return \array_map(static fn ($v, $k) => [
             'macd'       => $v,
             'signal'     => $macd[1][$k],
-            'divergence' => $macd[2][$k]
+            'divergence' => $macd[2][$k],
         ], $macd[0], \array_keys($macd[0]));
     }
 }

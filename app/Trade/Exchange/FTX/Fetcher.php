@@ -23,6 +23,6 @@ class Fetcher extends \App\Trade\Exchange\CCXT\Fetcher
 
     protected function fetchCandles(string $symbol, string $interval, int $start = null, int $limit = null): array
     {
-        return parent::fetchCandles($symbol, $interval, !$start ? null : $start, $limit);
+        return parent::fetchCandles($symbol, $interval, ! $start ? null : $start, $limit);
     }
 }

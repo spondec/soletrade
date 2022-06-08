@@ -22,7 +22,6 @@ use Illuminate\Validation\Rules\Enum;
  * @property Symbol                                                 symbol
  * @property Signature                                              signature
  * @property TradeAction[]|\Illuminate\Database\Eloquent\Collection actions
- *
  * @property int                                                    id
  * @property int                                                    symbol_id
  * @property int                                                    signature_id
@@ -54,7 +53,7 @@ class TradeSetup extends Model implements Bindable
             'name'       => 'required|string|max:255',
             'price_date' => 'gte:timestamp',
             'price'      => 'required|numeric',
-            'side'       => ['required', new Enum(Side::class)]
+            'side'       => ['required', new Enum(Side::class)],
         ];
     }
 
@@ -85,7 +84,7 @@ class TradeSetup extends Model implements Bindable
 
     public function loadBindingPrice(?Price $price, string $column, int $timestamp): void
     {
-        if (!$price)
+        if (! $price)
         {
             return;
         }
@@ -116,11 +115,11 @@ class TradeSetup extends Model implements Bindable
     {
         $result = parent::toArray();
 
-        if (!empty($result['price']) || !empty($result['target_price']) || !empty($result['stop_price']))
+        if (! empty($result['price']) || ! empty($result['target_price']) || ! empty($result['stop_price']))
         {
-            $result['price'] = \round((float)$result['price'], 2);
-            $result['target_price'] = $result['target_price'] ? \round((float)$result['target_price'], 2) : null;
-            $result['stop_price'] = $result['stop_price'] ? \round((float)$result['stop_price'], 2) : null;
+            $result['price'] = \round((float) $result['price'], 2);
+            $result['target_price'] = $result['target_price'] ? \round((float) $result['target_price'], 2) : null;
+            $result['stop_price'] = $result['stop_price'] ? \round((float) $result['stop_price'], 2) : null;
         }
 
         return $result;
@@ -138,7 +137,7 @@ class TradeSetup extends Model implements Bindable
 
     protected function assertPrice(): float
     {
-        if (!$price = $this->price)
+        if (! $price = $this->price)
         {
             throw new \UnexpectedValueException('Price is not set.');
         }
@@ -148,7 +147,7 @@ class TradeSetup extends Model implements Bindable
 
     public function setStopPrice(float $ratio, float $triggerPriceRatio = StopLimit::DEFAULT_TRIGGER_PRICE_RATIO): void
     {
-        if (!$ratio)
+        if (! $ratio)
         {
             throw new \LogicException('Invalid ratio.');
         }
@@ -169,7 +168,7 @@ class TradeSetup extends Model implements Bindable
 
     public function setTargetPrice(float $ratio): void
     {
-        if (!$ratio)
+        if (! $ratio)
         {
             throw new \LogicException('Invalid ratio.');
         }

@@ -14,13 +14,13 @@ final class Enum
     }
 
     /**
-     * @param string|\UnitEnum $class
-     *
+     * @param  string|\UnitEnum  $class
      * @return string[]|int[]
      */
     public static function cases(string|\UnitEnum $class): array
     {
-        return \array_map(static function (\UnitEnum $enum): string {
+        return \array_map(static function (\UnitEnum $enum): string
+        {
             return static::case($enum);
         }, $class::cases());
     }
