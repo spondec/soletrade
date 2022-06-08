@@ -14,7 +14,7 @@ class TradeAssetTest extends m\Adapter\Phpunit\MockeryTestCase
 {
     public function test_register_roi()
     {
-        $allocation = m::mock('alias:' . AllocatedAsset::class);
+        $allocation = m::mock('alias:'.AllocatedAsset::class);
 
         $allocation
             ->shouldReceive('amount')

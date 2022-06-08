@@ -69,7 +69,7 @@ class TradeCreator
 
     public function save(): TradeSetup
     {
-        if (!$this->trade)
+        if (! $this->trade)
         {
             throw new \LogicException('Trade has not been set.');
         }
@@ -83,13 +83,13 @@ class TradeCreator
             foreach ($this->actions as $class => $config)
             {
                 $tradeSetup->actions()->create(['class'  => $class,
-                                                'config' => $config]);
+                    'config' => $config, ]);
             }
         }
 
         $tradeSetup->signals()
             ->sync($this->signals
-                ->map(static fn(Signal $signal): int => $signal->id));
+                ->map(static fn (Signal $signal): int => $signal->id));
         $this->finalize();
 
         return $tradeSetup;
@@ -107,14 +107,13 @@ class TradeCreator
     }
 
     /**
-     * @param Candles  $candles
-     * @param Signal[] $signals
-     *
+     * @param  Candles  $candles
+     * @param  Signal[]  $signals
      * @return TradeSetup|null
      */
     public function findTradeWithSignals(Candles $candles, array $signals): ?TradeSetup
     {
-        if (!$signals)
+        if (! $signals)
         {
             throw new \LogicException('$signals must not be empty.');
         }
@@ -123,7 +122,7 @@ class TradeCreator
 
         foreach ($signals as $signal)
         {
-            if (!$this->isRequiredNextSignal($signal) || !$this->verifySignal($signal))
+            if (! $this->isRequiredNextSignal($signal) || ! $this->verifySignal($signal))
             {
                 return null;
             }
@@ -146,7 +145,7 @@ class TradeCreator
 
     protected function isRequiredNextSignal(Signal $signal): bool
     {
-        return !$this->nextRequiredSignalAlias || $signal->indicator->alias === $this->nextRequiredSignalAlias;
+        return ! $this->nextRequiredSignalAlias || $signal->indicator->alias === $this->nextRequiredSignalAlias;
     }
 
     protected function verifySignal(Signal $signal): bool
@@ -161,7 +160,7 @@ class TradeCreator
 
         // signals must pass the name condition if defined in the config
         $names = $this->config->signals[$signal->indicator->alias] ?? null;
-        if ($names && !\in_array($signal->name, $names))
+        if ($names && ! \in_array($signal->name, $names))
         {
             return false;
         }
@@ -199,7 +198,7 @@ class TradeCreator
             $lastSignal = $this->getLastSignal();
 
             $setup->name = $this->signals
-                ->map(static fn(Signal $signal): string => $signal->name)
+                ->map(static fn (Signal $signal): string => $signal->name)
                 ->implode('|');
             $setup->side = $lastSignal->side;
             $setup->timestamp = $lastSignal->timestamp;
@@ -219,7 +218,7 @@ class TradeCreator
 
     protected function runCallback(Candles $candles): ?TradeSetup
     {
-        if (!$candle = $candles->candle())
+        if (! $candle = $candles->candle())
         {
             return null;
         }
@@ -230,8 +229,7 @@ class TradeCreator
     }
 
     /**
-     * @param Signal[] $signals
-     *
+     * @param  Signal[]  $signals
      * @return void
      */
     protected function sortByRequiredOrder(array &$signals): void
@@ -240,7 +238,8 @@ class TradeCreator
         {
             return;
         }
-        \uasort($signals, function (Signal $a, Signal $b): int {
+        \uasort($signals, function (Signal $a, Signal $b): int
+        {
             return $this->signalOrder[$a->indicator->alias] <=> $this->signalOrder[$b->indicator->alias];
         });
     }

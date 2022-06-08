@@ -29,7 +29,7 @@ class CandleCollectionTest extends TestCase
     public function test_override_candle()
     {
         $col = new CandleCollection(range(1, 10));
-        $col->overrideCandle(1, (object)[]);
+        $col->overrideCandle(1, (object) []);
 
         $this->assertInstanceOf(\stdClass::class, $col[1]);
     }

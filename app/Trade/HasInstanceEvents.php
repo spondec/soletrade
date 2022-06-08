@@ -7,7 +7,6 @@ namespace App\Trade;
 use App\Trade\Helper\ClosureHash;
 
 /**
- *
  * @property string[]                           events
  *
  * Events triggered by another set of events.
@@ -31,7 +30,7 @@ trait HasInstanceEvents
 
         if (\in_array($hash = ClosureHash::from($onEvent), $this->listenerHash[$eventName] ?? []))
         {
-            throw new \LogicException("Listener already registered.");
+            throw new \LogicException('Listener already registered.');
         }
 
         $this->listenerHash[$eventName][] = $hash;
@@ -45,6 +44,7 @@ trait HasInstanceEvents
         if (isset($this->bypassed[$eventName]))
         {
             unset($this->bypassed[$eventName]);
+
             return;
         }
 
@@ -64,7 +64,7 @@ trait HasInstanceEvents
 
     private function assertEventExists(string $eventName): void
     {
-        if (!\in_array($eventName, $this->events) && !isset($this->eventTriggers[$eventName]))
+        if (! \in_array($eventName, $this->events) && ! isset($this->eventTriggers[$eventName]))
         {
             throw new \InvalidArgumentException("Event '$eventName' doesn't exist.");
         }
@@ -72,7 +72,7 @@ trait HasInstanceEvents
 
     private function handleTriggers(string $triggerEventName, array $params): void
     {
-        if (!isset($this->eventTriggers))
+        if (! isset($this->eventTriggers))
         {
             return;
         }

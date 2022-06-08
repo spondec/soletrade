@@ -54,10 +54,10 @@ class CandleFactoryTest extends TestCase
 
         foreach ($candles as $candle)
         {
-            $this->assertTrue(in_array((int)((string)$candle->c)[0], [8, 9]));
-            $this->assertTrue(in_array((int)((string)$candle->o)[0], [8, 9]));
-            $this->assertTrue(in_array((int)((string)$candle->h)[0], [8, 9]));
-            $this->assertTrue(in_array((int)((string)$candle->l)[0], [8, 9]));
+            $this->assertTrue(in_array((int) ((string) $candle->c)[0], [8, 9]));
+            $this->assertTrue(in_array((int) ((string) $candle->o)[0], [8, 9]));
+            $this->assertTrue(in_array((int) ((string) $candle->h)[0], [8, 9]));
+            $this->assertTrue(in_array((int) ((string) $candle->l)[0], [8, 9]));
         }
     }
 }

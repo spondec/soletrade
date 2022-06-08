@@ -19,8 +19,8 @@ class TradeCollection extends Collection
     ];
 
     /**
-     * @param TradeSetup[] $items
-     * @param array        $config
+     * @param  TradeSetup[]  $items
+     * @param  array  $config
      *
      * @throws \Exception
      */
@@ -36,8 +36,7 @@ class TradeCollection extends Collection
     }
 
     /**
-     * @param TradeCollection<TradeSetup> $trades
-     *
+     * @param  TradeCollection<TradeSetup>  $trades
      * @return $this
      */
     public function mergeTrades(TradeCollection $trades): static
@@ -76,6 +75,7 @@ class TradeCollection extends Collection
         {
             return $this->findNextOppositeTrade($trade);
         }
+
         return $this->findNextTrade($trade);
     }
 
@@ -104,6 +104,7 @@ class TradeCollection extends Collection
             if ($iterator->key() == $timestamp)
             {
                 $iterator->next();
+
                 return $iterator->current();
             }
 
@@ -114,9 +115,9 @@ class TradeCollection extends Collection
     }
 
     /**
-     * @param TradeSetup[] $items
-     *
+     * @param  TradeSetup[]  $items
      * @return array
+     *
      * @throws \Exception
      */
     protected function keyByTimestamp(array $items): array
@@ -132,20 +133,21 @@ class TradeCollection extends Collection
 
             $keyed[$t] = $trade;
         }
+
         return $keyed;
     }
 
     /**
-     * @param array $items
-     *
+     * @param  array  $items
      * @return TradeSetup[]|array
      */
     protected function filterByConfig(array $items): array
     {
         if ($this->config('permanentOnly'))
         {
-            $items = \array_filter($items, fn(TradeSetup $trade) => $trade->is_permanent);
+            $items = \array_filter($items, fn (TradeSetup $trade) => $trade->is_permanent);
         }
+
         return $items;
     }
 }

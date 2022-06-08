@@ -23,15 +23,15 @@ class SignatureFactory extends Factory
     {
         return [
             'data' => $data = $this->faker->shuffleArray($this->faker->words(100)),
-            'hash' => $this->hash($data)
+            'hash' => $this->hash($data),
         ];
     }
 
     public function data(array $data)
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'data' => $data,
-            'hash' => $this->hash($data)
+            'hash' => $this->hash($data),
         ]);
     }
 }

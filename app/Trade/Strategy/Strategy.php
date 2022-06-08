@@ -68,7 +68,7 @@ abstract class Strategy
 
         if ($duplicate = Util::getDuplicates(\array_column($indicatorConfig, 'alias')))
         {
-            throw new \LogicException('Duplicate indicator aliases: ' . \implode(', ', $duplicate));
+            throw new \LogicException('Duplicate indicator aliases: '.\implode(', ', $duplicate));
         }
 
         foreach ($indicatorConfig as &$c)
@@ -97,12 +97,12 @@ abstract class Strategy
     {
         return $this->register([
             'strategy'        => [
-                'signature' => $this->signature->hash
+                'signature' => $this->signature->hash,
             ],
             'trade_setup'     => $config,
             'indicator_setup' => \array_map(
-                static fn(IndicatorConfig $i): array => $i->toArray(),
-                $this->indicatorConfig)
+                static fn (IndicatorConfig $i): array => $i->toArray(),
+                $this->indicatorConfig),
         ]);
     }
 
@@ -111,7 +111,7 @@ abstract class Strategy
         $exchange = $this->symbol->exchange();
         $symbolName = $this->symbol->symbol;
 
-        if (!$evaluationInterval = $this->config('evaluation.interval'))
+        if (! $evaluationInterval = $this->config('evaluation.interval'))
         {
             return $this->symbol;
         }
@@ -132,12 +132,12 @@ abstract class Strategy
 
     public function newAction(TradeSetup $trade, string $actionClass, array $config): void
     {
-        if (!\is_subclass_of($actionClass, Handler::class))
+        if (! \is_subclass_of($actionClass, Handler::class))
         {
-            throw new \InvalidArgumentException('Invalid trade action class: ' . $actionClass);
+            throw new \InvalidArgumentException('Invalid trade action class: '.$actionClass);
         }
 
-        if (!isset($this->actions[$trade]))
+        if (! isset($this->actions[$trade]))
         {
             $this->actions[$trade] = new Collection();
         }
@@ -167,6 +167,7 @@ abstract class Strategy
             $this->tradeConfig,
             collect($this->indicatorConfig),
             $this->indicators);
+
         return $finder->findTrades();
     }
 
@@ -291,13 +292,13 @@ abstract class Strategy
                  * Provides more accurate evaluation at the cost of performance.
                  * Lowest intervals can really slow down the strategy testing.
                  */
-                'interval' => null
+                'interval' => null,
             ],
             /**
              * Trade commission ratio. This will be reflected on the final ROI when tested. Disabled by default.
              * Most exchanges charges between 0.0004(0.04%) and 0.001(0.1%).
              */
-            'feeRatio'   => 0.0000
+            'feeRatio'   => 0.0000,
         ];
     }
 
@@ -316,7 +317,7 @@ abstract class Strategy
             //this will throw an exception if the parameter is invalid
             $this->config($name);
 
-            if (!$parameter instanceof ParameterSet)
+            if (! $parameter instanceof ParameterSet)
             {
                 throw new \UnexpectedValueException("$name is not a ParameterSet.");
             }

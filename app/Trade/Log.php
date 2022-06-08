@@ -32,7 +32,7 @@ final class Log
     {
         if (self::canLog() && $expression)
         {
-            Logger::info(ExecTimeMiddleware::getSessionPrefix() . ($message instanceof \Closure ? $message() : $message));
+            Logger::info(ExecTimeMiddleware::getSessionPrefix().($message instanceof \Closure ? $message() : $message));
         }
     }
 
@@ -43,18 +43,18 @@ final class Log
             throw new \LogicException("Task $taskName is already started.");
         }
 
-        self::$tasks[(string)\microtime(true)] = $taskName;
+        self::$tasks[(string) \microtime(true)] = $taskName;
         self::info(\sprintf('Started: %s', $taskName));
     }
 
     public static function execTimeFinish(string $taskName): void
     {
-        if (!$time = \array_search($taskName, self::$tasks))
+        if (! $time = \array_search($taskName, self::$tasks))
         {
             throw new \LogicException("$taskName is not started, therefore can not be finished.");
         }
 
-        $execTime = \microtime(true) - (float)$time;
+        $execTime = \microtime(true) - (float) $time;
 
         self::info(\sprintf('Finished in %s seconds: %s',
             \round($execTime, 2), self::$tasks[$time]));
@@ -65,6 +65,6 @@ final class Log
     protected static function canLog(): bool
     {
         //does not log in tests to prevent unexpected mock call errors
-        return !\defined('PHPUNIT_COMPOSER_INSTALL') && !\defined('__PHPUNIT_PHAR__');
+        return ! \defined('PHPUNIT_COMPOSER_INSTALL') && ! \defined('__PHPUNIT_PHAR__');
     }
 }

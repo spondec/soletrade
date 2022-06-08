@@ -22,7 +22,7 @@ class MoveStopTest extends TestCase
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
-            'new_stop_price' => $entry
+            'new_stop_price' => $entry,
         ]);
 
         $candle = [
@@ -35,7 +35,7 @@ class MoveStopTest extends TestCase
 
         $this->assertEquals(0.5, $position->price('stop')->get());
 
-        $moveStop->run((object)$candle, $candle['t']);
+        $moveStop->run((object) $candle, $candle['t']);
 
         $this->assertTrue($position->isOpen(), 'Position is expected to be open but is closed.');
         $this->assertEquals(1, $position->price('stop')->get());
@@ -52,7 +52,7 @@ class MoveStopTest extends TestCase
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
-            'new_stop_price' => $entry
+            'new_stop_price' => $entry,
         ]);
 
         $candle = [
@@ -65,7 +65,7 @@ class MoveStopTest extends TestCase
 
         $this->assertEquals(3, $position->price('stop')->get());
 
-        $moveStop->run((object)$candle, $candle['t']);
+        $moveStop->run((object) $candle, $candle['t']);
 
         $this->assertTrue($position->isOpen(), 'Position is expected to be open but is closed.');
         $this->assertEquals(2, $position->price('stop')->get());
@@ -82,7 +82,7 @@ class MoveStopTest extends TestCase
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
-            'new_stop_price' => $entry
+            'new_stop_price' => $entry,
         ]);
 
         $candle = [
@@ -95,7 +95,7 @@ class MoveStopTest extends TestCase
 
         $this->assertEquals(0.5, $position->price('stop')->get());
 
-        $moveStop->run((object)$candle, $candle['t']);
+        $moveStop->run((object) $candle, $candle['t']);
 
         $this->assertNotTrue($position->isOpen(), 'Position is expected to be closed but is open.');
         $this->assertEquals(0.9, $position->price('stop')->get());
@@ -112,7 +112,7 @@ class MoveStopTest extends TestCase
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
-            'new_stop_price' => $entry
+            'new_stop_price' => $entry,
         ]);
 
         $candle = [
@@ -125,7 +125,7 @@ class MoveStopTest extends TestCase
 
         $this->assertEquals(3, $position->price('stop')->get());
 
-        $moveStop->run((object)$candle, $candle['t']);
+        $moveStop->run((object) $candle, $candle['t']);
 
         $this->assertNotTrue($position->isOpen(), 'Position is expected to be closed but is open.');
         $this->assertEquals(2.1, $position->price('stop')->get());

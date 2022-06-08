@@ -7,9 +7,9 @@ class Asset
     /**
      * The properties will be updated as the associated balance is updated.
      *
-     * @param string $name
-     * @param float  $total
-     * @param float  $available
+     * @param  string  $name
+     * @param  float  $total
+     * @param  float  $available
      *
      * @see \App\Trade\Exchange\Fetcher::registerBalanceListeners()
      */

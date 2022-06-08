@@ -10,7 +10,7 @@ final class AllocatedAsset
 
     public function __construct(public       readonly Balance $balance,
                                 public       readonly Asset $asset,
-                                float        $amount,
+                                float $amount,
                                 public float $leverage = 1)
     {
         $this->allocate($amount);

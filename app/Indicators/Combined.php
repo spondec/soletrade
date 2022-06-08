@@ -25,11 +25,11 @@ final class Combined extends Indicator
          *              'class' => \App\Indicators\EMA::class,
          *              'config' => ['timeFrame' => 20]
          *       ]
-         * ]
+         * ].
          */
         'indicators' => [
 
-        ]
+        ],
     ];
     protected array $variableConfigKeys = ['indicators'];
 
@@ -51,7 +51,7 @@ final class Combined extends Indicator
 
         if ($duplicates = Util::getDuplicates(\array_column($indicators, 'alias')))
         {
-            throw new \LogicException('Duplicate indicator aliases: ' . \implode(', ', $duplicates));
+            throw new \LogicException('Duplicate indicator aliases: '.\implode(', ', $duplicates));
         }
 
         foreach ($indicators as $config)

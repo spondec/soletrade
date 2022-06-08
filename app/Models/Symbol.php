@@ -37,17 +37,17 @@ class Symbol extends Model
             'end'        => $this->end,
             'limit'      => $this->limit,
             'candles'    => $this->exists ? $this->candles?->toArray() ?? [] : [],
-            'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
-                    'name'        => $i::name(),
-                    'data'        => $i->raw($i->data()),
-                    'config'      => $i->config(),
-                ])?->toArray() ?? []
+            'indicators' => $this->indicators?->map(static fn (Indicator $i) => [
+                'name'        => $i::name(),
+                'data'        => $i->raw($i->data()),
+                'config'      => $i->config(),
+            ])?->toArray() ?? [],
         ]);
     }
 
     public function candles(?int $limit = null, ?int $start = null, ?int $end = null): CandleCollection
     {
-        if (!$this->exists)
+        if (! $this->exists)
         {
             throw new \LogicException('Can not get candles for an unsaved symbol.');
         }
@@ -75,6 +75,7 @@ class Symbol extends Model
         }
 
         $candles = $query->get();
+
         return $this->candles = new CandleCollection($order === 'DESC' ? $candles->reverse()->values() : $candles);
     }
 
@@ -82,10 +83,10 @@ class Symbol extends Model
     {
         if ($indicator->symbol() !== $this)
         {
-            throw new \InvalidArgumentException("Indicator must be attached to the same symbol.");
+            throw new \InvalidArgumentException('Indicator must be attached to the same symbol.');
         }
 
-        if (!$this->indicators)
+        if (! $this->indicators)
         {
             $this->indicators = new Collection();
         }

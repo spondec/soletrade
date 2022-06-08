@@ -24,8 +24,7 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      *
-     * @param \Illuminate\Console\Scheduling\Schedule $schedule
-     *
+     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
     protected function schedule(Schedule $schedule)
@@ -40,8 +39,8 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__ . '/Command');
-        $this->load(__DIR__ . '/../Trade/Command');
+        $this->load(__DIR__.'/Command');
+        $this->load(__DIR__.'/../Trade/Command');
 
         require base_path('routes/console.php');
     }
@@ -57,7 +56,7 @@ class Kernel extends ConsoleKernel
     {
         if ($this->isPrintable($e))
         {
-            $this->printableExceptionSection->writeln('<fg=red>' . $e->getMessage() . '</>');
+            $this->printableExceptionSection->writeln('<fg=red>'.$e->getMessage().'</>');
         }
         else
         {

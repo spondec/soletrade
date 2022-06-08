@@ -13,9 +13,9 @@ use App\Trade\Log;
 
 class LiveTradeLoop extends TradeLoop
 {
-    public function __construct(TradeSetup                   $entry,
-                                Symbol                       $evaluationSymbol,
-                                array                        $config,
+    public function __construct(TradeSetup $entry,
+                                Symbol $evaluationSymbol,
+                                array $config,
                                 public readonly OrderManager $order)
     {
         parent::__construct($entry, $evaluationSymbol, $config);
@@ -23,7 +23,7 @@ class LiveTradeLoop extends TradeLoop
 
     public function __destruct()
     {
-        if ($this->status->getPosition() && !$this->status->isExited())
+        if ($this->status->getPosition() && ! $this->status->isExited())
         {
             throw new \LogicException('TradeLoop can not be destroyed before the trade is exited');
         }
@@ -31,14 +31,15 @@ class LiveTradeLoop extends TradeLoop
 
     protected function tryPositionEntry(\stdClass $candle, int $priceDate): void
     {
-        if (!$this->order->entry)
+        if (! $this->order->entry)
         {
             $price = $this->status->getEntryPrice();
             $order = $this->sendEntryOrder($price);
 
             $price->lock();
 
-            $order->onFill(function (Fill $fill) {
+            $order->onFill(function (Fill $fill)
+            {
                 if ($this->status->isEntered())
                 {
                     /** @var LivePosition $position */
@@ -56,7 +57,7 @@ class LiveTradeLoop extends TradeLoop
                 }
             });
         }
-        else if (!$this->order->entry->isAllFilled())
+        elseif (! $this->order->entry->isAllFilled())
         {
             $this->order->sync($this->order->entry);
         }
@@ -86,11 +87,12 @@ class LiveTradeLoop extends TradeLoop
     {
         $isEntryFilled = $this->order->entry->isAllFilled();
 
-        if (!$this->order->exit && $this->status->getTargetPrice())
+        if (! $this->order->exit && $this->status->getTargetPrice())
         {
-            if (!$isEntryFilled)
+            if (! $isEntryFilled)
             {
-                Log::info("Entry order not filled fully, cannot send exit order.");
+                Log::info('Entry order not filled fully, cannot send exit order.');
+
                 return;
             }
 
@@ -98,11 +100,12 @@ class LiveTradeLoop extends TradeLoop
             $this->live()->sendExitOrder(OrderType::LIMIT);
         }
 
-        if (!$this->order->stop && $this->status->getStopPrice())
+        if (! $this->order->stop && $this->status->getStopPrice())
         {
-            if (!$isEntryFilled)
+            if (! $isEntryFilled)
             {
-                Log::info("Entry order not filled fully, cannot send stop order.");
+                Log::info('Entry order not filled fully, cannot send stop order.');
+
                 return;
             }
 

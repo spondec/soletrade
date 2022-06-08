@@ -11,7 +11,8 @@ class HasInstanceEventsTest extends TestCase
     {
         $hasEvents = $this->getHasEventsObject();
 
-        $hasEvents->listen('event1', function () {
+        $hasEvents->listen('event1', function ()
+        {
             $this->assertTrue(true);
         });
 
@@ -20,7 +21,8 @@ class HasInstanceEventsTest extends TestCase
 
     protected function getHasEventsObject(): object
     {
-        return new class {
+        return new class
+        {
             use HasInstanceEvents;
 
             protected array $events = ['event1', 'event2'];
@@ -44,7 +46,8 @@ class HasInstanceEventsTest extends TestCase
     {
         $hasEvents = $this->getHasEventsObject();
 
-        $hasEvents->listen('event1', function () {
+        $hasEvents->listen('event1', function ()
+        {
             $this->assertTrue(true);
         });
 
@@ -66,12 +69,14 @@ class HasInstanceEventsTest extends TestCase
 
         foreach ($triggerEvents as $triggerEvent)
         {
-            $hasEvents->listen($triggerEvent, function () use (&$triggerEventCounter) {
+            $hasEvents->listen($triggerEvent, function () use (&$triggerEventCounter)
+            {
                 $triggerEventCounter++;
             });
         }
 
-        $hasEvents->listen('event3', function () use (&$triggeredEventCounter) {
+        $hasEvents->listen('event3', function () use (&$triggeredEventCounter)
+        {
             $triggeredEventCounter++;
         });
 
@@ -89,7 +94,7 @@ class HasInstanceEventsTest extends TestCase
         $hasEvents = $this->getHasEventsObject();
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Listener already registered');
-        $hasEvents->listen('event1', fn() => true);
-        $hasEvents->listen('event1', fn() => true);
+        $hasEvents->listen('event1', fn () => true);
+        $hasEvents->listen('event1', fn () => true);
     }
 }

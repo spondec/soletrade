@@ -20,7 +20,7 @@ class CandleUpdater
      */
     protected array $symbols;
 
-    static bool $isShutdownCallbackRegistered = false;
+    public static bool $isShutdownCallbackRegistered = false;
 
     public function __construct(protected Exchange $exchange)
     {
@@ -32,9 +32,10 @@ class CandleUpdater
         $this->map = $fetch->candleMap();
         $this->limit = $fetch->getMaxCandlesPerRequest();
 
-        if (!static::$isShutdownCallbackRegistered)
+        if (! static::$isShutdownCallbackRegistered)
         {
-            on_shutdown(static function () {
+            on_shutdown(static function ()
+            {
                 //shutdowns may interrupt unlock query
                 DB::unprepared('UNLOCK TABLES');
             });
@@ -43,10 +44,9 @@ class CandleUpdater
     }
 
     /**
-     * @param string        $interval
-     * @param int           $maxRunTime
-     * @param \Closure|null $filter
-     *
+     * @param  string  $interval
+     * @param  int  $maxRunTime
+     * @param  \Closure|null  $filter
      * @return Collection<Symbol>|null
      */
     public function byInterval(string $interval, int $maxRunTime = 0, ?\Closure $filter = null): ?Collection
@@ -60,7 +60,7 @@ class CandleUpdater
             $symbols = $symbols->filter($filter)->values();
         }
 
-        if (!$symbols->first())
+        if (! $symbols->first())
         {
             throw new \LogicException('No symbol was given.');
         }
@@ -70,10 +70,10 @@ class CandleUpdater
             $remaining = $maxRunTime - (\time() - $startTime);
 
             if (($maxRunTime > 0 && $remaining <= 0) ||
-                !$this->bySymbol($symbol, $maxRunTime > 0 ? $remaining : 0))
+                ! $this->bySymbol($symbol, $maxRunTime > 0 ? $remaining : 0))
             {
-                if (($length = $key - 1) < 1) //nothing to return if the length is non-positive
-                {
+                if (($length = $key - 1) < 1)
+                { //nothing to return if the length is non-positive
                     return null;
                 }
 
@@ -130,10 +130,12 @@ class CandleUpdater
                 {
                     return false;
                 }
+            }
+            while (! $break);
 
-            } while (!$break);
             return true;
-        } finally
+        }
+        finally
         {
             DB::unprepared('UNLOCK TABLES');
             Log::execTimeFinish($task);

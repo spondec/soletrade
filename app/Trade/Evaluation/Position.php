@@ -39,9 +39,9 @@ class Position
     protected float $exitPrice;
 
     public function __construct(public           readonly Side $side,
-                                protected float  $size,
-                                protected int    $entryTime,
-                                protected Price  $entry,
+                                protected float $size,
+                                protected int $entryTime,
+                                protected Price $entry,
                                 protected ?Price $exit,
                                 protected ?Price $stop)
     {
@@ -54,7 +54,7 @@ class Position
     {
         if ($size > Position::MAX_SIZE)
         {
-            throw new \InvalidArgumentException('Maximum position size is limited to ' . Position::MAX_SIZE);
+            throw new \InvalidArgumentException('Maximum position size is limited to '.Position::MAX_SIZE);
         }
     }
 
@@ -73,7 +73,7 @@ class Position
 
             $reduce = $this->amount / $this->getUsedSize() * $size;
             $pnl = $reduce * $price - $reduce * $this->getBreakEvenPrice();
-            if (!$this->isBuy())
+            if (! $this->isBuy())
             {
                 $pnl *= -1;
             }
@@ -98,7 +98,7 @@ class Position
             $this->transactionLog = new ChangeLog($data, $timestamp, $reason);
         }
 
-        if (!$this->amount && $this->isOpen())
+        if (! $this->amount && $this->isOpen())
         {
             throw new \LogicException('Position is open but no asset left. Exit trades must be performed with stop() or close().');
         }
@@ -131,12 +131,13 @@ class Position
         {
             return $breakEvenPrice + $differ;
         }
+
         return $breakEvenPrice - $differ;
     }
 
     public function isOpen(): bool
     {
-        return !$this->isClosed && !$this->isStopped;
+        return ! $this->isClosed && ! $this->isStopped;
     }
 
     public function getAssetAmount(): float
@@ -208,7 +209,7 @@ class Position
 
     protected function lockIfUnlocked(Price $price): void
     {
-        if (!$price->isLocked())
+        if (! $price->isLocked())
         {
             $price->lock();
         }
@@ -228,12 +229,13 @@ class Position
         {
             return $this->calcLongRoi($lastPrice, $this->getUsedSize(), $this->maxUsedSize);
         }
+
         return $this->calcShortRoi($lastPrice, $this->getUsedSize(), $this->maxUsedSize);
     }
 
     protected function assertCanRecalculateRoi(): void
     {
-        if (!$this->isOpen())
+        if (! $this->isOpen())
         {
             throw new \LogicException('ROI for a closed position can not be recalculated.');
         }
@@ -264,6 +266,7 @@ class Position
         {
             $pnl = $size - $this->amount * $exitPrice;
         }
+
         return $pnl / $maxUsedSize * 100;
     }
 
@@ -380,8 +383,7 @@ class Position
     }
 
     /**
-     * @param int $exitTime
-     *
+     * @param  int  $exitTime
      * @return void
      */
     protected function insertExitTransaction(int $exitTime): void

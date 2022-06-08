@@ -46,7 +46,7 @@ class LivePositionTest extends TestCase
 
     protected function getPosition(?OrderManager &$manager = null, float $size = 100): LivePosition
     {
-        $manager = m::mock('alias:' . OrderManager::class);
+        $manager = m::mock('alias:'.OrderManager::class);
         $manager->tradeAsset = m::mock(TradeAsset::class);
 
         $manager->stop = null;
@@ -56,7 +56,8 @@ class LivePositionTest extends TestCase
         $manager->tradeAsset
             ->shouldReceive('proportional')
             ->zeroOrMoreTimes()
-            ->andReturnUsing(function (float $size) {
+            ->andReturnUsing(function (float $size)
+            {
                 return $size;
             });
 
@@ -138,15 +139,15 @@ class LivePositionTest extends TestCase
         return $quantity;
     }
 
-    protected function getOrder(Side      $side,
+    protected function getOrder(Side $side,
                                 OrderType $type,
-                                int       $price,
-                                float     $quantity,
-                                bool      $reduceOnly,
-                                ?array    &$fillCallbacks = null,
-                                int       $fillCount = 1): MockInterface|Order
+                                int $price,
+                                float $quantity,
+                                bool $reduceOnly,
+                                ?array &$fillCallbacks = null,
+                                int $fillCount = 1): MockInterface|Order
     {
-        $order = m::mock('alias:' . Order::class);
+        $order = m::mock('alias:'.Order::class);
 
         $order->side = $side;
         $order->type = $type;
@@ -156,7 +157,8 @@ class LivePositionTest extends TestCase
 
         $order->shouldReceive('onFill')
             ->times($fillCount)
-            ->andReturnUsing(function (\Closure $callback) use (&$fillCallbacks) {
+            ->andReturnUsing(function (\Closure $callback) use (&$fillCallbacks)
+            {
                 $fillCallbacks[] = $callback;
             });
 
@@ -165,7 +167,7 @@ class LivePositionTest extends TestCase
 
     protected function getFill(float $quantity, int $price): MockInterface|Fill
     {
-        $fill = m::mock('alias:' . Fill::class);
+        $fill = m::mock('alias:'.Fill::class);
 
         $fill->timestamp = time() * 1000;
         $fill->quantity = $quantity;

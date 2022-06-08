@@ -25,7 +25,7 @@ use Illuminate\Database\Eloquent\Model;
 class Summary extends Model
 {
     protected $casts = [
-        'balance_history' => 'array'
+        'balance_history' => 'array',
     ];
 
     public array $parameters = [];
@@ -39,6 +39,6 @@ class Summary extends Model
         'loss'              => 0,
         'profit'            => 0,
         'failed'            => 0,
-        'ambiguous'         => 0
+        'ambiguous'         => 0,
     ];
 }

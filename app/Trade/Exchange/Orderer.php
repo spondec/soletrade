@@ -14,25 +14,23 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
 {
     public function __construct(protected Exchange $exchange)
     {
-
     }
 
     /**
-     * @param Order $order
-     *
+     * @param  Order  $order
      * @return Fill[]
      */
     public function sync(Order $order): array
     {
         $response = $this->executeOrderUpdate($order);
+
         return $this->handleOrderResponse($order, $response, 'sync');
     }
 
     /**
-     * @param Order  $order
-     * @param array  $response
-     * @param string $responseType
-     *
+     * @param  Order  $order
+     * @param  array  $response
+     * @param  string  $responseType
      * @return Fill[]
      */
     private function handleOrderResponse(Order $order, array $response, string $responseType): array
@@ -43,7 +41,7 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
 
         if ($filled = $order->filled)
         {
-            if (!$fills->count())
+            if (! $fills->count())
             {
                 throw new FailedOrderFillException('Failed to process order fills.');
             }
@@ -56,13 +54,15 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
 
         $order->logResponse($responseType, $response);
 
-        if (!$order->save())
+        if (! $order->save())
         {
             throw new \UnexpectedValueException('Failed to save order.');
         }
 
-        return $fills->map(static function (Fill $fill) use ($order) {
+        return $fills->map(static function (Fill $fill) use ($order)
+        {
             $fill->order()->associate($order);
+
             return $fill->firstUniqueOrCreate();
         })->all();
     }
@@ -160,9 +160,8 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
     abstract protected function processOrderDetails(Order $order, array $response): void;
 
     /**
-     * @param Order $order
-     * @param array $response
-     *
+     * @param  Order  $order
+     * @param  array  $response
      * @return Fill[]
      */
     abstract protected function processOrderFills(Order $order, array $response): array;

@@ -13,7 +13,7 @@ abstract class Creator
 
     public function __construct(protected Filesystem $files)
     {
-        $this->stubPath = $this->getStubDir() . $this->getStubFileName();
+        $this->stubPath = $this->getStubDir().$this->getStubFileName();
     }
 
     public function getStubDir(): string
@@ -34,15 +34,15 @@ abstract class Creator
     {
         $fileName = $this->getFileName();
         $destination = $this->getDestinationDir();
-        
+
         $this->files->ensureDirectoryExists($destination);
-        
-        if (!$destination || !$fileName)
+
+        if (! $destination || ! $fileName)
         {
             throw new \LogicException('Destination directory or filename was not set.');
         }
 
-        if (!$this->files->exists($this->stubPath))
+        if (! $this->files->exists($this->stubPath))
         {
             throw new FileNotFoundException("Stub file not found at $this->stubPath.");
         }
@@ -52,7 +52,7 @@ abstract class Creator
             throw new \RuntimeException("File already exists at $destination$fileName.");
         }
 
-        $this->files->put($destination . $fileName, $this->content);
+        $this->files->put($destination.$fileName, $this->content);
     }
 
     abstract public function getFileName(): ?string;
@@ -61,7 +61,7 @@ abstract class Creator
 
     public function isFileExists(): bool
     {
-        return $this->files->exists($this->getDestinationDir() . $this->getFileName());
+        return $this->files->exists($this->getDestinationDir().$this->getFileName());
     }
 
     public function apply(): static
@@ -74,6 +74,7 @@ abstract class Creator
 
         $this->assertNoPlaceholderExists($content);
         $this->content = $this->modifyContent($content);
+
         return $this;
     }
 
@@ -90,6 +91,7 @@ abstract class Creator
         {
             $content = \str_replace($this->wrapPlaceholder($placeHolder), $replacements[$placeHolder], $content);
         }
+
         return $content;
     }
 
@@ -111,7 +113,7 @@ abstract class Creator
 
         if ($p)
         {
-            throw new \UnexpectedValueException('Failed to replace placeholders: ' . \implode(', ', $p));
+            throw new \UnexpectedValueException('Failed to replace placeholders: '.\implode(', ', $p));
         }
     }
 

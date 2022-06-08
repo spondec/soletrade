@@ -6,7 +6,7 @@ use Database\Factories\ExchangeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/** COLUMNS
+/** COLUMNS.
  *
  * @property int    id
  * @property string class

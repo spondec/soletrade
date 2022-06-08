@@ -12,7 +12,7 @@ trait HasConfig
 
     public function mergeConfig(array &$config): void
     {
-        if (!isset($this->hasDefaultConfig))
+        if (! isset($this->hasDefaultConfig))
         {
             $this->hasDefaultConfig = \method_exists(static::class, 'getDefaultConfig');
         }
@@ -29,11 +29,11 @@ trait HasConfig
         {
             $keys = \explode('.', $key);
 
-            if (isset($keys[1])) //has multiple dimensions
-            {
+            if (isset($keys[1]))
+            { //has multiple dimensions
                 foreach ($keys as $k)
                 {
-                    if (!isset($ref))
+                    if (! isset($ref))
                     {
                         $ref = &$array[$k];
                     }
@@ -42,7 +42,7 @@ trait HasConfig
                         $ref = &$ref[$k];
                     }
 
-                    $ref = $ref ?? [];//redundant?
+                    $ref = $ref ?? []; //redundant?
                 }
 
                 $ref = $value;
@@ -59,14 +59,14 @@ trait HasConfig
     {
         foreach ($replacement as $key => &$value)
         {
-            if (!\array_key_exists($key, $original))
+            if (! \array_key_exists($key, $original))
             {
                 throw new \UnexpectedValueException("Config key does not match: $key");
             }
 
-            if (!\in_array($key, $this->variableConfigKeys))
+            if (! \in_array($key, $this->variableConfigKeys))
             {
-                if (\is_array($value) && !\array_is_list($value))
+                if (\is_array($value) && ! \array_is_list($value))
                 {
                     $this->assertKeyMatch($original[$key], $value);
                 }
@@ -92,7 +92,7 @@ trait HasConfig
             }
             else
             {
-                throw new \InvalidArgumentException('Undefined config key: ' . $k);
+                throw new \InvalidArgumentException('Undefined config key: '.$k);
             }
         }
 
@@ -138,7 +138,7 @@ trait HasConfig
                 throw new \LogicException('Only one level of parent config is allowed.');
             }
 
-            if (!$this->hasDefaultConfig && \in_array(HasConfig::class, \class_uses($parent)))
+            if (! $this->hasDefaultConfig && \in_array(HasConfig::class, \class_uses($parent)))
             {
                 throw new \LogicException('Parent class must implement getDefaultConfig() method.');
             }

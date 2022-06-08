@@ -45,15 +45,15 @@ class Order extends Model
     /**
      * @var \Closure[][]
      */
-    static protected array $fillListeners = [];
+    protected static array $fillListeners = [];
     /**
      * @var Fill[][]
      */
-    static protected array $fills = [];
+    protected static array $fills = [];
     /**
      * @var \Closure[][]
      */
-    static protected array $cancelListeners = [];
+    protected static array $cancelListeners = [];
 
     protected $table = 'orders';
     protected $casts = [
@@ -71,7 +71,8 @@ class Order extends Model
     {
         parent::booted();
 
-        static::saved(static function (self $order) {
+        static::saved(static function (self $order)
+        {
             if ($order->status === OrderStatus::CANCELED)
             {
                 static::handleCancel($order);
@@ -89,7 +90,7 @@ class Order extends Model
 
     public function onCancel(\Closure $callback): void
     {
-        if (!$this->exists)
+        if (! $this->exists)
         {
             throw new \LogicException('Cannot attach listener to non-existing order.');
         }
@@ -109,7 +110,7 @@ class Order extends Model
             throw new \LogicException('Cannot flush listeners for an open order.');
         }
 
-        Log::info('Flushing listeners for order #' . $this->id);
+        Log::info('Flushing listeners for order #'.$this->id);
         unset(static::$fillListeners[$this->id]);
         unset(static::$fills[$this->id]);
         unset(static::$cancelListeners[$this->id]);
@@ -129,7 +130,7 @@ class Order extends Model
             'stop_price'       => 'nullable|numeric',
             'type'             => [new Enum(OrderType::class)],
             'side'             => [new Enum(Side::class)],
-            'status'           => [new Enum(OrderStatus::class)]
+            'status'           => [new Enum(OrderStatus::class)],
         ];
     }
 
@@ -142,8 +143,8 @@ class Order extends Model
             $callback($fill);
         }
 
-        Log::info(\count(static::$fills[$fill->order_id]) . ' fills for order ' . $fill->order_id);
-        Log::info(\count(static::$fills) . ' total fills');
+        Log::info(\count(static::$fills[$fill->order_id]).' fills for order '.$fill->order_id);
+        Log::info(\count(static::$fills).' total fills');
     }
 
     public function isAllFilled(): bool
@@ -153,7 +154,7 @@ class Order extends Model
 
     public function rawFills(): Builder
     {
-        if (!$this->exists)
+        if (! $this->exists)
         {
             throw new \LogicException('Order is not saved.');
         }
@@ -169,7 +170,7 @@ class Order extends Model
 
     public function avgFillPrice(): float
     {
-        return (float)$this
+        return (float) $this
             ->rawFills()
             ->selectRaw('SUM(quantity * price) / SUM(quantity) as avgPrice')
             ->first()
@@ -180,7 +181,7 @@ class Order extends Model
     {
         $responses = $this->responses ?? [];
 
-        if (!isset($responses[$key]) || \end($responses[$key]) != $data)
+        if (! isset($responses[$key]) || \end($responses[$key]) != $data)
         {
             $responses[$key][] = $data;
         }
@@ -204,7 +205,7 @@ class Order extends Model
             $callback($fill);
         }
 
-        Log::info(\count(static::$fillListeners[$this->id]) . ' fill listeners registered for order ' . $this->id);
-        Log::info(\count(static::$fillListeners) . ' total fill listeners registered');
+        Log::info(\count(static::$fillListeners[$this->id]).' fill listeners registered for order '.$this->id);
+        Log::info(\count(static::$fillListeners).' total fill listeners registered');
     }
 }

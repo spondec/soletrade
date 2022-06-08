@@ -12,7 +12,7 @@ class TradeConfig extends Config
                                 public readonly \Closure $setup,
                                 public readonly Signature $signature)
     {
-        $this->withSignals = !empty($signals);
+        $this->withSignals = ! empty($signals);
     }
 
     /**
@@ -25,6 +25,7 @@ class TradeConfig extends Config
         {
             $indicators[] = \is_array($indicator) ? $key : $indicator;
         }
+
         return $indicators;
     }
 }

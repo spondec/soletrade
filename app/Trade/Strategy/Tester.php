@@ -39,9 +39,9 @@ class Tester
 
     protected function newStrategy(string $class, Symbol $symbol, array $config): Strategy
     {
-        if (!\is_subclass_of($class, Strategy::class))
+        if (! \is_subclass_of($class, Strategy::class))
         {
-            throw new \InvalidArgumentException('Invalid strategy class: ' . $class);
+            throw new \InvalidArgumentException('Invalid strategy class: '.$class);
         }
 
         $config = array_merge_recursive_distinct($this->config, $config);
@@ -145,7 +145,7 @@ class Tester
         return [
             'minCandles' => null,
             'startDate'  => null,
-            'endDate'    => null
+            'endDate'    => null,
         ];
     }
 }

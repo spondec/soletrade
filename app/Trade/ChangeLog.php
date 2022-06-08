@@ -56,7 +56,7 @@ class ChangeLog implements Arrayable
     {
         foreach ($log = $this->log as $k => $item)
         {
-            $log[$k]['time'] = \date('Y-m-d H:i:s', (int)(as_ms($item['timestamp']) / 1000));
+            $log[$k]['time'] = \date('Y-m-d H:i:s', (int) (as_ms($item['timestamp']) / 1000));
         }
 
         return $log;

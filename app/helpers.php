@@ -1,17 +1,16 @@
 <?php
 
-const INDICATOR_DIR = "app/Indicators/";
+const INDICATOR_DIR = 'app/Indicators/';
 const INDICATOR_NAMESPACE = "\App\Indicators\\";
 
-const STRATEGY_DIR = "app/Strategies/";
+const STRATEGY_DIR = 'app/Strategies/';
 const STRATEGY_NAMESPACE = "\App\Strategies\\";
 
-if (!function_exists('array_merge_recursive_distinct'))
+if (! function_exists('array_merge_recursive_distinct'))
 {
     /**
-     * @param array<int|string, mixed> $array1
-     * @param array<int|string, mixed> $array2
-     *
+     * @param  array<int|string, mixed>  $array1
+     * @param  array<int|string, mixed>  $array2
      * @return array<int|string, mixed>
      */
     function array_merge_recursive_distinct(array $array1, array &$array2): array
@@ -33,18 +32,18 @@ if (!function_exists('array_merge_recursive_distinct'))
     }
 }
 
-if (!function_exists('recoverable'))
+if (! function_exists('recoverable'))
 {
     function recoverable(Closure $request,
-                         ?int    $retryInSeconds = null,
-                         ?int    $retryLimit = null,
-                         array   $handle = []): \App\Trade\Process\RecoverableRequest
+                         ?int $retryInSeconds = null,
+                         ?int $retryLimit = null,
+                         array $handle = []): \App\Trade\Process\RecoverableRequest
     {
         return \App\Trade\Process\RecoverableRequest::new($request, $retryInSeconds, $retryLimit, $handle);
     }
 }
 
-if (!function_exists('on_shutdown'))
+if (! function_exists('on_shutdown'))
 {
     function on_shutdown(Closure $callback): void
     {
@@ -59,7 +58,8 @@ if (!function_exists('on_shutdown'))
             }
         }
 
-        register_shutdown_function($callbacks[] = static function () use ($callback, &$executed) {
+        register_shutdown_function($callbacks[] = static function () use ($callback, &$executed)
+        {
             if (isset($executed[$callback]))
             {
                 return;
@@ -68,7 +68,8 @@ if (!function_exists('on_shutdown'))
             $callback();
         });
 
-        pcntl_signal(SIGINT, static function () use (&$callbacks) {
+        pcntl_signal(SIGINT, static function () use (&$callbacks)
+        {
             foreach ($callbacks as $callback)
             {
                 $callback();
@@ -78,40 +79,39 @@ if (!function_exists('on_shutdown'))
     }
 }
 
-if (!function_exists('millitime'))
+if (! function_exists('millitime'))
 {
     function millitime(): int
     {
-        return (int)(microtime(true) * 1000);
+        return (int) (microtime(true) * 1000);
     }
 }
 
-if (!function_exists('indicator_exists'))
+if (! function_exists('indicator_exists'))
 {
     function indicator_exists(string $indicatorName): bool
     {
-        return class_exists(INDICATOR_NAMESPACE . $indicatorName);
+        return class_exists(INDICATOR_NAMESPACE.$indicatorName);
     }
 }
 
-if (!function_exists('strategy_exists'))
+if (! function_exists('strategy_exists'))
 {
     function strategy_exists(string $strategyName): bool
     {
-        return class_exists(STRATEGY_NAMESPACE . $strategyName);
+        return class_exists(STRATEGY_NAMESPACE.$strategyName);
     }
 }
 
-if (!function_exists('get_strategy_class'))
+if (! function_exists('get_strategy_class'))
 {
     /**
-     * @param string $strategyName
-     *
+     * @param  string  $strategyName
      * @return class-string<\App\Trade\Strategy\Strategy>
      */
     function get_strategy_class(string $strategyName): string
     {
-        if (class_exists($class = STRATEGY_NAMESPACE . $strategyName))
+        if (class_exists($class = STRATEGY_NAMESPACE.$strategyName))
         {
             return $class;
         }
@@ -120,16 +120,15 @@ if (!function_exists('get_strategy_class'))
     }
 }
 
-if (!function_exists('get_indicator_class'))
+if (! function_exists('get_indicator_class'))
 {
     /**
-     * @param string $indicatorName
-     *
+     * @param  string  $indicatorName
      * @return class-string<\App\Trade\Indicator\Indicator>
      */
     function get_indicator_class(string $indicatorName): string
     {
-        if (class_exists($class = INDICATOR_NAMESPACE . $indicatorName))
+        if (class_exists($class = INDICATOR_NAMESPACE.$indicatorName))
         {
             return $class;
         }
@@ -137,7 +136,7 @@ if (!function_exists('get_indicator_class'))
     }
 }
 
-if (!function_exists('get_indicators'))
+if (! function_exists('get_indicators'))
 {
     function get_indicators(): array
     {
@@ -146,7 +145,7 @@ if (!function_exists('get_indicators'))
         $indicators = [];
         $path = base_path(INDICATOR_DIR);
 
-        if (!$files->isDirectory($path))
+        if (! $files->isDirectory($path))
         {
             return $indicators;
         }
@@ -154,14 +153,14 @@ if (!function_exists('get_indicators'))
         foreach ($files->allFiles($path) as $file)
         {
             $basename = $file->getBasename('.php');
-            $indicators[$basename] = INDICATOR_NAMESPACE . $basename;
+            $indicators[$basename] = INDICATOR_NAMESPACE.$basename;
         }
 
         return $indicators;
     }
 }
 
-if (!function_exists('get_strategies'))
+if (! function_exists('get_strategies'))
 {
     function get_strategies(): array
     {
@@ -170,7 +169,7 @@ if (!function_exists('get_strategies'))
         $strategies = [];
         $path = base_path(STRATEGY_DIR);
 
-        if (!$files->isDirectory($path))
+        if (! $files->isDirectory($path))
         {
             return $strategies;
         }
@@ -178,23 +177,23 @@ if (!function_exists('get_strategies'))
         foreach ($files->allFiles($path) as $file)
         {
             $basename = $file->getBasename('.php');
-            $strategies[$basename] = STRATEGY_NAMESPACE . $basename;
+            $strategies[$basename] = STRATEGY_NAMESPACE.$basename;
         }
 
         return $strategies;
     }
 }
 
-if (!function_exists('as_ms'))
+if (! function_exists('as_ms'))
 {
     function as_ms(int $timestamp): int
     {
-        if (strlen((string)$timestamp) === 13)
+        if (strlen((string) $timestamp) === 13)
         {
             return $timestamp;
         }
 
-        if (strlen((string)$timestamp) === 10)
+        if (strlen((string) $timestamp) === 10)
         {
             return $timestamp * 1000;
         }
@@ -203,11 +202,11 @@ if (!function_exists('as_ms'))
     }
 }
 
-if (!function_exists('elapsed_time'))
+if (! function_exists('elapsed_time'))
 {
     function elapsed_time(int $startTime): string
     {
-        $start = (int)(as_ms($startTime) / 1000);
+        $start = (int) (as_ms($startTime) / 1000);
         $time = time();
         if ($start > $time)
         {
@@ -217,9 +216,9 @@ if (!function_exists('elapsed_time'))
         $elapsed = $time - $start;
 
         $seconds = $elapsed % 60;
-        $minutes = (int)($elapsed / 60) % 60;
-        $hours = (int)($elapsed / 60 / 60) % 60 % 24;
-        $days = (int)($elapsed / 60 / 60 / 24);
+        $minutes = (int) ($elapsed / 60) % 60;
+        $hours = (int) ($elapsed / 60 / 60) % 60 % 24;
+        $days = (int) ($elapsed / 60 / 60 / 24);
 
         return "$days:$hours:$minutes:$seconds";
     }

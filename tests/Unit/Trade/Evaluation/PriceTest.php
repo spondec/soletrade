@@ -17,7 +17,8 @@ class PriceTest extends TestCase
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Attempted to set a locked price');
 
-        \Closure::bind(function () use ($price) {
+        \Closure::bind(function () use ($price)
+        {
             $price->lock();
             $price->set(100, time(), 'Change', false);
         }, $price, Price::class)();
@@ -28,7 +29,8 @@ class PriceTest extends TestCase
         $price = new Price(123, time());
 
         $test = $this;
-        \Closure::bind(function () use ($price, $test) {
+        \Closure::bind(function () use ($price, $test)
+        {
             $test->assertFalse($price->isLocked());
             $price->lock();
             $test->assertTrue($price->isLocked());

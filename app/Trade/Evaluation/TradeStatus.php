@@ -43,7 +43,7 @@ class TradeStatus
     {
         $priceDate = $this->entry->price_date;
 
-        $this->entryPrice = $this->newPrice((float)$this->entry->price, $priceDate);
+        $this->entryPrice = $this->newPrice((float) $this->entry->price, $priceDate);
         $this->targetPrice = $this->entry->target_price ? $this->newPrice($this->entry->target_price, $priceDate) : null;
         $this->stopPrice = $this->entry->stop_price ? $this->newPrice($this->entry->stop_price, $priceDate) : null;
     }
@@ -53,8 +53,8 @@ class TradeStatus
         return new Price($price, $timestamp);
     }
 
-    public function enterPosition(int    $entryTime,
-                                  float  $size = 100,
+    public function enterPosition(int $entryTime,
+                                  float $size = 100,
                                   ?float $price = null,
                                   string $positionClass = Position::class,
                                          ...$params): void
@@ -86,10 +86,12 @@ class TradeStatus
 
     protected function registerPositionListeners(): void
     {
-        $this->position->listen(eventName: 'close', onEvent: function () {
+        $this->position->listen(eventName: 'close', onEvent: function ()
+        {
             $this->isExited = $this->isClosed = true;
         });
-        $this->position->listen(eventName: 'stop', onEvent: function () {
+        $this->position->listen(eventName: 'stop', onEvent: function ()
+        {
             $this->isExited = $this->isStopped = true;
         });
     }
@@ -106,7 +108,7 @@ class TradeStatus
 
     protected function initActionHandlers(): void
     {
-        foreach ($this->entry->actions->filter(static fn(TradeAction $action) => !$action->is_taken) as $action)
+        foreach ($this->entry->actions->filter(static fn (TradeAction $action) => ! $action->is_taken) as $action)
         {
             $this->actionHandlers[] = $this->newActionHandler($this->position, $action);
         }
@@ -129,7 +131,7 @@ class TradeStatus
         {
             return;
         }
-        
+
         foreach ($this->actionHandlers as $key => $handler)
         {
             if ($action = $handler->run($candle, $priceDate))
@@ -156,7 +158,7 @@ class TradeStatus
 
     protected function assertPosition(): void
     {
-        if (!$this->position)
+        if (! $this->position)
         {
             throw new \LogicException('Position has not been initialized.');
         }
@@ -176,30 +178,33 @@ class TradeStatus
         return $this->isClosed;
     }
 
-    #[Pure] public function getEntryPrice(): Price
-    {
-        return $this->entryPrice;
-    }
+    #[Pure]
+ public function getEntryPrice(): Price
+ {
+     return $this->entryPrice;
+ }
 
     public function getPosition(): ?Position
     {
         return $this->position;
     }
 
-    #[Pure] public function isStopped(): bool
-    {
-        return !$this->isAmbiguous() ? $this->isStopped : false;
-    }
+    #[Pure]
+ public function isStopped(): bool
+ {
+     return ! $this->isAmbiguous() ? $this->isStopped : false;
+ }
 
     public function isAmbiguous(): bool
     {
         return $this->isStopped && $this->isClosed;
     }
 
-    #[Pure] public function isClosed(): bool
-    {
-        return !$this->isAmbiguous() ? $this->isClosed : false;
-    }
+    #[Pure]
+ public function isClosed(): bool
+ {
+     return ! $this->isAmbiguous() ? $this->isClosed : false;
+ }
 
     public function isEntered(): bool
     {

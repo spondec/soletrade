@@ -12,8 +12,8 @@ class Binance extends Exchange
             'apiKey'  => $this->apiKey,
             'secret'  => $this->secretKey,
             'options' => [
-                'recvWindow' => 5000
-            ]
+                'recvWindow' => 5000,
+            ],
         ]);
 
         $this->fetch = new Fetcher($this, $api);

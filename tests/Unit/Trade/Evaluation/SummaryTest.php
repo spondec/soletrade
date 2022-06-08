@@ -54,13 +54,14 @@ class SummaryTest extends TestCase
     protected function calcFeeIncludedRoi(float $roi, float $feeRatio): float
     {
         $balance = (100 - 100 * $feeRatio * 2);
+
         return $balance + $balance * $roi / 100 - 100;
     }
 
     protected function getTenPercentPositiveRoiBuyEvaluation(): Evaluation
     {
         /** @var Evaluation $evaluation */
-        $evaluation = \Mockery::mock('alias:' . Evaluation::class);
+        $evaluation = \Mockery::mock('alias:'.Evaluation::class);
         $evaluation->entry_price = 100;
         $evaluation->stop_price = 50;
         $evaluation->target_price = 200;
@@ -76,6 +77,7 @@ class SummaryTest extends TestCase
         $evaluation->is_entry_price_valid = 1;
         $evaluation->entry_timestamp = time() - 86400;
         $evaluation->exit_timestamp = time();
+
         return $evaluation;
     }
 }

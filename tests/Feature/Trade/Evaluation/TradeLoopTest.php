@@ -3,10 +3,10 @@
 namespace Tests\Feature\Trade\Evaluation;
 
 use App\Models\Candle;
-use App\Trade\Evaluation\Position;
 use App\Models\Signature;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
+use App\Trade\Evaluation\Position;
 use App\Trade\Evaluation\TradeLoop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
@@ -45,7 +45,7 @@ class TradeLoopTest extends TestCase
             'side'       => 'SELL',
             'price'      => 2,
             'timestamp'  => $candles[2]->t,
-            'price_date' => $candles[3]->t - 1000
+            'price_date' => $candles[3]->t - 1000,
         ]);
 
         $popped = $candles->pop();
@@ -54,7 +54,7 @@ class TradeLoopTest extends TestCase
             'side'       => 'BUY',
             'price'      => 1,
             'timestamp'  => $candles->last()->t,
-            'price_date' => $popped->t - 1000
+            'price_date' => $popped->t - 1000,
         ]);
 
         $candles->last()->update([
@@ -106,7 +106,7 @@ class TradeLoopTest extends TestCase
                 'side'       => 'SELL',
                 'price'      => 2,
                 'timestamp'  => $candles[2]->t,
-                'price_date' => $candles[3]->t - 1000
+                'price_date' => $candles[3]->t - 1000,
             ]);
 
         $loop = new TradeLoop($entry, $entry->symbol, ['timeout' => 60 * 3]);
