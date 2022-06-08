@@ -11,7 +11,7 @@ class RecoverableTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('No Throwable');
-        new Recoverable(fn() => $this->assertTrue(true), 1, 1);
+        new Recoverable(fn () => $this->assertTrue(true), 1, 1);
     }
 
     public function test_retry_in_seconds()
@@ -19,8 +19,7 @@ class RecoverableTest extends TestCase
         $recoverable = new Recoverable(function () {
             static $time;
 
-            if (!$time)
-            {
+            if (!$time) {
                 $time = time();
                 throw new \Exception('Failed');
             }
@@ -38,8 +37,7 @@ class RecoverableTest extends TestCase
 
             $count++;
 
-            if ($count < 2)
-            {
+            if ($count < 2) {
                 throw new \Exception('Failed');
             }
 
@@ -63,8 +61,7 @@ class RecoverableTest extends TestCase
     {
         $recoverable = new Recoverable(function () {
             static $count;
-            if (!$count)
-            {
+            if (!$count) {
                 $count = 1;
                 throw new \LogicException('Failed');
             }
@@ -76,18 +73,14 @@ class RecoverableTest extends TestCase
 
     public function test_negative_retry_limit()
     {
-        try
-        {
+        try {
             $count = 0;
             (new Recoverable(function () use (&$count) {
-
                 $count++;
 
                 throw new \Exception('To be caught');
-
             }, 1, 2, [\Exception::class]))->run();
-        } catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             $this->assertInstanceOf(\Exception::class, $e);
             $this->assertEquals('To be caught', $e->getMessage());
             $this->assertEquals(3, $count);

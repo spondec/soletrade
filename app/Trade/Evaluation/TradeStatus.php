@@ -53,29 +53,31 @@ class TradeStatus
         return new Price($price, $timestamp);
     }
 
-    public function enterPosition(int    $entryTime,
-                                  float  $size = 100,
-                                  ?float $price = null,
-                                  string $positionClass = Position::class,
-                                         ...$params): void
+    public function enterPosition(
+        int    $entryTime,
+        float  $size = 100,
+        ?float $price = null,
+        string $positionClass = Position::class,
+        ...$params
+    ): void
     {
-        if ($this->position)
-        {
+        if ($this->position) {
             throw new \LogicException('Already in a position.');
         }
 
-        if ($price && $price != $this->entryPrice->get())
-        {
+        if ($price && $price != $this->entryPrice->get()) {
             $this->entryPrice->set($price, $entryTime, 'Price override.', true);
         }
 
-        $this->position = new $positionClass($this->entry->side(),
+        $this->position = new $positionClass(
+            $this->entry->side(),
             $size,
             $entryTime,
             $this->entryPrice,
             $this->getTargetPrice(),
             $this->getStopPrice(),
-            ...$params);
+            ...$params
+        );
 
         $this->registerPositionListeners();
         $this->initActionHandlers();
@@ -106,8 +108,7 @@ class TradeStatus
 
     protected function initActionHandlers(): void
     {
-        foreach ($this->entry->actions->filter(static fn(TradeAction $action) => !$action->is_taken) as $action)
-        {
+        foreach ($this->entry->actions->filter(static fn (TradeAction $action) => !$action->is_taken) as $action) {
             $this->actionHandlers[] = $this->newActionHandler($this->position, $action);
         }
     }
@@ -125,15 +126,12 @@ class TradeStatus
 
     public function runTradeActions(\stdClass $candle, int $priceDate): void
     {
-        if ($this->isExited())
-        {
+        if ($this->isExited()) {
             return;
         }
         
-        foreach ($this->actionHandlers as $key => $handler)
-        {
-            if ($action = $handler->run($candle, $priceDate))
-            {
+        foreach ($this->actionHandlers as $key => $handler) {
+            if ($action = $handler->run($candle, $priceDate)) {
                 $action->save();
                 unset($this->actionHandlers[$key]);
             }
@@ -144,10 +142,11 @@ class TradeStatus
     {
         $this->assertPosition();
         $stopPrice = $this->getStopPrice();
-        if ($stopPrice && $this->isStopped = (Calc::inRange($stopPrice->get(),
-                    $candle->h,
-                    $candle->l) || $this->position?->isStopped()))
-        {
+        if ($stopPrice && $this->isStopped = (Calc::inRange(
+            $stopPrice->get(),
+            $candle->h,
+            $candle->l
+        ) || $this->position?->isStopped())) {
             $this->isExited = true;
         }
 
@@ -156,8 +155,7 @@ class TradeStatus
 
     protected function assertPosition(): void
     {
-        if (!$this->position)
-        {
+        if (!$this->position) {
             throw new \LogicException('Position has not been initialized.');
         }
     }
@@ -166,10 +164,11 @@ class TradeStatus
     {
         $this->assertPosition();
         $target = $this->getTargetPrice();
-        if ($target && $this->isClosed = (Calc::inRange($target->get(),
-                    $candle->h,
-                    $candle->l) || $this->position?->isClosed()))
-        {
+        if ($target && $this->isClosed = (Calc::inRange(
+            $target->get(),
+            $candle->h,
+            $candle->l
+        ) || $this->position?->isClosed())) {
             $this->isExited = true;
         }
 

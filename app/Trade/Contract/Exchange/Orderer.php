@@ -34,10 +34,12 @@ interface Orderer
      * @return Order
      * @throws OrderFailedException
      */
-    public function market(Side   $side,
-                           string $symbol,
-                           float  $quantity,
-                           bool   $reduceOnly): Order;
+    public function market(
+        Side   $side,
+        string $symbol,
+        float  $quantity,
+        bool   $reduceOnly
+    ): Order;
 
     /**
      * @param Side   $side
@@ -49,11 +51,13 @@ interface Orderer
      * @return Order
      * @throws OrderFailedException
      */
-    public function stopMarket(Side   $side,
-                               string $symbol,
-                               float  $quantity,
-                               float  $stopPrice,
-                               bool   $reduceOnly): Order;
+    public function stopMarket(
+        Side   $side,
+        string $symbol,
+        float  $quantity,
+        float  $stopPrice,
+        bool   $reduceOnly
+    ): Order;
 
     /**
      * @param Side   $side
@@ -65,11 +69,13 @@ interface Orderer
      * @return Order
      * @throws OrderFailedException
      */
-    public function limit(Side   $side,
-                          string $symbol,
-                          float  $price,
-                          float  $quantity,
-                          bool   $reduceOnly): Order;
+    public function limit(
+        Side   $side,
+        string $symbol,
+        float  $price,
+        float  $quantity,
+        bool   $reduceOnly
+    ): Order;
 
     /**
      * @param Side   $side
@@ -82,10 +88,12 @@ interface Orderer
      * @return Order
      * @throws OrderFailedException
      */
-    public function stopLimit(Side   $side,
-                              string $symbol,
-                              float  $stopPrice,
-                              float  $price,
-                              float  $quantity,
-                              bool   $reduceOnly): Order;
+    public function stopLimit(
+        Side   $side,
+        string $symbol,
+        float  $stopPrice,
+        float  $price,
+        float  $quantity,
+        bool   $reduceOnly
+    ): Order;
 }

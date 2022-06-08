@@ -14,9 +14,11 @@ use App\Trade\Collection\CandleCollection;
  */
 class Candles
 {
-    public function __construct(protected \Iterator        $iterator,
-                                protected CandleCollection $candles,
-                                public                     readonly Symbol $symbol)
+    public function __construct(
+        protected \Iterator        $iterator,
+        protected CandleCollection $candles,
+        public                     readonly Symbol $symbol
+    )
     {
     }
 
@@ -34,8 +36,7 @@ class Candles
     {
         $offset = $this->iterator->key() - $period;
 
-        if ($offset < 0)
-        {
+        if ($offset < 0) {
             return null;
         }
         return \array_slice($this->candles->all(), $offset, $period);

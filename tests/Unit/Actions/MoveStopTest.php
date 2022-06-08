@@ -13,12 +13,14 @@ class MoveStopTest extends TestCase
 {
     public function test_buy_with_target_roi_50_and_target_price_above_new_stop_price_should_leave_position_open_and_move_stop_to_entry(): void
     {
-        $position = new Position(Side::BUY,
+        $position = new Position(
+            Side::BUY,
             100,
             time(),
             new Price($entry = 1, time()),
             new Price(2, time()),
-            new Price(0.5, time()));
+            new Price(0.5, time())
+        );
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
@@ -43,12 +45,14 @@ class MoveStopTest extends TestCase
 
     public function test_sell_with_target_roi_50_and_target_price_below_new_stop_price_should_leave_position_open_and_move_stop_to_entry(): void
     {
-        $position = new Position(Side::SELL,
+        $position = new Position(
+            Side::SELL,
             100,
             time(),
             new Price($entry = 2, time()),
             new Price(1, time()),
-            new Price(3, time()));
+            new Price(3, time())
+        );
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
@@ -73,12 +77,14 @@ class MoveStopTest extends TestCase
 
     public function test_buy_with_target_roi_50_and_target_price_below_new_stop_price_should_close_position_at_target_price(): void
     {
-        $position = new Position(Side::BUY,
+        $position = new Position(
+            Side::BUY,
             100,
             time(),
             new Price($entry = 1, time()),
             new Price(2, time()),
-            new Price(0.5, time()));
+            new Price(0.5, time())
+        );
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],
@@ -103,12 +109,14 @@ class MoveStopTest extends TestCase
 
     public function test_sell_with_target_roi_50_and_target_price_above_new_stop_price_should_close_position_at_target_price(): void
     {
-        $position = new Position(Side::SELL,
+        $position = new Position(
+            Side::SELL,
             100,
             time(),
             new Price($entry = 2, time()),
             new Price(1, time()),
-            new Price(3, time()));
+            new Price(3, time())
+        );
 
         $moveStop = $this->newMoveStop($position, [
             'target'         => ['roi' => 50],

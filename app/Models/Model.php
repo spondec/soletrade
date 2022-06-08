@@ -8,16 +8,14 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
 {
     protected array $unique = [];
 
-    public final function validate(?array &$errors = null)
+    final public function validate(?array &$errors = null)
     {
         $errors = Validator::make($this->toArray(), static::validationRules())
             ->errors()
             ->messages();
 
-        if ($errors)
-        {
-            foreach ($errors as $key => $error)
-            {
+        if ($errors) {
+            foreach ($errors as $key => $error) {
                 $errors[$key] = \implode(' ,', $error);
             }
 
@@ -28,8 +26,7 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
 
     public function findUnique(array $with = []): ?static
     {
-        if ($this->unique)
-        {
+        if ($this->unique) {
             /** @noinspection PhpIncompatibleReturnTypeInspection */
             return static::query()
                 ->with($with)
@@ -61,14 +58,13 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
     {
         parent::booted();
 
-        static::saving(static fn(self $model) => $model->validate());
+        static::saving(static fn (self $model) => $model->validate());
     }
 
     public function uniqueAttributesToArray(): array
     {
         $attributes = [];
-        foreach ($this->unique as $column)
-        {
+        foreach ($this->unique as $column) {
             $attributes[$column] = $this->getAttribute($column);
         }
 

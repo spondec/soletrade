@@ -28,11 +28,13 @@ class StopLimit extends Handler
     {
         $side = $this->getSide($reduceOnly);
 
-        return $this->manager->stopLimit($side,
+        return $this->manager->stopLimit(
+            $side,
             $this->getStopPrice($side, $price, $this->config('trigger_price_ratio', true)),
             $price,
             $quantity,
-            $reduceOnly);
+            $reduceOnly
+        );
     }
 
     protected function getStopPrice(Side $side, float $price, float $stopPriceRatio): float

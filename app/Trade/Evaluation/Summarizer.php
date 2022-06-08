@@ -47,8 +47,7 @@ class Summarizer
     /** @param Evaluation[] $evaluations */
     public function summarize(Collection $evaluations): Summary
     {
-        foreach ($evaluations as $evaluation)
-        {
+        foreach ($evaluations as $evaluation) {
             $this->addEvaluation($evaluation);
         }
 
@@ -61,10 +60,8 @@ class Summarizer
         $isAmbiguous = (bool)$evaluation->is_ambiguous;
         $relativeRoi = (float)$evaluation->relative_roi;
 
-        if ($isEntryValid && !$isAmbiguous && $relativeRoi)
-        {
-            if (!$this->balanceHistory)
-            {
+        if ($isEntryValid && !$isAmbiguous && $relativeRoi) {
+            if (!$this->balanceHistory) {
                 $this->recordBalance($evaluation->entry_timestamp); //registers initial balance
             }
             $this->cutCommission($evaluation->used_size, $this->feeRatio * 2);
@@ -74,12 +71,9 @@ class Summarizer
             $this->recordBalance($evaluation->exit_timestamp);
             $this->summary->total++;
 
-            if ($relativeRoi > 0)
-            {
+            if ($relativeRoi > 0) {
                 $this->profitRoi[] = $relativeRoi;
-            }
-            else if ($relativeRoi < 0)
-            {
+            } elseif ($relativeRoi < 0) {
                 $this->lossRoi[] = $relativeRoi;
             }
             $this->highestRoi[] = (float)$evaluation->highest_roi;
@@ -91,13 +85,11 @@ class Summarizer
 
     protected function recordBalance(int $timestamp): void
     {
-        if (\array_key_exists($timestamp, $this->balanceHistory))
-        {
+        if (\array_key_exists($timestamp, $this->balanceHistory)) {
             throw new \LogicException("Balance record for timestamp $timestamp already exists.");
         }
 
-        if (\array_key_last($this->balanceHistory) > $timestamp)
-        {
+        if (\array_key_last($this->balanceHistory) > $timestamp) {
             throw new \LogicException("New balance record can't be older than previous record.");
         }
 
@@ -115,20 +107,13 @@ class Summarizer
 
     protected function updateCounters(bool $isAmbiguous, bool $isEntryValid, float $roi): void
     {
-        if ($isAmbiguous)
-        {
+        if ($isAmbiguous) {
             $this->summary->ambiguous++;
-        }
-        else if (!$isEntryValid)
-        {
+        } elseif (!$isEntryValid) {
             $this->summary->failed++;
-        }
-        else if ($roi < 0)
-        {
+        } elseif ($roi < 0) {
             $this->summary->loss++;
-        }
-        else if ($roi > 0)
-        {
+        } elseif ($roi > 0) {
             $this->summary->profit++;
         }
     }
@@ -144,8 +129,7 @@ class Summarizer
     {
         $summary = $this->summary;
 
-        if ($summary->total == 0)
-        {
+        if ($summary->total == 0) {
             return;
         }
 
@@ -155,25 +139,20 @@ class Summarizer
         $summary->avg_roi = \round($roi / $summary->total, 2);
         $summary->success_ratio = \round($summary->profit / $summary->total * 100, 2);
 
-        if ($this->profitRoi)
-        {
+        if ($this->profitRoi) {
             $summary->avg_profit_roi = \round(Calc::avg($this->profitRoi), 2);
         }
-        if ($this->lossRoi)
-        {
+        if ($this->lossRoi) {
             $summary->avg_loss_roi = \round(Calc::avg($this->lossRoi), 2);
         }
 
-        if ($this->highestRoi)
-        {
+        if ($this->highestRoi) {
             $summary->avg_highest_roi = \round(Calc::avg($this->highestRoi), 2);
         }
-        if ($this->lowestRoi)
-        {
+        if ($this->lowestRoi) {
             $summary->avg_lowest_roi = \round(Calc::avg($this->lowestRoi), 2);
         }
-        if ($this->profitRoi && $this->lossRoi)
-        {
+        if ($this->profitRoi && $this->lossRoi) {
             $summary->risk_reward_ratio = $summary->avg_loss_roi
                 ? \round(\abs($summary->avg_profit_roi / $summary->avg_loss_roi), 2)
                 : 0;

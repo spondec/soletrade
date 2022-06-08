@@ -18,8 +18,7 @@ class IndicatorTest extends IndicatorTestCase
         $slice = $candles->slice(7);
         $candleIterator = $slice->getIterator();
 
-        foreach ($sma->scan() as $result)
-        {
+        foreach ($sma->scan() as $result) {
             $this->assertEquals($iterator->key(), $result['timestamp']);
             $this->assertEquals($sma->current(), $iterator->current());
             $this->assertEquals($sma->candle(), $candleIterator->current());

@@ -20,8 +20,7 @@ class SymbolSeeder extends Seeder
         $repo = App::make(ConfigRepository::class);
 
         /** @var Exchange|string $exchange */
-        foreach ($repo->exchanges as $exchange)
-        {
+        foreach ($repo->exchanges as $exchange) {
             $exchange::instance()
                 ->update()
                 ->bulkIndexSymbols([

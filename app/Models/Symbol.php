@@ -37,7 +37,7 @@ class Symbol extends Model
             'end'        => $this->end,
             'limit'      => $this->limit,
             'candles'    => $this->exists ? $this->candles?->toArray() ?? [] : [],
-            'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
+            'indicators' => $this->indicators?->map(static fn (Indicator $i) => [
                     'name'        => $i::name(),
                     'data'        => $i->raw($i->data()),
                     'config'      => $i->config(),
@@ -47,13 +47,11 @@ class Symbol extends Model
 
     public function candles(?int $limit = null, ?int $start = null, ?int $end = null): CandleCollection
     {
-        if (!$this->exists)
-        {
+        if (!$this->exists) {
             throw new \LogicException('Can not get candles for an unsaved symbol.');
         }
 
-        if ($end && $start && $limit)
-        {
+        if ($end && $start && $limit) {
             throw new \UnexpectedValueException('Argument $limit can not be passed along with $start and $end.');
         }
 
@@ -61,16 +59,13 @@ class Symbol extends Model
             ->where('symbol_id', $this->id)
             ->orderBy('t', $order = $start ? 'ASC' : 'DESC');
 
-        if ($limit)
-        {
+        if ($limit) {
             $query->limit($limit);
         }
-        if ($end)
-        {
+        if ($end) {
             $query->where('t', '<=', $end);
         }
-        if ($start)
-        {
+        if ($start) {
             $query->where('t', '>=', $start);
         }
 
@@ -80,13 +75,11 @@ class Symbol extends Model
 
     public function addIndicator(Indicator $indicator): void
     {
-        if ($indicator->symbol() !== $this)
-        {
+        if ($indicator->symbol() !== $this) {
             throw new \InvalidArgumentException("Indicator must be attached to the same symbol.");
         }
 
-        if (!$this->indicators)
-        {
+        if (!$this->indicators) {
             $this->indicators = new Collection();
         }
 
@@ -95,8 +88,7 @@ class Symbol extends Model
 
     public function updateCandlesIfOlderThan(int $seconds, int $maxRunTime = 0): void
     {
-        if ($seconds > 0 && $this->last_update + $seconds * 1000 <= \time() * 1000)
-        {
+        if ($seconds > 0 && $this->last_update + $seconds * 1000 <= \time() * 1000) {
             $this->updateCandles($maxRunTime);
         }
     }

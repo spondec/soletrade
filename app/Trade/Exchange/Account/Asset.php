@@ -13,9 +13,11 @@ class Asset
      *
      * @see \App\Trade\Exchange\Fetcher::registerBalanceListeners()
      */
-    public function __construct(public        readonly string $name,
-                                private float $total,
-                                private float $available)
+    public function __construct(
+        public        readonly string $name,
+        private float $total,
+        private float $available
+    )
     {
     }
 

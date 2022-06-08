@@ -87,8 +87,7 @@ abstract class Fetcher
      */
     public function roi(): ?array
     {
-        if (!$this->prevBalance)
-        {
+        if (!$this->prevBalance) {
             return null;
         }
 
@@ -97,15 +96,16 @@ abstract class Fetcher
 
     protected function registerBalanceListeners(Balance $balance): void
     {
-        foreach ($balance->assets as $asset)
-        {
-            $balance->listen('update',
+        foreach ($balance->assets as $asset) {
+            $balance->listen(
+                'update',
                 \Closure::bind(function (Balance $current, Balance $updated) use ($asset) {
                     $updatedAsset = $updated[$this->name];
 
                     $asset->total = $updatedAsset->total();
                     $asset->available = $updatedAsset->available();
-                }, $asset, $asset));
+                }, $asset, $asset)
+            );
         }
     }
 
@@ -120,8 +120,7 @@ abstract class Fetcher
 
         $this->registerBalanceListeners($balance);
 
-        if (!$this->prevBalance)
-        {
+        if (!$this->prevBalance) {
             $this->prevBalance = $balance;
         }
 

@@ -33,9 +33,8 @@ class StrategyIndicatorStub extends Creator
 
         $default = Util::indicatorConfig($indicator);
 
-        if ($combined)
-        {
-            $default['indicators'] = $combined->map(fn(string $indicator): array => [
+        if ($combined) {
+            $default['indicators'] = $combined->map(fn (string $indicator): array => [
                 'alias'  => "{{ {$indicator}_alias }}",
                 'class'  => "{{ {$indicator}_class }}",
                 'config' => Util::indicatorConfig($indicator)
@@ -53,7 +52,7 @@ class StrategyIndicatorStub extends Creator
         $export = Util::varExport($config);
         $export = str($export)
             ->explode("\n")
-            ->map(fn(string $line): string => "\t\t\t\t$line");
+            ->map(fn (string $line): string => "\t\t\t\t$line");
         $export->pop();
         $export->shift();
         return "[\n" . $export->implode("\n") . "\n\t\t\t\t]";

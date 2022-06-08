@@ -138,13 +138,15 @@ class LivePositionTest extends TestCase
         return $quantity;
     }
 
-    protected function getOrder(Side      $side,
-                                OrderType $type,
-                                int       $price,
-                                float     $quantity,
-                                bool      $reduceOnly,
-                                ?array    &$fillCallbacks = null,
-                                int       $fillCount = 1): MockInterface|Order
+    protected function getOrder(
+        Side      $side,
+        OrderType $type,
+        int       $price,
+        float     $quantity,
+        bool      $reduceOnly,
+        ?array    &$fillCallbacks = null,
+        int       $fillCount = 1
+    ): MockInterface|Order
     {
         $order = m::mock('alias:' . Order::class);
 
@@ -233,13 +235,15 @@ class LivePositionTest extends TestCase
 
         $quantity = 0.5;
 
-        $order = $this->getOrder($pos->side->opposite(),
+        $order = $this->getOrder(
+            $pos->side->opposite(),
             $pos->stopOrderType,
             $price,
             $quantity,
             true,
             $fillCallbacks,
-            2);
+            2
+        );
 
         $order->shouldReceive('isAllFilled')->once()->andReturn(true);
         $order->shouldReceive('avgFillPrice')->once()->andReturn($price);
@@ -277,13 +281,15 @@ class LivePositionTest extends TestCase
 
         $quantity = 0.5;
 
-        $order = $this->getOrder($pos->side->opposite(),
+        $order = $this->getOrder(
+            $pos->side->opposite(),
             $pos->exitOrderType,
             $price,
             $quantity,
             true,
             $fillCallbacks,
-            2);
+            2
+        );
 
         $order->shouldReceive('isAllFilled')->once()->andReturn(true);
         $order->shouldReceive('avgFillPrice')->once()->andReturn($price);

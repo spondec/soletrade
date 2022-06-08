@@ -45,15 +45,15 @@ class Order extends Model
     /**
      * @var \Closure[][]
      */
-    static protected array $fillListeners = [];
+    protected static array $fillListeners = [];
     /**
      * @var Fill[][]
      */
-    static protected array $fills = [];
+    protected static array $fills = [];
     /**
      * @var \Closure[][]
      */
-    static protected array $cancelListeners = [];
+    protected static array $cancelListeners = [];
 
     protected $table = 'orders';
     protected $casts = [
@@ -72,8 +72,7 @@ class Order extends Model
         parent::booted();
 
         static::saved(static function (self $order) {
-            if ($order->status === OrderStatus::CANCELED)
-            {
+            if ($order->status === OrderStatus::CANCELED) {
                 static::handleCancel($order);
             }
         });
@@ -81,16 +80,14 @@ class Order extends Model
 
     protected static function handleCancel(Order $order): void
     {
-        foreach (static::$cancelListeners[$order->id] ?? [] as $cancelListener)
-        {
+        foreach (static::$cancelListeners[$order->id] ?? [] as $cancelListener) {
             $cancelListener($order);
         }
     }
 
     public function onCancel(\Closure $callback): void
     {
-        if (!$this->exists)
-        {
+        if (!$this->exists) {
             throw new \LogicException('Cannot attach listener to non-existing order.');
         }
 
@@ -104,8 +101,7 @@ class Order extends Model
 
     public function flushListeners(): void
     {
-        if ($this->isOpen())
-        {
+        if ($this->isOpen()) {
             throw new \LogicException('Cannot flush listeners for an open order.');
         }
 
@@ -137,8 +133,7 @@ class Order extends Model
     {
         static::$fills[$fill->order_id][$fill->id] = $fill;
 
-        foreach (static::$fillListeners[$fill->order_id] ?? [] as $callback)
-        {
+        foreach (static::$fillListeners[$fill->order_id] ?? [] as $callback) {
             $callback($fill);
         }
 
@@ -153,8 +148,7 @@ class Order extends Model
 
     public function rawFills(): Builder
     {
-        if (!$this->exists)
-        {
+        if (!$this->exists) {
             throw new \LogicException('Order is not saved.');
         }
 
@@ -180,8 +174,7 @@ class Order extends Model
     {
         $responses = $this->responses ?? [];
 
-        if (!isset($responses[$key]) || \end($responses[$key]) != $data)
-        {
+        if (!isset($responses[$key]) || \end($responses[$key]) != $data) {
             $responses[$key][] = $data;
         }
 
@@ -197,8 +190,7 @@ class Order extends Model
     {
         static::$fillListeners[$this->id][] = $callback;
 
-        foreach (static::$fills[$this->id] ?? [] as $fill)
-        {
+        foreach (static::$fills[$this->id] ?? [] as $fill) {
             //run the listener if it registered not before but after the fill, so they won't be missed
             //happens with immediate order fills
             $callback($fill);

@@ -22,10 +22,8 @@ final class Fib extends Indicator
         $firstLevel = \array_key_first($prices);
         $firstLevelPrice = $prices[$firstLevel];
 
-        foreach ($prices as $level => $price)
-        {
-            if ($level !== $firstLevel)
-            {
+        foreach ($prices as $level => $price) {
+            if ($level !== $firstLevel) {
                 return $price < $firstLevelPrice;
             }
         }
@@ -41,26 +39,17 @@ final class Fib extends Indicator
         $levels = \array_keys($prices);
         $isUpward = self::isUpward($prices);
 
-        if ($isUpward)
-        {
-            if ($isBuy)
-            {
-                $target = \array_reverse(\array_filter($levels, static fn(float $l) => $l < $level));
+        if ($isUpward) {
+            if ($isBuy) {
+                $target = \array_reverse(\array_filter($levels, static fn (float $l) => $l < $level));
+            } else {
+                $target = \array_filter($levels, static fn (float $l) => $l > $level);
             }
-            else
-            {
-                $target = \array_filter($levels, static fn(float $l) => $l > $level);
-            }
-        }
-        else
-        {
-            if ($isBuy)
-            {
-                $target = \array_filter($levels, static fn(float $l) => $l > $level);
-            }
-            else
-            {
-                $target = \array_reverse(\array_filter($levels, static fn(float $l) => $l < $level));
+        } else {
+            if ($isBuy) {
+                $target = \array_filter($levels, static fn (float $l) => $l > $level);
+            } else {
+                $target = \array_reverse(\array_filter($levels, static fn (float $l) => $l < $level));
             }
         }
 
@@ -71,11 +60,9 @@ final class Fib extends Indicator
     public static function nearestLevel(array $levels, float $price): array
     {
         $minDistance = null;
-        foreach ($levels as $level => $levelPrice)
-        {
+        foreach ($levels as $level => $levelPrice) {
             $distance = \abs($price - $levelPrice);
-            if (!$minDistance || $distance < $minDistance)
-            {
+            if (!$minDistance || $distance < $minDistance) {
                 $minDistance = $distance;
                 $fibLevel = $level;
                 $fibPrice = $levelPrice;
@@ -93,10 +80,8 @@ final class Fib extends Indicator
     {
         $raw = [];
 
-        foreach ($data as $timestamp => $fibLevels)
-        {
-            foreach ($fibLevels as $key => $val)
-            {
+        foreach ($data as $timestamp => $fibLevels) {
+            foreach ($fibLevels as $key => $val) {
                 $raw[$key][$timestamp] = $val;
             }
         }
@@ -116,7 +101,7 @@ final class Fib extends Indicator
 
     public function getBindable(): array
     {
-        return \array_filter($this->config['levels'], static fn(int $level): bool => !\in_array($level, [0, 1000]));
+        return \array_filter($this->config['levels'], static fn (int $level): bool => !\in_array($level, [0, 1000]));
     }
 
     protected function getBindPrice(mixed $bind): float
@@ -145,21 +130,18 @@ final class Fib extends Indicator
         $lows = [];
         $bars = 0;
 
-        foreach ($candles as $candle)
-        {
+        foreach ($candles as $candle) {
             $highs[] = (float)$candle->h;
             $lows[] = (float)$candle->l;
 
-            if ($bars === $period)
-            {
+            if ($bars === $period) {
                 $highest = \max($highs);
                 $lowest = \min($lows);
 
                 $new = [];
 
                 $new[0] = $highest;
-                foreach ($levels as $level)
-                {
+                foreach ($levels as $level) {
                     $new[$level] = $highest - ($highest - $lowest) * ($level / 1000);
                 }
                 $new[1000] = $highest - ($highest - $lowest) * 1.000;
@@ -168,9 +150,7 @@ final class Fib extends Indicator
 
                 \array_shift($highs);
                 \array_shift($lows);
-            }
-            else
-            {
+            } else {
                 $bars++;
             }
         }

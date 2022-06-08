@@ -6,8 +6,7 @@ const INDICATOR_NAMESPACE = "\App\Indicators\\";
 const STRATEGY_DIR = "app/Strategies/";
 const STRATEGY_NAMESPACE = "\App\Strategies\\";
 
-if (!function_exists('array_merge_recursive_distinct'))
-{
+if (!function_exists('array_merge_recursive_distinct')) {
     /**
      * @param array<int|string, mixed> $array1
      * @param array<int|string, mixed> $array2
@@ -17,14 +16,10 @@ if (!function_exists('array_merge_recursive_distinct'))
     function array_merge_recursive_distinct(array $array1, array &$array2): array
     {
         $merged = $array1;
-        foreach ($array2 as $key => &$value)
-        {
-            if (is_array($value) && isset($merged[$key]) && is_array($merged[$key]))
-            {
+        foreach ($array2 as $key => &$value) {
+            if (is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
                 $merged[$key] = array_merge_recursive_distinct($merged[$key], $value);
-            }
-            else
-            {
+            } else {
                 $merged[$key] = $value;
             }
         }
@@ -33,35 +28,32 @@ if (!function_exists('array_merge_recursive_distinct'))
     }
 }
 
-if (!function_exists('recoverable'))
-{
-    function recoverable(Closure $request,
-                         ?int    $retryInSeconds = null,
-                         ?int    $retryLimit = null,
-                         array   $handle = []): \App\Trade\Process\RecoverableRequest
+if (!function_exists('recoverable')) {
+    function recoverable(
+        Closure $request,
+        ?int    $retryInSeconds = null,
+        ?int    $retryLimit = null,
+        array   $handle = []
+    ): \App\Trade\Process\RecoverableRequest
     {
         return \App\Trade\Process\RecoverableRequest::new($request, $retryInSeconds, $retryLimit, $handle);
     }
 }
 
-if (!function_exists('on_shutdown'))
-{
+if (!function_exists('on_shutdown')) {
     function on_shutdown(Closure $callback): void
     {
         static $callbacks = [];
         static $executed = new WeakMap();
 
-        foreach ($callbacks as $c)
-        {
-            if ($callback === $c)
-            {
+        foreach ($callbacks as $c) {
+            if ($callback === $c) {
                 return;
             }
         }
 
         register_shutdown_function($callbacks[] = static function () use ($callback, &$executed) {
-            if (isset($executed[$callback]))
-            {
+            if (isset($executed[$callback])) {
                 return;
             }
             $executed[$callback] = true;
@@ -69,8 +61,7 @@ if (!function_exists('on_shutdown'))
         });
 
         pcntl_signal(SIGINT, static function () use (&$callbacks) {
-            foreach ($callbacks as $callback)
-            {
+            foreach ($callbacks as $callback) {
                 $callback();
             }
             exit;
@@ -78,32 +69,28 @@ if (!function_exists('on_shutdown'))
     }
 }
 
-if (!function_exists('millitime'))
-{
+if (!function_exists('millitime')) {
     function millitime(): int
     {
         return (int)(microtime(true) * 1000);
     }
 }
 
-if (!function_exists('indicator_exists'))
-{
+if (!function_exists('indicator_exists')) {
     function indicator_exists(string $indicatorName): bool
     {
         return class_exists(INDICATOR_NAMESPACE . $indicatorName);
     }
 }
 
-if (!function_exists('strategy_exists'))
-{
+if (!function_exists('strategy_exists')) {
     function strategy_exists(string $strategyName): bool
     {
         return class_exists(STRATEGY_NAMESPACE . $strategyName);
     }
 }
 
-if (!function_exists('get_strategy_class'))
-{
+if (!function_exists('get_strategy_class')) {
     /**
      * @param string $strategyName
      *
@@ -111,8 +98,7 @@ if (!function_exists('get_strategy_class'))
      */
     function get_strategy_class(string $strategyName): string
     {
-        if (class_exists($class = STRATEGY_NAMESPACE . $strategyName))
-        {
+        if (class_exists($class = STRATEGY_NAMESPACE . $strategyName)) {
             return $class;
         }
 
@@ -120,8 +106,7 @@ if (!function_exists('get_strategy_class'))
     }
 }
 
-if (!function_exists('get_indicator_class'))
-{
+if (!function_exists('get_indicator_class')) {
     /**
      * @param string $indicatorName
      *
@@ -129,16 +114,14 @@ if (!function_exists('get_indicator_class'))
      */
     function get_indicator_class(string $indicatorName): string
     {
-        if (class_exists($class = INDICATOR_NAMESPACE . $indicatorName))
-        {
+        if (class_exists($class = INDICATOR_NAMESPACE . $indicatorName)) {
             return $class;
         }
         throw new RuntimeException("Indicator $indicatorName not found");
     }
 }
 
-if (!function_exists('get_indicators'))
-{
+if (!function_exists('get_indicators')) {
     function get_indicators(): array
     {
         $files = new Illuminate\Filesystem\Filesystem();
@@ -146,13 +129,11 @@ if (!function_exists('get_indicators'))
         $indicators = [];
         $path = base_path(INDICATOR_DIR);
 
-        if (!$files->isDirectory($path))
-        {
+        if (!$files->isDirectory($path)) {
             return $indicators;
         }
 
-        foreach ($files->allFiles($path) as $file)
-        {
+        foreach ($files->allFiles($path) as $file) {
             $basename = $file->getBasename('.php');
             $indicators[$basename] = INDICATOR_NAMESPACE . $basename;
         }
@@ -161,8 +142,7 @@ if (!function_exists('get_indicators'))
     }
 }
 
-if (!function_exists('get_strategies'))
-{
+if (!function_exists('get_strategies')) {
     function get_strategies(): array
     {
         $files = new Illuminate\Filesystem\Filesystem();
@@ -170,13 +150,11 @@ if (!function_exists('get_strategies'))
         $strategies = [];
         $path = base_path(STRATEGY_DIR);
 
-        if (!$files->isDirectory($path))
-        {
+        if (!$files->isDirectory($path)) {
             return $strategies;
         }
 
-        foreach ($files->allFiles($path) as $file)
-        {
+        foreach ($files->allFiles($path) as $file) {
             $basename = $file->getBasename('.php');
             $strategies[$basename] = STRATEGY_NAMESPACE . $basename;
         }
@@ -185,17 +163,14 @@ if (!function_exists('get_strategies'))
     }
 }
 
-if (!function_exists('as_ms'))
-{
+if (!function_exists('as_ms')) {
     function as_ms(int $timestamp): int
     {
-        if (strlen((string)$timestamp) === 13)
-        {
+        if (strlen((string)$timestamp) === 13) {
             return $timestamp;
         }
 
-        if (strlen((string)$timestamp) === 10)
-        {
+        if (strlen((string)$timestamp) === 10) {
             return $timestamp * 1000;
         }
 
@@ -203,14 +178,12 @@ if (!function_exists('as_ms'))
     }
 }
 
-if (!function_exists('elapsed_time'))
-{
+if (!function_exists('elapsed_time')) {
     function elapsed_time(int $startTime): string
     {
         $start = (int)(as_ms($startTime) / 1000);
         $time = time();
-        if ($start > $time)
-        {
+        if ($start > $time) {
             throw new LogicException('Argument $startTime must be older than current date.');
         }
 
