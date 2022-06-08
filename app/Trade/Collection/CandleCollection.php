@@ -3,30 +3,40 @@
 namespace App\Trade\Collection;
 
 use Illuminate\Support\Collection;
-use JetBrains\PhpStorm\Pure;
+use Illuminate\Support\Facades\Log;
 
-/** @property \stdClass[] items */
+/** @property object items */
 class CandleCollection extends Collection
 {
     protected array $overrides = [];
 
-    #[Pure] public function closes(): array
+    public function closes(): array
     {
         return \array_column($this->all(), 'c');
     }
 
-    #[Pure] public function highs(): array
+    public function highs(): array
 
     {
         return \array_column($this->all(), 'h');
     }
 
-    #[Pure] public function lows(): array
+    public function lows(): array
     {
         return \array_column($this->all(), 'l');
     }
 
-    #[Pure] public function timestamps(): array
+    public function volumes(): array
+    {
+        return \array_column($this->all(), 'v');
+    }
+
+    public function hasVolume(): bool
+    {
+        return !empty($this->items[0]->v);
+    }
+
+    public function timestamps(): array
     {
         return \array_column($this->all(), 't');
     }
