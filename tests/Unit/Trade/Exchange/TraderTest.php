@@ -50,8 +50,7 @@ class TraderTest extends m\Adapter\Phpunit\MockeryTestCase
         ?TradeAsset &$tradeAsset = null,
         ?Runner     &$runner = null,
         ?\App       &$app = null
-    ): Trader
-    {
+    ): Trader {
         $app = m::mock('overload:App');
         $app->shouldReceive('runningInConsole')->once()->andReturn(true);
 

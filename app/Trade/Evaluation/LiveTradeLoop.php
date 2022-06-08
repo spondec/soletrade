@@ -18,8 +18,7 @@ class LiveTradeLoop extends TradeLoop
         Symbol                       $evaluationSymbol,
         array                        $config,
         public readonly OrderManager $order
-    )
-    {
+    ) {
         parent::__construct($entry, $evaluationSymbol, $config);
     }
 

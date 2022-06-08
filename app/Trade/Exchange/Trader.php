@@ -32,8 +32,7 @@ class Trader
         public readonly Exchange   $exchange,
         public readonly Symbol     $symbol,
         public readonly TradeAsset $tradeAsset
-    )
-    {
+    ) {
         Runner::purgeExpired();
 
         if (!\App::runningInConsole()) {

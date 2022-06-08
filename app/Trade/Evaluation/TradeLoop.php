@@ -10,7 +10,6 @@ use App\Trade\Calc;
 use App\Trade\Exception\PrintableException;
 use App\Trade\HasConfig;
 use App\Trade\Repository\SymbolRepository;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -42,8 +41,7 @@ class TradeLoop
         public readonly TradeSetup $entry,
         protected Symbol           $evaluationSymbol,
         array                      $config
-    )
-    {
+    ) {
         $this->mergeConfig($config);
         $this->assertTradeSymbolMatchesEvaluationSymbol();
         $this->initTradeStatus();

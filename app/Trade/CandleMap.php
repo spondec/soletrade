@@ -11,7 +11,6 @@ class CandleMap
         public readonly int|string $h,
         public readonly int|string $l,
         public readonly int|string $v
-    )
-    {
+    ) {
     }
 }

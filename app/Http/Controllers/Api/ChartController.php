@@ -21,8 +21,7 @@ class ChartController extends Controller
         protected Request          $request,
         protected SymbolRepository $symbolRepo,
         protected ConfigRepository $config
-    )
-    {
+    ) {
     }
 
     public function index(Request $request): array
@@ -85,8 +84,7 @@ class ChartController extends Controller
         string          $strategy = null,
         ?array          $range = null,
         ?int            $limit = null
-    ): array
-    {
+    ): array {
         $start = $range ? as_ms(Carbon::parse($range['start'])->getTimestamp()) : null;
         $end = $range ? as_ms(Carbon::parse($range['end'])->getTimestamp()) : null;
 

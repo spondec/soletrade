@@ -32,8 +32,7 @@ class LivePosition extends Position
         ?Price                 $stop,
         protected OrderManager $manager,
         Fill                   $fill
-    )
-    {
+    ) {
         $this->entryPrice = $entry->get();
 
         if ($this->entryPrice != $fill->price) {
@@ -192,8 +191,7 @@ class LivePosition extends Position
         float     $quantity,
         float     $price,
         bool      $reduceOnly
-    ): Order
-    {
+    ): Order {
         return $this->manager
             ->handler($orderType, $this->side)
             ->order($orderType, $quantity, $price, $reduceOnly);

@@ -40,8 +40,7 @@ abstract class Handler
         float     $quantity,
         float     $price,
         bool      $reduceOnly
-    ): Order
-    {
+    ): Order {
         if ($orderType !== $this->getOrderType()) {
             throw new \LogicException('Order type mismatch.');
         }

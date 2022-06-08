@@ -49,8 +49,7 @@ class CandleCollection extends Collection
         ?\stdClass &$next = null,
         ?int       &$prevKey = null,
         ?int       &$nextKey = null
-    ): void
-    {
+    ): void {
         /**
          * @var int       $key
          * @var \stdClass $candle

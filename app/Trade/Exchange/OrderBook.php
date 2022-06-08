@@ -15,8 +15,7 @@ class OrderBook
         protected string $symbol,
         protected array  $bids,
         protected array  $asks
-    )
-    {
+    ) {
         $this->initTime = \microtime(true);
 
         if (!$this->bids || !$this->asks) {

@@ -13,8 +13,7 @@ final class AllocatedAsset
         public       readonly Asset $asset,
         float        $amount,
         public float $leverage = 1
-    )
-    {
+    ) {
         $this->allocate($amount);
     }
 

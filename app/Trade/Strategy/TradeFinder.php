@@ -42,8 +42,7 @@ class TradeFinder
         protected TradeConfig      $tradeConfig,
         protected Collection       $indicatorConfig,
         protected Collection       $indicators
-    )
-    {
+    ) {
         $this->candleIterator = $this->candles->getIterator();
         $this->_candles = new Candles($this->candleIterator, $this->candles, $this->strategy->symbol());
         $this->creator = new TradeCreator($this->tradeConfig);
@@ -55,8 +54,8 @@ class TradeFinder
 
         $this->hasNextCandle = \Closure::bind(
             function (): bool {
-            return isset($this->candles[$this->iterator->key() + 1]);
-        },
+                return isset($this->candles[$this->iterator->key() + 1]);
+            },
             $this->_candles,
             Candles::class
         );

@@ -18,8 +18,7 @@ trait CanBind
         string|int     $bind,
         ?\Closure      $callback = null,
         ?int           $timestamp = null
-    ): Binding
-    {
+    ): Binding {
         $this->assertBindExists($bind);
 
         $value = $this->getBindValue($bind, $timestamp);

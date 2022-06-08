@@ -8,8 +8,7 @@ class RangedSet extends ParameterSet
         public readonly int|float $min,
         public readonly int|float $max,
         public readonly int|float $step
-    )
-    {
+    ) {
         if ($min > $max) {
             throw new \InvalidArgumentException('Range minimum cannot be greater than the maximum.');
         }

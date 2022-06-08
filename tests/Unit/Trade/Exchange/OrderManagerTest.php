@@ -40,8 +40,7 @@ class OrderManagerTest extends m\Adapter\Phpunit\MockeryTestCase
         Exchange|MockInterface &$exchange = null,
         Symbol|MockInterface   &$symbol = null,
         Orderer|MockInterface  &$orderer = null
-    ): OrderManager
-    {
+    ): OrderManager {
         $symbol = m::mock('alias:' . Symbol::class);
         $symbol->symbol = 'BTC/USDT';
 

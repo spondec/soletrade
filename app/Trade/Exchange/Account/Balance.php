@@ -21,8 +21,7 @@ class Balance implements \ArrayAccess
     public function __construct(
         protected Exchange $exchange,
         array              $assets
-    )
-    {
+    ) {
         foreach ($assets as $k => $asset) {
             unset($assets[$k]);
 

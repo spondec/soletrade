@@ -12,8 +12,7 @@ class TradeConfig extends Config
         public readonly array $signals,
         public readonly \Closure $setup,
         public readonly Signature $signature
-    )
-    {
+    ) {
         $this->withSignals = !empty($signals);
     }
 

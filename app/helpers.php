@@ -34,8 +34,7 @@ if (!function_exists('recoverable')) {
         ?int    $retryInSeconds = null,
         ?int    $retryLimit = null,
         array   $handle = []
-    ): \App\Trade\Process\RecoverableRequest
-    {
+    ): \App\Trade\Process\RecoverableRequest {
         return \App\Trade\Process\RecoverableRequest::new($request, $retryInSeconds, $retryLimit, $handle);
     }
 }
