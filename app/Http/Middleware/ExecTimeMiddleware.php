@@ -12,8 +12,7 @@ class ExecTimeMiddleware
 
     public function __construct()
     {
-        if (!static::$sessionId)
-        {
+        if (!static::$sessionId) {
             static::$sessionId = \random_int(1000000000, 9000000000);
         }
     }
@@ -28,22 +27,24 @@ class ExecTimeMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        Log::info(static::getSessionPrefix() . 'Started...');
+        Log::info(static::getSessionPrefix().'Started...');
+
         return $next($request);
     }
 
     public static function getSessionPrefix(): string
     {
-        return static::$sessionId ? "[SESSION-" . static::$sessionId . "] " : '';
+        return static::$sessionId ? '[SESSION-'.static::$sessionId.'] ' : '';
     }
 
     public function terminate()
     {
-        if (\defined('LARAVEL_START'))
-        {
-            Log::info(\sprintf("%sExecution time: %s seconds.",
+        if (\defined('LARAVEL_START')) {
+            Log::info(\sprintf(
+                '%sExecution time: %s seconds.',
                 static::getSessionPrefix(),
-                \round(\microtime(true) - LARAVEL_START, 2)));
+                \round(\microtime(true) - LARAVEL_START, 2)
+            ));
         }
     }
 }

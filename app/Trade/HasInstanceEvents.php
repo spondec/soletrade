@@ -7,7 +7,6 @@ namespace App\Trade;
 use App\Trade\Helper\ClosureHash;
 
 /**
- *
  * @property string[]                           events
  *
  * Events triggered by another set of events.
@@ -29,9 +28,8 @@ trait HasInstanceEvents
     {
         $this->assertEventExists($eventName);
 
-        if (\in_array($hash = ClosureHash::from($onEvent), $this->listenerHash[$eventName] ?? []))
-        {
-            throw new \LogicException("Listener already registered.");
+        if (\in_array($hash = ClosureHash::from($onEvent), $this->listenerHash[$eventName] ?? [])) {
+            throw new \LogicException('Listener already registered.');
         }
 
         $this->listenerHash[$eventName][] = $hash;
@@ -42,14 +40,13 @@ trait HasInstanceEvents
     {
         $this->assertEventExists($eventName);
 
-        if (isset($this->bypassed[$eventName]))
-        {
+        if (isset($this->bypassed[$eventName])) {
             unset($this->bypassed[$eventName]);
+
             return;
         }
 
-        foreach ($this->listeners[$eventName] ?? [] as $onEvent)
-        {
+        foreach ($this->listeners[$eventName] ?? [] as $onEvent) {
             $onEvent($this, ...$params);
         }
 
@@ -64,24 +61,20 @@ trait HasInstanceEvents
 
     private function assertEventExists(string $eventName): void
     {
-        if (!\in_array($eventName, $this->events) && !isset($this->eventTriggers[$eventName]))
-        {
+        if (!\in_array($eventName, $this->events) && !isset($this->eventTriggers[$eventName])) {
             throw new \InvalidArgumentException("Event '$eventName' doesn't exist.");
         }
     }
 
     private function handleTriggers(string $triggerEventName, array $params): void
     {
-        if (!isset($this->eventTriggers))
-        {
+        if (!isset($this->eventTriggers)) {
             return;
         }
 
-        foreach ($this->eventTriggers as $event => $triggers)
-        {
+        foreach ($this->eventTriggers as $event => $triggers) {
             $triggers = \is_string($triggers) ? [$triggers] : $triggers;
-            if (\in_array($triggerEventName, $triggers))
-            {
+            if (\in_array($triggerEventName, $triggers)) {
                 $this->fireEvent($event, ...$params);
             }
         }

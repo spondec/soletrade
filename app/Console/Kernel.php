@@ -40,8 +40,8 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__ . '/Command');
-        $this->load(__DIR__ . '/../Trade/Command');
+        $this->load(__DIR__.'/Command');
+        $this->load(__DIR__.'/../Trade/Command');
 
         require base_path('routes/console.php');
     }
@@ -55,12 +55,9 @@ class Kernel extends ConsoleKernel
 
     protected function renderException($output, Throwable $e)
     {
-        if ($this->isPrintable($e))
-        {
-            $this->printableExceptionSection->writeln('<fg=red>' . $e->getMessage() . '</>');
-        }
-        else
-        {
+        if ($this->isPrintable($e)) {
+            $this->printableExceptionSection->writeln('<fg=red>'.$e->getMessage().'</>');
+        } else {
             parent::renderException($output, $e);
         }
     }

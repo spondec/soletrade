@@ -15,12 +15,10 @@ abstract class TradeCommand extends Command
 {
     protected function assertStrategyClass(string $strategyName): string
     {
-        if (!strategy_exists($name = $strategyName))
-        {
+        if (!strategy_exists($name = $strategyName)) {
             $this->error("Strategy $name not found.");
             $this->info('Available strategies:');
-            foreach (get_strategies() as $name => $class)
-            {
+            foreach (get_strategies() as $name => $class) {
                 $this->info($name);
             }
             exit(1);
@@ -34,8 +32,7 @@ abstract class TradeCommand extends Command
      */
     protected function assertDateRange(string $start, ?string $end = null): array
     {
-        try
-        {
+        try {
             $startDate = $start
                 ? $this->newDate($start)
                     ->setTime(0, 0)
@@ -47,16 +44,14 @@ abstract class TradeCommand extends Command
                     ->setTime(23, 59, 59)
                     ->getTimestamp() * 1000
                 : null;
-        } catch (InvalidFormatException $e)
-        {
+        } catch (InvalidFormatException $e) {
             $this->error($e->getMessage());
-            $this->error("Invalid date format.");
-            $this->error("Use format d-m-Y as in 19-11-2021.");
+            $this->error('Invalid date format.');
+            $this->error('Use format d-m-Y as in 19-11-2021.');
             exit(1);
         }
 
-        if ($startDate && !$endDate)
-        {
+        if ($startDate && !$endDate) {
             $endDate = Carbon::now()->setTime(0, 0)->getTimestamp() * 1000;
         }
 
@@ -70,12 +65,13 @@ abstract class TradeCommand extends Command
 
     protected function assertSymbol(SymbolRepository $repo, array $args): Symbol
     {
-        $symbol = $repo->fetchSymbol(Exchange::from($args['exchange']),
+        $symbol = $repo->fetchSymbol(
+            Exchange::from($args['exchange']),
             $args['symbol'],
-            $args['interval']);
+            $args['interval']
+        );
 
-        if (!$symbol)
-        {
+        if (!$symbol) {
             $this->error("Symbol {$args['symbol']} {$args['interval']} not found on {$args['exchange']}.");
             exit(1);
         }
@@ -87,6 +83,7 @@ abstract class TradeCommand extends Command
     {
         /** @var ConsoleOutput $output */
         $output = $this->output->getOutput();
+
         return $output->section();
     }
 }

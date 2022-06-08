@@ -4,12 +4,11 @@ use App\Trade\Illuminate\Database\Schema\Blueprint;
 use App\Trade\Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class() extends Migration {
     /**
      * Run the migrations.
      *
      * @return void
-     *
      */
     public function up()
     {

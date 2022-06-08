@@ -13,9 +13,11 @@ class EMATest extends IndicatorTestCase
 
         $symbol = $this->createCandles(100);
 
-        $repo->initIndicators($symbol,
+        $repo->initIndicators(
+            $symbol,
             $candles = $symbol->candles(100),
-            [EMA::class => ['timePeriod' => 8]]);
+            [EMA::class => ['timePeriod' => 8]]
+        );
 
         $ema = $symbol->indicator(EMA::name());
         $this->assertIsFloat($ema->data()->first());

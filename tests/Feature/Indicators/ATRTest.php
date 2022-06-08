@@ -13,9 +13,11 @@ class ATRTest extends IndicatorTestCase
 
         $symbol = $this->createCandles(100);
 
-        $repo->initIndicators($symbol,
+        $repo->initIndicators(
+            $symbol,
             $candles = $symbol->candles(100),
-            [ATR::class => ['timePeriod' => 14]]);
+            [ATR::class => ['timePeriod' => 14]]
+        );
 
         $this->assertCount(100, $candles);
 
@@ -27,4 +29,3 @@ class ATRTest extends IndicatorTestCase
         $this->assertEquals($candles->last()->t, $atr->data()->keys()->last());
     }
 }
-

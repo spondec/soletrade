@@ -9,9 +9,8 @@ enum Side: string
 
     public function opposite(): Side
     {
-        return match ($this)
-        {
-            static::BUY => static::SELL,
+        return match ($this) {
+            static::BUY  => static::SELL,
             static::SELL => static::BUY
         };
     }

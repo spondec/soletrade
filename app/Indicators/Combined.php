@@ -25,18 +25,17 @@ final class Combined extends Indicator
          *              'class' => \App\Indicators\EMA::class,
          *              'config' => ['timeFrame' => 20]
          *       ]
-         * ]
+         * ].
          */
         'indicators' => [
 
-        ]
+        ],
     ];
     protected array $variableConfigKeys = ['indicators'];
 
     protected function setup(): void
     {
-        foreach ($this->config['indicators'] ?? [] as $k => $item)
-        {
+        foreach ($this->config['indicators'] ?? [] as $k => $item) {
             /** @var class-string<Indicator> $class */
             $class = $item['class'];
             $this->config['indicators'][$k]['name'] = $class::name();
@@ -49,13 +48,11 @@ final class Combined extends Indicator
 
         $indicators = $this->config('indicators');
 
-        if ($duplicates = Util::getDuplicates(\array_column($indicators, 'alias')))
-        {
-            throw new \LogicException('Duplicate indicator aliases: ' . \implode(', ', $duplicates));
+        if ($duplicates = Util::getDuplicates(\array_column($indicators, 'alias'))) {
+            throw new \LogicException('Duplicate indicator aliases: '.\implode(', ', $duplicates));
         }
 
-        foreach ($indicators as $config)
-        {
+        foreach ($indicators as $config) {
             /** @var Indicator $indicator */
             $indicator = new $config['class'](
                 symbol: $this->symbol,
@@ -64,8 +61,7 @@ final class Combined extends Indicator
             );
 
             $alias = $config['alias'];
-            foreach ($indicator->data() as $timestamp => $value)
-            {
+            foreach ($indicator->data() as $timestamp => $value) {
                 $data[$timestamp][$alias] = $value;
             }
         }

@@ -21,6 +21,7 @@ class Schema extends \Illuminate\Support\Facades\Schema
         $builder->blueprintResolver(static function ($table, $callback) {
             return new Blueprint($table, $callback);
         });
+
         return $builder;
     }
 }

@@ -19,7 +19,7 @@ class FetcherTest extends TestCase
 
         $updatedBalance = new Balance($exchangeMock, [
             new Asset('BTC', 9, 5),
-            new Asset('ETH', 8, 4)
+            new Asset('ETH', 8, 4),
         ]);
 
         $exchangeMock
@@ -89,7 +89,7 @@ class FetcherTest extends TestCase
             {
                 return $this->newBalance([
                     $this->newAsset('BTC', 10, 10),
-                    $this->newAsset('ETH', 10, 10)
+                    $this->newAsset('ETH', 10, 10),
                 ]);
             }
         };
