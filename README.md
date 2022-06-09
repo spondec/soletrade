@@ -77,11 +77,7 @@ alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'
 * After boot, run these commands in order:
 
 ```bash
-sail artisan migrate
-```
-
-```bash
-sail artisan db:seed
+sail artisan migrate --seed
 ```
 
 ```bash
@@ -131,11 +127,7 @@ php artisan key:generate
 ```
 
 ```bash
-php artisan migrate
-```
-
-```bash
-php artisan db:seed
+php artisan migrate --seed
 ```
 
 ```bash
