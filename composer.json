@@ -1,10 +1,11 @@
 {
-  "name": "laravel/laravel",
+  "name": "spondec/soletrade",
   "type": "project",
-  "description": "The Laravel Framework.",
+  "description": "Algorithmic crypto trading platform.",
   "keywords": [
-    "framework",
-    "laravel"
+    "algotrading",
+    "crypto-trading",
+    "trading-bot"
   ],
   "license": "MIT",
   "require": {
