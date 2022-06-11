@@ -15,6 +15,5 @@ export default {
     Combined: () =>
     {
         return new Combined(false, this.indicatorHandlers)
-    },
-    AlphaTrend: () => new SimpleLineSeries(false, {color: 'rgb(255,0,0)', lineWidth: 1, lineType: 0}),
+    }
 }
