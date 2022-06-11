@@ -12,6 +12,6 @@ final class MA extends Indicator
     protected function calculate(CandleCollection $candles): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        return ($sma = \trader_sma($candles->closes(), $this->config['timePeriod'])) ? $sma : [];
+        return \trader_sma($candles->closes(), $this->config['timePeriod']) ?: [];
     }
 }

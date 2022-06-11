@@ -3,14 +3,11 @@
 namespace App\Indicators;
 
 use App\Trade\Collection\CandleCollection;
-use App\Trade\Indicator\Helper\CanCross;
 use App\Trade\Indicator\Indicator;
 use App\Trade\Util;
 
 final class Combined extends Indicator
 {
-    use CanCross;
-
     protected array $config = [
         /**
          * Example:

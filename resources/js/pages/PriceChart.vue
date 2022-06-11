@@ -135,12 +135,9 @@ import {Vue3JsonEditor} from 'vue3-json-editor'
 
 import {DatePicker} from 'v-calendar';
 
-import MACD from "../indicators/MACD";
-import RSI from "../indicators/RSI";
-import SimpleLineSeries from "../indicators/SimpleLineSeries";
-import Fib from "../indicators/Fib";
 import IndicatorManager from "../indicators/IndicatorManager";
-import Combined from "../indicators/Combined";
+
+import { default as indicatorHandlers } from "../indicator_view.js";
 
 export default {
   title: "Chart",
@@ -179,18 +176,7 @@ export default {
 
       magnifiedCharts: [],
 
-      indicatorHandlers: {
-        ATR: () => new SimpleLineSeries(true, {color: 'rgb(255,0,0)', lineWidth: 1, lineType: 0}),
-        MA: () => new SimpleLineSeries(false, {color: 'rgb(0,153,255)', lineWidth: 1, lineType: 0}),
-        EMA: () => new SimpleLineSeries(false, {color: 'rgb(49,255,0)', lineWidth: 1, lineType: 0}),
-        Fib: () => new Fib(),
-        RSI: () => new RSI(true, {color: 'rgb(170,42,252)', lineWidth: 1}),
-        MACD: () => new MACD(),
-        Combined: () =>
-        {
-          return new Combined(false, this.indicatorHandlers)
-        },
-      },
+      indicatorHandlers: indicatorHandlers,
       indicatorManager: null,
       jsonEditorEnabled: false,
 
