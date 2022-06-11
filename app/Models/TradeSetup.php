@@ -13,12 +13,11 @@ use App\Trade\Order\Type\StopLimit;
 use Database\Factories\TradeSetupFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\Rules\Enum;
 
 /**
- * @property Signal[]|\Illuminate\Database\Eloquent\Collection      signals
+ * @property array                                                  signals
  * @property Symbol                                                 symbol
  * @property Signature                                              signature
  * @property TradeAction[]|\Illuminate\Database\Eloquent\Collection actions
@@ -76,6 +75,7 @@ class TradeSetup extends Model implements Bindable
         'price'             => 'float',
         'order_type_config' => 'array',
         'entry_order_type'  => OrderType::class,
+        'signals'           => 'array',
     ];
 
     public function actions(): HasMany
@@ -97,11 +97,6 @@ class TradeSetup extends Model implements Bindable
         }
     }
 
-    public function signals(): BelongsToMany
-    {
-        return $this->belongsToMany(Signal::class);
-    }
-
     public function symbol(): BelongsTo
     {
         return $this->belongsTo(Symbol::class);
@@ -116,6 +111,7 @@ class TradeSetup extends Model implements Bindable
     {
         $result = parent::toArray();
 
+        //TODO:: do this in a resource
         if (!empty($result['price']) || !empty($result['target_price']) || !empty($result['stop_price']))
         {
             $result['price'] = \round((float)$result['price'], 2);

@@ -24,6 +24,9 @@ class TradeCreator
     protected ?Collection $actions = null;
     protected ?TradeSetup $trade = null;
     protected ?string $nextRequiredSignalAlias = null;
+    /**
+     * @var Signal[]
+     */
     protected Collection $signals;
 
     protected readonly SymbolRepository $repo;
@@ -82,14 +85,14 @@ class TradeCreator
         {
             foreach ($this->actions as $class => $config)
             {
-                $tradeSetup->actions()->create(['class'  => $class,
-                                                'config' => $config]);
+                $tradeSetup->actions()->create([
+                    'class'  => $class,
+                    'config' => $config
+                ]);
             }
         }
 
-        $tradeSetup->signals()
-            ->sync($this->signals
-                ->map(static fn(Signal $signal): int => $signal->id));
+        $tradeSetup->signals = $this->signals->toArray();
         $this->finalize();
 
         return $tradeSetup;
