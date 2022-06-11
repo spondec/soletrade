@@ -12,6 +12,9 @@ final class ATR extends Indicator
     protected function calculate(CandleCollection $candles): array
     {
         /** @noinspection PhpUndefinedFunctionInspection */
-        return \trader_atr($candles->highs(), $candles->lows(), $candles->closes(), $this->config['timePeriod']) ?: [];
+        return \trader_atr($candles->highs(),
+            $candles->lows(),
+            $candles->closes(),
+            $this->config['timePeriod']) ?: [];
     }
 }

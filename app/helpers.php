@@ -1,5 +1,7 @@
 <?php
 
+use App\Trade\Contract\Series;
+
 const INDICATOR_DIR = "app/Indicators/";
 const INDICATOR_NAMESPACE = "\App\Indicators\\";
 
@@ -222,5 +224,55 @@ if (!function_exists('elapsed_time'))
         $days = (int)($elapsed / 60 / 60 / 24);
 
         return "$days:$hours:$minutes:$seconds";
+    }
+}
+
+if (!function_exists('crossover'))
+{
+    function crossover(Series|int|float $x, Series|int|float $y): bool
+    {
+        if ($x instanceof Series)
+        {
+            $prevX = $x->value(1)->get();
+            $x = $x->get();
+        }
+
+        if ($y instanceof Series)
+        {
+            $prevY = $y->value(1)->get();
+            $y = $y->get();
+        }
+
+        if (empty($prevY) || empty($prevX) || empty($y) || empty($x))
+        {
+            return false;
+        }
+
+        return $prevX <= $prevY && $x > $y;
+    }
+}
+
+if (!function_exists('crossunder'))
+{
+    function crossunder(Series|int|float $x, Series|int|float $y): bool
+    {
+        if ($x instanceof Series)
+        {
+            $prevX = $x->value(1)->get();
+            $x = $x->get();
+        }
+
+        if ($y instanceof Series)
+        {
+            $prevY = $y->value(1)->get();
+            $y = $y->get();
+        }
+
+        if (empty($prevY) || empty($prevX) || empty($y) || empty($x))
+        {
+            return false;
+        }
+
+        return $prevX >= $prevY && $x < $y;
     }
 }

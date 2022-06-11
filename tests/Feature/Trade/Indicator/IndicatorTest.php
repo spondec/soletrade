@@ -21,7 +21,7 @@ class IndicatorTest extends IndicatorTestCase
         foreach ($sma->scan() as $result)
         {
             $this->assertEquals($iterator->key(), $result['timestamp']);
-            $this->assertEquals($sma->current(), $iterator->current());
+            $this->assertEquals($sma->value(), $iterator->current());
             $this->assertEquals($sma->candle(), $candleIterator->current());
             $candleIterator->next();
             $iterator->next();
