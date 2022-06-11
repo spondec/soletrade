@@ -15,7 +15,7 @@
     "bentools/cartesian-product": "^1.4",
     "ccxt/ccxt": "^1.72",
     "fruitcake/laravel-cors": "^2.0",
-    "guzzlehttp/guzzle": "^7.4.3",
+    "guzzlehttp/guzzle": "^7.4.4",
     "itsgoingd/clockwork": "^5.1",
     "laravel/framework": "^9.0",
     "laravel/tinker": "^2.7",
