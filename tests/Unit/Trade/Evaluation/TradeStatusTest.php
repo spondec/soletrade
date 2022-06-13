@@ -36,7 +36,6 @@ class TradeStatusTest extends TestCase
         ];
         $action->is_taken = false;
         $action->class = MoveStop::class;
-        $action->expects('save')->andReturn(true);
 
         $setup->actions = new Collection([$action]);
 
