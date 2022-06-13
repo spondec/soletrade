@@ -77,25 +77,14 @@ class TradeCreator
             throw new \LogicException('Trade has not been set.');
         }
 
-        /** @var TradeSetup $tradeSetup */
-        $tradeSetup = $this->trade->updateUniqueOrCreate();
-        $tradeSetup->actions()->delete();
+        $this->trade->actions = $this->actions->all();
+        $this->trade->signals = $this->signals->map(fn(Signal $signal): array => $signal->getAttributes());
 
-        if ($this->actions)
-        {
-            foreach ($this->actions as $class => $config)
-            {
-                $tradeSetup->actions()->create([
-                    'class'  => $class,
-                    'config' => $config
-                ]);
-            }
-        }
+        $setup = $this->trade->updateUniqueOrCreate();
 
-        $tradeSetup->signals = $this->signals->toArray();
         $this->finalize();
 
-        return $tradeSetup;
+        return $setup;
     }
 
     protected function finalize(): void

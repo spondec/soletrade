@@ -75,7 +75,8 @@ class TradeStatus
             $this->entryPrice,
             $this->getTargetPrice(),
             $this->getStopPrice(),
-            ...$params);
+            ...$params
+        );
 
         $this->registerPositionListeners();
         $this->initActionHandlers();
@@ -106,7 +107,12 @@ class TradeStatus
 
     protected function initActionHandlers(): void
     {
-        foreach ($this->entry->actions->filter(static fn(TradeAction $action) => !$action->is_taken) as $action)
+        $active = collect($this->entry->actions)
+            ->filter(
+                fn(TradeAction $action) => !$action->is_taken
+            );
+
+        foreach ($active as $action)
         {
             $this->actionHandlers[] = $this->newActionHandler($this->position, $action);
         }
@@ -129,12 +135,11 @@ class TradeStatus
         {
             return;
         }
-        
+
         foreach ($this->actionHandlers as $key => $handler)
         {
-            if ($action = $handler->run($candle, $priceDate))
+            if ($handler->run($candle, $priceDate))
             {
-                $action->save();
                 unset($this->actionHandlers[$key]);
             }
         }
