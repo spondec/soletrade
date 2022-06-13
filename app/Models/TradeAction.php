@@ -15,5 +15,5 @@ class TradeAction extends Model
     protected $casts = [
         'config' => 'array'
     ];
-    protected $guarded = ['id'];
+    protected $guarded = [];
 }

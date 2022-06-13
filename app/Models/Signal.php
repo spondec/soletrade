@@ -29,7 +29,7 @@ class Signal extends Model
 {
     public readonly Indicator $indicator;
     protected $table = 'signals';
-    protected $guarded = ['id'];
+    protected $guarded = [];
     protected array $unique = ['symbol_id', 'indicator_id', 'signature_id', 'timestamp'];
     protected $casts = [
         'info' => 'array'
