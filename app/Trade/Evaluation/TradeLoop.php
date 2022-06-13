@@ -7,6 +7,7 @@ namespace App\Trade\Evaluation;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Calc;
+use App\Trade\Enum\OrderType;
 use App\Trade\Exception\PrintableException;
 use App\Trade\HasConfig;
 use App\Trade\Repository\SymbolRepository;
@@ -162,6 +163,8 @@ class TradeLoop
     {
         $this->assertPreLoopRequisites($candles);
 
+        $this->adjustEntryPriceByOrderType($candles);
+
         $iterator = $candles->getIterator();
 
         $entry = $this->status->getEntryPrice();
@@ -223,8 +226,22 @@ class TradeLoop
 
     protected function tryPositionEntry(\stdClass $candle, int $priceDate): void
     {
-        if (Calc::inRange($this->status->getEntryPrice()->get(), $candle->h, $candle->l))
+        $realizedEntryPrice = Calc::realizePrice($this->entry->isBuy(),
+            $entryPrice = $this->status->getEntryPrice()->get(),
+            $candle->h,
+            $candle->l
+        );
+
+        if ($realizedEntryPrice !== false)
         {
+            if ($realizedEntryPrice != $entryPrice)
+            {
+                $this->status->getEntryPrice()->set($realizedEntryPrice,
+                    $priceDate,
+                    'A better entry price found.'
+                );
+            }
+
             $this->status->enterPosition($priceDate);
             $this->tryPositionExit($this->getPosition(), $candle, $priceDate);
         }
@@ -387,6 +404,23 @@ class TradeLoop
     public function status(): TradeStatus
     {
         return $this->status;
+    }
+
+    protected function adjustEntryPriceByOrderType(Collection $candles): void
+    {
+        $first = $candles->first();
+        if (
+            $first->t == $this->firstCandle->t &&
+            $this->entry->price != $first->o &&
+            $this->entry->entry_order_type === OrderType::MARKET
+        )
+        {
+            $this->status->getEntryPrice()->set(
+                (float)$first->o,
+                $this->getPriceDate($first, $candles[1] ?? null),
+                'Entry price set to first candle open price.'
+            );
+        }
     }
 
     protected function getDefaultConfig(): array
