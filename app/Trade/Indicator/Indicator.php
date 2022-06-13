@@ -286,8 +286,10 @@ abstract class Indicator implements Binder, \ArrayAccess
 
     protected function getSignalCallbackSignature(\Closure $callback): Signature
     {
-        return $this->register(['config'             => $this->config,
-                                'signalCallbackHash' => ClosureHash::from($callback)]);
+        return $this->register([
+            'config'             => $this->config,
+            'signalCallbackHash' => ClosureHash::from($callback)
+        ]);
     }
 
     public function setupSignal(Signature $signalSignature): Signal
@@ -297,8 +299,6 @@ abstract class Indicator implements Binder, \ArrayAccess
         $signal->symbol()->associate($this->symbol);
         $signal->indicator()->associate($this->signature);
         $signal->signature()->associate($signalSignature);
-
-
 
         return $signal;
     }

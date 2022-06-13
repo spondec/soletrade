@@ -58,8 +58,7 @@ abstract class Handler
                 $this->applyLocks();
             }
 
-            $this->isTaken = true;
-            $this->action->is_taken = true;
+            $this->action->is_taken = $this->isTaken = true;
             $this->action->timestamp = $priceDate;
             return $this->action;
         }
