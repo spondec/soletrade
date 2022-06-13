@@ -10,7 +10,7 @@ trait HasConfig
     private readonly bool $hasDefaultConfig;
     protected array $variableConfigKeys = [];
 
-    public function mergeConfig(array &$config): void
+    public function mergeConfig(array $config): void
     {
         if (!isset($this->hasDefaultConfig))
         {

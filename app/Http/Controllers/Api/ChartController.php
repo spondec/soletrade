@@ -103,10 +103,10 @@ class ChartController extends Controller
 
         if ($strategy)
         {
-            $tester = new Tester($strategy, $symbol, [
+            $tester = new Tester(new $strategy(symbol: $symbol, config: [
                 'startDate' => $start,
                 'endDate'   => $end
-            ]);
+            ]));
 
             $tester->strategy->updateSymbols();
             $trades = $tester->runStrategy();

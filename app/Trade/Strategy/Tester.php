@@ -3,19 +3,16 @@
 namespace App\Trade\Strategy;
 
 use App\Models\Summary;
-use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Collection\TradeCollection;
 use App\Trade\Evaluation\Evaluator;
 use App\Trade\Evaluation\Summarizer;
-use App\Trade\HasConfig;
 use App\Trade\HasInstanceEvents;
 use Illuminate\Support\Collection;
 
 class Tester
 {
     use HasInstanceEvents;
-    use HasConfig;
 
     protected array $events = [
         'strategy_pre_run',
@@ -25,28 +22,17 @@ class Tester
         'summary_finished',
     ];
 
-    public readonly Strategy $strategy;
-    protected array $config = [];
     protected Evaluator $evaluator;
 
-    public function __construct(string $strategyClass, Symbol $symbol, array $config = [])
+    public function __clone(): void
     {
-        $this->mergeConfig($config);
-        $this->strategy = $this->newStrategy($strategyClass, $symbol, $config);
-
-        $this->evaluator = new Evaluator($this->strategy);
+        $this->strategy = clone $this->strategy;
     }
 
-    protected function newStrategy(string $class, Symbol $symbol, array $config): Strategy
+    public function __construct(public Strategy $strategy)
     {
-        if (!\is_subclass_of($class, Strategy::class))
-        {
-            throw new \InvalidArgumentException('Invalid strategy class: ' . $class);
-        }
-
-        $config = array_merge_recursive_distinct($this->config, $config);
-
-        return new $class(symbol: $symbol, config: $config);
+        $this->strategy->mergeConfig(['minCandles' => null]);
+        $this->evaluator = new Evaluator($this->strategy);
     }
 
     public function runStrategy(): TradeCollection
@@ -138,14 +124,5 @@ class Tester
         }
 
         $this->fireEvent('summary_finished', $summary ?? new Summary(), $tradeCount);
-    }
-
-    final protected function getDefaultConfig(): array
-    {
-        return [
-            'minCandles' => null,
-            'startDate'  => null,
-            'endDate'    => null
-        ];
     }
 }

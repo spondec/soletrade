@@ -81,7 +81,7 @@ class StrategyTester extends TradeCommand
 
         $strategy = $tester->strategy;
 
-        if(!$options['skipUpdate'])
+        if (!$options['skipUpdate'])
         {
             $this->updateSymbols($strategy);
         }
@@ -117,10 +117,11 @@ class StrategyTester extends TradeCommand
                                        ?int   $startDate,
                                        ?int   $endDate): Tester
     {
-        return new Tester($strategyClass, $symbol, [
+        $strategy = new $strategyClass(symbol: $symbol, config: [
             'startDate' => $startDate,
-            'endDate'   => $endDate,
+            'endDate'   => $endDate
         ]);
+        return new Tester($strategy);
     }
 
     protected function initSections(): void
