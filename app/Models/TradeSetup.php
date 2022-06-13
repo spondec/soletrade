@@ -11,35 +11,35 @@ use App\Trade\Enum\Side;
 use App\Trade\Evaluation\Price;
 use App\Trade\Order\Type\StopLimit;
 use Database\Factories\TradeSetupFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rules\Enum;
 
 /**
- * @property Signal[]|\Illuminate\Database\Eloquent\Collection      signals
- * @property Symbol                                                 symbol
- * @property Signature                                              signature
- * @property TradeAction[]|\Illuminate\Database\Eloquent\Collection actions
+ * @property array|Signal[]           signals
+ * @property Symbol                   symbol
+ * @property Signature                signature
+ * @property TradeAction[]|Collection actions
  *
- * @property int                                                    id
- * @property int                                                    symbol_id
- * @property int                                                    signature_id
- * @property int                                                    signal_count
- * @property bool                                                   is_permanent
- * @property int                                                    timestamp
- * @property int                                                    price_date
- * @property string                                                 name
- * @property Side                                                   side
- * @property OrderType                                              entry_order_type
- * @property array                                                  order_type_config
- * @property float                                                  price
- * @property float                                                  size
- * @property float                                                  target_price
- * @property float                                                  stop_price
- * @property mixed                                                  created_at
- * @property mixed                                                  updated_at
+ * @property int                      id
+ * @property int                      symbol_id
+ * @property int                      signature_id
+ * @property int                      signal_count
+ * @property bool                     is_permanent
+ * @property int                      timestamp
+ * @property int                      price_date
+ * @property string                   name
+ * @property Side                     side
+ * @property OrderType                entry_order_type
+ * @property array                    order_type_config
+ * @property float                    price
+ * @property float                    size
+ * @property float                    target_price
+ * @property float                    stop_price
+ * @property mixed                    created_at
+ * @property mixed                    updated_at
  *
  * @method static TradeSetupFactory factory($count = null, $state = [])
  */
@@ -56,6 +56,30 @@ class TradeSetup extends Model implements Bindable
             'price'      => 'required|numeric',
             'side'       => ['required', new Enum(Side::class)]
         ];
+    }
+
+    protected function actions(): Attribute
+    {
+        return Attribute::make(
+            get: fn(string|null $value): array => $value ?
+                array_map(
+                    fn(array $action) => new TradeAction($action),
+                    json_decode($value, true)
+                ) : [],
+            set: fn(\JsonSerializable|array $value): string => json_encode($value)
+        );
+    }
+
+    protected function signals(): Attribute
+    {
+        return Attribute::make(
+            get: fn(string|null $value): array => $value ?
+                array_map(
+                    fn(array $signal) => new Signal($signal),
+                    json_decode($value, true)
+                ) : [],
+            set: fn(\JsonSerializable|array $value): string => json_encode($value)
+        );
     }
 
     protected $guarded = ['id'];
@@ -76,12 +100,8 @@ class TradeSetup extends Model implements Bindable
         'price'             => 'float',
         'order_type_config' => 'array',
         'entry_order_type'  => OrderType::class,
+        'signals'           => 'array',
     ];
-
-    public function actions(): HasMany
-    {
-        return $this->hasMany(TradeAction::class);
-    }
 
     public function loadBindingPrice(?Price $price, string $column, int $timestamp): void
     {
@@ -95,11 +115,6 @@ class TradeSetup extends Model implements Bindable
         {
             $price->set($entryPrice, $timestamp, 'Binding: ' . $binding->name, true);
         }
-    }
-
-    public function signals(): BelongsToMany
-    {
-        return $this->belongsToMany(Signal::class);
     }
 
     public function symbol(): BelongsTo
@@ -116,6 +131,7 @@ class TradeSetup extends Model implements Bindable
     {
         $result = parent::toArray();
 
+        //TODO:: do this in a resource
         if (!empty($result['price']) || !empty($result['target_price']) || !empty($result['stop_price']))
         {
             $result['price'] = \round((float)$result['price'], 2);

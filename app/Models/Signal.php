@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Trade\Indicator\Indicator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /** COLUMNS
  *
@@ -28,6 +27,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Signal extends Model
 {
+    public readonly Indicator $indicator;
+    protected $table = 'signals';
+    protected $guarded = [];
+    protected array $unique = ['symbol_id', 'indicator_id', 'signature_id', 'timestamp'];
+    protected $casts = [
+        'info' => 'array'
+    ];
+
     public static function validationRules(): array
     {
         return [
@@ -35,25 +42,9 @@ class Signal extends Model
         ];
     }
 
-    public readonly Indicator $indicator;
-
     public function setIndicator(Indicator $indicator): void
     {
         $this->indicator = $indicator;
-    }
-
-    protected $table = 'signals';
-
-    protected $guarded = ['id'];
-    protected array $unique = ['symbol_id', 'indicator_id', 'signature_id', 'timestamp'];
-
-    protected $casts = [
-        'info' => 'array'
-    ];
-
-    public function tradeSetup(): BelongsToMany
-    {
-        return $this->belongsToMany(TradeSetup::class);
     }
 
     public function symbol(): BelongsTo
@@ -70,14 +61,5 @@ class Signal extends Model
     public function signature(): BelongsTo
     {
         return $this->belongsTo(Signature::class);
-    }
-
-    public function toArray(): array
-    {
-        $result = parent::toArray();
-
-        $result['price'] = \round($result['price'], 2);
-
-        return $result;
     }
 }

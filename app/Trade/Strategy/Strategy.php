@@ -142,7 +142,10 @@ abstract class Strategy
             $this->actions[$trade] = new Collection();
         }
 
-        $this->actions[$trade][$actionClass] = $config;
+        $this->actions[$trade][] = [
+            'class'  => $actionClass,
+            'config' => $config
+        ];
     }
 
     public function updateSymbols()

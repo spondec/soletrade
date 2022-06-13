@@ -259,7 +259,7 @@ abstract class Indicator implements Binder, \ArrayAccess
                     $newSignal->timestamp = $openTime;
                     $newSignal->price_date = $priceDate;
 
-                    $newSignal = $this->saveSignal($newSignal);
+                    $newSignal = $this->pushSignal($newSignal);
                     $signal = $this->setupSignal($signalSignature);
                 }
             }
@@ -286,8 +286,10 @@ abstract class Indicator implements Binder, \ArrayAccess
 
     protected function getSignalCallbackSignature(\Closure $callback): Signature
     {
-        return $this->register(['config'             => $this->config,
-                                'signalCallbackHash' => ClosureHash::from($callback)]);
+        return $this->register([
+            'config'             => $this->config,
+            'signalCallbackHash' => ClosureHash::from($callback)
+        ]);
     }
 
     public function setupSignal(Signature $signalSignature): Signal
@@ -304,10 +306,10 @@ abstract class Indicator implements Binder, \ArrayAccess
     /**
      * @param Signal $signal
      */
-    protected function saveSignal(Signal $signal): Signal
+    protected function pushSignal(Signal $signal): Signal
     {
-        /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-        $this->signals[] = $signal = $signal->updateUniqueOrCreate();
+        $this->signals[] = $signal;
+
         $signal->setIndicator($this);
         return $signal;
     }

@@ -25,6 +25,8 @@ return new class extends Migration {
             $table->enum('entry_order_type', \App\Trade\Enum::cases(\App\Trade\Enum\OrderType::class));
             $table->json('order_type_config')->nullable();
             $table->integer('signal_count');
+            $table->json('signals')->nullable();
+            $table->json('actions')->nullable();
             $table->boolean('is_permanent')->default(false);
             $table->bigInteger('timestamp');
             $table->bigInteger('price_date');

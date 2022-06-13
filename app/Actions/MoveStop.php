@@ -25,7 +25,7 @@ class MoveStop extends Handler
 
     protected function setup(): void
     {
-        $this->stop = $this->position->price('stop');
+        $this->stop = $this->position->price('stop') ?? throw new \LogicException('No stop price set.');
 
         if ($this->config('target.price') && $this->config('target.roi'))
         {
