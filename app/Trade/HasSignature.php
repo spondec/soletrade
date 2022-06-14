@@ -24,11 +24,21 @@ trait HasSignature
             return $signature->get();
         }
 
-        /** @var Signature $signature */
-        $signature = Signature::query()->firstOrCreate(['hash' => $hash], [
-            'hash' => $hash,
-            'data' => $hashed
-        ]);
+        try
+        {
+            $signature = $this->getSignature($hash, $hashed);
+        } catch (\PDOException $e)
+        {
+            if (str_contains($e->getMessage(), 'Duplicate entry'))
+            {
+                //a possible race condition, try again
+                $signature = $this->getSignature($hash, $hashed);
+            }
+            else
+            {
+                throw $e;
+            }
+        }
 
         if ($collisions = $this->getKeyDiff($signature->data, $hashed))
         {
@@ -51,12 +61,9 @@ trait HasSignature
                     $collisions[$key] = $c;
                 }
             }
-            else
+            else if (!\array_key_exists($key, $array2) || $array2[$key] != $value)
             {
-                if (!\array_key_exists($key, $array2) || $array2[$key] != $value)
-                {
-                    $collisions[] = $key;
-                }
+                $collisions[] = $key;
             }
         }
         return $collisions;
@@ -96,5 +103,15 @@ trait HasSignature
     public function id(): int
     {
         return $this->signature->id;
+    }
+
+    private function getSignature(string $hash, array $hashed): Signature
+    {
+        /** @var Signature $signature */
+        $signature = Signature::query()->firstOrCreate(['hash' => $hash], [
+            'hash' => $hash,
+            'data' => $hashed
+        ]);
+        return $signature;
     }
 }
