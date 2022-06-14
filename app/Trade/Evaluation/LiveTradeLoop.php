@@ -29,7 +29,7 @@ class LiveTradeLoop extends TradeLoop
         }
     }
 
-    protected function tryPositionEntry(\stdClass $candle, int $priceDate): void
+    protected function tryPositionEntry(object $candle): void
     {
         if (!$this->order->entry)
         {
