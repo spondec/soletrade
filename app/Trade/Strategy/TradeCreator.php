@@ -77,8 +77,8 @@ class TradeCreator
             throw new \LogicException('Trade has not been set.');
         }
 
-        $this->trade->actions = $this->actions->all();
-        $this->trade->signals = $this->signals->map(fn(Signal $signal): array => $signal->getAttributes());
+        $this->trade->actions = $this->actions?->all() ?? [];
+        $this->trade->signals = $this->signals?->map(fn(Signal $signal): array => $signal->getAttributes()) ?? [];
 
         $setup = $this->trade->updateUniqueOrCreate();
 
