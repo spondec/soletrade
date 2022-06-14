@@ -47,4 +47,15 @@ class CalcTest extends TestCase
         $this->assertEquals("101:23:59:59", elapsed_time($time - 86400 * 101 - 23 * 60 ** 2 - 59 * 60 - 59));
         $this->assertEquals("102:0:0:0", elapsed_time($time - 86400 * 101 - 23 * 60 ** 2 - 59 * 60 - 60));
     }
+
+    public function test_realize_price()
+    {
+        $this->assertEquals(false, Calc::realizePrice(true, 10.64, 10.66,10.65));
+        $this->assertEquals(10.63, Calc::realizePrice(true, 10.64, 10.63,10.61));
+        $this->assertEquals(10.64, Calc::realizePrice(true, 10.64, 10.91,10.61));
+
+        $this->assertEquals(10.65, Calc::realizePrice(false, 10.64, 10.66,10.65));
+        $this->assertEquals(false, Calc::realizePrice(false, 10.64, 10.63,10.61));
+        $this->assertEquals(10.64, Calc::realizePrice(false, 10.64, 10.91,10.61));
+    }
 }

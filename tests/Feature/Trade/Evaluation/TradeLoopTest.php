@@ -87,7 +87,7 @@ class TradeLoopTest extends TestCase
         /** @var Candle[] $candles */
         $candles = Candle::factory()
             ->for($symbol)
-            ->fillBetween($time - 86400, $time, 3600)
+            ->fillBetween($time - 86400, $time, $interval = 3600)
             ->priceLowerThan(2)
             ->create();
 
@@ -109,7 +109,7 @@ class TradeLoopTest extends TestCase
                 'price_date' => $candles[3]->t - 1000
             ]);
 
-        $loop = new TradeLoop($entry, $entry->symbol, ['timeout' => 60 * 3]);
+        $loop = new TradeLoop($entry, $entry->symbol, ['timeout' => $interval / 60 * 3]);
         $loop->run();
 
         $status = $loop->status();
@@ -122,6 +122,9 @@ class TradeLoopTest extends TestCase
 
         $this->assertNotNull($exitTime);
         //account for evaluation interval?
-        $this->assertEquals($entryTime + (3600 * 3 * 1000), $exitTime);
+
+        $this->assertGreaterThanOrEqual($entryTime + ($interval * 3 * 1000), $exitTime);
+        //accounts for the wiggle room of price dates ranging between candle open and close
+        $this->assertLessThanOrEqual($loop->timeoutDate() + ($interval * 1000), $exitTime);
     }
 }

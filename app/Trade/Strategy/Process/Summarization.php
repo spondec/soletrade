@@ -19,12 +19,9 @@ abstract class Summarization extends Process
     protected function newStrategySummaryJob(Tester $tester, array $config): \Closure
     {
         return static function () use ($config, $tester) {
-
             $tester->strategy->mergeConfig($config);
             $trades = $tester->strategy->run();
-            $summary = $tester->summary($trades);
-
-            return $summary;
+            return $tester->summary($trades);
         };
     }
 

@@ -16,6 +16,31 @@ class Calc
         return $value <= $high && $value >= $low;
     }
 
+    public static function realizePrice(bool $isBuy, float $price, float $high, float $low): float|false
+    {
+        if (static::inRange($price, $high, $low))
+        {
+            return $price;
+        }
+
+        // Look for a better price outside the range
+        if ($isBuy)
+        {
+            if ($high < $price)
+            {
+                return $high;
+            }
+            return false;
+        }
+
+        if ($low > $price)
+        {
+            return $low;
+        }
+
+        return false;
+    }
+
     public static function roi(bool $isBuy, int|float $entryPrice, int|float $exitPrice): float
     {
         $roi = ($exitPrice - $entryPrice) * 100 / $entryPrice;

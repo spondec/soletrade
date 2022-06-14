@@ -23,6 +23,11 @@ final class Log
         self::$errors[] = $e;
     }
 
+    public static function flush(): void
+    {
+        static::$errors = [];
+    }
+
     public static function getErrors(): array
     {
         return self::$errors;

@@ -7,14 +7,13 @@ namespace App\Trade\Evaluation;
 use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Calc;
+use App\Trade\Enum\OrderType;
 use App\Trade\Exception\PrintableException;
 use App\Trade\HasConfig;
 use App\Trade\Repository\SymbolRepository;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
-use JetBrains\PhpStorm\Pure;
 
 class TradeLoop
 {
@@ -109,7 +108,7 @@ class TradeLoop
 
     public function run(): TradeStatus
     {
-        if ($this->hasExitTrade() && !isset($this->isExitRunCompleted))
+        if (!isset($this->isExitRunCompleted) && $this->hasExitTrade())
         {
             $this->isExitRunCompleted = true;
             $lastCandle = $this->repo->fetchNextCandle($this->evaluationSymbol, $this->exit->price_date);
@@ -162,6 +161,8 @@ class TradeLoop
     {
         $this->assertPreLoopRequisites($candles);
 
+        $this->adjustEntryPriceByOrderType($candles);
+
         $iterator = $candles->getIterator();
 
         $entry = $this->status->getEntryPrice();
@@ -182,8 +183,7 @@ class TradeLoop
             if (!$this->status->isEntered())
             {
                 $this->loadBinding($entry, 'price', $candle);
-                $priceDate = $this->getPriceDate($candle, $nextCandle);
-                $this->tryPositionEntry($candle, $priceDate);
+                $this->tryPositionEntry($candle);
             }
             else if (!$this->status->isExited())
             {
@@ -216,26 +216,47 @@ class TradeLoop
             : $candle->t;
     }
 
-    protected function getPriceDate(\stdClass $candle, ?\stdClass $next): int
+    protected function getPriceDate(object $candle, ?object $next, ?float $price = null): int
     {
+        if ($price == (float)$candle->o)
+        {
+            return $candle->t;
+        }
+
         return $this->repo->getPriceDate($candle->t, $next?->t, $this->evaluationSymbol);
     }
 
-    protected function tryPositionEntry(\stdClass $candle, int $priceDate): void
+    protected function tryPositionEntry(object $candle): void
     {
-        if (Calc::inRange($this->status->getEntryPrice()->get(), $candle->h, $candle->l))
+        $realizedEntryPrice = Calc::realizePrice($this->entry->isBuy(),
+            $entryPrice = $this->status->getEntryPrice()->get(),
+            $candle->h,
+            $candle->l
+        );
+
+        if ($realizedEntryPrice !== false)
         {
+            $priceDate = $this->getPriceDate($candle, null, $realizedEntryPrice);
+
+            if ($realizedEntryPrice != $entryPrice)
+            {
+                $this->status->getEntryPrice()->set($realizedEntryPrice,
+                    $priceDate,
+                    'A better entry price found.'
+                );
+            }
+
             $this->status->enterPosition($priceDate);
             $this->tryPositionExit($this->getPosition(), $candle, $priceDate);
         }
     }
 
-    #[Pure] protected function getPosition(): ?Position
+    protected function getPosition(): ?Position
     {
         return $this->status->getPosition();
     }
 
-    #[Pure] protected function hasPositionTimedOut(int $priceDate): bool
+    protected function hasPositionTimedOut(int $priceDate): bool
     {
         return $this->timeoutDate <= $priceDate;
     }
@@ -287,7 +308,7 @@ class TradeLoop
         }
     }
 
-    protected function isLastCandle(\stdClass $candle): bool //TODO:: needs caching
+    protected function isLastCandle(\stdClass $candle): bool
     {
         return !(bool)$this->repo->fetchNextCandle($candle->symbol_id, $candle->t);
     }
@@ -387,6 +408,29 @@ class TradeLoop
     public function status(): TradeStatus
     {
         return $this->status;
+    }
+
+    protected function adjustEntryPriceByOrderType(Collection $candles): void
+    {
+        $first = $candles->first();
+        if (
+            $first->t == $this->firstCandle->t &&
+            $this->entry->price != $first->o &&
+            $this->entry->entry_order_type === OrderType::MARKET
+        )
+        {
+
+            $this->status->getEntryPrice()->set(
+                (float)$first->o,
+                $this->getPriceDate($first, $candles[1] ?? null),
+                'Entry price set to first candle open price.'
+            );
+        }
+    }
+
+    public function timeoutDate(): ?int
+    {
+        return $this->timeoutDate;
     }
 
     protected function getDefaultConfig(): array
