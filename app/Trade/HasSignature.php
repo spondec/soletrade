@@ -6,6 +6,7 @@ use App\Models\Signature;
 use App\Trade\Helper\ClosureHash;
 
 trait HasSignature
+
 {
     protected Signature $signature;
 
@@ -24,21 +25,7 @@ trait HasSignature
             return $signature->get();
         }
 
-        try
-        {
-            $signature = $this->getSignature($hash, $hashed);
-        } catch (\PDOException $e)
-        {
-            if (str_contains($e->getMessage(), 'Duplicate entry'))
-            {
-                //a possible race condition, try again
-                $signature = $this->getSignature($hash, $hashed);
-            }
-            else
-            {
-                throw $e;
-            }
-        }
+        $signature = $this->getSignature($hash, $hashed);
 
         if ($collisions = $this->getKeyDiff($signature->data, $hashed))
         {

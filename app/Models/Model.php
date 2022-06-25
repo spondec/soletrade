@@ -1,7 +1,10 @@
 <?php
 
+/** @noinspection PhpIncompatibleReturnTypeInspection */
+
 namespace App\Models;
 
+use App\Trade\Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Validator;
 
 abstract class Model extends \Illuminate\Database\Eloquent\Model
@@ -30,7 +33,6 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
     {
         if ($this->unique)
         {
-            /** @noinspection PhpIncompatibleReturnTypeInspection */
             return static::query()
                 ->with($with)
                 ->where($this->uniqueAttributesToArray())
@@ -39,9 +41,13 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
         return null;
     }
 
+    public function newEloquentBuilder($query)
+    {
+        return new Builder($query);
+    }
+
     public function updateUniqueOrCreate(): static
     {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
         return static::query()->updateOrCreate(
             $this->uniqueAttributesToArray(),
             $this->attributesToArray()
@@ -50,7 +56,6 @@ abstract class Model extends \Illuminate\Database\Eloquent\Model
 
     public function firstUniqueOrCreate(): static
     {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
         return static::query()->firstOrCreate(
             $this->uniqueAttributesToArray(),
             $this->attributesToArray()
