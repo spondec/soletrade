@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console;
+namespace App\Trade\Console;
 
 use App\Trade\Exception\PrintableException;
 use Illuminate\Console\Scheduling\Schedule;
@@ -41,7 +41,6 @@ class Kernel extends ConsoleKernel
     protected function commands()
     {
         $this->load(__DIR__ . '/Command');
-        $this->load(__DIR__ . '/../Trade/Command');
 
         require base_path('routes/console.php');
     }

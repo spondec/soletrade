@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Command;
+namespace App\Trade\Console\Command;
 
 use App\Trade\Stub\StrategyIndicatorStub;
 use App\Trade\Stub\TradeActionStub;

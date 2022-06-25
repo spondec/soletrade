@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trade\Command;
+namespace App\Trade\Console\Command;
 
 use App\Models\Symbol;
 use App\Trade\Exchange\Exchange;
