@@ -56,39 +56,7 @@ class CandleCollection extends Collection
         return new static(\array_reverse($candles, false));
     }
 
-    public function findPrevNextCandle(int        $timestamp,
-                                       ?object &$prev = null,
-                                       ?object &$next = null,
-                                       ?int       &$prevKey = null,
-                                       ?int       &$nextKey = null): void
-    {
-        /**
-         * @var int       $key
-         * @var object $candle
-         */
-        foreach ($this->items as $key => $candle)
-        {
-            if (!$prev)
-            {
-                if ($candle->t > $timestamp)
-                {
-                    $prev = $_prev ?? null;
-                    $prevKey = $_prevKey ?? null;
-                }
-            }
-            else if ($candle->t > $prev->t)
-            {
-                $next = $candle;
-                $nextKey = $key;
-                break;
-            }
-
-            $_prev = $candle;
-            $_prevKey = $key;
-        }
-    }
-
-    public function overrideCandle(int $key, object $candle): void
+    public function overrideCandle(int $key, \stdClass $candle): void
     {
         $this->overrides[$key] = $this->items[$key];
         $this->items[$key] = $candle;
