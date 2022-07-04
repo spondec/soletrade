@@ -40,7 +40,7 @@ class MoveStop extends Handler
         $this->lockIfUnlocked($this->stop);
     }
 
-    protected function stopIfShould(\stdClass $candle, int $priceDate): void
+    protected function stopIfShould(object $candle, int $priceDate): void
     {
         if (!$this->position->isOpen())
         {
@@ -74,7 +74,7 @@ class MoveStop extends Handler
         $this->stop->set($price, $timestamp, $this->prepareReason($reason));
     }
 
-    protected function performAction(\stdClass $candle, int $priceDate): bool
+    protected function performAction(object $candle, int $priceDate): bool
     {
         $newStop = $this->config('new_stop_price');
 

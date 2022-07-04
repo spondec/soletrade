@@ -57,14 +57,14 @@ class CandleCollection extends Collection
     }
 
     public function findPrevNextCandle(int        $timestamp,
-                                       ?\stdClass &$prev = null,
-                                       ?\stdClass &$next = null,
+                                       ?object &$prev = null,
+                                       ?object &$next = null,
                                        ?int       &$prevKey = null,
                                        ?int       &$nextKey = null): void
     {
         /**
          * @var int       $key
-         * @var \stdClass $candle
+         * @var object $candle
          */
         foreach ($this->items as $key => $candle)
         {
@@ -88,7 +88,7 @@ class CandleCollection extends Collection
         }
     }
 
-    public function overrideCandle(int $key, \stdClass $candle): void
+    public function overrideCandle(int $key, object $candle): void
     {
         $this->overrides[$key] = $this->items[$key];
         $this->items[$key] = $candle;

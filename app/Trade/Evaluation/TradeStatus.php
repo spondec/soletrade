@@ -129,7 +129,7 @@ class TradeStatus
         $exitPrice->newLog($priceDate, 'Exit price has been set.');
     }
 
-    public function runTradeActions(\stdClass $candle, int $priceDate): void
+    public function runTradeActions(object $candle, int $priceDate): void
     {
         if ($this->isExited())
         {
@@ -145,7 +145,7 @@ class TradeStatus
         }
     }
 
-    public function checkIsStopped(\stdClass $candle): bool
+    public function checkIsStopped(object $candle): bool
     {
         $this->assertPosition();
         $stopPrice = $this->getStopPrice();
@@ -167,7 +167,7 @@ class TradeStatus
         }
     }
 
-    public function checkIsClosed(\stdClass $candle): bool
+    public function checkIsClosed(object $candle): bool
     {
         $this->assertPosition();
         $target = $this->getTargetPrice();

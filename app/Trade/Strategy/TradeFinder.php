@@ -95,7 +95,7 @@ class TradeFinder
     {
         while ($this->candleIterator->valid())
         {
-            /** @var \stdClass $candle */
+            /** @var object $candle */
             $candle = $this->candleIterator->current();
             $key = $this->candleIterator->key();
             $results = $this->getIndicatorGeneratorResults($candle, $indicator) ?? [];
@@ -128,7 +128,7 @@ class TradeFinder
         return new TradeCollection($this->trades, $this->strategy->config('trades'));
     }
 
-    protected function getIndicatorGeneratorResults(\stdClass $candle, ?Indicator &$indicator = null): ?array
+    protected function getIndicatorGeneratorResults(object $candle, ?Indicator &$indicator = null): ?array
     {
         $results = [];
         foreach ($this->indicatorGenerators as $alias => $generator)
@@ -164,7 +164,7 @@ class TradeFinder
         return $results;
     }
 
-    protected function runUnderCandle(int $key, \stdClass $candle, \Closure $closure): void
+    protected function runUnderCandle(int $key, object $candle, \Closure $closure): void
     {
         $this->candles->overrideCandle($key, $candle);
         try

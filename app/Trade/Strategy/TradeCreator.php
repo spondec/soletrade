@@ -177,7 +177,7 @@ class TradeCreator
         return $this->signals->count() == $this->requiredSignalCount;
     }
 
-    protected function setup(Candles $candles, \stdClass $candle): TradeSetup
+    protected function setup(Candles $candles, object $candle): TradeSetup
     {
         $setup = new TradeSetup();
 

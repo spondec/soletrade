@@ -53,9 +53,9 @@ class SymbolRepository extends Repository
     }
 
     /**
-     * @return \stdClass[]
+     * @return object[]
      */
-    #[ArrayShape(['lowest' => \stdClass::class, 'highest' => \stdClass::class])]
+    #[ArrayShape(['lowest' => 'object', 'highest' => 'object'])]
     public function assertLowestHighestCandle(int $symbolId, int $startDate, int $endDate): array
     {
         if ($startDate >= $endDate)
@@ -146,7 +146,7 @@ class SymbolRepository extends Repository
         return DB::table('candles')->where('symbol_id', $symbol->id);
     }
 
-    public function fetchCandle(Symbol $symbol, int $timestamp, ?string $interval = null): ?\stdClass
+    public function fetchCandle(Symbol $symbol, int $timestamp, ?string $interval = null): ?object
     {
         return DB::table('candles')
             ->where('symbol_id', $interval ? $this->findSymbolIdForInterval($symbol, $interval) : $symbol->id)
@@ -169,7 +169,7 @@ class SymbolRepository extends Repository
         return $symbol->last_update;
     }
 
-    public function fetchNextCandle(Symbol|int $symbol, int $timestamp): ?\stdClass
+    public function fetchNextCandle(Symbol|int $symbol, int $timestamp): ?object
     {
         $id = \is_int($symbol) ? $symbol : $symbol->id;
 
@@ -193,7 +193,7 @@ class SymbolRepository extends Repository
         return $candles[0] ?? null;
     }
 
-    public function assertNextCandle(Symbol|int $symbol, int $timestamp): \stdClass
+    public function assertNextCandle(Symbol|int $symbol, int $timestamp): object
     {
         if (!$candle = $this->fetchNextCandle($symbol, $timestamp))
         {
@@ -268,7 +268,7 @@ class SymbolRepository extends Repository
             ->get()->pluck('interval');
     }
 
-    public function fetchLastCandle(Symbol $symbol): \stdClass
+    public function fetchLastCandle(Symbol $symbol): object
     {
         return DB::table('candles')
             ->where('symbol_id', $symbol->id)

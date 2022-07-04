@@ -31,6 +31,6 @@ class CandleCollectionTest extends TestCase
         $col = new CandleCollection(range(1, 10));
         $col->overrideCandle(1, (object)[]);
 
-        $this->assertInstanceOf(\stdClass::class, $col[1]);
+        $this->assertIsObject($col[1]);
     }
 }

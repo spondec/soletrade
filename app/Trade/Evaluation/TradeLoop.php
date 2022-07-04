@@ -26,7 +26,7 @@ class TradeLoop
     protected ?int $timeoutDate = null;
     protected ?int $lastRunDate = null;
     protected Collection $candles;
-    protected \stdClass $firstCandle;
+    protected object $firstCandle;
     protected TradeStatus $status;
     protected ?int $timeout;
     public readonly TradeSetup $exit;
@@ -71,7 +71,7 @@ class TradeLoop
         $this->status->listen('positionEntry', $this->onPositionEntry(...));
     }
 
-    protected function getFirstCandle(TradeSetup $setup): \stdClass
+    protected function getFirstCandle(TradeSetup $setup): object
     {
         return $this->repo->fetchNextCandle($this->evaluationSymbol, $setup->price_date) //candle is closed
             ?? DB::table('candles')
@@ -261,7 +261,7 @@ class TradeLoop
         return $this->timeoutDate <= $priceDate;
     }
 
-    protected function stopPositionAtClosePrice(Position $position, \stdClass $candle, string $reason): void
+    protected function stopPositionAtClosePrice(Position $position, object $candle, string $reason): void
     {
         if ($this->status->isAmbiguous())
         {
@@ -283,7 +283,7 @@ class TradeLoop
         $position->stop($priceDate);
     }
 
-    protected function tryPositionExit(Position $position, \stdClass $candle, int $priceDate): void
+    protected function tryPositionExit(Position $position, object $candle, int $priceDate): void
     {
         if ($this->status->isExited())
         {
@@ -308,12 +308,12 @@ class TradeLoop
         }
     }
 
-    protected function isLastCandle(\stdClass $candle): bool
+    protected function isLastCandle(object $candle): bool
     {
         return !(bool)$this->repo->fetchNextCandle($candle->symbol_id, $candle->t);
     }
 
-    protected function getPrevCandle(\stdClass $candle): \stdClass
+    protected function getPrevCandle(object $candle): object
     {
         return $this->repo->findCandles($this->evaluationSymbol)
             ->where('t', '<', $candle->t)
@@ -374,7 +374,7 @@ class TradeLoop
         }
     }
 
-    protected function getLastCandle(): \stdClass
+    protected function getLastCandle(): object
     {
         $candle = $this->repo->fetchCandle($this->evaluationSymbol, $this->lastRunDate);
 
@@ -474,7 +474,7 @@ class TradeLoop
         }
     }
 
-    protected function loadBinding(Price $price, string $column, \stdClass $candle): void
+    protected function loadBinding(Price $price, string $column, object $candle): void
     {
         $this->entry->loadBindingPrice($price, $column, $candle->t);
     }

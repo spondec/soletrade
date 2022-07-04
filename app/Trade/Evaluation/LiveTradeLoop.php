@@ -82,7 +82,7 @@ class LiveTradeLoop extends TradeLoop
         return $this->order->tradeAsset;
     }
 
-    protected function tryPositionExit(Position $position, \stdClass $candle, int $priceDate): void
+    protected function tryPositionExit(Position $position, object $candle, int $priceDate): void
     {
         $isEntryFilled = $this->order->entry->isAllFilled();
 

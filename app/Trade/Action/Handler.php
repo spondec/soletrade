@@ -49,7 +49,7 @@ abstract class Handler
 
     }
 
-    public function run(\stdClass $candle, int $priceDate): ?TradeAction
+    public function run(object $candle, int $priceDate): ?TradeAction
     {
         if (!$this->isTaken && $this->performAction($candle, $priceDate))
         {
@@ -69,12 +69,12 @@ abstract class Handler
     /**
      * Return true if the action is taken.
      *
-     * @param \stdClass $candle
+     * @param object $candle
      * @param int       $priceDate
      *
      * @return bool
      */
-    abstract protected function performAction(\stdClass $candle, int $priceDate): bool;
+    abstract protected function performAction(object $candle, int $priceDate): bool;
 
     protected function applyLocks(): void
     {

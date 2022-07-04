@@ -197,7 +197,7 @@ which side we're on, and bind it as our stop price in the setup function:
                 /** @var ATR $atr */
                 $atr = $this->indicator('ATR');
                 $atr->bind($trade, 'stop_price', 'ATR',
-                    fn(float $atrValue, \stdClass $candle) => $trade->isBuy() 
+                    fn(float $atrValue, object $candle) => $trade->isBuy() 
                     ? $candle->c - $atrValue * 1 
                     : $candle->c + $atrValue * 1
                 );
