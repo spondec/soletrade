@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use App\Trade\Strategy\Parameter\RangedSet;
 use App\Trade\Strategy\Parameter\DefinedSet;
 use App\Trade\Strategy\Strategy;
+use App\Trade\Indicator\IndicatorDataSeries as Series;
 {{ use }}
 
 final class {{ name }} extends Strategy
