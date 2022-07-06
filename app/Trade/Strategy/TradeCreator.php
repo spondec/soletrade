@@ -9,6 +9,7 @@ use App\Models\Symbol;
 use App\Models\TradeSetup;
 use App\Trade\Candles;
 use App\Trade\Config\TradeConfig;
+use App\Trade\Enum;
 use App\Trade\Enum\OrderType;
 use App\Trade\Repository\SymbolRepository;
 use Illuminate\Support\Collection;
@@ -191,7 +192,7 @@ class TradeCreator
             $lastSignal = $this->getLastSignal();
 
             $setup->name = $this->signals
-                ->map(static fn(Signal $signal): string => $signal->name)
+                ->map(static fn(Signal $signal): string => $signal->name ?? $signal->name = Enum::case($signal->side))
                 ->implode('|');
             $setup->side = $lastSignal->side;
             $setup->timestamp = $lastSignal->timestamp;

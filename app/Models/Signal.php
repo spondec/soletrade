@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Trade\Enum\Side;
 use App\Trade\Indicator\Indicator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int       timestamp
  * @property int       price_date
  * @property string    name
- * @property string    side
+ * @property Side      side
  * @property string    signature_id
  * @property float     price
  * @property array     info
