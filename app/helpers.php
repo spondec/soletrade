@@ -236,11 +236,19 @@ if (!function_exists('crossover'))
             $prevX = $x->value(1)->get();
             $x = $x->get();
         }
+        else
+        {
+            $prevX = $x;
+        }
 
         if ($y instanceof Series)
         {
             $prevY = $y->value(1)->get();
             $y = $y->get();
+        }
+        else
+        {
+            $prevY = $y;
         }
 
         if (empty($prevY) || empty($prevX) || empty($y) || empty($x))
@@ -261,11 +269,19 @@ if (!function_exists('crossunder'))
             $prevX = $x->value(1)->get();
             $x = $x->get();
         }
+        else
+        {
+            $prevX = $x;
+        }
 
         if ($y instanceof Series)
         {
             $prevY = $y->value(1)->get();
             $y = $y->get();
+        }
+        else
+        {
+            $prevY = $y;
         }
 
         if (empty($prevY) || empty($prevX) || empty($y) || empty($x))
