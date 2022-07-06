@@ -10,7 +10,7 @@
                  * If you want to use this as a signal, code it inside the signal function
                  * and return $signal once your condition is met, otherwise return null.
                  */
-                'signal' => function (Signal $signal, {{ indicator }} $indicator, mixed $value): ?Signal {
+                'signal' => function (Signal $signal, {{ indicator }} $indicator, Series $series): ?Signal {
 
                     return null;
                 }
