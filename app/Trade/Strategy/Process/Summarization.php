@@ -21,7 +21,11 @@ abstract class Summarization extends Process
         return static function () use ($config, $tester) {
             $tester->strategy->mergeConfig($config);
             $trades = $tester->strategy->run();
-            return $tester->summary($trades);
+            $summary = $tester->summary($trades);
+
+            $summary->parameters = $config;
+
+            return $summary;
         };
     }
 
