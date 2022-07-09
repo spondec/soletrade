@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->decimal('h');
             $table->decimal('l');
             $table->decimal('v')->nullable();
+            $table->decimal('price_date');
             $table->index(['symbol_id', 'l']);
             $table->index(['symbol_id', 'h']);
             $table->unique(['t', 'symbol_id']);

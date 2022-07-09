@@ -45,7 +45,7 @@ class CandleFactory extends Factory
         }
 
         return [
-            't' => $this->startDate && $this->interval
+            't' => $t = $this->startDate && $this->interval
                 ? $this->getNextTimestamp()
                 : $this->faker
                     ->dateTimeBetween($this->startDate ?: '-1 year', 'now')
@@ -55,6 +55,7 @@ class CandleFactory extends Factory
             'h' => \max($prices),
             'l' => \min($prices),
             'v' => $this->faker->randomFloat(2, 100, 100 * 10),
+            'price_date' => $t + $this->interval - 1000
         ];
     }
 
