@@ -292,3 +292,47 @@ if (!function_exists('crossunder'))
         return $prevX >= $prevY && $x < $y;
     }
 }
+
+if (!function_exists('binary_search'))
+{
+    function binary_search(array|\ArrayAccess $haystack,
+                           int                $needle,
+                           int                $left,
+                           int                $right,
+                           callable           $compare,
+                           int                &$low = null,
+                           int                &$high = null): ?int
+    {
+        while ($left <= $right)
+        {
+            $mid = (int)($left + ($right - $left) / 2);
+            $cmp = $compare($haystack[$mid], $needle);
+
+            if ($cmp < 0)
+            {
+                $left = $mid + 1;
+            }
+            elseif ($cmp > 0)
+            {
+                $right = $mid - 1;
+            }
+            else
+            {
+                return $mid;
+            }
+        }
+
+        $low = $right;
+        $high = $left;
+
+        return null;
+    }
+}
+
+if (!function_exists('in_range'))
+{
+    function in_range(int|float $value, int|float $min, int|float $max): bool
+    {
+        return $value >= $min && $value <= $max;
+    }
+}
