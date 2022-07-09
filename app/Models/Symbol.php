@@ -118,4 +118,12 @@ class Symbol extends Model
             ->orderBy('t', 'DESC')
             ->first();
     }
+
+    public function firstCandle(): object
+    {
+        return \DB::table('candles')
+            ->where('symbol_id', $this->id)
+            ->orderBy('t', 'ASC')
+            ->first();
+    }
 }
