@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Trade\Collection\CandleCollection;
 use App\Trade\Indicator\Indicator;
+use App\Trade\Repository\SymbolRepository;
 use Database\Factories\SymbolFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Collection;
@@ -38,9 +39,9 @@ class Symbol extends Model
             'limit'      => $this->limit,
             'candles'    => $this->exists ? $this->candles?->toArray() ?? [] : [],
             'indicators' => $this->indicators?->map(static fn(Indicator $i) => [
-                    'name'        => $i::name(),
-                    'data'        => $i->raw($i->data()),
-                    'config'      => $i->config(),
+                    'name'   => $i::name(),
+                    'data'   => $i->raw($i->data()),
+                    'config' => $i->config(),
                 ])?->toArray() ?? []
         ]);
     }
@@ -75,7 +76,7 @@ class Symbol extends Model
         }
 
         $candles = $query->get();
-        return $this->candles = new CandleCollection($order === 'DESC' ? $candles->reverse()->values() : $candles);
+        return $this->candles = new CandleCollection($order === 'DESC' ? $candles->reverse()->values()->all() : $candles->all());
     }
 
     public function addIndicator(Indicator $indicator): void
