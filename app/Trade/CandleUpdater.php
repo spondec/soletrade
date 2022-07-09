@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class CandleUpdater
 {
-    protected SymbolRepository $symbolRepo;
+    protected SymbolRepository $repo;
 
     protected int $limit;
     protected CandleMap $map;
@@ -24,7 +24,7 @@ class CandleUpdater
 
     public function __construct(protected Exchange $exchange)
     {
-        $this->symbolRepo = App::make(SymbolRepository::class);
+        $this->repo = App::make(SymbolRepository::class);
 
         $fetch = $this->exchange->fetch();
 
@@ -95,27 +95,27 @@ class CandleUpdater
             do
             {
                 DB::unprepared('LOCK TABLES candles WRITE, symbols WRITE');
-                $currentCandles = $this->symbolRepo->fetchLatestCandles($symbol, 'DESC', 2);
-                $currentLastCandle = $currentCandles->shift();
-                $start = $currentCandles->first()->t ?? 0;
+                $candles = $this->repo->fetchLatestCandles($symbol, 'DESC', 2);
+                $lastCandle = $candles->shift();
+                $start = $candles->first()->t ?? 0;
 
                 $symbol->last_update = \time() * 1000;
                 $latestCandles = $this->exchange->fetch()->candles($symbol->symbol,
                     $symbol->interval,
                     $start,
                     $this->limit);
-                $inserts = $this->symbolRepo->mapCandles($latestCandles, $id, $this->map);
+                $inserts = $this->repo->mapCandles($latestCandles, $symbol, $this->map);
 
                 $break = \count($latestCandles) <= 1;
 
-                if (isset($latestCandles[0]) && $currentLastCandle)
+                if (isset($latestCandles[0]) && $lastCandle)
                 {
-                    if ($latestCandles[0][$this->map->t] != $currentLastCandle->t)
+                    if ($latestCandles[0][$this->map->t] != $lastCandle->t)
                     {
                         throw new \LogicException("Candle corruption detected! Symbol ID: $id");
                     }
 
-                    $this->symbolRepo->updateCandle($currentLastCandle->id, $inserts[0]);
+                    $this->repo->updateCandle($lastCandle->id, $inserts[0]);
                     unset($inserts[0]);
                 }
 
@@ -153,11 +153,11 @@ class CandleUpdater
 
     public function indexSymbols(string $interval): Collection
     {
-        $this->symbolRepo->insertIgnoreSymbols($this->symbols,
+        $this->repo->insertIgnoreSymbols($this->symbols,
             $id = $this->exchange->model()->id,
             $interval);
 
-        return $this->symbolRepo->fetchSymbols($this->symbols,
+        return $this->repo->fetchSymbols($this->symbols,
             $interval,
             $id);
     }
