@@ -57,7 +57,7 @@ abstract class TradeCommand extends Command
 
         if ($startDate && !$endDate)
         {
-            $endDate = Carbon::now()->setTime(0, 0)->getTimestamp() * 1000;
+            $endDate = Carbon::now()->setTime(23, 59, 59)->getTimestamp() * 1000;
         }
 
         return [$startDate, $endDate];
