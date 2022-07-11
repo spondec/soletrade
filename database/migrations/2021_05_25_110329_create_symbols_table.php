@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->string('interval', 3)->charset('utf8mb4')->collation('utf8mb4_bin');
             $table->foreignId('exchange_id');
             $table->bigInteger('last_update', unsigned: true)->default(0);
+            $table->bigInteger('last_candle_time', unsigned: true)->default(0);
             $table->unique(['exchange_id', 'symbol', 'interval']);
             $table->timestamps();
         });

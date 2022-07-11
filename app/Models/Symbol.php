@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
  * @property string symbol
  * @property string interval
  * @property int    last_update
+ * @property int    last_candle_time
  * @property mixed  created_at
  * @property mixed  updated_at
  *

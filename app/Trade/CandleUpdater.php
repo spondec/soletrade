@@ -105,6 +105,7 @@ class CandleUpdater
                     $start,
                     $this->limit);
                 $inserts = $this->repo->mapCandles($latestCandles, $symbol, $this->map);
+                $symbol->last_candle_time = end($inserts)['t'];
 
                 $break = \count($latestCandles) <= 1;
 
