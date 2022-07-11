@@ -22,13 +22,14 @@ class AppServiceProvider extends ServiceProvider
     {
         if (!App::runningInConsole())
         {
-            \set_time_limit(30);
+            \set_time_limit(100);
         }
         \ini_set('trader.real_precision', 10);
 
         $this->app->singleton(SymbolRepository::class);
         $this->app->singleton(ConfigRepository::class);
 
+        //register extended Blueprint class
         $this->app->bind('db.schema', static function ($app) {
             $builder = $app['db']->connection()->getSchemaBuilder();
             $builder->blueprintResolver(static function ($table, $callback) {
