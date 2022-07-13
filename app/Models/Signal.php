@@ -53,6 +53,18 @@ class Signal extends Model
         return $this->belongsTo(Symbol::class);
     }
 
+    public function buy(): static
+    {
+        $this->side = Side::BUY;
+        return $this;
+    }
+
+    public function sell(): static
+    {
+        $this->side = Side::SELL;
+        return $this;
+    }
+
     //TODO:: rename this
     public function indicator(): BelongsTo
     {
