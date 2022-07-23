@@ -204,7 +204,7 @@ class TradeCreator
         {
             $setup->price = $candle->c;
             $setup->timestamp = $candle->t;
-            $setup->price_date = $this->repo->getPriceDate($candle->t, null, $candles->symbol);
+            $setup->price_date = $candle->price_date;
         }
 
         return $setup;
