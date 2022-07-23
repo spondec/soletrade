@@ -23,7 +23,6 @@ class StrategyTester extends TradeCommand
 {
     use HasInstanceEvents;
 
-    protected static $isDebug = false;
     /**
      * The name and signature of the console command.
      *
@@ -62,7 +61,7 @@ class StrategyTester extends TradeCommand
         $this->startTime = \time();
         $this->processes = config('trade.options.concurrentProcesses');
 
-        if (self::$isDebug = config('app.debug'))
+        if ($isDebugging = config('app.debug'))
         {
             DB::enableQueryLog();
         }
@@ -79,16 +78,32 @@ class StrategyTester extends TradeCommand
 
         $this->initSections();
 
-        $strategy = $tester->strategy;
-
         if (!$options['skipUpdate'])
         {
-            $this->updateSymbols($strategy);
+            $this->updateSymbols($tester->strategy);
         }
 
         if ($options['optimize'])
         {
-            $this->runOptimizer($strategy, $tester, $args);
+            $walkForward = $this->askWalkForward($tester);
+
+            if ($walkForward['consecutive']['enabled'])
+            {
+                $this->runConsecutiveWalkForwardOptimization(
+                    $tester,
+                    $walkForward['consecutive']['optimizationInterval'],
+                    $walkForward['consecutive']['walkForwardInterval']
+                );
+            }
+            else
+            {
+                $this->runOptimization(
+                    $tester,
+                    $walkForward['enabled'],
+                    $walkForward['startDate'],
+                    $walkForward['endDate']
+                );
+            }
         }
         else
         {
@@ -97,14 +112,14 @@ class StrategyTester extends TradeCommand
 
         $this->updateElapsedTime();
 
-        if (self::$isDebug)
+        if ($isDebugging)
         {
             $this->sections['memUsage']->overwrite("\nMemory usage: " . Util::memoryUsage());
             $log = DB::getQueryLog();
             $time = \array_sum(\array_column($log, 'time')) / 1000;
-            $this->sections['queryInfo']->overwrite("Total query time: $time"
-                . "\n" .
-                "Queries: " . \count($log));
+            $this->sections['queryInfo']->overwrite(
+                sprintf("Total query time: $time\nQueries: %s", \count($log))
+            );
         }
 
         $this->sections['state']->overwrite("<info>Done.</info>\n");
@@ -152,11 +167,90 @@ class StrategyTester extends TradeCommand
         $this->info("Done.\n");
     }
 
-    protected function runOptimizer(Strategy $strategy, Tester $tester, array $args): void
+    protected function askWalkForward(Tester $tester): array
     {
+        if ($hasWalkForward = ($this->ask('Do you want to run Walk Forward Analysis? (y|n)') === 'y'))
+        {
+            if ($isConsecutive = ($this->ask('Walk forward consecutively?') === 'y'))
+            {
+                $this->warn('Optimization Period');
+                $optimizationInterval = $this->askConsecutiveInterval();
+
+                $this->warn('Walk Forward Period');
+                $walkForwardInterval = $this->askConsecutiveInterval();
+            }
+            else
+            {
+                if (!$startDateString = $this->ask('Enter the walk forward period start date (DD-MM-YYYY)'))
+                {
+                    $this->error('Invalid start date.');
+                    exit(1);
+                }
+
+                [$walkForwardStartDate, $walkForwardEndDate] = $this->assertDateRange(
+                    $startDateString,
+                    $this->ask('Enter the walk forward period end date (DD-MM-YYYY) (optional)')
+                );
+
+                $optimizationEndDate = $tester->strategy->config('endDate');
+
+                if (
+                    $walkForwardStartDate < $optimizationEndDate &&
+                    $startDateString !== $this->option('end')
+                )
+                {
+                    $this->error("Walk Forward Analysis can't start before the end date of the optimization.");
+                    exit(1);
+                }
+            }
+        }
+
+        return [
+            'enabled'     => $hasWalkForward,
+            'startDate'   => $walkForwardStartDate ?? null,
+            'endDate'     => $walkForwardEndDate ?? null,
+            'consecutive' => [
+                'enabled'              => $isConsecutive ?? false,
+                'optimizationInterval' => $optimizationInterval ?? null,
+                'walkForwardInterval'  => $walkForwardInterval ?? null,
+            ],
+        ];
+    }
+
+    protected function askConsecutiveInterval(): int
+    {
+        return match ($this->askDayMonthYear())
+            {
+                'day' => 86400,
+                'month' => 86400 * 28,
+                'year' => 86400 * 365,
+                default => throw new \Exception('Invalid choice. Available: day, month or year')
+            } * $this->askPeriodCoefficient();
+    }
+
+    protected function askDayMonthYear(): string
+    {
+        return $this->choice('Choose a period', ['day', 'month', 'year']);
+    }
+
+    protected function askPeriodCoefficient(): int
+    {
+        return (int)$this->ask("Enter the period coefficient (e.g. 1, 7, 15, 30...)");
+    }
+
+    protected function runOptimization(
+        Tester $tester,
+        bool   $walkForward = false,
+        int    $walkForwardStart = null,
+        int    $walkForwardEnd = null,
+        bool   $verbose = true
+    ): void
+    {
+        $strategy = $tester->strategy;
+
         if (!$parameters = $strategy->optimizableParameters())
         {
-            $this->error("Strategy {$args['strategy']} doesn't have any optimizable parameters.");
+            $this->error("Strategy {$strategy::name()} doesn't have any optimizable parameters.");
             exit(1);
         }
 
@@ -166,37 +260,15 @@ class StrategyTester extends TradeCommand
         /** @var ProgressBar $progressBar */
         $progressBar = $this->helpers['progressBar']['opt'];
 
-        $this->warn("Parameters to be optimized: "
-            . implode(', ', array_keys($parameters)) .
-            "\nTotal simulations: <fg=red>$optimizer->total</>");
-
-        if ($this->ask("Do you want to proceed? (y|n)") !== 'y')
+        if ($verbose)
         {
-            $this->info("Aborted.");
-            exit(1);
-        }
+            $this->warn("Parameters to be optimized: "
+                . implode(', ', array_keys($parameters)) .
+                "\nTotal simulations: <fg=red>$optimizer->total</>");
 
-        if ($walkForward = ($this->ask('Do you want to run Walk Forward Analysis? (y|n)') === 'y'))
-        {
-            $startDateString = $this->ask('Enter the walk forward period start date (DD-MM-YYYY)');
-
-            if (!$startDateString)
+            if ($this->ask("Do you want to proceed? (y|n)") !== 'y')
             {
-                $this->error('Invalid start date.');
-                exit(1);
-            }
-
-            [$walkForwardStartDate, $walkForwardEndDate] = $this->assertDateRange(
-                $startDateString,
-                $this->ask('Enter the walk forward period end date (DD-MM-YYYY) (optional)')
-            );
-
-            $optimizationEndDate = $tester->strategy->config('endDate');
-
-            if (($walkForwardStartDate < $optimizationEndDate) &&
-                $startDateString !== $this->option('end'))
-            {
-                $this->error("Walk Forward Analysis can't start before the end date of the optimization.");
+                $this->info("Aborted.");
                 exit(1);
             }
         }
@@ -215,16 +287,18 @@ class StrategyTester extends TradeCommand
             sprintf('%s %s Optimization Summary (%s ~ %s)',
                 $strategy::name(),
                 "{$symbol->exchange()::name()} $symbol->symbol $symbol->interval",
-                $this->option('start'), $this->option('end')),
+                Util::dateFormat($strategy->config('startDate')), Util::dateFormat($strategy->config('endDate'))),
             $filtered->all());
 
         if ($walkForward)
         {
-            $this->runWalkForwardAnalysis($strategy,
-                $walkForwardStartDate,
-                $walkForwardEndDate,
+            $this->runWalkForwardAnalysis(
+                $strategy,
+                $walkForwardStart,
+                $walkForwardEnd,
                 $filtered,
-                $progressBar);
+                $progressBar
+            );
         }
 
         $this->sections['possibleTrades']->clear();
@@ -241,12 +315,6 @@ class StrategyTester extends TradeCommand
             {
                 $filtered[] = $summary;
             }
-
-//            //get the worst 5
-//            foreach ($summaries->slice(-5, 5) as $summary)
-//            {
-//                $filtered[] = $summary;
-//            }
         }
         else
         {
@@ -332,14 +400,18 @@ class StrategyTester extends TradeCommand
                                               SummaryCollection $summaries,
                                               ProgressBar       $progressBar): void
     {
-        $tester = $this->newRangedTester($strategy::class,
+        $tester = $this->newRangedTester(
+            $strategy::class,
             $strategy->symbol(),
             $startDate,
-            $endDate);
+            $endDate
+        );
 
-        $summarizer = new Summarizer($tester,
+        $summarizer = new Summarizer(
+            $tester,
             $summaries->pluck('parameters')->all()
         );
+
         $summarizer->setParallelProcesses($this->processes);
 
         $progressBar->setMaxSteps($summarizer->total);
@@ -353,8 +425,8 @@ class StrategyTester extends TradeCommand
 
         $parameters = $summaries->pluck('parameters')->values()->all();
 
-        //sort by parameter order
-        $walkForwardSummaries = $walkForwardSummaries->sortBy(function ($summary) use ($parameters) {
+        //sorts by parameter order
+        $walkForwardSummaries = $walkForwardSummaries->filter()->sortBy(function (Summary $summary) use ($parameters) {
             return array_search($summary->parameters, $parameters);
         });
 
@@ -374,44 +446,82 @@ class StrategyTester extends TradeCommand
 
     protected function registerTesterEvents(Tester $tester): void
     {
-        $tester->listen('strategy_pre_run', function () {
-            $this->sections['state']->overwrite("<info>Running strategy...</info>\n");
-        });
-
-        $tester->listen('strategy_post_run', function (Tester          $strategyTester,
-                                                       Strategy        $strategy,
-                                                       TradeCollection $trades) {
-            $this->sections['possibleTrades']->overwrite("{$trades->count()} possible trades found.");
-            $this->sections['state']->overwrite("<info>Evaluating trades...</info>\n");
-        });
-
-        $tester->listen('summary_updated', function (Tester  $strategyTester,
-                                                     Summary $summary,
-                                                     int     $tradeCount) {
-            $this->sections['evalTable']->clear();
-
-            $this->sections['evaluatedTrades']->overwrite("Evaluated $tradeCount trades.\n");
-            $this->updateElapsedTime();
-
-            $this->helpers['table']['eval']
-                ->setHeaders($this->getSummaryHeader())
-                ->setRows([$this->getSummaryRow($summary)])
-                ->render();
-        });
-
-        $tester->listen('summary_finished', function (Tester  $strategyTester,
-                                                      Summary $summary,
-                                                      int     $tradeCount) {
-            if (!$tradeCount)
-            {
-                $this->sections['evaluatedTrades']->overwrite("No evaluations.\n");
+        $tester->listen('strategy_pre_run',
+            function () {
+                $this->sections['state']->overwrite("<info>Running strategy...</info>\n");
             }
-        });
+        );
+
+        $tester->listen('strategy_post_run',
+            function (Tester $tester, Strategy $strategy, TradeCollection $trades) {
+                $this->sections['possibleTrades']->overwrite("{$trades->count()} possible trades found.");
+                $this->sections['state']->overwrite("<info>Evaluating trades...</info>\n");
+            }
+        );
+
+        $tester->listen('summary_updated',
+            function (Tester $tester, Summary $summary, int $tradeCount) {
+                $this->sections['evalTable']->clear();
+
+                $this->sections['evaluatedTrades']->overwrite("Evaluated $tradeCount trades.\n");
+                $this->updateElapsedTime();
+
+                $this->helpers['table']['eval']
+                    ->setHeaders($this->getSummaryHeader())
+                    ->setRows([$this->getSummaryRow($summary)])
+                    ->render();
+            }
+        );
+
+        $tester->listen('summary_finished',
+            function (Tester $tester, Summary $summary, int $tradeCount) {
+                if (!$tradeCount)
+                {
+                    $this->sections['evaluatedTrades']->overwrite("No evaluations.\n");
+                }
+            }
+        );
     }
 
     protected function updateElapsedTime(): void
     {
         $elapsed = elapsed_time($this->startTime);
         $this->sections['elapsedTime']->overwrite("Elapsed time: $elapsed");
+    }
+
+    protected function runConsecutiveWalkForwardOptimization(Tester $tester,
+                                                             int    $optimizationPeriod,
+                                                             int    $walkForwardPeriod): void
+    {
+        $strategy = $tester->strategy;
+        $symbol = $strategy->symbol();
+
+        $startDate = $strategy->config('startDate')
+            ?: $symbol->firstCandle()?->t
+            ?? throw new \UnexpectedValueException('No start date found.');
+
+        $endDate = $strategy->config('endDate')
+            ?: $symbol->lastCandle()?->t
+            ?? throw new \UnexpectedValueException('No end date found.');
+
+        $optStart = $startDate;
+
+        while ($optStart < $endDate)
+        {
+            $strategy->mergeConfig([
+                'startDate' => $optStart,
+                'endDate'   => $optEnd = $optStart + $optimizationPeriod * 1000
+            ]);
+
+            $this->runOptimization(
+                $tester,
+                true,
+                $optEnd,
+                $optStart = $optEnd + $walkForwardPeriod * 1000,
+                false
+            );
+
+            $this->initSections();
+        }
     }
 }
