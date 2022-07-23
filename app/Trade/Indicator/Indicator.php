@@ -145,7 +145,7 @@ abstract class Indicator implements Binder, \ArrayAccess
             return $value;
         }
 
-        foreach ($this->data as $t => $value)
+        foreach ($this->data as $t => $value)//TODO:: use binary search
         {
             if ($t > $timestamp)
             {
@@ -180,7 +180,7 @@ abstract class Indicator implements Binder, \ArrayAccess
     /**
      * @param int      $offset Historical value offset.
      *                         1 = previous candle,
-     *                         2 = second previous candle, and so on.
+     *                         2 = second previous candle, and so on...
      * @param int|null $timestamp
      *
      * @return object
@@ -189,14 +189,17 @@ abstract class Indicator implements Binder, \ArrayAccess
     {
         if ($timestamp)
         {
-            foreach ($this->candles as $candle)
-            {
-                if ($candle->t == $timestamp)
-                {
-                    return $candle;
-                }
-            }
-            throw new \LogicException("Candle for timestamp $timestamp not found.");
+            $key = binary_search(
+                $this->candles,
+                $timestamp,
+                0,
+                $this->candles->count() - 1,
+                fn(object $candle, int $t) => $candle->t <=> $t
+            );
+
+            return $key !== null
+                ? $this->candles[$key]
+                : throw new \LogicException("Invalid candle timestamp.");
         }
 
         return $this->series->candle($offset);
@@ -240,24 +243,22 @@ abstract class Indicator implements Binder, \ArrayAccess
         $iterator = $this->data->getIterator();
         while ($iterator->valid())
         {
-            $value = $iterator->current();
             $this->state->index++;
-            $this->state->current = $openTime = $key = $iterator->key();
+            $this->state->current = $openTime = $iterator->key();
             $iterator->next();
-            $nextOpenTime = $iterator->key();
 
             if ($signalCallback)
             {
                 /** @var Signal|null $newSignal */
                 $newSignal = $signalCallback(signal: $signal, indicator: $this, series: $this->series);
 
-                $priceDate = $this->repo->getPriceDate($openTime, $nextOpenTime, $this->symbol);
+                 $candle = $this->candle();
 
                 if ($newSignal)
                 {
-                    $newSignal->price ??= $this->candle()->c;
+                    $newSignal->price ??= $candle->c;
                     $newSignal->timestamp = $openTime;
-                    $newSignal->price_date = $priceDate;
+                    $newSignal->price_date = $candle->price_date;
 
                     $newSignal = $this->pushSignal($newSignal);
                     $signal = $this->setupSignal($signalSignature);
@@ -266,7 +267,7 @@ abstract class Indicator implements Binder, \ArrayAccess
 
             yield ['signal'     => $newSignal,
                    'timestamp'  => $openTime,
-                   'price_date' => $priceDate ?? null] ?? null;
+                   'price_date' => $candle->price_date ?? null] ?? null;
         }
     }
 
