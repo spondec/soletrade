@@ -34,19 +34,26 @@ class SymbolRepository extends Repository
         }
     }
 
-    public function mapCandles(array $candles, int $symbolId, CandleMap $map): array
+    public function mapCandles(array $candles, Symbol $symbol, CandleMap $map): array
     {
         $mapped = [];
-        foreach ($candles as $candle)
+        $iterator = new \ArrayIterator($candles);
+        $symbolId = $symbol->id;
+        while ($iterator->current())
         {
+            $candle = $iterator->current();
+            $iterator->next();
+            $next = $iterator->current();
+
             $mapped[] = [
-                'symbol_id' => $symbolId,
-                't'         => $candle[$map->t],
-                'o'         => $candle[$map->o],
-                'c'         => $candle[$map->c],
-                'h'         => $candle[$map->h],
-                'l'         => $candle[$map->l],
-                'v'         => $candle[$map->v],
+                'symbol_id'  => $symbolId,
+                't'          => $candle[$map->t],
+                'o'          => $candle[$map->o],
+                'c'          => $candle[$map->c],
+                'h'          => $candle[$map->h],
+                'l'          => $candle[$map->l],
+                'v'          => $candle[$map->v],
+                'price_date' => $next ? $next[$map->t] - 1000 : $symbol->last_update
             ];
         }
         return $mapped;
