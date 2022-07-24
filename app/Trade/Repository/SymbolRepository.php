@@ -7,6 +7,7 @@ namespace App\Trade\Repository;
 use App\Models\Symbol;
 use App\Trade\CandleMap;
 use App\Trade\Exchange\Exchange;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -14,8 +15,6 @@ use JetBrains\PhpStorm\ArrayShape;
 
 class SymbolRepository extends Repository
 {
-    protected static array $nextCandleCache = [];
-
     /**
      * @param string[]|array[] $indicators
      */
@@ -137,7 +136,6 @@ class SymbolRepository extends Repository
         $candles = $this->fetchCandlesBetween($symbol,
             $startDate,
             $endDate,
-            $interval,
             $includeStart);
 
         if (!$candles->first())
@@ -159,55 +157,6 @@ class SymbolRepository extends Repository
             ->where('symbol_id', $interval ? $this->findSymbolIdForInterval($symbol, $interval) : $symbol->id)
             ->where('t', $timestamp)
             ->first();
-    }
-
-    public function getPriceDate(int $openTime, int|null $nextOpenTime, Symbol $symbol): int
-    {
-        if ($nextOpenTime)
-        {
-            return $nextOpenTime - 1000;
-        }
-
-        if ($nextCandle = $this->fetchNextCandle($symbol->id, $openTime))
-        {
-            return $nextCandle->t - 1000;
-        }
-
-        return $symbol->last_update;
-    }
-
-    public function fetchNextCandle(Symbol|int $symbol, int $timestamp): ?object
-    {
-        $id = \is_int($symbol) ? $symbol : $symbol->id;
-
-        if ($nextCandle = static::$nextCandleCache[$id][$timestamp] ?? null)
-        {
-            return $nextCandle;
-        }
-
-        $candles = DB::table('candles')
-            ->where('symbol_id', $id)
-            ->where('t', '>', $timestamp)
-            ->orderBy('t', 'ASC')
-            ->limit(100)
-            ->get();
-
-        foreach ($candles as $k => $candle)
-        {
-            static::$nextCandleCache[$id][$candle->t] = $candles[$k + 1] ?? null;
-        }
-
-        return $candles[0] ?? null;
-    }
-
-    public function assertNextCandle(Symbol|int $symbol, int $timestamp): object
-    {
-        if (!$candle = $this->fetchNextCandle($symbol, $timestamp))
-        {
-            throw new \InvalidArgumentException("Candle for timestamp $timestamp is not closed.");
-        }
-
-        return $candle;
     }
 
     public function insertIgnoreSymbols(array $symbols, int $exchangeId, string $interval): void
@@ -250,7 +199,7 @@ class SymbolRepository extends Repository
         return $this->findSymbols($exchangeId, $symbols, $interval)->get();
     }
 
-    public function findSymbols(Exchange|int $exchange, string|array $symbolName, string $interval): \Illuminate\Database\Eloquent\Builder
+    public function findSymbols(Exchange|int $exchange, string|array $symbolName, string $interval): EloquentBuilder
     {
         $query = Symbol::query()
             ->where('exchange_id', \is_int($exchange) ? $exchange : $exchange::instance()->model()->id)
@@ -275,14 +224,6 @@ class SymbolRepository extends Repository
             ->get()->pluck('interval');
     }
 
-    public function fetchLastCandle(Symbol $symbol): object
-    {
-        return DB::table('candles')
-            ->where('symbol_id', $symbol->id)
-            ->orderBy('t', 'DESC')
-            ->first();
-    }
-
     public function fetchSymbolFromExchange(Exchange $exchange, string $symbolName, string $interval)
     {
         $filter = static fn(Symbol $symbol): bool => $symbol->symbol === $symbolName && $symbol->interval === $interval;
@@ -299,21 +240,18 @@ class SymbolRepository extends Repository
         return $this->findSymbols($exchange, $symbolName, $interval)->first();
     }
 
-    public function fetchCandlesBetween(Symbol  $symbol,
-                                        int     $startDate,
-                                        int     $endDate,
-                                        ?string $interval = null,
-                                        bool    $includeStart = false): Collection
+    public function fetchCandlesBetween(Symbol $symbol,
+                                        int    $startDate,
+                                        int    $endDate,
+                                        bool   $includeStart = false): Collection
     {
         if ($startDate >= $endDate)
         {
             throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
         }
 
-        $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
-
         return DB::table('candles')
-            ->where('symbol_id', $symbolId)
+            ->where('symbol_id', $symbol->id)
             ->where('t', $includeStart ? '>=' : '>', $startDate)
             ->where('t', '<=', $endDate)
             ->orderBy('t', 'ASC')
