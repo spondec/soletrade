@@ -6,7 +6,7 @@
 
 <script>
 
-import MainLayout from '../layouts/Main';
+import MainLayout from '../layouts/Main.vue';
 
 export default {
   components:

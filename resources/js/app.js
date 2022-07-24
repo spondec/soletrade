@@ -5,18 +5,20 @@
  */
 
 
-require("./bootstrap");
+import "./bootstrap";
+import "../css/app.css";
 
 import {createApp} from "vue";
 import * as VueRouter from "vue-router";
 
 const app = createApp({});
 
-import '../css/app.css'
-import PriceChart from "./pages/PriceChart";
-import Dashboard from "./pages/Dashboard";
+import PriceChart from "./pages/PriceChart.vue";
+import Dashboard from "./pages/Dashboard.vue";
 import ApiService from "./services/ApiService";
-import ErrorPage from "./pages/Error";
+import ErrorPage from "./pages/Error.vue";
+import MainLayout from "./layouts/Main.vue";
+import CardTable from "./components/CardTable.vue";
 
 /**
  * The following block of code may be used to automatically register your
@@ -29,9 +31,9 @@ import ErrorPage from "./pages/Error";
 // const files = require.context('./', true, /\.vue$/i)
 // files.keys().map(key => Vue.component(key.split('/').pop().split('.')[0], files(key).default))
 
-app.component('dashboard-page', require('./pages/Dashboard.vue').default);
-app.component('main-layout', require('./layouts/Main.vue').default);
-app.component('card-table', require('./components/CardTable.vue').default);
+app.component('dashboard-page', Dasboard);
+app.component('main-layout', MainLayout);
+app.component('card-table',  CardTable);
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to

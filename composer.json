@@ -17,7 +17,7 @@
     "fruitcake/laravel-cors": "^2.0",
     "guzzlehttp/guzzle": "^7.4.4",
     "itsgoingd/clockwork": "^5.1",
-    "laravel/framework": "^9.0",
+    "laravel/framework": "^9.19.0",
     "laravel/tinker": "^2.7",
     "laravel/ui": "^3.4",
     "longman/telegram-bot": "^0.76.1",

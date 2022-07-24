@@ -12,6 +12,7 @@ public/storage
 public/hot
 /public/css
 /public/js
+/public/build
 storage/*.key
 Homestead.yaml
 Homestead.json

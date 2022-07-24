@@ -121,10 +121,10 @@
 
 <script>
 
-import MainLayout from '../layouts/Main';
+import MainLayout from '../layouts/Main.vue';
 
-import VSpinner from "../components/VSpinner";
-import TradeTable from "../components/TradeTable";
+import VSpinner from "../components/VSpinner.vue";
+import TradeTable from "../components/TradeTable.vue";
 
 import ApiService from "../services/ApiService";
 import Chart from "../services/Chart";

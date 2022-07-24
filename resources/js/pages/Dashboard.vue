@@ -11,8 +11,8 @@
 
 <script>
 
-import CardTable from "../components/CardTable";
-import MainLayout from "../layouts/Main";
+import CardTable from "../components/CardTable.vue";
+import MainLayout from "../layouts/Main.vue";
 import ApiService from "../services/ApiService";
 
 export default {
