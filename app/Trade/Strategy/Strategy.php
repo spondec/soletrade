@@ -211,7 +211,7 @@ abstract class Strategy
 
             $helperSymbol->updateCandles();
 
-            $nextCandle = $this->symbolRepo->fetchNextCandle($symbol->id, $candles->last()->t);
+            $nextCandle = $symbol->candles->nextCandle($candles->last()->t);
             $helperCandles = $helperSymbol->candles(start: $candles->first()->t, end: $nextCandle?->t);
 
             unset($config['interval'], $config['symbol']);

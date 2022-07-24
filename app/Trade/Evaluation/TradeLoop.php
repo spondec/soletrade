@@ -73,13 +73,7 @@ class TradeLoop
 
     protected function getFirstCandle(TradeSetup $setup): object
     {
-        return $this->repo->fetchNextCandle($this->evaluationSymbol, $setup->price_date) //candle is closed
-            ?? DB::table('candles')
-                ->where('symbol_id', $this->evaluationSymbol->id)
-                ->where('t', '>=', $setup->timestamp)
-                ->where('t', '<=', $setup->price_date)
-                ->orderBy('t', 'DESC')
-                ->first(); //not closed
+        return $this->evaluationSymbol->candles->nextCandle($setup->price_date);
     }
 
     public function setExitTrade(TradeSetup $exit): void
@@ -111,7 +105,7 @@ class TradeLoop
         if (!isset($this->isExitRunCompleted) && $this->hasExitTrade())
         {
             $this->isExitRunCompleted = true;
-            $lastCandle = $this->repo->fetchNextCandle($this->evaluationSymbol, $this->exit->price_date);
+            $lastCandle = $this->evaluationSymbol->candles->nextCandle($this->exit->price_date);
             if ($lastCandle)
             {
                 $candles = $this->getCandlesBetween($lastCandle->t);
@@ -150,7 +144,8 @@ class TradeLoop
 
         if (!$candles?->first())
         {
-            throw new PrintableException("Not enough price data found for {$symbol->exchange()::name()}-$symbol->symbol-$symbol->interval. " .
+            throw new PrintableException("Not enough price data found for 
+            {$symbol->exchange()::name()}-$symbol->symbol-$symbol->interval. " .
                 "Please use a different interval or exchange.");
         }
 
@@ -196,7 +191,7 @@ class TradeLoop
                     $this->loadBinding($exit, 'target_price', $candle);
                 }
 
-                $priceDate = $this->getPriceDate($candle, $nextCandle);
+                $priceDate = $this->getPriceDate($candle);
                 $position = $position ?? $this->getPosition();
 
                 if ($this->timeout && $this->hasPositionTimedOut($priceDate))
@@ -210,20 +205,24 @@ class TradeLoop
             }
         }
 
-        $this->lastRunDate = $this->isLastCandle($candle)
-            ? $candles[$key - 1]?->t
-            ?? $this->getPrevCandle($candle)->t
-            : $candle->t;
+        if ($this->isLastCandle($candle))
+        {
+            $this->lastRunDate = $candles[$key - 1]?->t ?? $this->getPrevCandle($candle)->t;
+        }
+        else
+        {
+            $this->lastRunDate = $candle->t;
+        }
     }
 
-    protected function getPriceDate(object $candle, ?object $next, ?float $price = null): int
+    protected function getPriceDate(object $candle, ?float $price = null): int
     {
         if ($price == (float)$candle->o)
         {
             return $candle->t;
         }
 
-        return $this->repo->getPriceDate($candle->t, $next?->t, $this->evaluationSymbol);
+        return $candle->price_date;
     }
 
     protected function tryPositionEntry(object $candle): void
@@ -236,7 +235,7 @@ class TradeLoop
 
         if ($realizedEntryPrice !== false)
         {
-            $priceDate = $this->getPriceDate($candle, null, $realizedEntryPrice);
+            $priceDate = $this->getPriceDate($candle, $realizedEntryPrice);
 
             if ($realizedEntryPrice != $entryPrice)
             {
@@ -268,7 +267,7 @@ class TradeLoop
             return;
         }
 
-        $priceDate = $this->getPriceDate($candle, null);
+        $priceDate = $this->getPriceDate($candle);
 
         if ($stop = $position->price('stop'))
         {
@@ -310,7 +309,7 @@ class TradeLoop
 
     protected function isLastCandle(object $candle): bool
     {
-        return !(bool)$this->repo->fetchNextCandle($candle->symbol_id, $candle->t);
+        return $candle->t == $this->evaluationSymbol->last_candle_time;
     }
 
     protected function getPrevCandle(object $candle): object
@@ -357,7 +356,7 @@ class TradeLoop
                 {
                     //for live
                     $targetPrice = $candle->c;
-                    $priceDate = $this->getPriceDate($candle, null);
+                    $priceDate = $this->getPriceDate($candle);
                 }
                 else
                 {
@@ -422,7 +421,7 @@ class TradeLoop
 
             $this->status->getEntryPrice()->set(
                 (float)$first->o,
-                $this->getPriceDate($first, $candles[1] ?? null),
+                $this->getPriceDate($first),
                 'Entry price set to first candle open price.'
             );
         }
