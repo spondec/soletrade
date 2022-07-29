@@ -34,7 +34,7 @@ class StrategyTester extends TradeCommand
      *
      * @var string
      */
-    protected $description = 'Tests specified strategy on a specified symbol.';
+    protected $description = 'Tests a given strategy on a given symbol.';
 
     /**
      * @var ConsoleSectionOutput[]
