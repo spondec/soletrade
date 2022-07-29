@@ -85,6 +85,8 @@ class StrategyTester extends TradeCommand
 
         if ($options['optimize'])
         {
+            $this->assertParameters($tester->strategy);
+
             $walkForward = $this->askWalkForward($tester);
 
             if ($walkForward['consecutive']['enabled'])
@@ -248,11 +250,7 @@ class StrategyTester extends TradeCommand
     {
         $strategy = $tester->strategy;
 
-        if (!$parameters = $strategy->optimizableParameters())
-        {
-            $this->error("Strategy {$strategy::name()} doesn't have any optimizable parameters.");
-            exit(1);
-        }
+        $parameters = $this->assertParameters($strategy);
 
         $optimizer = new Optimizer($tester, $parameters);
         $optimizer->setParallelProcesses($this->processes);
@@ -523,5 +521,15 @@ class StrategyTester extends TradeCommand
 
             $this->initSections();
         }
+    }
+
+    public function assertParameters(Strategy $strategy): array
+    {
+        if (!$parameters = $strategy->optimizableParameters())
+        {
+            $this->error("Strategy {$strategy::name()} doesn't have any optimizable parameters.");
+            exit(1);
+        }
+        return $parameters;
     }
 }
