@@ -40,18 +40,18 @@ class IndicatorDataSeries implements Series
         throw new \LogicException('IndicatorData is immutable.');
     }
 
-    public function value(int $offset = 0, ?string $key = null): Series
+    public function value(int $offset = 0, ?string $column = null): Series
     {
-        if ($offset == 0 && !$key)
+        if ($offset == 0 && !$column)
         {
             return $this;
         }
 
         $series = clone $this;
 
-        if ($key)
+        if ($column)
         {
-            $series->state->column = $key;
+            $series->state->column = $column;
         }
 
         if ($offset != 0)
@@ -78,7 +78,7 @@ class IndicatorDataSeries implements Series
 
         if ($data && $this->state->column)
         {
-            return $data[$this->state->column] ?? throw new \LogicException("Column {$this->state->column} not found.");
+            return $data[$this->state->column] ?? null;
         }
 
         return $data;

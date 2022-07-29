@@ -47,11 +47,10 @@ class IndicatorDataSeriesTest extends TestCase
     {
         $series = $this->getSeries($state, 'foo');
         $this->assertIsArray($series->get());
-        $this->assertEquals(1, $series->value(key: 'foo')->get());
+        $this->assertEquals(1, $series->value(column: 'foo')->get());
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Column bar not found');
-        $series->value(key: 'bar')->get();
+
+        $this->assertNull($series->value(column: 'bar')->get());
     }
 
     protected function getSeries(IndicatorSeriesState &$state = null, ?string $withColumn = null): IndicatorDataSeries
