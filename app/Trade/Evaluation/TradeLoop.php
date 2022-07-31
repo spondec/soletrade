@@ -13,7 +13,6 @@ use App\Trade\HasConfig;
 use App\Trade\Repository\SymbolRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 
 class TradeLoop
 {
@@ -41,6 +40,11 @@ class TradeLoop
                                 protected Symbol           $evaluationSymbol,
                                 array                      $config)
     {
+        if ($this->evaluationSymbol->candles === null)
+        {
+            throw new \LogicException('Evaluation symbol has no candles.');
+        }
+
         $this->mergeConfig($config);
         $this->assertTradeSymbolMatchesEvaluationSymbol();
         $this->initTradeStatus();
