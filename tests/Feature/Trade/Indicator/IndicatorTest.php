@@ -14,7 +14,7 @@ class IndicatorTest extends IndicatorTestCase
 
         $data = $ma->data();
         $iterator = $data->getIterator();
-        $slice = $candles->slice(7);
+        $slice = collect($candles->all())->slice(7);
         $candleIterator = $slice->getIterator();
 
         foreach ($ma->scan() as $result)
