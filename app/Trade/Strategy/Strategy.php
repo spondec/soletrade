@@ -182,8 +182,6 @@ abstract class Strategy
 
     protected function initIndicators(): void
     {
-        $this->initHelperIndicators($this->symbol, $this->candles);
-
         foreach ($this->indicatorConfig as $c)
         {
             /** @var Indicator $indicator */
@@ -197,42 +195,6 @@ abstract class Strategy
         }
     }
 
-    protected function initHelperIndicators(Symbol $symbol, Collection $candles): void
-    {
-        $helpers = [];
-        foreach ($this->helperIndicators() as $class => $config)
-        {
-            /** @var Symbol $helperSymbol */
-            $helperSymbol = Symbol::query()
-                ->where('exchange_id', $symbol->exchange_id)
-                ->where('symbol', $config['symbol'] ?? $symbol->symbol)
-                ->where('interval', $config['interval'] ?? $symbol->interval)
-                ->firstOrFail();
-
-            $helperSymbol->updateCandles();
-
-            $nextCandle = $symbol->candles->nextCandle($candles->last()->t);
-            $helperCandles = $helperSymbol->candles(start: $candles->first()->t, end: $nextCandle?->t);
-
-            unset($config['interval'], $config['symbol']);
-
-            /** @var Indicator $helperIndicator */
-            $helperIndicator = new $class(symbol: $helperSymbol, candles: $helperCandles, config: $config);
-            if ($helperIndicator->symbol() === $symbol)
-            {
-                $symbol->addIndicator($helperIndicator);
-            }
-            $helpers[$class] = $helperIndicator;
-        }
-
-        $this->helperIndicators = new Collection($helpers);
-    }
-
-    protected function helperIndicators(): array
-    {
-        return [];
-    }
-
     public function symbol(): Symbol
     {
         return $this->symbol;
@@ -241,11 +203,6 @@ abstract class Strategy
     public function actions(TradeSetup $setup): ?Collection
     {
         return $this->actions[$setup] ?? null;
-    }
-
-    public function helperIndicator(string $class): Indicator
-    {
-        return $this->helperIndicators[$class];
     }
 
     protected function indicator(string $alias): Indicator
