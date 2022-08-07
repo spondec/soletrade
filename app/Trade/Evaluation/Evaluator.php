@@ -27,7 +27,9 @@ class Evaluator
         $evaluation = $this->setup($entry, $exit);
         $this->realize($evaluation);
 
-        return $evaluation->updateUniqueOrCreate();
+        return $evaluation->updateUniqueOrCreate()
+            ->setRelation('entry', $entry)
+            ->setRelation('exit', $exit);
     }
 
     protected function setup(TradeSetup $entry, TradeSetup $exit): Evaluation

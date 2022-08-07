@@ -186,7 +186,8 @@ class TradeFinder
 
         $trade->is_permanent = ($this->hasNextCandle)();
 
-        $savedTrade = $this->creator->save();
+        $savedTrade = $this->creator->save()
+            ->setRelation('symbol', $this->strategy->symbol());
 
         foreach ($this->indicators as $i)
         {

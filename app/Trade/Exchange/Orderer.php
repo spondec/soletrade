@@ -63,7 +63,8 @@ abstract class Orderer implements \App\Trade\Contract\Exchange\Orderer
 
         return $fills->map(static function (Fill $fill) use ($order) {
             $fill->order()->associate($order);
-            return $fill->firstUniqueOrCreate();
+            return $fill->firstUniqueOrCreate()
+                ->setRelation('order', $order);
         })->all();
     }
 
