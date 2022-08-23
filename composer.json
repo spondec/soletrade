@@ -22,7 +22,8 @@
     "laravel/ui": "^3.4",
     "longman/telegram-bot": "^0.76.1",
     "ratchet/pawl": "^0.4.1",
-    "spatie/fork": "^1.1"
+    "spatie/fork": "^1.1",
+    "spatie/laravel-sql-commenter": "^1.1"
   },
   "require-dev": {
     "brianium/paratest": "^6.4",

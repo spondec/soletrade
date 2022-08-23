@@ -64,6 +64,9 @@ class TradeLoopTest extends TestCase
             'o' => 1,
         ]);
 
+        //fetch all candles from the database
+        $entry->symbol->candles();
+
         $loop = new TradeLoop($entry, $entry->symbol, ['closeOnExit' => true]);
         $loop->setExitTrade($exit);
         $loop->run();

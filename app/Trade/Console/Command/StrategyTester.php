@@ -13,7 +13,9 @@ use App\Trade\Strategy\Process\Summarizer;
 use App\Trade\Strategy\Strategy;
 use App\Trade\Strategy\Tester;
 use App\Trade\Util;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Fork\Fork;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\Table;
@@ -118,6 +120,10 @@ class StrategyTester extends TradeCommand
         {
             $this->sections['memUsage']->overwrite("\nMemory usage: " . Util::memoryUsage());
             $log = DB::getQueryLog();
+
+            //write query log to a file
+            Storage::put('logs/query/' . date('Y-m-d H:i:s') . '.json', json_encode($log));
+
             $time = \array_sum(\array_column($log, 'time')) / 1000;
             $this->sections['queryInfo']->overwrite(
                 sprintf("Total query time: $time\nQueries: %s", \count($log))

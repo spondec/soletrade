@@ -37,7 +37,7 @@ class TradeLoop
     protected readonly bool $isExitRunCompleted;
 
     public function __construct(public readonly TradeSetup $entry,
-                                protected Symbol           $evaluationSymbol,
+                                protected readonly Symbol           $evaluationSymbol,
                                 array                      $config)
     {
         if ($this->evaluationSymbol->candles === null)
@@ -162,19 +162,12 @@ class TradeLoop
 
         $this->adjustEntryPriceByOrderType($candles);
 
-        $iterator = $candles->getIterator();
-
         $entry = $this->status->getEntryPrice();
         $exit = $this->status->getTargetPrice();
         $stop = $this->status->getStopPrice();
 
-        while ($iterator->valid())
+        foreach ($candles as $candle)
         {
-            $candle = $nextCandle ?? $iterator->current();
-            $key = $iterator->key();
-            $iterator->next();
-            $nextCandle = $iterator->current();
-
             $candle->l = (float)$candle->l;
             $candle->h = (float)$candle->h;
             $candle->t = (int)$candle->t;
@@ -207,11 +200,13 @@ class TradeLoop
                 $this->tryPositionExit($position, $candle, $priceDate);
                 $this->status->runTradeActions($candle, $priceDate);
             }
+
+            $prev = $candle;
         }
 
         if ($this->isLastCandle($candle))
         {
-            $this->lastRunDate = $candles[$key - 1]?->t ?? $this->getPrevCandle($candle)->t;
+            $this->lastRunDate = $prev?->t ?? $this->getPrevCandle($candle)->t;
         }
         else
         {
@@ -326,7 +321,7 @@ class TradeLoop
 
     protected function runToEnd(int $chunk = 10000): void
     {
-        while (($candles = $this->getCandlesLimit($chunk))->first())
+        while (($candles = $this->getRunnableCandles($chunk))->first())
         {
             $this->runLoop($candles);
 
@@ -337,13 +332,17 @@ class TradeLoop
         }
     }
 
-    protected function getCandlesLimit(int $limit): Collection
+    protected function getRunnableCandles(int $limit): Collection
     {
         if ($this->lastRunDate)
         {
-            return $this->repo->assertCandlesLimit($this->evaluationSymbol, $this->lastRunDate, limit: $limit);
+            return $this->evaluationSymbol
+                ->candles
+                ->assertCandlesLimit($this->lastRunDate, $limit);
         }
-        return $this->repo->assertCandlesLimit($this->evaluationSymbol, $this->firstCandle->t, limit: $limit, includeStart: true);
+        return $this->evaluationSymbol
+            ->candles
+            ->assertCandlesLimit($this->firstCandle->t, $limit, includeStart: true);
     }
 
     protected function performPostRunChecks(): void

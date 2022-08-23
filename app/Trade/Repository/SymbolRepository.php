@@ -89,34 +89,6 @@ class SymbolRepository extends Repository
         ];
     }
 
-    public function assertCandlesLimit(Symbol  $symbol,
-                                       int     $startDate,
-                                       ?int    $limit,
-                                       ?string $interval = null,
-                                       bool    $includeStart = false): Collection
-    {
-        $symbolId = $this->findSymbolIdForInterval($symbol, $interval);
-
-        $candles = DB::table('candles')
-            ->where('symbol_id', $symbolId)
-            ->where('t', $includeStart ? '>=' : '>', $startDate)
-            ->orderBy('t', 'ASC');
-
-        if ($limit)
-        {
-            $candles->limit($limit);
-        }
-
-        $candles = $candles->get();
-
-        if (!$candles->first())
-        {
-            throw new \UnexpectedValueException("$symbol->symbol-$interval candles was not found.");
-        }
-
-        return $candles;
-    }
-
     public function findSymbolIdForInterval(Symbol $symbol, ?string $interval = null): int
     {
         return !$interval || $symbol->interval === $interval ? $symbol->id :

@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Trade\Collection;
 
 use App\Models\Symbol;
 use App\Trade\Calc;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class CandleCollection extends Collection
 {
@@ -78,18 +81,42 @@ class CandleCollection extends Collection
         unset($this->overrides[$key]);
     }
 
-    public function between(int  $startDate,
-                            int  $endDate,
-                            bool $includeStart = false): static
+//    public function between(int  $startDate,
+//                            int  $endDate,
+//                            bool $includeStart = false): static
+//    {
+//        if ($startDate >= $endDate)
+//        {
+//            throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
+//        }
+//
+//        $candles = collect($this)
+//            ->where('t', $includeStart ? '>=' : '>', $startDate)
+//            ->where('t', '<=', $endDate);
+//
+//        return new static($candles->values()->all());
+//    }
+
+    public function assertCandlesLimit(int  $startDate,
+                                       ?int $limit = null,
+                                       bool $includeStart = false): Collection
     {
-        if ($startDate >= $endDate)
+        $candles = collect($this)
+            ->where('t', $includeStart ? '>=' : '>', $startDate)
+            ->sortBy('t'); //is sorting necessary?
+
+        if ($limit !== null)
         {
-            throw new \LogicException('$startDate cannot be greater than or equal to $endDate.');
+            $candles->take($limit);
         }
 
-        return $this
-            ->where('t', $includeStart ? '>=' : '>', $startDate)
-            ->where('t', '<=', $endDate);
+        if (!$candles->first())
+        {
+            throw new \LogicException("Candles not found.");
+        }
+
+//        return $candles;
+        return new static($candles->values()->all());
     }
 
     public function nextCandle(int $timestamp): ?object
