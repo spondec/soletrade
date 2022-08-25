@@ -104,6 +104,8 @@ if you aliased it to `sail`.
 
 ### Standalone
 
+_Warning: If you're on Windows, please use the Docker installation. The standalone installation is not supported on Windows due to PHP PCNTL extension requiring a UNIX OS._
+
 For standalone installation, after installing all the dependencies, run these commands in order:
 
 ```bash
