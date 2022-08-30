@@ -86,7 +86,7 @@ class Position
             'increase'    => $increase,
             'price'       => $price,
             'size'        => $size,
-            'system_time' => \microtime(true), //for uniqueness
+            'uuid'        => uniqid(more_entropy: true),
         ];
 
         if (isset($this->transactionLog))
