@@ -5,11 +5,7 @@
       <th>Magnifier</th>
       <th>Details</th>
       <th>Side</th>
-      <th>Entry</th>
-      <th>Exit</th>
-      <th>Entry Setup</th>
       <th>Entry Date</th>
-      <th>Exit Setup</th>
       <th>Exit Date</th>
       <th>Entry Price</th>
       <th>Exit Price</th>
@@ -38,8 +34,7 @@
         <vue-json-pretty :path="'res'" :data="trade" :deep="0"></vue-json-pretty>
       </td>
       <td>{{ trade.entry.side }}</td>
-      <td>{{ trade.entry.name }}</td>
-      <td>{{ trade.exit.name }}</td>
+
       <td>
         <a v-bind:href="'#' + chartId"
            v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
@@ -47,24 +42,10 @@
         </a>
       </td>
       <td>
-        <a v-if="trade.entry_timestamp" v-bind:href="'#' + chartId"
-           v-on:click="dateClick(trade.entry_timestamp, trade.exit_timestamp)">
-          {{ timestampToString(trade.entry_timestamp) }}
-        </a>
-        <p v-else>N/A</p>
-      </td>
-      <td>
         <a v-bind:href="'#' + chartId"
            v-on:click="dateClick(trade.entry.timestamp, trade.exit.timestamp)">
           {{ timestampToString(trade.exit.price_date) }}
         </a>
-      </td>
-      <td>
-        <a v-if="trade.entry_timestamp" v-bind:href="'#' + chartId"
-           v-on:click="dateClick(trade.entry_timestamp, trade.exit_timestamp)">
-          {{ timestampToString(trade.exit_timestamp) }}
-        </a>
-        <p v-else>N/A</p>
       </td>
       <td v-bind:class="{ 'text-danger': !trade.is_entry_price_valid }">{{ round(trade.entry_price) }}</td>
       <td>{{ round(trade.exit_price) }}</td>
