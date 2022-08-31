@@ -82,7 +82,7 @@ class Position
             $this->remainingSize += $size;
         }
 
-        $data = [
+        $log = [
             'increase'    => $increase,
             'price'       => $price,
             'size'        => $size,
@@ -91,11 +91,11 @@ class Position
 
         if (isset($this->transactionLog))
         {
-            $this->transactionLog->new($data, $timestamp, $reason);
+            $this->transactionLog->new($log, $timestamp, $reason);
         }
         else
         {
-            $this->transactionLog = new ChangeLog($data, $timestamp, $reason);
+            $this->transactionLog = new ChangeLog($log, $timestamp, $reason);
         }
 
         if (!$this->amount && $this->isOpen())
