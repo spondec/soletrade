@@ -36,7 +36,7 @@ class Trade extends Model
         'transactions' => 'array',
     ];
 
-    public static function from(LiveTradeLoop $loop): static
+    public static function fromLoop(LiveTradeLoop $loop): static
     {
         if (!$position = $loop->status()->getPosition())
         {
