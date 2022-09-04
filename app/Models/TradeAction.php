@@ -3,12 +3,12 @@
 namespace App\Models;
 
 /**
- * @property int    id
- * @property int    trade_setup_id
- * @property string class
- * @property bool   is_taken
- * @property int    timestamp
- * @property array  config
+ * App\Models\TradeAction
+ *
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeAction newModelQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeAction newQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeAction query()
+ * @mixin \Eloquent
  */
 class TradeAction extends Model
 {

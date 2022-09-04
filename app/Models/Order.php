@@ -8,35 +8,59 @@ use App\Trade\Enum\OrderStatus;
 use App\Trade\Enum\OrderType;
 use App\Trade\Enum\Side;
 use App\Trade\Log;
-use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rules\Enum;
 
 /**
- * @property int         id
- * @property int         exchange_id
- * @property int         position_id
- * @property bool        reduce_only
- * @property string      symbol
- * @property Side        side
- * @property OrderType   type
- * @property OrderStatus status
- * @property float       quantity
- * @property float       filled
- * @property float       price
- * @property float       stop_price
- * @property array       responses
- * @property float       commission
- * @property string      commission_asset
- * @property string      exchange_order_id
- * @property Carbon      created_at
- * @property Carbon      updated_at
+ * App\Models\Order
  *
- * @method static OrderFactory factory($count = null, $state = [])
+ * @property int $id
+ * @property int $exchange_id
+ * @property int|null $trade_id
+ * @property int $reduce_only
+ * @property OrderStatus $status
+ * @property string $symbol
+ * @property Side $side
+ * @property OrderType $type
+ * @property string $quantity
+ * @property string $filled
+ * @property string|null $price
+ * @property string|null $stop_price
+ * @property string|null $commission
+ * @property string|null $commission_asset
+ * @property string|null $exchange_order_id
+ * @property array|null $responses
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Exchange $exchange
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Fill[] $fills
+ * @property-read int|null $fills_count
+ * @method static \Database\Factories\OrderFactory factory(...$parameters)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order newModelQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order newQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order query()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereCommission($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereCommissionAsset($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereCreatedAt($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereExchangeId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereExchangeOrderId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereFilled($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order wherePrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereQuantity($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereReduceOnly($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereResponses($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereSide($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereStatus($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereStopPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereSymbol($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereTradeId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereType($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Order whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class Order extends Model
 {

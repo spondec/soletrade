@@ -7,35 +7,69 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
- * @property int            id
- * @property string         type
- * @property int            entry_id
- * @property TradeSetup     entry
- * @property TradeSetup     exit
- * @property int            exit_id
- * @property Symbol         symbol
- * @property int            symbol_id
- * @property float          relative_roi
- * @property float          highest_roi
- * @property float          lowest_roi
- * @property float          used_size
- * @property float          entry_price
- * @property float          exit_price
- * @property float          target_price
- * @property float          stop_price
- * @property float          highest_price
- * @property float          lowest_price
- * @property float          highest_entry_price
- * @property float          lowest_entry_price
- * @property bool           is_entry_price_valid
- * @property bool           is_ambiguous
- * @property bool           is_stopped
- * @property bool           is_closed
- * @property int            entry_timestamp
- * @property int            exit_timestamp
- * @property array          log
- * @property \Carbon\Carbon created_at
- * @property \Carbon\Carbon updated_at
+ * App\Models\Evaluation
+ *
+ * @property int $id
+ * @property string $type
+ * @property int $entry_id
+ * @property int|null $exit_id
+ * @property int $symbol_id
+ * @property float|null $relative_roi
+ * @property float|null $highest_roi
+ * @property float|null $lowest_roi
+ * @property float $used_size
+ * @property string|null $entry_price
+ * @property string|null $avg_entry_price
+ * @property string|null $exit_price
+ * @property string|null $target_price
+ * @property string|null $stop_price
+ * @property string|null $highest_price
+ * @property string|null $lowest_price
+ * @property string|null $highest_entry_price
+ * @property string|null $lowest_entry_price
+ * @property int $is_entry_price_valid
+ * @property int|null $is_ambiguous
+ * @property int|null $is_stopped
+ * @property int|null $is_closed
+ * @property int|null $entry_timestamp
+ * @property int|null $exit_timestamp
+ * @property array|null $log
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $entry
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $exit
+ * @property-read \App\Models\Symbol $symbol
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation newModelQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation newQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation query()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereAvgEntryPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereCreatedAt($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereEntryId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereEntryPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereEntryTimestamp($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereExitId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereExitPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereExitTimestamp($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereHighestEntryPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereHighestPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereHighestRoi($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereIsAmbiguous($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereIsClosed($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereIsEntryPriceValid($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereIsStopped($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereLog($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereLowestEntryPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereLowestPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereLowestRoi($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereRelativeRoi($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereStopPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereSymbolId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereTargetPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereType($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereUpdatedAt($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Evaluation whereUsedSize($value)
+ * @mixin \Eloquent
  */
 class Evaluation extends Model
 {

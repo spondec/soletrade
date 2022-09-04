@@ -6,25 +6,16 @@ use App\Trade\Enum\Side;
 use App\Trade\Indicator\Indicator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** COLUMNS
+/**
+ * App\Models\Signal
  *
- * @property Symbol    symbol
- * @property Signature signature
- * @property Signature indicator
- *
- * @property int       id
- * @property int       indicator_id
- * @property int       symbol_id
- * @property int       timestamp
- * @property int       price_date
- * @property string    name
- * @property Side      side
- * @property string    signature_id
- * @property float     price
- * @property array     info
- * @property mixed     created_at
- * @property mixed     updated_at
- *
+ * @property-read \App\Models\Signature|null $indicator
+ * @property-read \App\Models\Signature|null $signature
+ * @property-read \App\Models\Symbol $symbol
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Signal newModelQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Signal newQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Signal query()
+ * @mixin \Eloquent
  */
 class Signal extends Model
 {

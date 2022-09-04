@@ -4,21 +4,32 @@ namespace App\Models;
 
 use App\Trade\Collection\CandleCollection;
 use App\Trade\Indicator\Indicator;
-use Database\Factories\SymbolFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * @property int    id
- * @property int    exchange_id
- * @property string symbol
- * @property string interval
- * @property int    last_update
- * @property mixed  created_at
- * @property mixed  updated_at
+ * App\Models\Symbol
  *
- * @method static SymbolFactory factory($count = null, $state = [])
+ * @property int $id
+ * @property string $symbol
+ * @property string $interval
+ * @property int $exchange_id
+ * @property int $last_update
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @method static \Database\Factories\SymbolFactory factory(...$parameters)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol newModelQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol newQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol query()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol whereCreatedAt($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol whereExchangeId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol whereId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol whereInterval($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol whereLastUpdate($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol whereSymbol($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|Symbol whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class Symbol extends Model
 {

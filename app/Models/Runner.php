@@ -6,10 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property int    id
- * @property string name
- * @property int    start_date
- * @property int    expire_date
+ * App\Models\Runner
+ *
+ * @property int $id
+ * @property int $start_date
+ * @property int $expire_date
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder|Runner newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Runner newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Runner query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Runner whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Runner whereExpireDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Runner whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Runner whereStartDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Runner whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class Runner extends Model
 {

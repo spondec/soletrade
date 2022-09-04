@@ -10,38 +10,61 @@ use App\Trade\Enum\OrderType;
 use App\Trade\Enum\Side;
 use App\Trade\Evaluation\Price;
 use App\Trade\Order\Type\StopLimit;
-use Database\Factories\TradeSetupFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\Rules\Enum;
 
 /**
- * @property array|Signal[]           signals
- * @property Symbol                   symbol
- * @property Signature                signature
- * @property TradeAction[]|Collection actions
+ * App\Models\TradeSetup
  *
- * @property int                      id
- * @property int                      symbol_id
- * @property int                      signature_id
- * @property int                      signal_count
- * @property bool                     is_permanent
- * @property int                      timestamp
- * @property int                      price_date
- * @property string                   name
- * @property Side                     side
- * @property OrderType                entry_order_type
- * @property array                    order_type_config
- * @property float                    price
- * @property float                    size
- * @property float                    target_price
- * @property float                    stop_price
- * @property mixed                    created_at
- * @property mixed                    updated_at
- *
- * @method static TradeSetupFactory factory($count = null, $state = [])
+ * @property int $id
+ * @property int $symbol_id
+ * @property int $signature_id
+ * @property string $name
+ * @property Side $side
+ * @property float $price
+ * @property float $size
+ * @property string|null $target_price
+ * @property string|null $stop_price
+ * @property OrderType $entry_order_type
+ * @property array|null $order_type_config
+ * @property int $signal_count
+ * @property array|null $signals
+ * @property mixed|null $actions
+ * @property int $is_permanent
+ * @property int $timestamp
+ * @property int $price_date
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Binding[] $bindings
+ * @property-read int|null $bindings_count
+ * @property-read \App\Models\Signature $signature
+ * @property-read \App\Models\Symbol $symbol
+ * @method static \Database\Factories\TradeSetupFactory factory(...$parameters)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup newModelQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup newQuery()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup query()
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereActions($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereCreatedAt($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereEntryOrderType($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereIsPermanent($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereName($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereOrderTypeConfig($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup wherePrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup wherePriceDate($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereSide($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereSignalCount($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereSignals($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereSignatureId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereSize($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereStopPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereSymbolId($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereTargetPrice($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereTimestamp($value)
+ * @method static \App\Trade\Illuminate\Database\Eloquent\Builder|TradeSetup whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class TradeSetup extends Model implements Bindable
 {

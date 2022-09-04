@@ -10,22 +10,48 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property int     id
- * @property int     entry_id
- * @property int     exit_id
- * @property Side    side
- * @property bool    is_stopped
- * @property bool    is_closed
- * @property int     entry_time
- * @property int     exit_time
- * @property array   transactions
- * @property float   max_used_size
- * @property float   entry_price
- * @property float   exit_price
- * @property float   roi
- * @property float   relative_roi
+ * App\Models\Trade
  *
- * @property Order[] orders
+ * @property int $id
+ * @property Side $side
+ * @property int $entry_id
+ * @property int|null $exit_id
+ * @property int $is_stopped
+ * @property int $is_closed
+ * @property int $entry_time
+ * @property int|null $exit_time
+ * @property array $transactions
+ * @property string $max_used_size
+ * @property string $entry_price
+ * @property string|null $exit_price
+ * @property string $roi
+ * @property string $relative_roi
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\TradeSetup $entry
+ * @property-read \App\Models\TradeSetup|null $exit
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Order[] $orders
+ * @property-read int|null $orders_count
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereEntryId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereEntryPrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereEntryTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereExitId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereExitPrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereExitTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereIsClosed($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereIsStopped($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereMaxUsedSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereRelativeRoi($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereRoi($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereSide($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereTransactions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Trade whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class Trade extends Model
 {
