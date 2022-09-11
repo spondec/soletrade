@@ -25,3 +25,4 @@ _metadata.json
 .php_cs.cache
 *.cache
 AppDataLocalGitHubPortableGit_etcprofile.daliases.sh.
+_ide_helper.php
