@@ -24,10 +24,8 @@ Features include:
 
 ## Supported Exchanges
 
-* [FTX](https://ftx.com)
 * [Binance Spot](https://www.binance.com/en/markets/spot)(**Only for testing**)
     * Binance has no order module, so it can not be used to trade live.
-      Use Binance for testing and FTX for live trading since FTX doesn't provide enough historical price data.
 
 ## Installation
 
@@ -339,7 +337,7 @@ can use `php artisan trade:run` command:
 An example for trading 100 USD at 5x leverage would be:
 
 ```bash
-php artisan trade:run MACross FTX BTC/USDT 1h USDT 100 5
+php artisan trade:run MACross Binance BTC/USDT 1h USDT 100 5
 ```
 
 [Run this command on Docker](#running-commands-on-docker)
