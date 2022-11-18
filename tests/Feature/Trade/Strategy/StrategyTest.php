@@ -3,6 +3,7 @@
 namespace Tests\Feature\Trade\Strategy;
 
 use App\Models\Symbol;
+use App\Trade\Exchange\Binance\Spot\Binance;
 use Database\Seeders\SymbolSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -33,7 +34,7 @@ class StrategyTest extends TestCase
         Symbol::insert([
             'symbol' => 'BTC/USDT',
             'interval' => '1d',
-            'exchange_id' => 1,
+            'exchange_id' => Binance::instance()->model()->id,
         ]);
 
         $fixture = json_decode(
